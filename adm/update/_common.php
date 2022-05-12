@@ -1,7 +1,7 @@
 <?php
 define('G5_IS_ADMIN', true);
 include_once ('../../common.php');
-include_once(G5_LIB_PATH.'/update.lib.php');
+include_once('./update.lib.php');
 include_once(G5_ADMIN_PATH.'/admin.lib.php');
 
 if( !isset($g5['update'])) {

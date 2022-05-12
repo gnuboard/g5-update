@@ -12,7 +12,7 @@ class G5Update {
     
     // token값 입력 필요
     // token값이 없는 경우, 1시간에 60번의 데이터조회가 가능함
-    private $token = null;
+    private $token = "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";
     
     private $url = "https://api.github.com";
     private $version_list = array();
@@ -103,28 +103,29 @@ class G5Update {
             $update_dir = G5_DATA_PATH.'/update';
 
             if($this->port == 'ftp') {
-                if(!is_dir($update_dir)) {
-                    if(!ftp_mkdir($this->conn, $update_dir)) throw new Exception("디렉토리를 생성하는데 실패했습니다.");
+                $update_ftp_dir = preg_replace("/(.*?)(?=\\".ftp_pwd($this->conn).")/", '', $update_dir);
+
+                if(!is_dir($update_dir)) {                    
+                    if(!ftp_mkdir($this->conn, $update_ftp_dir)) throw new Exception("디렉토리를 생성하는데 실패했습니다.");
                     if(!ftp_chmod($this->conn, 0707, $update_dir)) throw new Exception("디렉토리의 권한을 변경하는데 실패했습니다.");
                 }
 
                 if(!is_dir($update_dir.'/version')) {
-                    if(!ftp_mkdir($this->conn, $update_dir.'/version')) throw new Exception("디렉토리를 생성하는데 실패했습니다.");
-                    if(!ftp_chmod($this->conn, 0707, $update_dir.'/version')) throw new Exception("디렉토리의 권한을 변경하는데 실패했습니다.");
+                    if(!ftp_mkdir($this->conn, $update_ftp_dir.'/version')) throw new Exception("디렉토리를 생성하는데 실패했습니다.");
+                    if(!ftp_chmod($this->conn, 0707, $update_ftp_dir.'/version')) throw new Exception("디렉토리의 권한을 변경하는데 실패했습니다.");
                 }
 
                 if(!is_dir($update_dir.'/log')) {
-                    if(!ftp_mkdir($this->conn, $update_dir.'/log')) throw new Exception("디렉토리를 생성하는데 실패했습니다.");
-                    if(!ftp_chmod($this->conn, 0707, $update_dir.'/log')) throw new Exception("디렉토리의 권한을 변경하는데 실패했습니다.");
+                    if(!ftp_mkdir($this->conn, $update_ftp_dir.'/log')) throw new Exception("디렉토리를 생성하는데 실패했습니다.");
+                    if(!ftp_chmod($this->conn, 0707, $update_ftp_dir.'/log')) throw new Exception("디렉토리의 권한을 변경하는데 실패했습니다.");
                 }
 
                 if(!is_dir($update_dir.'/backup')) {
-                    if(!ftp_mkdir($this->conn, $update_dir.'/backup')) throw new Exception("디렉토리를 생성하는데 실패했습니다.");
-                    if(!ftp_chmod($this->conn, 0707, $update_dir)) throw new Exception("디렉토리의 권한을 변경하는데 실패했습니다.");
+                    if(!ftp_mkdir($this->conn, $update_ftp_dir.'/backup')) throw new Exception("디렉토리를 생성하는데 실패했습니다.");
+                    if(!ftp_chmod($this->conn, 0707, $update_ftp_dir)) throw new Exception("디렉토리의 권한을 변경하는데 실패했습니다.");
                 }
 
-                $list = ftp_nlist($this->conn, $update_dir);
-
+                $list = ftp_nlist($this->conn, $update_ftp_dir);
 
             } else if($this->port == 'sftp') {
                 if(!is_dir($update_dir)) {
@@ -451,6 +452,7 @@ class G5Update {
             if($this->conn == false) throw new Exception("통신이 연결되지 않았습니다.");
 
             if($this->port == 'ftp') {
+                $originPath = preg_replace("/(.*?)(?=\\".ftp_pwd($this->conn).")/", '', $originPath);
                 $result = ftp_delete($this->conn, $originPath);
             } else if($this->port == 'sftp') {
                 $result = ssh2_sftp_unlink($this->connPath, $originPath);
@@ -472,6 +474,7 @@ class G5Update {
             $dirCheck = $this->checkDirIsEmpty($originDir);
             if($dirCheck){
                 if($this->port == 'ftp') {
+                    $originDir = preg_replace("/(.*?)(?=\\".ftp_pwd($this->conn).")/", '', $originDir);
                     $result = ftp_rmdir($this->conn, $originDir);
                 } else if($this->port == 'sftp') {
                     $result = ssh2_sftp_rmdir($this->connPath, $originDir);                    
@@ -503,17 +506,22 @@ class G5Update {
             if($this->conn == false) throw new Exception("통신이 연결되지 않았습니다.");
 
             if(!file_exists($changePath)) throw new Exception("업데이트에 존재하지 않는 파일입니다.");
-
             $fp = fopen($changePath, 'r');
             $content = @fread($fp, filesize($changePath));
+            
             if($content == false) throw new Exception("파일을 여는데 실패했습니다.");
-
             if($this->port == 'ftp') {
-                if(ftp_nlist($this->conn, dirname($originPath)) == false) {
-                    ftp_mkdir($this->conn, dirname($originPath));
+                $ftpOriginPath = preg_replace("/(.*?)(?=\\".ftp_pwd($this->conn).")/", '', $originPath); // ftp에서는 경로 변경
+                $ftpChangePath = preg_replace("/(.*?)(?=\\".ftp_pwd($this->conn).")/", '', $changePath); // ftp에서는 경로 변경
+
+                if(ftp_nlist($this->conn, dirname($ftpOriginPath)) == false) {
+                    $result = ftp_mkdir($this->conn, dirname($ftpOriginPath));
+                    ftp_nb_continue($this->conn); // 디렉토리 생성후 파일을 계속해서 검색/전송
+                    if($result == false) throw new Exception("ftp를 통한 디렉토리 생성에 실패했습니다.");
                 }
-                
-                $result = ftp_put($this->conn, $originPath, $changePath, FTP_BINARY);
+
+                $fg = fopen($originPath, 'w'); // 덮어쓸 파일 포인터 생성
+                $result = ftp_fget($this->conn, $fg, $ftpChangePath, FTP_BINARY);                
                 if($result == false) throw new Exception("ftp를 통한 파일전송에 실패했습니다.");
             } else if($this->port == 'sftp') {
                 if(!file_exists("ssh2.sftp://".intval($this->connPath).$originPath)) {
@@ -545,10 +553,51 @@ class G5Update {
             $log_dir = G5_DATA_PATH.'/update/log';
 
             if($this->port == 'ftp') {
-                if(ftp_nlist($this->conn, dirname($log_dir)) == false) {
-                    $result = ftp_mkdir($this->conn, $log_dir);
+                $ftp_log_dir = preg_replace("/(.*?)(?=\\".ftp_pwd($this->conn).")/", '', $log_dir);
+
+                if(ftp_nlist($this->conn, dirname($ftp_log_dir)) == false) {
+                    $result = ftp_mkdir($this->conn, $ftp_log_dir);
                     if($result == false) throw new Exception("디렉토리 생성에 실패했습니다.");
                 }
+
+                $datetime = date('Y-m-d_his', time());
+                $rand = rand(0000,9999);
+
+                $fp = fopen($log_dir."/".$datetime.'_'.$status.'_'.$rand.'.log', 'w+');
+                if($fp == false) throw new Exception('파일생성에 실패했습니다.');
+
+                switch($status) {
+                    case 'update':
+                        $success_txt = "성공한 업데이트 내역\n";
+                        $fail_txt = "실패한 업데이트 내역\n";
+                        break;
+                    case 'rollback':
+                        $success_txt = "성공한 롤백 내역\n";
+                        $fail_txt = "롤백 시 제거된 파일 내역\n";
+                        break;
+                    default:
+                        ftp_delete($this->conn, $ftp_log_dir."/".$datetime.'_'.$status.'_'.$rand.'.log');
+                        throw new Exception("올바르지 않은 명령입니다.");
+                }
+
+                if(count($success_list) > 0) {
+                    foreach($success_list as $key => $var) {
+                        $success_txt .= $var."\n";
+                    }
+                } else {
+                    $success_txt = '';
+                }
+
+                if(count($fail_list) > 0) {
+                    foreach($fail_list as $key => $var) {
+                        $fail_txt .= $var['file']." : ".$var['message']."\n";
+                    }
+                } else {
+                    $fail_txt = '';
+                }
+
+                $result = fwrite($fp, $success_txt."\n\n".$fail_txt);
+                if($result == false) throw new Exception('파일쓰기에 실패했습니다.');
             } else if($this->port == 'sftp') {
                 if(!is_dir($log_dir)) {
                     $result = mkdir("ssh2.sftp://".intval($this->connPath).$log_dir);
