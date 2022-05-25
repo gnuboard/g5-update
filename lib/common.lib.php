@@ -3076,8 +3076,8 @@ function get_search_string($stx)
 // XSS 관련 태그 제거
 function clean_xss_tags($str, $check_entities=0, $is_remove_tags=0, $cur_str_len=0)
 {
-    // space, tab('\t'), formfeed('\f'), vertical tab('\v'), newline('\n'), carriage return('\r') 를 제거한다.
-    $str = preg_replace('#[[:space:]]#', '', $str);
+    // tab('\t'), formfeed('\f'), vertical tab('\v'), newline('\n'), carriage return('\r') 를 제거한다.
+    $str = preg_replace("#[\t\f\v\n\r]#", '', $str);
 
     if( $is_remove_tags ){
         $str = strip_tags($str);
@@ -3922,6 +3922,38 @@ function is_include_path_check($path='', $is_input='')
     }
 
     return true;
+}
+
+function check_auth_session_token($str=''){
+    if (get_session('ss_mb_token_key') === get_token_encryption_key($str)) {
+        return true;
+    }
+    return false;
+}
+
+function update_auth_session_token($str=''){
+    set_session('ss_mb_token_key', get_token_encryption_key($str));
+}
+
+function get_token_encryption_key($str=''){
+    $token = G5_TABLE_PREFIX.(defined('G5_SHOP_TABLE_PREFIX') ? G5_SHOP_TABLE_PREFIX : '').(defined('G5_TOKEN_ENCRYPTION_KEY') ? G5_TOKEN_ENCRYPTION_KEY : '').$str;
+
+    return md5($token);
+}
+
+function get_random_token_string($length=6)
+{
+    if(function_exists('random_bytes')){
+        return bin2hex(random_bytes($length));
+    }
+
+    $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    $characters_length = strlen($characters);
+    $output = '';
+    for ($i = 0; $i < $length; $i++)
+        $output .= $characters[rand(0, $characters_length - 1)];
+
+    return bin2hex($output);
 }
 
 function filter_input_include_path($path){
