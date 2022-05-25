@@ -73,6 +73,42 @@ define('G5_ICODE_COIN', 100);
 
 include_once(G5_LIB_PATH.'/shop.uri.lib.php');
 
+// PG 강제 설정
+if(isset($_GET['pg'])) {
+    switch($_GET['pg']) {
+        case 'lg':
+        case 'tosspayments' :
+            set_session('ss_default_pg', 'lg');
+            break;
+        case 'kcp':
+            set_session('ss_default_pg', 'kcp');
+            break;
+        case 'inicis':
+            set_session('ss_default_pg', 'inicis');
+            break;
+        default:
+            set_session('ss_default_pg', $default['de_pg_service']);
+            break;
+    }
+}
+
+if(isset($_SESSION['ss_default_pg'])) {
+    switch($_SESSION['ss_default_pg']) {
+        case 'lg':
+        case 'tosspayments' :
+            $default['de_pg_service'] = 'lg';
+            break;
+        case 'kcp':
+            $default['de_pg_service'] = 'kcp';
+            break;
+        case 'inicis':
+            $default['de_pg_service'] = 'inicis';
+            break;
+        default:
+            break;
+    }
+}
+
 add_replace('get_pretty_url', 'add_pretty_shop_url', 10, 5);
 add_replace('false_short_url_clean', 'shop_short_url_clean', 10, 4);
 add_replace('add_nginx_conf_rules', 'add_shop_nginx_conf_rules', 10, 3);

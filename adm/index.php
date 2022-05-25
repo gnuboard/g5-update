@@ -97,6 +97,9 @@ $colspan = 12;
             $leave_date = $row['mb_leave_date'] ? $row['mb_leave_date'] : date("Ymd", G5_SERVER_TIME);
             $intercept_date = $row['mb_intercept_date'] ? $row['mb_intercept_date'] : date("Ymd", G5_SERVER_TIME);
 
+            // 정보 *로 변환
+            $row = conv_field_info($row, 'mb_id,mb_name,mb_nick,mb_email');
+
             $mb_nick = get_sideview($row['mb_id'], get_text($row['mb_nick']), $row['mb_email'], $row['mb_homepage']);
 
             $mb_id = $row['mb_id'];
@@ -272,6 +275,10 @@ $colspan = 7;
                 $sql2 = " select mb_id, mb_name, mb_nick, mb_email, mb_homepage, mb_point from {$g5['member_table']} where mb_id = '{$row['mb_id']}' ";
                 $row2 = sql_fetch($sql2);
             }
+
+            // 정보 *로 변환
+            $row = conv_field_info($row, 'mb_id,mb_name,mb_nick,mb_email');
+            $row2 = conv_field_info($row2, 'mb_id,mb_name,mb_nick,mb_email');
 
             $mb_nick = get_sideview($row['mb_id'], $row2['mb_nick'], $row2['mb_email'], $row2['mb_homepage']);
 

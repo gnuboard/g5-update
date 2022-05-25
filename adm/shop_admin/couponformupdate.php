@@ -147,6 +147,7 @@ if($w == '' && ($_POST['cp_sms_send'] || $_POST['cp_email_send'])) {
     $sms_messages = array();
 
     if($_POST['chk_all_mb']) {
+        $_POST['cp_email_send'] = 0;
         $sql = " select mb_id, mb_name, mb_hp, mb_email, mb_mailling, mb_sms
                     from {$g5['member_table']}
                     where mb_leave_date = ''

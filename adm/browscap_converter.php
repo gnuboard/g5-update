@@ -1,15 +1,19 @@
 <?php
 ini_set('memory_limit', '-1');
+
+$sub_menu = "100520";
 include_once('./_common.php');
 
 // clean the output buffer
 ob_end_clean();
 
+auth_check($auth[$sub_menu], 'r');
+
 if(!(version_compare(phpversion(), '5.3.0', '>=') && defined('G5_BROWSCAP_USE') && G5_BROWSCAP_USE))
     die('사용할 수 없는 기능입니다.');
 
-if($is_admin != 'super')
-    die('최고관리자로 로그인 후 실행해 주세요.');
+//if($is_admin != 'super')
+//    die('최고관리자로 로그인 후 실행해 주세요.');
 
 // browscap cache 파일 체크
 if(!is_file(G5_DATA_PATH.'/cache/browscap_cache.php')) {
@@ -25,8 +29,8 @@ $browscap->cacheFilename = 'browscap_cache.php';
 
 // 데이터 변환
 $rows = preg_replace('#[^0-9]#', '', $_GET['rows']);
-if(!$rows)
-    $rows = 100;
+if(!$rows || $is_admin != 'super')
+    $rows = 10;
 
 $sql_common = " from {$g5['visit_table']} where vi_agent <> '' and ( vi_browser = '' or vi_os = '' or vi_device = '' ) ";
 $sql_order  = " order by vi_id desc ";

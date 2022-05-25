@@ -2,15 +2,17 @@
 $sub_menu = "100520";
 include_once('./_common.php');
 
+auth_check($auth[$sub_menu], 'r');
+
 if(!(version_compare(phpversion(), '5.3.0', '>=') && defined('G5_BROWSCAP_USE') && G5_BROWSCAP_USE))
     alert('사용할 수 없는 기능입니다.', correct_goto_url(G5_ADMIN_URL));
 
-if ($is_admin != 'super')
-    alert('최고관리자만 접근 가능합니다.');
+//if ($is_admin != 'super')
+//    alert('최고관리자만 접근 가능합니다.');
 
 $rows = isset($_GET['rows']) ? preg_replace('#[^0-9]#', '', $_GET['rows']) : 0;
 if(!$rows)
-    $rows = 100;
+    $rows = 10;
 
 $g5['title'] = '접속로그 변환';
 include_once('./admin.head.php');

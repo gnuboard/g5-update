@@ -52,7 +52,7 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_SHOP_CSS_URL.'/style.css">', 0
 
         // 다운로드 쿠폰인지
         $disabled = '';
-        if(is_coupon_downloaded($member['mb_id'], $row['cz_id']))
+        if($member['mb_id'] != 'youngcart5' && is_coupon_downloaded($member['mb_id'], $row['cz_id']))
             $disabled = ' disabled';
 
         // $row['cp_type'] 값이 있으면 % 이며 없으면 원 입니다.
@@ -144,7 +144,7 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_SHOP_CSS_URL.'/style.css">', 0
 
         // 다운로드 쿠폰인지
         $disabled = '';
-        if(is_coupon_downloaded($member['mb_id'], $row['cz_id']))
+        if($member['mb_id'] != 'youngcart5' && is_coupon_downloaded($member['mb_id'], $row['cz_id']))
             $disabled = ' disabled';
 
         // $row['cp_type'] 값이 있으면 % 이며 없으면 원 입니다.

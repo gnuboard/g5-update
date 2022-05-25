@@ -21,6 +21,9 @@ if (!$od['od_id']) {
 // 주문정보
 $data = unserialize(base64_decode($od['dt_data']));
 
+// 정보 *로 변환
+$data = conv_field_info($data, 'mb_id,od_email,od_name,od_b_name,od_tel,od_hp,od_b_tel,od_b_hp,od_addr1,od_addr2,od_b_addr1,od_b_addr2,od_ip,od_zip1,od_zip2,od_b_zip1,od_b_zip2,od_addr3,od_b_addr3,od_addr_jibeon,od_b_addr_jibeon');
+
 $sql_common = " from {$g5['g5_shop_cart_table']} where od_id = '{$od['cart_id']}' and ct_status = '쇼핑' and ct_select = '1' ";
 
 // 주문금액

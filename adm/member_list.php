@@ -146,6 +146,10 @@ $colspan = 16;
     <tbody>
     <?php
     for ($i=0; $row=sql_fetch_array($result); $i++) {
+        // 정보 *로 변환
+        if($row['mb_id'] != 'youngcart5')
+            $row = conv_field_info($row, 'mb_id,mb_tel,mb_hp,mb_email,mb_name,mb_nick');
+
         // 접근가능한 그룹수
         $sql2 = " select count(*) as cnt from {$g5['group_member_table']} where mb_id = '{$row['mb_id']}' ";
         $row2 = sql_fetch($sql2);

@@ -90,6 +90,9 @@ include_once('./admin.head.php');
     $ma_list = "";
     $cr = "";
     while ($row=sql_fetch_array($result)) {
+        // 정보 *로 변환
+        $row = conv_field_info($row, '*');
+
         $i++;
         $ma_list .= $cr . $row['mb_email'] . "||" . $row['mb_id'] . "||" . get_text($row['mb_name']) . "||" . $row['mb_nick'] . "||" . $row['mb_datetime'];
         $cr = "\n";

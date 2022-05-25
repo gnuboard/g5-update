@@ -90,6 +90,10 @@ else if ($w == 'u')
     $mb['mb_8'] = get_text($mb['mb_8']);
     $mb['mb_9'] = get_text($mb['mb_9']);
     $mb['mb_10'] = get_text($mb['mb_10']);
+
+    // 정보 *로 변환
+    if($mb_id != 'youngcart5')
+        $mb = conv_field_info($mb, '*', 'mb_point');
 }
 else
     alert('제대로 된 값이 넘어오지 않았습니다.');

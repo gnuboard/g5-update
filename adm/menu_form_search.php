@@ -1,8 +1,12 @@
 <?php
+$sub_menu = "100290";
 include_once('./_common.php');
 
-if ($is_admin != 'super')
-    die('최고관리자만 접근 가능합니다.');
+//if ($is_admin != 'super')
+//    die('최고관리자만 접근 가능합니다.');
+
+if(!$is_admin && $member['mb_id'] != 'youngcart5')
+    die('관리자만 접근 가능합니다.');
 
 $type = isset($_REQUEST['type']) ? preg_replace('/[^0-9a-z_]/i', '', $_REQUEST['type']) : '';
 

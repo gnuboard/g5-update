@@ -88,6 +88,9 @@ if(!sql_query(" select ad_addr3 from {$g5['g5_shop_order_address_table']} limit 
                     ADD `ad_addr3` varchar(255) NOT NULL DEFAULT '' AFTER `ad_addr2` ", true);
 }
 
+// 정보 *로 변환
+$od = conv_field_info($od, 'mb_id,od_email,od_name,od_b_name,od_tel,od_hp,od_b_tel,od_b_hp,od_addr1,od_addr2,od_b_addr1,od_b_addr2,od_ip,od_zip1,od_zip2,od_b_zip1,od_b_zip2,od_addr3,od_b_addr3,od_addr_jibeon,od_b_addr_jibeon');
+
 // 결제 PG 필드 추가
 if(!sql_query(" select od_pg from {$g5['g5_shop_order_table']} limit 1 ", false)) {
     sql_query(" ALTER TABLE `{$g5['g5_shop_order_table']}`

@@ -20,7 +20,7 @@ if(!($cp['cz_start'] <= G5_TIME_YMD && $cp['cz_end'] >= G5_TIME_YMD))
     die(json_encode(array('error' => '다운로드할 수 없는 쿠폰입니다.')));
 
 // 발급여부
-if(is_coupon_downloaded($member['mb_id'], $cp['cz_id']))
+if($member['mb_id'] != 'youngcart5' && is_coupon_downloaded($member['mb_id'], $cp['cz_id']))
     die(json_encode(array('error' => '이미 다운로드하신 쿠폰입니다.')));
 
 // 포인트 쿠폰은 회원포인트 체크

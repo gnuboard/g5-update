@@ -230,7 +230,7 @@ if($default['de_tax_flag_use']) {
 
     ※ 주의 : 로고 용량이 150 X 50 이상일 경우 site_name 값이 표시됩니다. */
 ?>
-    <input type="hidden" name="site_logo"       value="">
+    <input type="hidden" name="site_logo"       value="http://demo.sir.co.kr/gnuboard5/img/sir_logo.jpg">
 <?php
     /* 결제창 영문 표시 파라미터 입니다. 영문을 기본으로 사용하시려면 Y로 세팅하시기 바랍니다
         2010-06월 현재 신용카드와 가상계좌만 지원됩니다

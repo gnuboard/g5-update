@@ -117,8 +117,17 @@ if ($csv == 'csv')
             $ct_send_cost = iconv_euckr($ct_send_cost);
         }
 
+
+
+        // 정보 *로 변환
+        $row = conv_field_info($row, 'od_b_name,od_b_zip1,od_b_zip2,od_b_addr1,od_b_addr2,od_b_addr3,od_b_tel,od_b_hp');
+
         echo '"\''.$row['od_b_zip1'].$row['od_b_zip2'].'"\''.',';
-        echo '"'.$pull_address.'"'.',';
+        if($is_admin != 'super') {
+            echo '"'.print_address($row['od_b_addr1'], $row['od_b_addr2'], $row['od_b_addr3'], $row['od_b_addr_jibeon']).'"'.',';
+        } else {
+            echo '"'.$pull_address.'"'.',';
+        }
         echo '"'.$row['od_b_name'].'"'.',';
         //echo '"'.multibyte_digit((string)$row[od_b_tel]).'"'.',';
         //echo '"'.multibyte_digit((string)$row[od_b_hp]).'"'.',';
@@ -216,6 +225,12 @@ if ($csv == 'xls')
 
                 $ct_send_cost = $ct_send_cost;
             }
+            
+            $row = conv_field_info($row, 'od_b_name,od_b_zip1,od_b_zip2,od_b_addr1,od_b_addr2,od_b_addr3,od_b_tel,od_b_hp');
+            
+            if($is_admin != 'super') {
+                $pull_address = print_address($row['od_b_addr1'], $row['od_b_addr2'], $row['od_b_addr3'], $row['od_b_addr_jibeon']);
+            }
 
             $rows[] = array(' '.$row['od_b_zip1'].$row['od_b_zip2'],
                             $pull_address,
@@ -305,11 +320,13 @@ if ($csv == 'xls')
 
                 $ct_send_cost = iconv_euckr($ct_send_cost);
             }
+            
+            // 정보 *로 변환
+            $row = conv_field_info($row, 'od_b_name,od_b_zip1,od_b_zip2,od_b_addr1,od_b_addr2,od_b_addr3,od_b_tel,od_b_hp');
 
             $pull_address = iconv('UTF-8', 'UHC', print_address($row['od_b_addr1'], $row['od_b_addr2'], $row['od_b_addr3'], $row['od_b_addr_jibeon']));
 
             $row = array_map('iconv_euckr', $row);
-
             $worksheet->write($i, 0, ' '.$row['od_b_zip1'].$row['od_b_zip2']);
             $worksheet->write($i, 1, $pull_address);
             $worksheet->write($i, 2, $row['od_b_name']);
@@ -410,8 +427,12 @@ if (sql_num_rows($result) == 0)
         if ($row1['od_name'] == $row1['od_b_name'] && $row1['od_addr'] == $row1['od_b_addr'] && $row1['od_tel'] == $row1['od_b_tel'] &&  $row1['od_hp'] == $row1['od_b_hp'] && $row1['od_hp'] != "&nbsp;") $samesamesame = 1;
         else $samesamesame = '';
 
+        // 정보 *로 변환
+        $row1 = conv_field_info($row1, 'od_name,od_zip1,od_zip2,od_addr1,od_addr2,od_addr3,od_tel,od_hp,od_b_name,od_b_zip1,od_b_zip2,od_b_addr1,od_b_addr2,od_b_addr3,od_b_tel,od_b_hp');
+
         $od_memo = ($row1['od_memo']) ? get_text(stripslashes($row1['od_memo'])) : '';
         $od_shop_memo = ($row1['od_shop_memo']) ? get_text(stripslashes($row1['od_shop_memo'])) : '';
+
     ?>
     <!-- 반복시작 - 지운아빠 2013-04-18 -->
     <div class="sodr_print_pop_list">

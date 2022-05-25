@@ -1,0 +1,37 @@
+@charset "utf-8";
+
+@font-face {
+font-family:'NanumGothic';
+    font-style: normal;
+    font-weight: normal;
+    src: local('NanumGothic'),  local('나눔고딕'),   url('http://commondatastorage.googleapis.com/fontfacekr-fonts/NanumGothic.woff') format('woff');
+}
+
+html,body{font-family:'NanumGothic','dotum' !important;}
+
+#bo_w{width:720px; margin:auto; background:#fff; padding:20px;}
+
+
+
+@media screen and (max-width:960px){
+#ft_company{display:none;}
+#popular,#visit{display:none;}
+#ft,#ft_catch{width:100%;}
+#gnb_1dul,#gnb,#hd,#hd_wrapper{width:100%;}
+#hd,#ft_catch,#ft{min-width:320px;}
+#text_size{display:none;}
+#bo_v_info{width:100%;}
+#bo_v,#bo_w{width:90% !important; margin:0 auo;}
+#ft_copy div{width:100%;}
+#ft_copy div a{display:block; line-height:18px;}
+#tnb{width:100%; margin-top:10px !important;}
+.bo_v_nb li,.bo_v_com li{margin:0;}
+#hd_sch{float:right;}
+#tnb li{margin:0 !important;}
+.more_wrap{width:320px; overflow:hidden;!important; margin:auto; height:auto;}
+.wrap ul.more{ padding:50px 0 0 0; position:relative; list-style:none;}
+.more_wrap ul.more li img{width:auto; max-width:320px; margin:auto;}
+.more_wrap ul.more li{width:320px; margin:0; padding:0; float:left;}
+.view{width:320px;}
+
+}

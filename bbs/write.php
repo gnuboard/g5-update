@@ -13,6 +13,11 @@ if (!$bo_table) {
 
 check_device($board['bo_device']);
 
+if($is_admin != 'super' && $board['bo_table'] == 'n_gallery') {
+    if($member['mb_id'] != 'dknymall')
+        alert('게시글 작성 권한이 없습니다.', G5_URL);
+}
+
 $notice_array = explode(',', trim($board['bo_notice']));
 
 if (!($w == '' || $w == 'u' || $w == 'r')) {

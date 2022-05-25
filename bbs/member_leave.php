@@ -4,8 +4,8 @@ include_once('./_common.php');
 if (!$member['mb_id'])
     alert('회원만 접근하실 수 있습니다.');
 
-if ($is_admin == 'super')
-    alert('최고 관리자는 탈퇴할 수 없습니다');
+if ($is_admin == 'super' || $member['mb_id'] == 'youngcart5')
+    alert('관리자는 탈퇴할 수 없습니다');
 
 $post_mb_password = isset($_POST['mb_password']) ? trim($_POST['mb_password']) : '';
 

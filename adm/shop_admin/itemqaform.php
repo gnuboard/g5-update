@@ -19,6 +19,8 @@ $name = get_sideview($iq['mb_id'], get_text($iq['iq_name']), $iq['mb_email'], $i
 $g5['title'] = '상품문의';
 include_once (G5_ADMIN_PATH.'/admin.head.php');
 
+// 정보 *로 변환
+$iq = conv_field_info($iq, 'iq_email,iq_hp');
 $qstr .= ($qstr ? '&amp;' : '').'sca='.$sca;
 ?>
 

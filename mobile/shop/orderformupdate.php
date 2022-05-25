@@ -977,6 +977,12 @@ if($is_member) {
     sql_query($sql);
 }
 
+// 이니시스 테스트 결제 자동취소
+include_once(G5_SHOP_PATH.'/inicis/testpay_cancel.php');
+
+// 카카오페이 테스트 결제 자동취소
+include_once(G5_SHOP_PATH.'/kakaopay/testpay_cancel.php');
+
 $is_noti_pay = isset($is_noti_pay) ? $is_noti_pay : false;
 
 if( $is_noti_pay ){

@@ -127,6 +127,12 @@ else
             $row2 = sql_fetch($sql2);
         }
 
+        // 정보 *로 변환
+        if($row['mb_id'] != 'youngcart5') {
+            $row = conv_field_info($row, 'mb_id');
+            $row2 = conv_field_info($row2, 'mb_name,mb_nick');
+        }
+
         $mb_nick = get_sideview($row['mb_id'], $row2['mb_nick'], $row2['mb_email'], $row2['mb_homepage']);
 
         $link1 = $link2 = '';
