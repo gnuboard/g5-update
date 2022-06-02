@@ -189,11 +189,12 @@ define('G5_SMTP_PORT', '25');
 // 5.4 버전 이전에는 sql_password 이 사용됨, 5.4 버전부터 기본이 create_hash 로 변경
 //define('G5_STRING_ENCRYPT_FUNCTION', 'sql_password');
 define('G5_STRING_ENCRYPT_FUNCTION', 'create_hash');
-define('G5_MYSQL_PASSWORD_LENGTH', 41);         // mysql password length 41, old_password 의 경우에는 16
+define('G5_MYSQL_PASSWORD_LENGTH', 41); // mysql password length 41, old_password 의 경우에는 16
 
 // SQL 에러를 표시할 것인지 지정
 // 에러를 표시하려면 true 로 변경
 define('G5_DISPLAY_SQL_ERROR', false);
+mysqli_report(MYSQLI_REPORT_OFF);
 
 // escape string 처리 함수 지정
 // addslashes 로 변경 가능
@@ -233,8 +234,8 @@ define('G5_VISIT_BROWSCAP_USE', false);
 */
 define('G5_IP_DISPLAY', '\\1.♡.\\3.\\4');
 
-if ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on') || 
-    (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO']==='https')) {   //https 통신일때 daum 주소 js
+if ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on') ||
+    (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO']==='https')) { //https 통신일때 daum 주소 js
     define('G5_POSTCODE_JS', '<script src="https://spi.maps.daum.net/imap/map_js_init/postcode.v2.js"></script>');
 } else {  //http 통신일때 daum 주소 js
     define('G5_POSTCODE_JS', '<script src="http://dmaps.daum.net/map_js_init/postcode.v2.js"></script>');
