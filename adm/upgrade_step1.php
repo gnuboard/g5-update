@@ -5,13 +5,13 @@ include_once('./_common.php');
 $g5['title'] = '그누보드 step1';
 include_once ('./admin.head.php');
 
-function build_folder_structure(&$dirs, $path_array) {
+function buildFolderStructure(&$dirs, $path_array) {
     if (count($path_array) > 1) {
         if (!isset($dirs[$path_array[0]])) {
             $dirs[$path_array[0]] = array();
         }
 
-        build_folder_structure($dirs[$path_array[0]], array_splice($path_array, 1));
+        buildFolderStructure($dirs[$path_array[0]], array_splice($path_array, 1));
     } else {
         $dirs[] = $path_array[0];
     }
@@ -87,7 +87,7 @@ if($compare_list == false) die("파일 비교에 실패했습니다.");
     include_once ('./admin.tail.php');
 // foreach($list as $key => $var) {
 //     $path_array = explode('/', $var);
-//     build_folder_structure($parray, $path_array);
+//     buildFolderStructure($parray, $path_array);
 // }
 
 // foreach($parray as $key => $var) {

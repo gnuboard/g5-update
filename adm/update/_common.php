@@ -1,10 +1,10 @@
 <?php
 define('G5_IS_ADMIN', true);
-include_once ('../../common.php');
-include_once('./update.lib.php');
-include_once(G5_ADMIN_PATH.'/admin.lib.php');
+require_once '../../common.php';
+require_once './update.lib.php';
+require_once G5_ADMIN_PATH . '/admin.lib.php';
 
-if( !isset($g5['update'])) {
+if (!isset($g5['update'])) {
     $g5['update'] = new G5Update(G5_PATH);
-    $g5['update']->setNowVersion("v".G5_GNUBOARD_VER);
+    $g5['update']->setNowVersion("v" . G5_GNUBOARD_VER);
 }

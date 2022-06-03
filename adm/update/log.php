@@ -1,22 +1,25 @@
 <?php
 $sub_menu = '100600';
-include_once('./_common.php');
+require_once './_common.php';
 
 $g5['title'] = '그누보드 업데이트 로그 기록';
-include_once ('../admin.head.php');
+require_once '../admin.head.php';
 
-$log_dir = G5_DATA_PATH."/update/log";
+$log_dir = G5_DATA_PATH . "/update/log";
 
-if(!is_dir($log_dir)) die("로그 디렉토리가 존재하지 않습니다.");
-
-// echo $g5['update']->getLogTotalCount();
-// exit;
+if (!is_dir($log_dir)) {
+    die("로그 디렉토리가 존재하지 않습니다.");
+}
 
 $page = $_REQUEST['page'];
 
 $list = $g5['update']->getLogList();
 ?>
-<ul class="anchor"><li><a href="./">업데이트</a></li><li><a href="./rollback.php">복원</a></li><li><a href="./log.php">로그</a></li></ul>
+<ul class="anchor">
+    <li><a href="./">업데이트</a></li>
+    <li><a href="./rollback.php">복원</a></li>
+    <li><a href="./log.php">로그</a></li>
+</ul>
 <div>
     <table>
         <thead>
@@ -27,7 +30,7 @@ $list = $g5['update']->getLogList();
             </tr>
         </thead>
         <tbody>
-            <?php foreach($list as $key => $var) { ?>
+            <?php foreach ($list as $key => $var) { ?>
                 <tr>
                     <td><a href="./log_detail.php?filename=<?php echo $var['filename']; ?>"><?php echo $var['filename']; ?></a></td>
                     <td><a><?php echo $var['status']; ?></a></td>
@@ -39,11 +42,11 @@ $list = $g5['update']->getLogList();
     </table>
 
     <?php
-    $pagelist = get_paging(G5_IS_MOBILE ? $config['cf_mobile_pages'] : $config['cf_write_pages'], $page, $total_page, $_SERVER['SCRIPT_NAME'].'?'.$qstr.'&amp;page=');
+    $pagelist = get_paging(G5_IS_MOBILE ? $config['cf_mobile_pages'] : $config['cf_write_pages'], $page, $total_page, $_SERVER['SCRIPT_NAME'] . '?' . $qstr . '&amp;page=');
     echo $pagelist;
     ?>
 
 </div>
 
 <?php
-include_once('../admin.tail.php');
+require_once '../admin.tail.php';
