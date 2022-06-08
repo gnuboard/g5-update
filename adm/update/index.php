@@ -2,7 +2,7 @@
 $sub_menu = '100600';
 include_once('./_common.php');
 
-$g5['title'] = '그누보드 업데이트';
+$g5['title'] = '버전 업데이트';
 include_once('../admin.head.php');
 
 $current_version    = "v" . G5_GNUBOARD_VER; // api.github의 tag_name에는 버전번호 앞에 v가 붙어있음.
@@ -37,102 +37,110 @@ if (function_exists('ssh2_connect')) {
         color: #0969da;
     }
 
-    .content_title {
+    .version_title_box p {
         font-size: 16px;
         font-weight: bold;
     }
+    .version_content_box {
+        border: none !important;
+    }
+    .version_content_box p {
+        white-space:pre-line; line-height:2;
+    }
 </style>
 
-<?php if ($latest_version != false) { ?>
+<section>
+    <h2 class="h2_frm">버전 업데이트 설정</h2>
     <ul class="anchor">
         <li><a href="./">업데이트</a></li>
         <li><a href="./rollback.php">복원</a></li>
         <li><a href="./log.php">로그</a></li>
     </ul>
-    <div class="version_box">
-        <form method="POST" name="update_box" class="update_box" action="./step1.php" onsubmit="return update_submit(this);">
-            <input type="hidden" name="compare_check" value="0">
-            <?php if ($current_version != $latest_version) { ?>
-                <table style="width:400px; text-align:left;">
-                    <tbody>
-                        <tr>
-                            <th colspan="2">
-                                <p>현재 그누보드 버전 : <?php echo $current_version; ?></p>
-                            </th>
-                        </tr>
-                        <tr>
-                            <th colspan="2">
-                                <p>최신 그누보드 버전 : <?php echo $latest_version; ?></p>
-                            </th>
-                        </tr>
-                        <tr></tr>
-                        <tr>
-                            <th>목표버전</th>
-                            <td>
-                                <select class="target_version" name="target_version">
-                                    <?php foreach ($version_list as $key => $version) { ?>
-                                        <option value="<?php echo $version; ?>"><?php echo $version; ?></option>
-                                    <?php } ?>
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>포트</th>
-                            <td>
-                                <?php if (!empty($connect_array)) { ?>
-                                    <?php foreach ($connect_array as $key => $connect) { ?>
-                                        <label for="<?php echo $connect; ?>"><?php echo $connect; ?></label>
-                                        <input id="<?php echo $connect; ?>" type="radio" name="port" value="<?php echo $connect; ?>" <?php echo $key == 0 ? "checked" : "" ?>>
-                                    <?php } ?>
-                                <?php } else { ?>
-                                    <p>통신연결 lib가 존재하지 않습니다.</p>
+    <?php if ($latest_version != false) { ?>
+    <form method="POST" name="update_box" class="update_box" action="./step1.php" onsubmit="return update_submit(this);">
+        <div class="tbl_frm01 tbl_wrap">
+            <table>
+                <caption>버전 업데이트 설정</caption>
+                <colgroup>
+                    <col class="grid_4">
+                    <col class="grid_8">
+                    <col class="grid_18">
+                </colgroup>
+                <tbody>
+                    <tr>
+                        <th scope="row"><label for="current_version">현재 그누보드 버전</label></th>
+                        <td><h3><?php echo $current_version; ?></h3></td>
+                        <th class="version_title_box">
+                            <?php echo (!empty($content)) ? "<p>" . $latest_version . " 버전 수정</p>" : ""; ?>
+                        </th>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="latest_version">최신 그누보드 버전</label></th>
+                        <td><h3><?php echo $latest_version; ?></h3></td>
+                        <td rowspan="5" style="padding:0px;">
+                            <div style="width:100%; height:300px; overflow:auto;">
+                                <table>
+                                    <tr>
+                                        <td class="version_content_box">
+                                        <?php if (!empty($content)) {
+                                            echo "<p>";
+                                            foreach ($content_url as $key => $url) {
+                                                $content = str_replace('@' . $key . '@', '<a class="a_style" href="' . $url . '" target="_blank">변경코드확인</a>', $content);
+                                            }
+                                            echo htmlspecialchars_decode($content, ENT_HTML5);
+                                            echo "</p><br>";
+                                        } ?>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="target_version">업데이트 버전 선택</label></th>
+                        <td>
+                            <select class="target_version" name="target_version">
+                                <?php foreach ($version_list as $key => $version) { ?>
+                                    <option value="<?php echo $version; ?>"><?php echo $version; ?></option>
                                 <?php } ?>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>
-                                <label for="username">사용자 이름</label>
-                            </th>
-                            <td>
-                                <input id="username" name="username">
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>
-                                <label for="password">사용자 비밀번호</label>
-                            </th>
-                            <td>
-                                <input id="password" name="password">
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>
-                                <button type="button" class="btn btn_connect_check">ftp 연결확인</button>
-                            </th>
-                            <td class="update_btn_area">
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            <?php } ?>
-        </form>
-        <div class="version_content_box" style="margin-top:30px;">
-            <?php if (!empty($content)) {
-                echo "<p class=\"content_title\">" . $latest_version . " 버전 수정</p>";
-                echo "<p style=\"white-space:pre-line; line-height:2;\">";
-                foreach ($content_url as $key => $url) {
-                    $content = str_replace('@' . $key . '@', '<a class="a_style" href="' . $url . '" target="_blank">변경코드확인</a>', $content);
-                }
-                echo htmlspecialchars_decode($content, ENT_HTML5);
-                echo "</p><br>";
-            } ?>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="latest_version">포트</label></th>
+                        <td>
+                        <?php if (!empty($connect_array)) { ?>
+                            <?php foreach ($connect_array as $key => $connect) { ?>
+                                <label for="<?php echo $connect; ?>"><?php echo $connect; ?></label>
+                                <input id="<?php echo $connect; ?>" type="radio" name="port" value="<?php echo $connect; ?>" <?php echo $key == 0 ? "checked" : "" ?>>
+                            <?php } ?>
+                        <?php } else { ?>
+                            <p>통신연결 lib가 존재하지 않습니다.</p>
+                        <?php } ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="latest_version">사용자 이름</label></th>
+                        <td><input id="username" name="username" class="frm_input"></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="latest_version">사용자 비밀번호</label></th>
+                        <td>
+                            <input id="password" name="password" class="frm_input">
+                            <button type="button" class="btn_connect_check btn_frmline">FTP 연결확인</button>
+                            <span class="update_btn_area"></span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
-    </div>
-<?php } else { ?>
+    </form>
+    <?php } else { ?>
     <div class="version_box">
         <p>정보 조회에 실패했습니다. 1시간 후 다시 시도해주세요.</p>
     </div>
-<?php } ?>
+    <?php } ?>
+</section>
 
 <script>
     var inAjax = false;
@@ -159,8 +167,8 @@ if (function_exists('ssh2_connect')) {
                         alert(data.message);
                         return false;
                     } else {
-                        $(".version_content_box").empty();
-                        $(".version_content_box").append(data['item']);
+                        $(".version_title_box").html(data['title']);
+                        $(".version_content_box").html(data['item']);
                     }
                 },
                 error: function(request, status, error) {
@@ -175,7 +183,6 @@ if (function_exists('ssh2_connect')) {
         })
 
         $(".btn_connect_check").click(function() {
-            var version     = $(".target_version").val();
             var username    = $("#username").val();
             var password    = $("#password").val();
             var port        = $("input[name=\"port\"]:checked").val();
@@ -200,7 +207,7 @@ if (function_exists('ssh2_connect')) {
                 success: function(data) {
                     alert(data.message);
                     if (data.error == 0) {
-                        $(".update_btn_area").html("<button type=\"submit\" class=\"btn btn_update\">지금 업데이트</button>");
+                        $(".update_btn_area").html("<button type=\"submit\" class=\"btn btn_submit\" style=\"height:35px\">지금 업데이트</button>");
                     } else {
                         $(".update_btn_area").html("");
                     }

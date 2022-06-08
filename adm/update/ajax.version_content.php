@@ -1,6 +1,10 @@
 <?php
 require_once "./_common.php";
 
+$data = array();
+$title = "";
+$content = "";
+
 try {
     $version = isset($_POST['version']) ? $_POST['version'] : null;
     if ($version == null) {
@@ -19,19 +23,18 @@ try {
         $result = str_replace($var, "@" . $key . "@", $result);
     }
 
-    $txt = "<p class=\"content_title\">" . $version . " 버전 수정</p>";
-    $txt .= "<p style=\"white-space:pre-line; line-height:2;\">";
+    $title .= "<p>" . $version . " 버전 수정</p>";
+    $content .= "<p>";
     foreach ($content_url as $key => $var) {
         $result = str_replace('@' . $key . '@', '<a class="a_style" href="' . $var . '" target="_blank">변경코드확인</a>', $result);
     }
-    $txt .= htmlspecialchars_decode($result, ENT_HTML5);
-    $txt .= "</p><br>";
+    $content .= htmlspecialchars_decode($result, ENT_HTML5);
+    $content .= "</p><br>";
 
-    $data = array();
     $data['error']      = 0;
-    $data['item']       = $txt;
+    $data['title']      = $title;
+    $data['item']       = $content;
 } catch (Exception $e) {
-    $data = array();
     $data['code']    = $e->getCode();
     $data['message'] = $e->getMessage();
 }

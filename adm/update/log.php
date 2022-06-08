@@ -1,9 +1,9 @@
 <?php
 $sub_menu = '100600';
-require_once './_common.php';
+include_once './_common.php';
 
-$g5['title'] = '그누보드 업데이트 로그 기록';
-require_once '../admin.head.php';
+$g5['title'] = '버전 업데이트';
+include_once '../admin.head.php';
 
 $log_dir = G5_DATA_PATH . "/update/log";
 
@@ -15,22 +15,25 @@ $page = $_REQUEST['page'];
 
 $list = $g5['update']->getLogList();
 ?>
+<h2 class="h2_frm">업데이트 로그 목록</h2>
 <ul class="anchor">
     <li><a href="./">업데이트</a></li>
     <li><a href="./rollback.php">복원</a></li>
     <li><a href="./log.php">로그</a></li>
 </ul>
-<div>
+
+<div class="tbl_head01 tbl_wrap">
     <table>
+        <caption><?php echo $g5['title']; ?> 목록</caption>
         <thead>
-            <tr>
-                <th>파일명</th>
-                <th>상태</th>
-                <th>날짜</th>
-            </tr>
+        <tr>
+            <th scope="col">파일명</th>
+            <th scope="col">상태</th>
+            <th scope="col">날짜</th>
+        </tr>
         </thead>
         <tbody>
-            <?php foreach ($list as $key => $var) { ?>
+        <?php foreach ($list as $key => $var) { ?>
                 <tr>
                     <td><a href="./log_detail.php?filename=<?php echo $var['filename']; ?>"><?php echo $var['filename']; ?></a></td>
                     <td><a><?php echo $var['status']; ?></a></td>
@@ -38,15 +41,10 @@ $list = $g5['update']->getLogList();
                 </tr>
             <?php } ?>
         </tbody>
-
     </table>
-
     <?php
-    $pagelist = get_paging(G5_IS_MOBILE ? $config['cf_mobile_pages'] : $config['cf_write_pages'], $page, $total_page, $_SERVER['SCRIPT_NAME'] . '?' . $qstr . '&amp;page=');
-    echo $pagelist;
+        echo get_paging(G5_IS_MOBILE ? $config['cf_mobile_pages'] : $config['cf_write_pages'], $page, $total_page, $_SERVER['SCRIPT_NAME'] . '?' . $qstr . '&amp;page=');
     ?>
-
 </div>
-
 <?php
-require_once '../admin.tail.php';
+include_once '../admin.tail.php';
