@@ -53,7 +53,7 @@ if (!$select_db) {
     die(install_json_msg('MySQL DB 를 확인해 주십시오.'));
 }
 
-if(sql_query("DESCRIBE `{$table_prefix}config`", G5_DISPLAY_SQL_ERROR, $dblink)) {
+if(sql_query("SHOW TABLES LIKE '{$table_prefix}config'", G5_DISPLAY_SQL_ERROR, $dblink)) {
     die(install_json_msg('주의! 이미 테이블이 존재하므로, 기존 DB 자료가 망실됩니다. 계속 진행하겠습니까?', 'exists'));
 }
 
