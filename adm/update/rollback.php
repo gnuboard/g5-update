@@ -9,25 +9,13 @@ $current_version    = "v" . G5_GNUBOARD_VER; // api.github의 tag_name에는 버
 $backup_list        = $g5['update']->getBackupList(G5_DATA_PATH . "/update/backup");
 $latest_version     = $g5['update']->getLatestVersion();
 $content            = $g5['update']->getVersionModifyContent($latest_version);
-$connect_array      = array();
-
-if ($latest_version == false) {
-    $message = "정보조회에 실패했습니다.";
-}
+$connect_array      = $g5['update']->getProtocolList();
 
 preg_match_all('/(?:(?:https?|ftp):)?\/\/[a-z0-9+&@#\/%?=~_|!:,.;]*[a-z0-9+&@#\/%=~_|]/i', $content, $match);
 $content_url = $match[0];
 foreach ($content_url as $key => $var) {
     $content = str_replace($var, "@" . $key . "@", $content);
 }
-
-if (function_exists("ftp_connect")) {
-    $connect_array[] = 'ftp';
-}
-if (function_exists('ssh2_connect')) {
-    $connect_array[] = 'sftp';
-}
-
 ?>
 
 <style>
@@ -114,7 +102,11 @@ if (function_exists('ssh2_connect')) {
     </form>
     <?php } else { ?>
     <div class="version_box">
+        <?php if ($latest_version == false) { ?>
+        <p>정보조회에 실패했습니다.</p>
+        <?php } else { ?>
         <p>복원시점이 존재하지 않습니다. 업데이트를 진행하고 접근해주세요.</p>
+        <?php } ?>
     </div>
     <?php } ?>
 </section>

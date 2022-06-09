@@ -1,5 +1,5 @@
 <?php
-require_once "./_common.php";
+include_once "./_common.php";
 
 $data = array();
 $title = "";

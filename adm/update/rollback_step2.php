@@ -1,9 +1,9 @@
 <?php
 $sub_menu = '100600';
-require_once './_common.php';
+include_once './_common.php';
 
 $g5['title'] = '그누보드 step2';
-require_once '../admin.head.php';
+include_once '../admin.head.php';
 
 $rollback_file = isset($_POST['rollback_file']) ? $_POST['rollback_file'] : null;
 $username = isset($_POST['username']) ? $_POST['username'] : null;
@@ -89,5 +89,5 @@ $g5['update']->disconnect();
 </div>
 
 <?php
-require_once '../admin.tail.php';
+include_once '../admin.tail.php';
 ?>

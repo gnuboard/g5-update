@@ -9,19 +9,12 @@ $current_version    = "v" . G5_GNUBOARD_VER; // api.github의 tag_name에는 버
 $version_list       = $g5['update']->getVersionList();
 $latest_version     = $g5['update']->getLatestVersion();
 $content            = $g5['update']->getVersionModifyContent($latest_version);
-$connect_array      = array();
+$connect_array      = $g5['update']->getProtocolList();
 
 preg_match_all('/(?:(?:https?|ftp):)?\/\/[a-z0-9+&@#\/%?=~_|!:,.;]*[a-z0-9+&@#\/%=~_|]/i', $content, $match);
 $content_url = $match[0];
 foreach ($content_url as $key => $url) {
     $content = str_replace($url, "@" . $key . "@", $content);
-}
-
-if (function_exists("ftp_connect")) {
-    $connect_array[] = 'ftp';
-}
-if (function_exists('ssh2_connect')) {
-    $connect_array[] = 'sftp';
 }
 ?>
 

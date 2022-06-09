@@ -13,12 +13,8 @@ class G5Update
     public $rollback_version = null;
     public $now_version = null;
 
-    // token값 입력 필요
     // token값이 없는 경우, 1시간에 60번의 데이터조회가 가능함
-    // old
-    // private $token = "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";
-    // new (kjh)
-    private $token = "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";
+    private $token = "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";
 
     private $url = "https://api.github.com";
     private $version_list = array();
@@ -41,6 +37,15 @@ class G5Update
     {
     }
 
+    /**
+     * FTP/SSH 연결
+     * @breif 
+     * @param string $hostname      접속할 host
+     * @param string $port          접속 프로토콜 ("ftp" or "sftp")
+     * @param string $username      사용자 이름
+     * @param string $userPassword  사용자 비밀번호
+     * @return bool
+     */
     public function connect($hostname, $port, $username, $userPassword)
     {
         $this->port = $port;
@@ -78,8 +83,8 @@ class G5Update
                 }
 
                 $this->username = $username;
-
                 $this->connPath = @ssh2_sftp($this->conn);
+                
                 if (!$this->connPath) {
                     $this->conn = false;
                     $this->conPath = false;
@@ -94,10 +99,13 @@ class G5Update
         return false;
     }
 
+    /**
+     * FTP/SSH 연결해제
+     * @breif 
+     * @return bool
+     */
     public function disconnect()
     {
-        $this->port = $port;
-
         if ($this->port == 'ftp') {
             ftp_close($this->conn);
             $this->connPath = null;
@@ -115,7 +123,14 @@ class G5Update
     {
         return $this->conn;
     }
-
+    /**
+     * 버전업데이트 경로 생성 및 권한처리
+     * @brief
+     * @todo
+     * 1. $update_dir같은 변수 선언을 전역으로 설정해야 하지 않나...?
+     * 2. 접속환경에 따라 경로가 달라진다고 했었는데 확인 후 공통으로 처리할 수 있도록 처리해아함.
+     * @return bool
+     */
     public function makeUpdateDir()
     {
         try {
@@ -208,7 +223,7 @@ class G5Update
                 throw new Exception("ftp/sftp가 아닌 프로토콜로 업데이트가 불가능합니다.");
             }
 
-            $result = exec('rm -rf ' . $update_dir . '/version/*');
+            exec('rm -rf ' . $update_dir . '/version/*');
 
             return true;
         } catch (Exception $e) {
@@ -217,6 +232,10 @@ class G5Update
         }
     }
 
+    /**
+     * 가용용량 체크 (20MB의 여유공간)
+     * @return bool
+     */
     public function checkInstallAvailable()
     {
         $dfs = disk_free_space("/");
@@ -230,31 +249,35 @@ class G5Update
 
     /**
      * 전체 저장공간 출력
+     * @return string 용량 + 데이터단위
      */
     public function getTotalStorageSize()
     {
-        return $this->getFormatFileSize(disk_total_space("/"), 2);
+        return $this->getFormatFileSize((int)disk_total_space("/"), 2);
     }
 
     /**
-     * 저장공간의 여유 공간 출력
+     * 전체 저장공간의 여유 공간 출력
+     * @return string 용량 + 데이터단위
      */
     public function getUseableStorageSize()
     {
-        return $this->getFormatFileSize(disk_free_space("/"), 2);
+        return $this->getFormatFileSize((int)disk_free_space("/"), 2);
     }
 
     /**
-     * 저장공간의 사용 중인 공간 출력
+     * 전체 저장공간 중 사용 중인 공간 출력
+     * @return string 용량 + 데이터단위
      */
     public function getUseStorageSize()
     {
         $useSpace = disk_total_space("/") - disk_free_space("/");
 
-        return $this->getFormatFileSize($useSpace, 2);
+        return $this->getFormatFileSize((int)$useSpace, 2);
     }
     /**
-     * 저장공간의 사용 중인 공간을 비율로 출력
+     * 전체 디스크의 사용률 조회
+     * @return float 사용률(소수점 2자리)
      */
     public function getUseStoragePercenty()
     {
@@ -267,10 +290,13 @@ class G5Update
     }
 
     /**
-     * 데이터 단위 계산
-     * - 입력되는 바이트에 따라 자동으로 적절한 단위를 표시한다.
+     * 데이터 단위 추가
+     * @brief 입력되는 바이트에 따라 적절한 단위를 자동으로 추가한다.
+     * @param string    $bytes        데이터 크기 (byte)       
+     * @param int       $decimals     표시할 소수점 자릿수
+     * @return string   용량 + 데이터단위
      */
-    private function getFormatFileSize ($bytes, $decimals = 2) {  
+    private function getFormatFileSize (int $bytes, int $decimals = 2) {  
         $size = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');  
         $factor = floor((strlen($bytes) - 1) / 3);
 
@@ -304,10 +330,16 @@ class G5Update
         return $this->token;
     }
 
+    /**
+     * 버전목록 조회
+     * @brief github > releases정보 중에 tag_name만 배열로 만들어 리턴한다.
+     * @return array|bool 버전 목록
+     */
     public function getVersionList()
     {
         if (empty($this->version_list)) {
             $result = $this->getApiCurlResult('version');
+            
             if ($result == false) {
                 return false;
             }
@@ -319,11 +351,21 @@ class G5Update
 
                 $this->version_list[] = $var->tag_name;
             }
+            // latest_version 변수선언 추가 (중복 요청 방지)
+            if (isset($this->version_list[0])) {
+                $this->latest_version = $this->version_list[0];
+            }
         }
 
         return $this->version_list;
     }
 
+    /**
+     * 버전에서 수정된 내용 조회
+     * @brief 지정된 태그로 게시된 release를 가져온다.
+     * @param string $tag github 태그
+     * @return mixed release
+     */
     public function getVersionModifyContent($tag = null)
     {
         if ($tag == null) {
@@ -535,6 +577,14 @@ class G5Update
         }
     }
 
+    /**
+     * 롤백에 쓰인 파일 삭제
+     * @brief 백업 원본인 zip파일은 제외하고 삭제함
+     * @todo
+     * 1. 백업에 쓰인 파일이 제대로 삭제되지 않는 것 같음..
+     * 2. preg_replace()를 사용하지 않아도 되지않나..? 어차피 zip파일은 삭제 안하니까... function 내부에 고정으로 ..
+     * @return void
+     */
     public function deleteBackupDir($backupDir)
     {
         $dh = dir($backupDir);
@@ -924,7 +974,12 @@ class G5Update
 
         return $check;
     }
-
+    
+    /**
+     * 최신버전 조회
+     * @brief 버전목록 중 첫번째 인덱스 값을 조회한다.
+     * @return string|bool 최신버전
+     */
     public function getLatestVersion()
     {
         if ($this->latest_version == null) {
@@ -933,7 +988,6 @@ class G5Update
             if ($result == false) {
                 return false;
             }
-
             $this->latest_version = $result[0];
         }
 
@@ -998,6 +1052,9 @@ class G5Update
     public function changeDepthListPrinting($list, $depth = 0)
     {
         if (!is_array($list)) {
+            if (strpos($list, "변경") !== false) {
+                $list = "<font style=\"color:red; font-weight:bold;\">" . $list . "</font>";
+            }
             return $list . "<br>";
         }
         $line = '';
@@ -1062,7 +1119,7 @@ class G5Update
         if ($this->token != null) {
             $auth = 'Authorization: token ' . $this->token;
         }
-        $url = "https://api.github.com";
+        $url = $this->url;
         switch ($option) {
             case "version":
                 $url .= "/repos/gnuboard/gnuboard5/releases";
@@ -1134,5 +1191,21 @@ class G5Update
     {
         echo $msg;
         exit;
+    }
+
+    /**
+     * 프로토콜 목록 조회
+     * @return array 프로토콜 목록
+     */
+    public function getProtocolList()
+    {   
+        $protocol_list = array();
+        if (function_exists("ftp_connect")) {
+            $protocol_list[] = 'ftp';
+        }
+        if (function_exists('ssh2_connect')) {
+            $protocol_list[] = 'sftp';
+        }
+        return $protocol_list;
     }
 }

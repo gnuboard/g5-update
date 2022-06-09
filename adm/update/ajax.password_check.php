@@ -1,5 +1,5 @@
 <?php
-require_once "./_common.php";
+include_once "./_common.php";
 
 try {
     $admin_password = isset($_POST['admin_password']) ? $_POST['admin_password'] : '';
