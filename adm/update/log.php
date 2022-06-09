@@ -12,7 +12,6 @@ if (!is_dir($log_dir)) {
 }
 
 $page = $_REQUEST['page'];
-
 $list = $g5['update']->getLogList();
 ?>
 <h2 class="h2_frm">업데이트 로그 목록</h2>
