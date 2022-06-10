@@ -13,8 +13,13 @@ class G5Update
     public $rollback_version = null;
     public $now_version = null;
 
+    static $dir_update     = G5_DATA_PATH . "/update";
+    static $dir_version    = G5_DATA_PATH . "/update/version";
+    static $dir_log        = G5_DATA_PATH . "/update/log";
+    static $dir_backup     = G5_DATA_PATH . "/update/backup";
+
     // token값이 없는 경우, 1시간에 60번의 데이터조회가 가능함
-    private $token = "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";
+    private $token = "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";
 
     private $url = "https://api.github.com";
     private $version_list = array();
@@ -41,7 +46,7 @@ class G5Update
      * FTP/SSH 연결
      * @breif 
      * @param string $hostname      접속할 host
-     * @param string $port          접속 프로토콜 ("ftp" or "sftp")
+     * @param string $port          접속 프로토콜 ("ftp", "sftp")
      * @param string $username      사용자 이름
      * @param string $userPassword  사용자 비밀번호
      * @return bool
@@ -127,8 +132,7 @@ class G5Update
      * 버전업데이트 경로 생성 및 권한처리
      * @brief
      * @todo
-     * 1. $update_dir같은 변수 선언을 전역으로 설정해야 하지 않나...?
-     * 2. 접속환경에 따라 경로가 달라진다고 했었는데 확인 후 공통으로 처리할 수 있도록 처리해아함.
+     * 1. 접속환경에 따라 경로가 달라진다고 했었는데 확인 필요함.
      * @return bool
      */
     public function makeUpdateDir()
@@ -141,21 +145,19 @@ class G5Update
                 throw new Exception("연결된 프로토콜을 찾을 수 없습니다.");
             }
 
-            $update_dir = G5_DATA_PATH . '/update';
-
             if ($this->port == 'ftp') {
-                $update_ftp_dir = preg_replace("/(.*?)(?=\\" . ftp_pwd($this->conn) . ")/", '', $update_dir);
+                $update_ftp_dir = preg_replace("/(.*?)(?=\\" . ftp_pwd($this->conn) . ")/", '', self::$dir_update);
 
-                if (!is_dir($update_dir)) {
+                if (!is_dir(self::$dir_update)) {
                     if (!ftp_mkdir($this->conn, $update_ftp_dir)) {
                         throw new Exception("디렉토리를 생성하는데 실패했습니다.");
                     }
-                    if (!ftp_chmod($this->conn, 0707, $update_dir)) {
+                    if (!ftp_chmod($this->conn, 0707, $update_ftp_dir)) {
                         throw new Exception("디렉토리의 권한을 변경하는데 실패했습니다.");
                     }
                 }
 
-                if (!is_dir($update_dir . '/version')) {
+                if (!is_dir(self::$dir_version)) {
                     if (!ftp_mkdir($this->conn, $update_ftp_dir . '/version')) {
                         throw new Exception("디렉토리를 생성하는데 실패했습니다.");
                     }
@@ -164,7 +166,7 @@ class G5Update
                     }
                 }
 
-                if (!is_dir($update_dir . '/log')) {
+                if (!is_dir(self::$dir_log)) {
                     if (!ftp_mkdir($this->conn, $update_ftp_dir . '/log')) {
                         throw new Exception("디렉토리를 생성하는데 실패했습니다.");
                     }
@@ -173,49 +175,49 @@ class G5Update
                     }
                 }
 
-                if (!is_dir($update_dir . '/backup')) {
+                if (!is_dir(self::$dir_backup)) {
                     if (!ftp_mkdir($this->conn, $update_ftp_dir . '/backup')) {
                         throw new Exception("디렉토리를 생성하는데 실패했습니다.");
                     }
-                    if (!ftp_chmod($this->conn, 0707, $update_ftp_dir)) {
+                    if (!ftp_chmod($this->conn, 0707, $update_ftp_dir . '/backup')) {
                         throw new Exception("디렉토리의 권한을 변경하는데 실패했습니다.");
                     }
                 }
-
                 $list = ftp_nlist($this->conn, $update_ftp_dir);
+
             } elseif ($this->port == 'sftp') {
-                if (!is_dir($update_dir)) {
-                    if (!ssh2_sftp_mkdir($this->connPath, $update_dir, 0707)) {
+                if (!is_dir(self::$dir_update)) {
+                    if (!ssh2_sftp_mkdir($this->connPath, self::$dir_update, 0707)) {
                         throw new Exception("디렉토리를 생성하는데 실패했습니다.");
                     }
-                    if (!ssh2_sftp_chmod($this->connPath, $update_dir, 0707)) {
+                    if (!ssh2_sftp_chmod($this->connPath, self::$dir_update, 0707)) {
                         throw new Exception("디렉토리의 권한을 변경하는데 실패했습니다.");
                     }
                 }
 
-                if (!is_dir($update_dir . '/version')) {
-                    if (!ssh2_sftp_mkdir($this->connPath, $update_dir . '/version', 0707)) {
+                if (!is_dir(self::$dir_version)) {
+                    if (!ssh2_sftp_mkdir($this->connPath, self::$dir_version, 0707)) {
                         throw new Exception("디렉토리를 생성하는데 실패했습니다.");
                     }
-                    if (!ssh2_sftp_chmod($this->connPath, $update_dir . '/version', 0707)) {
+                    if (!ssh2_sftp_chmod($this->connPath, self::$dir_version, 0707)) {
                         throw new Exception("디렉토리의 권한을 변경하는데 실패했습니다.");
                     }
                 }
 
-                if (!is_dir($update_dir . '/log')) {
-                    if (!ssh2_sftp_mkdir($this->connPath, $update_dir . '/log', 0755)) {
+                if (!is_dir(self::$dir_log)) {
+                    if (!ssh2_sftp_mkdir($this->connPath, self::$dir_log, 0755)) {
                         throw new Exception("디렉토리를 생성하는데 실패했습니다.");
                     }
-                    if (!ssh2_sftp_chmod($this->connPath, $update_dir . '/log', 0755)) {
+                    if (!ssh2_sftp_chmod($this->connPath, self::$dir_log, 0755)) {
                         throw new Exception("디렉토리의 권한을 변경하는데 실패했습니다.");
                     }
                 }
 
-                if (!is_dir($update_dir . '/backup')) {
-                    if (!ssh2_sftp_mkdir($this->connPath, $update_dir . '/backup', 0707)) {
+                if (!is_dir(self::$dir_backup)) {
+                    if (!ssh2_sftp_mkdir($this->connPath, self::$dir_backup, 0707)) {
                         throw new Exception("디렉토리를 생성하는데 실패했습니다.");
                     }
-                    if (!ssh2_sftp_chmod($this->connPath, $update_dir . '/backup', 0707)) {
+                    if (!ssh2_sftp_chmod($this->connPath, self::$dir_backup . '/backup', 0707)) {
                         throw new Exception("디렉토리의 권한을 변경하는데 실패했습니다.");
                     }
                 }
@@ -223,7 +225,7 @@ class G5Update
                 throw new Exception("ftp/sftp가 아닌 프로토콜로 업데이트가 불가능합니다.");
             }
 
-            exec('rm -rf ' . $update_dir . '/version/*');
+            exec('rm -rf ' . self::$dir_version . '/*');
 
             return true;
         } catch (Exception $e) {
@@ -408,13 +410,11 @@ class G5Update
     {
         try {
             if (empty($this->log_list)) {
-                $log_list = G5_DATA_PATH . '/update/log';
-                if (is_dir($log_list)) {
-                    $dirs = scandir($log_list);
+                if (is_dir(self::$dir_log)) {
+                    $dirs = scandir(self::$dir_log);
                     $result = array_values(array_diff($dirs, array('.', '..')));
                     $count = count($result);
                 }
-
                 return $count;
             } else {
                 throw new Exception("페이지 전체정보를 확인할 수 없습니다.");
@@ -430,9 +430,8 @@ class G5Update
     public function getLogList($page = null)
     {
         if (empty($this->log_list)) {
-            $log_list = G5_DATA_PATH . '/update/log';
-            if (is_dir($log_list)) {
-                if ($dh = @opendir($log_list)) {
+            if (is_dir(self::$dir_log)) {
+                if ($dh = @opendir(self::$dir_log)) {
                     while (($dl = readdir($dh)) !== false) {
                         if ($dl == '.' || $dl == '..') {
                             continue;
@@ -489,7 +488,7 @@ class G5Update
     public function getLogDetail($file_name = null)
     {
         try {
-            $file = G5_DATA_PATH . '/update/log/' . $file_name;
+            $file = self::$dir_log . '/' . $file_name;
 
             if ($file_name == null) {
                 throw new Exception("");
@@ -582,7 +581,6 @@ class G5Update
      * @brief 백업 원본인 zip파일은 제외하고 삭제함
      * @todo
      * 1. 백업에 쓰인 파일이 제대로 삭제되지 않는 것 같음..
-     * 2. preg_replace()를 사용하지 않아도 되지않나..? 어차피 zip파일은 삭제 안하니까... function 내부에 고정으로 ..
      * @return void
      */
     public function deleteBackupDir($backupDir)
@@ -740,10 +738,8 @@ class G5Update
                 throw new Exception("올바르지 않은 명령입니다.");
             }
 
-            $log_dir = G5_DATA_PATH . '/update/log';
-
             if ($this->port == 'ftp') {
-                $ftp_log_dir = preg_replace("/(.*?)(?=\\" . ftp_pwd($this->conn) . ")/", '', $log_dir);
+                $ftp_log_dir = preg_replace("/(.*?)(?=\\" . ftp_pwd($this->conn) . ")/", '', self::$dir_log);
 
                 if (ftp_nlist($this->conn, dirname($ftp_log_dir)) == false) {
                     $result = ftp_mkdir($this->conn, $ftp_log_dir);
@@ -755,7 +751,7 @@ class G5Update
                 $datetime = date('Y-m-d_his', time());
                 $rand = rand(0000, 9999);
 
-                $fp = fopen($log_dir . "/" . $datetime . '_' . $status . '_' . $rand . '.log', 'w+');
+                $fp = fopen(self::$dir_log . "/" . $datetime . '_' . $status . '_' . $rand . '.log', 'w+');
                 if ($fp == false) {
                     throw new Exception('파일생성에 실패했습니다.');
                 }
@@ -797,8 +793,8 @@ class G5Update
                     throw new Exception('파일쓰기에 실패했습니다.');
                 }
             } elseif ($this->port == 'sftp') {
-                if (!is_dir($log_dir)) {
-                    $result = mkdir("ssh2.sftp://" . intval($this->connPath) . $log_dir);
+                if (!is_dir(self::$dir_log)) {
+                    $result = mkdir("ssh2.sftp://" . intval($this->connPath) . self::$dir_log);
                     if ($result == false) {
                         throw new Exception("디렉토리 생성에 실패했습니다.");
                     }
@@ -807,7 +803,7 @@ class G5Update
                 $datetime = date('Y-m-d_his', time());
                 $rand = rand(0000, 9999);
 
-                $fp = fopen("ssh2.sftp://" . intval($this->connPath) . $log_dir . "/" . $datetime . '_' . $status . '_' . $rand . '.log', 'w+');
+                $fp = fopen("ssh2.sftp://" . intval($this->connPath) . self::$dir_log . "/" . $datetime . '_' . $status . '_' . $rand . '.log', 'w+');
                 if ($fp == false) {
                     throw new Exception('파일생성에 실패했습니다.');
                 }
@@ -822,7 +818,7 @@ class G5Update
                         $fail_txt = "실패한 롤백 내역\n";
                         break;
                     default:
-                        unlink("ssh2.sftp://" . intval($this->connPath) . $log_dir . "/" . $datetime . '_' . $status . '_' . $rand . '.log');
+                        unlink("ssh2.sftp://" . intval($this->connPath) . self::$dir_log . "/" . $datetime . '_' . $status . '_' . $rand . '.log');
                         throw new Exception("올바르지 않은 명령입니다.");
                 }
 
@@ -868,7 +864,7 @@ class G5Update
 
         umask(0002);
 
-        $save = G5_DATA_PATH . "/update/version/gnuboard.zip";
+        $save = self::$dir_version . "/gnuboard.zip";
 
         $zip = fopen($save, 'w+');
         if ($zip == false) {
@@ -885,9 +881,9 @@ class G5Update
             return false;
         }
 
-        exec('unzip ' . $save . ' -d ' . G5_DATA_PATH . '/update/version/' . $version);
-        exec('mv ' . G5_DATA_PATH . '/update/version/' . $version . '/gnuboard-*/* ' . G5_DATA_PATH . '/update/version/' . $version);
-        exec('rm -rf ' . G5_DATA_PATH . '/update/version/' . $version . '/gnuboard-*/');
+        exec('unzip ' . $save . ' -d ' . self::$dir_version . '/' . $version);
+        exec('mv ' . self::$dir_version . '/' . $version . '/gnuboard-*/* ' . self::$dir_version . '/' . $version);
+        exec('rm -rf ' . self::$dir_version . '/' . $version . '/gnuboard-*/');
         exec('rm -rf ' . $save);
 
         umask(0022);
@@ -914,7 +910,7 @@ class G5Update
 
         foreach ($list as $key => $var) {
             $now_file_path = G5_PATH . '/' . $var;
-            $release_file_path = G5_DATA_PATH . '/update/version/' . $this->now_version . '/' . $var;
+            $release_file_path = self::$dir_version . '/' . $this->now_version . '/' . $var;
 
             if (!file_exists($now_file_path)) {
                 continue;
