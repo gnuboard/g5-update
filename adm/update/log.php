@@ -11,8 +11,9 @@ if (!is_dir($log_dir)) {
     die("로그 디렉토리가 존재하지 않습니다.");
 }
 
-$page = $_REQUEST['page'];
-$list = $g5['update']->getLogList();
+$page = isset($_REQUEST['page']) ? $_REQUEST['page'] : 1;
+$list = $g5['update']->getLogList($page);
+$total_page = $g5['update']->getLogListSize();
 ?>
 <h2 class="h2_frm">업데이트 로그 목록</h2>
 <ul class="anchor">

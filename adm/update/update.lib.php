@@ -35,7 +35,6 @@ class G5Update
     private $port;
     private $connPath;
 
-    private $log_page_size = 10;
     private $log_page_list = 10;
 
     public function __construct()
@@ -170,7 +169,7 @@ class G5Update
                     if (!ftp_mkdir($this->conn, $update_ftp_dir . '/log')) {
                         throw new Exception("디렉토리를 생성하는데 실패했습니다.");
                     }
-                    if (!ftp_chmod($this->conn, 0707, $update_ftp_dir . '/log')) {
+                    if (!ftp_chmod($this->conn, 0755, $update_ftp_dir . '/log')) {
                         throw new Exception("디렉토리의 권한을 변경하는데 실패했습니다.");
                     }
                 }
@@ -406,10 +405,68 @@ class G5Update
         return $this->backup_list;
     }
 
+    /**
+     * 로그파일 목록 조회
+     * @param int $page 현재 페이지
+     * @return array 로그파일 목록
+     */
+    public function getLogList($page = 1)
+    {
+        if (empty($this->log_list)) {
+            if (is_dir(self::$dir_log)) {
+                if ($dir_resource = @opendir(self::$dir_log)) {
+                    while (($file_name = readdir($dir_resource)) !== false) {
+                        if ($file_name == '.' || $file_name == '..') {
+                            continue;
+                        }
+                        if (preg_match('/.log/i', $file_name)) {
+                            list($date, $time, $status, $rand) = explode("_", $file_name);
+
+                            switch ($status) {
+                                case 'update':
+                                    $status_txt = '업데이트';
+                                    break;
+                                case 'rollback':
+                                    $status_txt = '롤백';
+                                    break;
+                                default:
+                                    throw new Exception("상태값이 올바르지 않은 파일입니다.");
+                            }
+
+                            $this->log_list[] = array(
+                                'filename' => $file_name,
+                                'datetime' => date('Y-m-d h:i:s', strtotime($date . implode(':', str_split($time, 2)))),
+                                'status' => $status_txt
+                            );
+                        }
+                    }
+                    closedir($dir_resource);
+
+                    array_multisort(array_map('strtotime', array_column($this->log_list, 'datetime')), SORT_DESC, $this->log_list);
+                    
+                    // 페이징 처리
+                    $start = ($page - 1) * $this->log_page_list;
+                    $end = $start + $this->log_page_list;
+                    $log_list = array_slice($this->log_list, $start, $end, true);
+
+                    return $log_list;
+                }
+            }
+
+            return false;
+        } else {
+            return $this->log_list;
+        }
+    }
+
+    /**
+     * 전체 로그파일 갯수 조회
+     * @return int|bool
+     */
     public function getLogTotalCount()
     {
         try {
-            if (empty($this->log_list)) {
+            if (isset($this->log_list)) {
                 if (is_dir(self::$dir_log)) {
                     $dirs = scandir(self::$dir_log);
                     $result = array_values(array_diff($dirs, array('.', '..')));
@@ -425,59 +482,12 @@ class G5Update
         }
     }
 
-
-
-    public function getLogList($page = null)
-    {
-        if (empty($this->log_list)) {
-            if (is_dir(self::$dir_log)) {
-                if ($dh = @opendir(self::$dir_log)) {
-                    while (($dl = readdir($dh)) !== false) {
-                        if ($dl == '.' || $dl == '..') {
-                            continue;
-                        }
-                        if (preg_match('/.log/i', $dl)) {
-                            list($date, $time, $status, $rand) = explode("_", $dl);
-                            $file_name = $dl;
-
-                            switch ($status) {
-                                case 'update':
-                                    $status_txt = '업데이트';
-                                    break;
-                                case 'rollback':
-                                    $status_txt = '롤백';
-                                    break;
-                                default:
-                                    throw new Exception("상태값이 올바르지 않은 파일입니다.");
-                            }
-
-                            $this->log_list[] = array(
-                                'filename' => $dl,
-                                'datetime' => date('Y-m-d h:i:s', strtotime($date . implode(':', str_split($time, 2)))),
-                                'status' => $status_txt
-                            );
-                        }
-                    }
-                    closedir($dh);
-
-                    array_multisort(array_map('strtotime', array_column($this->log_list, 'datetime')), SORT_DESC, $this->log_list);
-
-                    return $this->log_list;
-                }
-            }
-
-            return false;
-        } else {
-            return $this->log_list;
-        }
-    }
-
+    /**
+     * 로그파일 목록 페이징 수 계산
+     * @return float
+     */
     public function getLogListSize()
     {
-        if ($this->log_page_list == null) {
-            return false;
-        }
-
         $count = $this->getLogTotalCount();
 
         $max_list_size = ceil($count / $this->log_page_list);
@@ -485,6 +495,11 @@ class G5Update
         return $max_list_size;
     }
 
+    /**
+     * 로그파일 상세정보 조회
+     * @param string    $file_name  로그파일 이름
+     * @return array|bool 로그파일 상세정보
+     */
     public function getLogDetail($file_name = null)
     {
         try {
