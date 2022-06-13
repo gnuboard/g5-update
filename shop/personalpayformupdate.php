@@ -234,6 +234,9 @@ set_session('ss_personalpay_hash', '');
 $uid = md5($pp['pp_id'].$pp['pp_time'].$_SERVER['REMOTE_ADDR']);
 set_session('ss_personalpay_uid', $uid);
 
+// 이니시스 테스트 결제 자동취소
+include_once(G5_SHOP_PATH.'/inicis/testpay_cancel.php');
+
 goto_url(G5_SHOP_URL.'/personalpayresult.php?pp_id='.$pp['pp_id'].'&amp;uid='.$uid);
 ?>
 

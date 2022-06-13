@@ -1,6 +1,8 @@
 <?php
 if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 
+check_demo();
+
 if(!$is_admin)
     alert('접근 권한이 없습니다.', G5_URL);
 

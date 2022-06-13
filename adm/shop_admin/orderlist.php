@@ -316,6 +316,10 @@ if( function_exists('pg_setting_check') ){
         if ($row['od_receipt_point'] > 0)
             $s_receipt_way .= $s_br."포인트";
 
+        // 정보 *로 변환
+        if($row['mb_id'] != 'youngcart5')
+            $row = conv_field_info($row, 'mb_id,od_name,od_email,od_b_name,od_tel');
+
         $mb_nick = get_sideview($row['mb_id'], get_text($row['od_name']), $row['od_email'], '');
 
         $od_cnt = 0;

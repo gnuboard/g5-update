@@ -9,6 +9,10 @@ $g5['title'] = "SMS 기본설정";
 if (!$config['cf_icode_server_ip'])   $config['cf_icode_server_ip'] = '211.172.232.124';
 if (!$config['cf_icode_server_port']) $config['cf_icode_server_port'] = '7295';
 
+if ($is_admin != 'super') {
+    $config = conv_field_info($config, 'cf_icode_id,cf_icode_pw');
+}
+
 // 아이코드 토큰키 추가
 if( ! isset($config['cf_icode_token_key']) ){
     $sql = "ALTER TABLE `{$g5['config_table']}` 
@@ -17,8 +21,10 @@ if( ! isset($config['cf_icode_token_key']) ){
     $config['cf_icode_token_key'] = '';
 }
 
+
 // 배열코드 초기화
 $userinfo = array('payment'=>'', 'coin'=>'');
+
 
 if ($config['cf_sms_use'] && $config['cf_icode_id'] && $config['cf_icode_pw'])
 {

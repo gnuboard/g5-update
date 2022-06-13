@@ -114,6 +114,9 @@ $colspan = 10;
         $ct = sql_fetch($sql);
 
         $bg = 'bg'.($i%2);
+
+        // 정보 *로 변환
+        $data = conv_field_info($data, 'od_name,od_tel,od_b_name');
     ?>
 
     <tr class="<?php echo $bg; ?>">

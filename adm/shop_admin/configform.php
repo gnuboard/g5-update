@@ -5,6 +5,11 @@ include_once(G5_EDITOR_LIB);
 
 auth_check_menu($auth, $sub_menu, "r");
 
+if ($is_admin != 'super') {
+    $config = conv_field_info($config, 'cf_icode_id,cf_icode_pw,cf_lg_mid,cf_lg_mert_key');
+    $default = conv_field_info($default, 'de_kcp_mid,de_kcp_site_key,de_inicis_mid,de_inicis_admin_key,de_inicis_sign_key,de_kakaopay_mid,de_kakaopay_key,de_kakaopay_enckey,de_kakaopay_hashkey,de_kakaopay_cancelpwd,de_naverpay_mid,de_naverpay_cert_key,de_naverpay_button_key');
+}
+
 if (!$config['cf_icode_server_ip'])   $config['cf_icode_server_ip'] = '211.172.232.124';
 if (!$config['cf_icode_server_port']) $config['cf_icode_server_port'] = '7295';
 

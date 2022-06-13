@@ -2,7 +2,7 @@
 $sub_menu = '500300';
 include_once('./_common.php');
 
-if ($w == "u" || $w == "d")
+//if ($w == "u" || $w == "d")
     check_demo();
 
 if ($w == 'd')
