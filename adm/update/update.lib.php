@@ -19,7 +19,7 @@ class G5Update
     static $dir_backup     = G5_DATA_PATH . "/update/backup";
 
     // token값이 없는 경우, 1시간에 60번의 데이터조회가 가능함
-    private $token = "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";
+    private $token = "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 ";
 
     private $url = "https://api.github.com";
     private $version_list = array();
@@ -43,7 +43,6 @@ class G5Update
 
     /**
      * FTP/SSH 연결
-     * @breif 
      * @param string $hostname      접속할 host
      * @param string $port          접속 프로토콜 ("ftp", "sftp")
      * @param string $username      사용자 이름
@@ -105,7 +104,6 @@ class G5Update
 
     /**
      * FTP/SSH 연결해제
-     * @breif 
      * @return bool
      */
     public function disconnect()
@@ -129,7 +127,6 @@ class G5Update
     }
     /**
      * 버전업데이트 경로 생성 및 권한처리
-     * @brief
      * @todo
      * 1. 접속환경에 따라 경로가 달라진다고 했었는데 확인 필요함.
      * @return bool
@@ -302,33 +299,6 @@ class G5Update
         $factor = floor((strlen($bytes) - 1) / 3);
 
         return sprintf("%.{$decimals}f", $bytes / pow(1024, $factor)) . $size[$factor];  
-    }
-
-    public function setNowVersion($now_version = null)
-    {
-        $this->now_version = $now_version;
-    }
-
-    public function setTargetVersion($target_version = null)
-    {
-        $this->target_version = $target_version;
-    }
-
-    public function setRollbackVersion($backup_dir)
-    {
-        $backup_version_file = file_get_contents($backup_dir . '/version.php');
-        preg_match("/(?<=define\('G5_GNUBOARD_VER', ')(.*?)(?='\);)/", $backup_version_file, $rollback_version); // 백업버전 체크
-        $this->rollback_version = "v" . $rollback_version[0];
-    }
-
-    public function getRollbackVersion()
-    {
-        return $this->rollback_version;
-    }
-
-    public function getToken()
-    {
-        return $this->token;
     }
 
     /**
@@ -594,24 +564,26 @@ class G5Update
     /**
      * 롤백에 쓰인 파일 삭제
      * @brief 백업 원본인 zip파일은 제외하고 삭제함
-     * @todo
-     * 1. 백업에 쓰인 파일이 제대로 삭제되지 않는 것 같음..
+     * 
+     * @param string $backup_dir 
      * @return void
+     * @todo
+     * 1. 롤백 step1 단계에서 생성된 파일을 삭제
      */
-    public function deleteBackupDir($backupDir)
+    public function deleteBackupDir($backup_dir)
     {
-        $dh = dir($backupDir);
+        $dh = dir($backup_dir);
         while (false !== ($dl = $dh->read())) {
             if (($dl != '.') && ($dl != '..')) {
-                if (is_dir($backupDir . '/' . $dl)) {
-                    $this->deleteBackupDir($backupDir . '/' . $dl);
+                if (is_dir($backup_dir . '/' . $dl)) {
+                    $this->deleteBackupDir($backup_dir . '/' . $dl);
                 } else {
-                    @unlink($backupDir . '/' . $dl);
+                    @unlink($backup_dir . '/' . $dl);
                 }
             }
         }
         $dh->close();
-        @rmdir($backupDir);
+        @rmdir($backup_dir);
     }
 
     public function deleteOriginFile($originPath)
@@ -668,11 +640,15 @@ class G5Update
             return $e->getMessage();
         }
     }
-
-    public function checkDirIsEmpty($originDir)
+    /**
+     * dir이 비었는지 체크
+     * @param string    $origin_dir   경로
+     * @return bool
+     */
+    public function checkDirIsEmpty($origin_dir)
     {
-        // dir이 비었는지 체크
-        if ($dh = @opendir($originDir)) {
+        // 
+        if ($dh = @opendir($origin_dir)) {
             while (($dl = @readdir($dh)) !== false) {
                 if ($dl != "." && $dl != "..") {
                     return false;
@@ -683,54 +659,73 @@ class G5Update
 
         return true;
     }
-
+    /**
+     * 업데이트버전 파일 적용
+     * @breif downloadVersion에서 만들어놓은 임시경로(/update/version)에서 실제 경로로 적용시킨다
+     * @param $originPath   원본 파일 경로
+     * @param $changPath    업데이트 파일 경로
+     * @return string|void 
+     * 
+      */
     public function writeUpdateFile($originPath, $changePath)
     {
         try {
             if ($this->conn == false) {
                 throw new Exception("통신이 연결되지 않았습니다.");
-            }
 
-            if (!file_exists($changePath)) {
-                throw new Exception("업데이트에 존재하지 않는 파일입니다.");
-            }
-            $fp = fopen($changePath, 'r');
-            $content = @fread($fp, filesize($changePath));
+            } elseif (!file_exists($changePath)) {
+                // 파일이 패치버전에 없을 경우 삭제처리
+                if ($this->port == 'ftp') {
+                    $originPath = preg_replace("/(.*?)(?=\\" . ftp_pwd($this->conn) . ")/", '', $originPath);
+                    $result = ftp_delete($this->conn, $originPath);
+                } elseif ($this->port == 'sftp') {
+                    $result = ssh2_sftp_unlink($this->connPath, $originPath);
+                }
+                throw new Exception("업데이트에 삭제되거나 존재하지 않는 파일입니다.");
 
-            if ($content == false) {
-                throw new Exception("파일을 여는데 실패했습니다.");
-            }
-            if ($this->port == 'ftp') {
-                $ftpOriginPath = preg_replace("/(.*?)(?=\\" . ftp_pwd($this->conn) . ")/", '', $originPath); // ftp에서는 경로 변경
-                $ftpChangePath = preg_replace("/(.*?)(?=\\" . ftp_pwd($this->conn) . ")/", '', $changePath); // ftp에서는 경로 변경
+            } else {
+                $fp = fopen($changePath, 'r');
+                $file_size = filesize($changePath);
+                if ($file_size <= 0) {
+                    throw new Exception("빈파일 입니다.");
+                }
 
-                if (ftp_nlist($this->conn, dirname($ftpOriginPath)) == false) {
-                    $result = ftp_mkdir($this->conn, dirname($ftpOriginPath));
-                    ftp_nb_continue($this->conn); // 디렉토리 생성후 파일을 계속해서 검색/전송
+                $content = @fread($fp, $file_size);
+                if ($content == false) {
+                    throw new Exception("파일을 여는데 실패했습니다.");
+                }
+                if ($this->port == 'ftp') {
+                    $ftpOriginPath = preg_replace("/(.*?)(?=\\" . ftp_pwd($this->conn) . ")/", '', $originPath); // ftp에서는 경로 변경
+                    $ftpChangePath = preg_replace("/(.*?)(?=\\" . ftp_pwd($this->conn) . ")/", '', $changePath); // ftp에서는 경로 변경
+
+                    if (ftp_nlist($this->conn, dirname($ftpOriginPath)) == false) {
+                        $result = ftp_mkdir($this->conn, dirname($ftpOriginPath));
+                        ftp_nb_continue($this->conn); // 디렉토리 생성후 파일을 계속해서 검색/전송
+                        if ($result == false) {
+                            throw new Exception("ftp를 통한 디렉토리 생성에 실패했습니다.");
+                        }
+                    }
+
+                    $fg = fopen($originPath, 'w'); // 덮어쓸 파일 포인터 생성
+                    $result = ftp_fget($this->conn, $fg, $ftpChangePath, FTP_BINARY);
                     if ($result == false) {
-                        throw new Exception("ftp를 통한 디렉토리 생성에 실패했습니다.");
+                        throw new Exception("ftp를 통한 파일전송에 실패했습니다.");
                     }
-                }
+                } elseif ($this->port == 'sftp') {
+                    if (!file_exists("ssh2.sftp://" . intval($this->connPath) . $originPath)) {
+                        if (!is_dir(dirname($originPath))) {
+                            mkdir("ssh2.sftp://" . intval($this->connPath) . dirname($originPath));
+                        }
 
-                $fg = fopen($originPath, 'w'); // 덮어쓸 파일 포인터 생성
-                $result = ftp_fget($this->conn, $fg, $ftpChangePath, FTP_BINARY);
-                if ($result == false) {
-                    throw new Exception("ftp를 통한 파일전송에 실패했습니다.");
-                }
-            } elseif ($this->port == 'sftp') {
-                if (!file_exists("ssh2.sftp://" . intval($this->connPath) . $originPath)) {
-                    if (!is_dir(dirname($originPath))) {
-                        mkdir("ssh2.sftp://" . intval($this->connPath) . dirname($originPath));
+                        $permission = intval(substr(sprintf('%o', fileperms($changePath)), -4), 8);
+                        $result = ssh2_scp_send($this->conn, $changePath, $originPath, $permission);
+                    } else {
+                        $result = file_put_contents("ssh2.sftp://" . intval($this->connPath) . $originPath, $content);
                     }
 
-                    $permission = intval(substr(sprintf('%o', fileperms($changePath)), -4), 8);
-                    $result = ssh2_scp_send($this->conn, $changePath, $originPath, $permission);
-                } else {
-                    $result = file_put_contents("ssh2.sftp://" . intval($this->connPath) . $originPath, $content);
-                }
-
-                if ($result == false) {
-                    throw new Exception("sftp를 통한 파일전송에 실패했습니다.");
+                    if ($result == false) {
+                        throw new Exception("sftp를 통한 파일전송에 실패했습니다.");
+                    }
                 }
             }
 
@@ -867,7 +862,12 @@ class G5Update
             return false;
         }
     }
-
+    /**
+     * 업데이트버전 파일 다운로드
+     * @breif 해당 버전에 맞는 압축파일 다운로드 후, 디렉토리 생성
+     * @param   string  다운로드 버전
+     * @return  bool
+     */
     public function downloadVersion($version = null)
     {
         if ($version == null) {
@@ -896,8 +896,9 @@ class G5Update
             return false;
         }
 
+        exec('rm -rf ' . self::$dir_version . '/' . $version);
         exec('unzip ' . $save . ' -d ' . self::$dir_version . '/' . $version);
-        exec('mv ' . self::$dir_version . '/' . $version . '/gnuboard-*/* ' . self::$dir_version . '/' . $version);
+        exec('mv -f ' . self::$dir_version . '/' . $version . '/gnuboard-*/* ' . self::$dir_version . '/' . $version);
         exec('rm -rf ' . self::$dir_version . '/' . $version . '/gnuboard-*/');
         exec('rm -rf ' . $save);
 
@@ -1045,6 +1046,9 @@ class G5Update
         }
     }
 
+    /**
+     * 계단식 표시처리
+     */
     public function buildFolderStructure(&$dirs, $path_array)
     {
         if (count($path_array) > 1) {
@@ -1060,6 +1064,9 @@ class G5Update
         }
     }
 
+    /**
+     * 변경내역 html태그 추가
+     */
     public function changeDepthListPrinting($list, $depth = 0)
     {
         if (!is_array($list)) {
@@ -1091,7 +1098,10 @@ class G5Update
 
         return $txt;
     }
-
+    /**
+     * 변경된 파일 표시
+     * @todo 삭제되는 파일들을 어떻게 표시할 것인지?
+     */
     public function getDepthVersionCompareList()
     {
         try {
@@ -1121,6 +1131,7 @@ class G5Update
 
             return $parray;
         } catch (Exception $e) {
+            print_r2($e->getMessage());
             return false;
         }
     }
@@ -1218,5 +1229,42 @@ class G5Update
             $protocol_list[] = 'sftp';
         }
         return $protocol_list;
+    }
+
+    public function getNowVersion()
+    {
+        return $this->now_version;
+    }    
+
+    public function setNowVersion($now_version = null)
+    {
+        $this->now_version = $now_version;
+    }
+    
+    public function getTargetVersion()
+    {
+        return $this->target_version;
+    }
+
+    public function setTargetVersion($target_version = null)
+    {
+        $this->target_version = $target_version;
+    }
+
+    public function getRollbackVersion()
+    {
+        return $this->rollback_version;
+    }
+
+    public function setRollbackVersion($backup_dir)
+    {
+        $backup_version_file = file_get_contents($backup_dir . '/version.php');
+        preg_match("/(?<=define\('G5_GNUBOARD_VER', ')(.*?)(?='\);)/", $backup_version_file, $rollback_version); // 백업버전 체크
+        $this->rollback_version = "v" . $rollback_version[0];
+    }
+
+    public function getToken()
+    {
+        return $this->token;
     }
 }
