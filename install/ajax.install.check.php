@@ -18,6 +18,10 @@ if (isset($_POST['table_prefix']) && preg_match("/[^0-9a-z_]+/i", $_POST['table_
     die(install_json_msg('TABLE명 접두사는 영문자, 숫자, _ 만 입력하세요.'));
 }
 
+if (isset($_POST['s3_compatible_check'])) {
+    s3CompatibleCheck();
+}
+
 $mysql_host  = isset($_POST['mysql_host']) ? safe_install_string_check($_POST['mysql_host'], 'json') : '';
 $mysql_user  = isset($_POST['mysql_user']) ? safe_install_string_check($_POST['mysql_user'], 'json') : '';
 $mysql_pass  = isset($_POST['mysql_pass']) ? safe_install_string_check($_POST['mysql_pass'], 'json') : '';
@@ -56,3 +60,27 @@ if (sql_query("SHOW TABLES LIKE `{$table_prefix}config`", G5_DISPLAY_SQL_ERROR, 
 }
 
 die(install_json_msg('ok', 'success'));
+
+
+/**
+ * S3 설치 가능한지 검사
+ * @return void
+ */
+function s3CompatibleCheck()
+{
+    $response = array(
+        'is_installable_version' => false,
+        'is_install_extension' => false, // AWS SDK 는 SimpleXML 익스텐션이 필수
+    );
+
+    if (version_compare(PHP_VERSION, '5.5.0', '>')) {
+        $response['is_installable_version'] = true;
+    }
+
+
+    if (class_exists('SimpleXMLElement') || extension_loaded('SimpleXML')) {
+        $response['is_install_extension'] = true;
+    }
+
+    die(json_encode($response));
+}

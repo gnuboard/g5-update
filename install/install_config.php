@@ -13,7 +13,7 @@ include_once ('../config.php');
 $title = G5_VERSION." 초기환경설정 2/3";
 include_once ('./install.inc.php');
 
-if (!isset($_POST['agree']) || $_POST['agree'] != '동의함') {
+if (!isset($_POST['agree']) || $_POST['agree'] !== '동의함') {
     echo "<div class=\"ins_inner\"><p>라이센스(License) 내용에 동의하셔야 설치를 계속하실 수 있습니다.</p>".PHP_EOL;
     echo "<div class=\"inner_btn\"><a href=\"./\">뒤로가기</a></div></div>".PHP_EOL;
     exit;
@@ -122,6 +122,47 @@ $ajax_token = md5($tmp_str.$_SERVER['REMOTE_ADDR'].dirname(dirname(__FILE__).'/'
     </tbody>
     </table>
 
+    <table class="ins_frm">
+        <caption>AWS S3 정보입력</caption>
+        <tbody>
+        <tr class="s3_step1">
+            <th scope="row"><label for="s3_use_check">S3 사용여부</label></th>
+            <td>
+                <select name="s3_use_check" id="s3_use_check" onchange="s3_option_listener()">
+                    <option value="no" selected>사용안함</option>
+                    <option value="yes">사용</option>
+                </select>
+            </td>
+        </tr>
+        <tr class="s3_step2">
+            <th scope="row"><label for="s3_region">S3 지역</label></th>
+            <td>
+                <input name="s3_region" type="text" id="s3_region">
+            </td>
+        </tr>
+        <tr class="s3_step2">
+            <th scope="row"><label for="s3_access_key">S3 엑세스키</label></th>
+            <td>
+                <input name="s3_access_key" type="text" id="s3_access_key">
+            </td>
+        </tr>
+        <tr class="s3_step2">
+            <th scope="row"><label for="s3_secret_key">S3 비밀키</label></th>
+            <td>
+                <input name="s3_secret_key" type="text" id="s3_secret_key">
+            </td>
+        </tr>
+        <tr class="s3_step2">
+            <th scope="row"><label for="s3_bucket_name">S3 버킷 이름</label></th>
+            <td>
+                <input name="s3_bucket_name" type="text" id="s3_bucket_name">
+                <input type="button" onclick="s3_connect_check()" id="btn_s3_key_check" value="S3 연결 확인하기">
+            </td>
+        </tr>
+
+        </tbody>
+    </table>
+
     <p>
         <strong class="st_strong">주의! 이미 <?php echo G5_VERSION ?>가 존재한다면 DB 자료가 망실되므로 주의하십시오.</strong><br>
         주의사항을 이해했으며, 그누보드 설치를 계속 진행하시려면 다음을 누르십시오.
@@ -132,35 +173,38 @@ $ajax_token = md5($tmp_str.$_SERVER['REMOTE_ADDR'].dirname(dirname(__FILE__).'/'
     </div>
 </div>
 
-<script src="../js/jquery-1.8.3.min.js"></script>
+<script src="../js/jquery-1.12.4.min.js"></script>
 <script>
+
+s3_option_listener();
+
 function frm_install_submit(f)
 {
-    if (f.mysql_host.value == '')
+    if (f.mysql_host.value === '')
     {
         alert('MySQL Host 를 입력하십시오.'); f.mysql_host.focus(); return false;
     }
-    else if (f.mysql_user.value == '')
+    else if (f.mysql_user.value === '')
     {
         alert('MySQL User 를 입력하십시오.'); f.mysql_user.focus(); return false;
     }
-    else if (f.mysql_db.value == '')
+    else if (f.mysql_db.value === '')
     {
         alert('MySQL DB 를 입력하십시오.'); f.mysql_db.focus(); return false;
     }
-    else if (f.admin_id.value == '')
+    else if (f.admin_id.value === '')
     {
         alert('최고관리자 ID 를 입력하십시오.'); f.admin_id.focus(); return false;
     }
-    else if (f.admin_pass.value == '')
+    else if (f.admin_pass.value === '')
     {
         alert('최고관리자 비밀번호를 입력하십시오.'); f.admin_pass.focus(); return false;
     }
-    else if (f.admin_name.value == '')
+    else if (f.admin_name.value === '')
     {
         alert('최고관리자 이름을 입력하십시오.'); f.admin_name.focus(); return false;
     }
-    else if (f.admin_email.value == '')
+    else if (f.admin_email.value === '')
     {
         alert('최고관리자 E-mail 을 입력하십시오.'); f.admin_email.focus(); return false;
     }
@@ -188,7 +232,7 @@ function frm_install_submit(f)
         alert('TABLE명 접두사'+reg_msg); f.table_prefix.focus(); return false;
     }
 
-    if(/^[a-z]+[a-z0-9]{2,19}$/i.test(f.admin_id.value) == false) {
+    if(/^[a-z]+[a-z0-9]{2,19}$/i.test(f.admin_id.value) === false) {
         alert('최고관리자 회원 ID는 첫자는 반드시 영문자 그리고 영문자와 숫자로만 만드셔야 합니다.');
         f.admin_id.focus();
         return false;
@@ -218,6 +262,77 @@ function frm_install_submit(f)
     }
 
     return true;
+}
+
+function php_version_check(){
+    let is_installable = true;
+    $.ajax({
+        url: './ajax.install.check.php',
+        type: "POST",
+        data: {
+            's3_compatible_check': 'check'
+        },
+        dataType: 'json',
+        success: function(data) {
+            if(data.is_installable_version === false){
+                alert('AWS S3 는 PHP 5.5이상에서만 이용하실 수있습니다.');
+                is_installable = false;
+            }
+            if(data.is_install_extension === false){
+                alert('SimpleXML 익스텐션이 비활성화되어 S3를 이용할 수없습니다. 서버관리자에게 문의 바랍니다.');
+                is_installable = false;
+            }
+        },
+        error: function(data) {
+            
+        }
+    })
+    return is_installable;
+}
+
+function s3_option_listener(){
+    if( $('#s3_use_check option:selected').val() === 'yes' && php_version_check() === true){
+        $('.s3_step2').show();
+    } else {
+        $('.s3_step2').hide();
+        $('#s3_use_check option:eq(0)').attr('selected', true);
+    }
+}
+function s3_connect_check(){
+
+    let region = $("#s3_region").val().trim();
+    let access_key = $("#s3_access_key").val().trim();
+    let secret_key = $("#s3_secret_key").val().trim();
+    let bucket_name = $("#s3_bucket_name").val().trim();
+
+    if(region === '' || access_key === '' || secret_key === '' || bucket_name === ''){
+        alert('S3 정보를 모두 입력해주세요.');
+        return false;
+    }
+    
+    let result = {};
+    $.ajax({
+        url: "./ajax.install.s3.check.php",
+        type: "POST",
+        data: {
+            'check_mode': 's3_connect_check',
+            'region': region,
+            'access_key':  access_key,
+            'secret_key':  secret_key,
+            'bucket_name': bucket_name,
+        },
+        dataType: 'json',
+        success:function(data) {
+            result.message = data.message;
+            alert(result.message);
+        },
+        error:function(data) {
+            result = JSON.parse(data.responseText);
+            alert(result.message);
+        }
+    });
+
+    return result;
 }
 </script>
 
