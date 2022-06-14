@@ -5,10 +5,10 @@ include_once './_common.php';
 $g5['title'] = '그누보드 step2';
 include_once '../admin.head.php';
 
-$rollback_file = isset($_POST['rollback_file']) ? $_POST['rollback_file'] : null;
-$username = isset($_POST['username']) ? $_POST['username'] : null;
-$userpassword = isset($_POST['password']) ? $_POST['password'] : null;
-$port = isset($_POST['port']) ? $_POST['port'] : null;
+$rollback_file  = isset($_POST['rollback_file']) ? $_POST['rollback_file'] : null;
+$username       = isset($_POST['username']) ? $_POST['username'] : null;
+$userpassword   = isset($_POST['password']) ? $_POST['password'] : null;
+$port           = isset($_POST['port']) ? $_POST['port'] : null;
 
 $conn_result = $g5['update']->connect($_SERVER['HTTP_HOST'], $port, $username, $password);
 if ($conn_result == false) {

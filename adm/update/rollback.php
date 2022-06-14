@@ -46,58 +46,55 @@ foreach ($content_url as $key => $var) {
     <form method="POST" name="update_box" class="update_box" action="./rollback_step1.php" onsubmit="return update_submit(this);">
         <input type="hidden" name="compare_check" value="0">
         <div class="tbl_frm01 tbl_wrap">
-            <?php if ($current_version != $latest_version) { ?>
-                <table style="width:650px; text-align:left;">
-                    <tbody>
-                        <tr>
-                            <th>현재 그누보드 버전</th>
-                            <td><h3><?php echo $current_version; ?></h3></td>
-                        </tr>
-                        <tr>
-                            <th>복원시점</th>
-                            <td>
-                                <select class="target_version" name="rollback_file">
-                                    <?php foreach ($backup_list as $key => $var) { ?>
-                                        <option value="<?php echo $var['realName']; ?>"><?php echo $var['listName']; ?></option>
-                                    <?php } ?>
-                                </select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>포트</th>
-                            <td>
-                            <?php if (!empty($connect_array)) { ?>
-                                <?php foreach ($connect_array as $key => $connect) { ?>
-                                    <label for="<?php echo $connect; ?>"><?php echo $connect; ?></label>
-                                    <input id="<?php echo $connect; ?>" type="radio" name="port" value="<?php echo $connect; ?>" <?php echo $key == 0 ? "checked" : "" ?>>
+            <table style="width:650px; text-align:left;">
+                <tbody>
+                    <tr>
+                        <th>현재 그누보드 버전</th>
+                        <td><h3><?php echo $current_version; ?></h3></td>
+                    </tr>
+                    <tr>
+                        <th>복원시점</th>
+                        <td>
+                            <select class="target_version" name="rollback_file">
+                                <?php foreach ($backup_list as $key => $var) { ?>
+                                    <option value="<?php echo $var['realName']; ?>"><?php echo $var['listName']; ?></option>
                                 <?php } ?>
-                            <?php } else { ?>
-                                <p>통신연결 lib가 존재하지 않습니다.</p>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>포트</th>
+                        <td>
+                        <?php if (!empty($connect_array)) { ?>
+                            <?php foreach ($connect_array as $key => $connect) { ?>
+                                <label for="<?php echo $connect; ?>"><?php echo $connect; ?></label>
+                                <input id="<?php echo $connect; ?>" type="radio" name="port" value="<?php echo $connect; ?>" <?php echo $key == 0 ? "checked" : "" ?>>
                             <?php } ?>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>
-                                <label for="username">사용자 이름</label>
-                            </th>
-                            <td>
-                                <input id="username" name="username" class="frm_input">
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>
-                                <label for="password">사용자 비밀번호</label>
-                            </th>
-                            <td>
-                                <input id="password" name="password" class="frm_input">
-                                <button type="button" class="btn_connect_check btn_frmline">FTP 연결확인</button>
-                                <span class="update_btn_area"></span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                
-            <?php } ?>
+                        <?php } else { ?>
+                            <p>통신연결 lib가 존재하지 않습니다.</p>
+                        <?php } ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>
+                            <label for="username">사용자 이름</label>
+                        </th>
+                        <td>
+                            <input id="username" name="username" class="frm_input">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>
+                            <label for="password">사용자 비밀번호</label>
+                        </th>
+                        <td>
+                            <input id="password" name="password" class="frm_input">
+                            <button type="button" class="btn_connect_check btn_frmline">FTP 연결확인</button>
+                            <span class="update_btn_area"></span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </form>
     <?php } else { ?>
