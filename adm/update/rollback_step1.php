@@ -52,7 +52,7 @@ if ($list == null) {
     die("비교파일리스트가 존재하지 않습니다.");
 }
 
-$compare_list = $g5['update']->checkRollbackVersionComparison($list, G5_DATA_PATH . '/update/backup/' . $rollback_file);
+$compare_list = $g5['update']->checkRollbackVersionComparison(G5_DATA_PATH . '/update/backup/' . $rollback_file, $list);
 if ($compare_list == false) {
     die("파일 비교에 실패했습니다.");
 }

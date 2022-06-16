@@ -80,7 +80,7 @@ foreach ($content_url as $key => $url) {
                                             foreach ($content_url as $key => $url) {
                                                 $content = str_replace('@' . $key . '@', '<a class="a_style" href="' . $url . '" target="_blank">변경코드확인</a>', $content);
                                             }
-                                            echo htmlspecialchars_decode($content, ENT_HTML5);
+                                            echo $g5['update']->setHtmlspecialcharsDecode($content);
                                             echo "</p><br>";
                                         } ?>
                                         </td>

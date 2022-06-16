@@ -28,7 +28,7 @@ try {
     foreach ($content_url as $key => $var) {
         $result = str_replace('@' . $key . '@', '<a class="a_style" href="' . $var . '" target="_blank">변경코드확인</a>', $result);
     }
-    $content .= htmlspecialchars_decode($result, ENT_HTML5);
+    $content .= $g5['update']->setHtmlspecialcharsDecode($result);
     $content .= "</p><br>";
 
     $data['error']      = 0;

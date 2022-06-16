@@ -6,9 +6,9 @@ $g5['title'] = '그누보드 step2';
 include_once '../admin.head.php';
 
 $target_version = isset($_POST['target_version']) ? $_POST['target_version'] : null;
-$username = isset($_POST['username']) ? $_POST['username'] : null;
-$userpassword = isset($_POST['password']) ? $_POST['password'] : null;
-$port = isset($_POST['port']) ? $_POST['port'] : null;
+$username       = isset($_POST['username']) ? $_POST['username'] : null;
+$userpassword   = isset($_POST['password']) ? $_POST['password'] : null;
+$port           = isset($_POST['port']) ? $_POST['port'] : null;
 
 $conn_result = $g5['update']->connect($_SERVER['HTTP_HOST'], $port, $username, $password);
 if ($conn_result == false) {
@@ -32,6 +32,13 @@ if ($result == false) {
 }
 
 ?>
+<h2 class="h2_frm">버전 업데이트 진행</h2>
+<ul class="anchor">
+    <li><a href="./">업데이트</a></li>
+    <li><a href="./rollback.php">복원</a></li>
+    <li><a href="./log.php">로그</a></li>
+</ul>
+
 <p style="font-size:15px; font-weight:bold;"><?php echo $g5['update']->targetVersion; ?> 버전 파일 다운로드 완료</p>
 <br>
 <?php
@@ -56,6 +63,7 @@ $result = $g5['update']->writeLogFile($update_check['success'], $update_check['f
 $g5['update']->disconnect();
 
 ?>
+
 
 <div>
     <p style="font-weight:bold; font-size:15px;">업데이트 성공</p>

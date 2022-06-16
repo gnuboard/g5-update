@@ -12,4 +12,3 @@ if (!isset($g5['update'])) {
 if (!isset($g5['update_test'])) {
     $g5['update_test'] = new G5UpdateTest();
 }
-

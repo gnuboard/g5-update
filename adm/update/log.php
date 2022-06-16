@@ -7,10 +7,6 @@ include_once '../admin.head.php';
 
 $log_dir = G5_DATA_PATH . "/update/log";
 
-if (!is_dir($log_dir)) {
-    die("로그 디렉토리가 존재하지 않습니다.");
-}
-
 $page = isset($_REQUEST['page']) ? $_REQUEST['page'] : 1;
 $list = $g5['update']->getLogList($page);
 $total_page = $g5['update']->getLogListSize();
@@ -33,17 +29,23 @@ $total_page = $g5['update']->getLogListSize();
         </tr>
         </thead>
         <tbody>
-        <?php foreach ($list as $key => $var) { ?>
-                <tr>
-                    <td><a href="./log_detail.php?filename=<?php echo $var['filename']; ?>"><?php echo $var['filename']; ?></a></td>
-                    <td><a><?php echo $var['status']; ?></a></td>
-                    <td><a><?php echo $var['datetime']; ?></a></td>
-                </tr>
+        <?php if (count($list) > 0) { ?>
+            <?php foreach ($list as $key => $var) { ?>
+            <tr>
+                <td><a href="./log_detail.php?filename=<?php echo $var['filename']; ?>"><?php echo $var['filename']; ?></a></td>
+                <td><a><?php echo $var['status']; ?></a></td>
+                <td><a><?php echo $var['datetime']; ?></a></td>
+            </tr>
             <?php } ?>
+        <?php } else { ?>
+            <tr><td colspan="3">로그파일 내역이 존재하지 않습니다.</td></tr>
+        <?php } ?>
         </tbody>
     </table>
     <?php
+    if ($total_page > 1) {
         echo get_paging(G5_IS_MOBILE ? $config['cf_mobile_pages'] : $config['cf_write_pages'], $page, $total_page, $_SERVER['SCRIPT_NAME'] . '?' . $qstr . '&amp;page=');
+    }
     ?>
 </div>
 <?php
