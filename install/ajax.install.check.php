@@ -19,7 +19,7 @@ if (isset($_POST['table_prefix']) && preg_match("/[^0-9a-z_]+/i", $_POST['table_
 }
 
 if (isset($_POST['s3_compatible_check'])) {
-    s3CompatibleCheck();
+    s3_compatible_check();
 }
 
 $mysql_host  = isset($_POST['mysql_host']) ? safe_install_string_check($_POST['mysql_host'], 'json') : '';
@@ -66,7 +66,7 @@ die(install_json_msg('ok', 'success'));
  * S3 설치 가능한지 검사
  * @return void
  */
-function s3CompatibleCheck()
+function s3_compatible_check()
 {
     $response = array(
         'is_installable_version' => false,

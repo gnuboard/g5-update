@@ -11,19 +11,18 @@ header('Pragma: no-cache'); // HTTP/1.0
 
 $g5_path['path'] = '..';
 include_once('../config.php');
-include_once('../lib/common.lib.php');
 include_once('./install.function.php');    // 인스톨 과정 함수 모음
+include_once ('./install.inc.php'); //설치되어있는지 체크
 
+include_once('../lib/common.lib.php');
 include_once('../lib/hook.lib.php');    // hook 함수 파일
 include_once('../lib/get_data.lib.php');
 include_once('../lib/uri.lib.php');    // URL 함수 파일
 include_once('../lib/cache.lib.php');
 
 $title = G5_VERSION." 설치 완료 3/3";
-include_once('./install.inc.php');
 
 $tmp_bo_table   = array ("notice", "qa", "free", "gallery");
-
 
 $mysql_host  = isset($_POST['mysql_host']) ? safe_install_string_check($_POST['mysql_host']) : '';
 $mysql_user  = isset($_POST['mysql_user']) ? safe_install_string_check($_POST['mysql_user']) : '';

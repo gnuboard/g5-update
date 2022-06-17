@@ -175,11 +175,16 @@ $ajax_token = md5($tmp_str.$_SERVER['REMOTE_ADDR'].dirname(dirname(__FILE__).'/'
 
 <script src="../js/jquery-1.12.4.min.js"></script>
 <script>
+/**
+ * s3 에 연결 확인버튼 클릭후 성공하면 true
+ * 전역변수
+ * @type {boolean}
+ */
+var is_s3_connect = false;
 
 s3_option_listener();
 
-function frm_install_submit(f)
-{
+function frm_install_submit(f) {
     if (f.mysql_host.value === '')
     {
         alert('MySQL Host 를 입력하십시오.'); f.mysql_host.focus(); return false;
@@ -237,11 +242,19 @@ function frm_install_submit(f)
         f.admin_id.focus();
         return false;
     }
+
+    if($('#s3_use_check option:selected').val() === 'yes') {
+        if(is_s3_connect ===  false){
+            alert('S3 사용으로 선택되어있습니다. 정보 입력 후 S3 연결 확인하기 버튼을 클릭해주세요');
+            return false;
+        }
+        s3_setup();
+    }
     
     if (window.jQuery) {
 
         var jqxhr = jQuery.post( "ajax.install.check.php", $(f).serialize(), function(data) {
-            
+
             if( data.error ){
                 alert(data.error);
             } else if( data.exists ) {
@@ -264,7 +277,7 @@ function frm_install_submit(f)
     return true;
 }
 
-function php_version_check(){
+function php_version_check() {
     let is_installable = true;
     $.ajax({
         url: './ajax.install.check.php',
@@ -279,7 +292,7 @@ function php_version_check(){
                 is_installable = false;
             }
             if(data.is_install_extension === false){
-                alert('SimpleXML 익스텐션이 비활성화되어 S3를 이용할 수없습니다. 서버관리자에게 문의 바랍니다.');
+                alert('SimpleXML 익스텐션이 비활성화되어 AWS S3를 이용할 수 없습니다. 서버관리자에게 문의 바랍니다.');
                 is_installable = false;
             }
         },
@@ -290,7 +303,39 @@ function php_version_check(){
     return is_installable;
 }
 
-function s3_option_listener(){
+function s3_setup() {
+    let is_shop_install = $("input:checkbox[name='g5_shop_install']").is(":checked") === true;
+    let region = $("#s3_region").val().trim();
+    let access_key = $("#s3_access_key").val().trim();
+    let secret_key = $("#s3_secret_key").val().trim();
+    let bucket_name = $("#s3_bucket_name").val().trim();
+
+    let result = {};
+    $.ajax({
+        url: "./install_s3.php",
+        type: "POST",
+        data: {
+            'use_check': use_check,
+            'region': region,
+            'access_key':  access_key,
+            'secret_key':  secret_key,
+            'bucket_name': bucket_name,
+            'is_g5_shop_install': is_shop_install
+        },
+        dataType: 'json',
+        success:function(data) {
+            result.message = data.message;
+            alert(result.message);
+        },
+        error:function(data) {
+            result = JSON.parse(data.responseText);
+            alert(result.message);
+        }
+    });
+
+}
+
+function s3_option_listener() {
     if( $('#s3_use_check option:selected').val() === 'yes' && php_version_check() === true){
         $('.s3_step2').show();
     } else {
@@ -298,8 +343,8 @@ function s3_option_listener(){
         $('#s3_use_check option:eq(0)').attr('selected', true);
     }
 }
-function s3_connect_check(){
 
+function s3_connect_check() {
     let region = $("#s3_region").val().trim();
     let access_key = $("#s3_access_key").val().trim();
     let secret_key = $("#s3_secret_key").val().trim();
@@ -324,6 +369,7 @@ function s3_connect_check(){
         dataType: 'json',
         success:function(data) {
             result.message = data.message;
+            is_s3_connect = true;
             alert(result.message);
         },
         error:function(data) {
