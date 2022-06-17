@@ -167,7 +167,13 @@ class G5Update
                 $relativePath .= $arrayPath[$j] . "/";
             }
             if (ftp_chdir($this->conn, $relativePath)) {
-                break;
+
+                // 현재 경로가 그누보드인지 체크해야함. (data폴더)
+                $original_directory = ftp_pwd($this->conn);
+                if (@ftp_chdir($this->conn, ftp_pwd($this->conn) . "/data")) {
+                    ftp_chdir($this->conn, $original_directory);
+                    break;
+                }
             } else {
                 array_shift($arrayPath);
             }
