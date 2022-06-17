@@ -25,7 +25,11 @@ class G5Update
     public $dir_version    = null;
     public $dir_backup     = null;
     public $dir_log        = null;
-    public $dir_ftp_update = null;
+
+    public $ftp_dir_update     = null;
+    public $ftp_dir_version    = null;
+    public $ftp_dir_log        = null;
+    public $ftp_dir_backup     = null;
 
     // token값이 없는 경우, 1시간에 60번의 데이터조회가 가능함
     private $token = "";
@@ -46,6 +50,9 @@ class G5Update
 
     private $log_page_list = 10;
 
+    // 운영체제 (Linux,WINNT)
+    public $os = null;
+
     public function __construct()
     {
         $this->dir_update   = G5_DATA_PATH . "/update";
@@ -53,11 +60,7 @@ class G5Update
         $this->dir_backup   = G5_DATA_PATH . "/update/backup";
         $this->dir_log      = G5_DATA_PATH . "/update/log";
 
-        //FTP 업로드 상대경로
-        $root = preg_replace('/.*?' . preg_quote($_SERVER['DOCUMENT_ROOT'], '/') . '/i', '', G5_PATH);
-        $document = end(explode("/", $_SERVER['DOCUMENT_ROOT']));
-
-        $this->dir_ftp_update = "/" . $document . $root;
+        $this->os = PHP_OS;
     }
 
     /**
@@ -150,6 +153,35 @@ class G5Update
     }
 
     /**
+     * ftp connect gnuboard5경로 설정
+     * @breif ftp 연결 시 홈 디렉토리가 서버 및 계정 설정에 따라 다 제각각이므로 초기경로를 잡아준다.
+     */
+    public function setFtpDirectoryToG5()
+    {
+        $arrayPath  = explode("/", G5_PATH);
+        $count      = count($arrayPath);
+
+        for ($i = 0; $i < $count; $i++) {
+            $relativePath = "";
+            for ($j = 0; $j < count($arrayPath); $j++) {
+                $relativePath .= $arrayPath[$j] . "/";
+            }
+            if (ftp_chdir($this->conn, $relativePath)) {
+                break;
+            } else {
+                array_shift($arrayPath);
+            }
+        }
+
+        if (ftp_pwd($this->conn)) {
+            $this->ftp_dir_update   = ftp_pwd($this->conn) . "/data/update";
+            $this->ftp_dir_version  = $this->ftp_dir_update . "/version";
+            $this->ftp_dir_log      = $this->ftp_dir_update . "/log";
+            $this->ftp_dir_backup   = $this->ftp_dir_update . "/backup";
+        }
+    }
+
+    /**
      * 버전업데이트 경로 생성 및 권한처리
      * @return bool
      */
@@ -164,41 +196,42 @@ class G5Update
             }
 
             if ($this->port == 'ftp') {
-                // $update_ftp_dir = preg_replace("/(.*?)(?=\\" . ftp_pwd($this->conn) . ")/", '', $this->dir_update);
+                // ftp 경로 설정
+                $this->setFtpDirectoryToG5();
 
                 if (!is_dir($this->dir_update)) {
-                    if (!ftp_mkdir($this->conn, $this->dir_ftp_update)) {
-                        throw new Exception("디렉토리를 생성하는데 실패했습니다.");
+                    if (!ftp_mkdir($this->conn, $this->ftp_dir_update)) {
+                        throw new Exception("/update 디렉토리를 생성하는데 실패했습니다.");
                     }
-                    if (!ftp_chmod($this->conn, 0707, $this->dir_ftp_update)) {
-                        throw new Exception("디렉토리의 권한을 변경하는데 실패했습니다.");
+                    if (!ftp_chmod($this->conn, 0707, $this->ftp_dir_update) && $this->os != "WINNT") {
+                        throw new Exception("/update 디렉토리의 권한을 변경하는데 실패했습니다.");
                     }
                 }
 
                 if (!is_dir($this->dir_version)) {
-                    if (!ftp_mkdir($this->conn, $this->dir_ftp_update . '/version')) {
-                        throw new Exception("디렉토리를 생성하는데 실패했습니다.");
+                    if (!ftp_mkdir($this->conn, $this->ftp_dir_version)) {
+                        throw new Exception("/update/version 디렉토리를 생성하는데 실패했습니다.");
                     }
-                    if (!ftp_chmod($this->conn, 0707, $this->dir_ftp_update . '/version')) {
-                        throw new Exception("디렉토리의 권한을 변경하는데 실패했습니다.");
+                    if (!ftp_chmod($this->conn, 0707, $this->ftp_dir_version) && $this->os != "WINNT") {
+                        throw new Exception("/update/version 디렉토리의 권한을 변경하는데 실패했습니다.");
                     }
                 }
 
                 if (!is_dir($this->dir_log)) {
-                    if (!ftp_mkdir($this->conn, $this->dir_ftp_update . '/log')) {
-                        throw new Exception("디렉토리를 생성하는데 실패했습니다.");
+                    if (!ftp_mkdir($this->conn, $this->ftp_dir_log)) {
+                        throw new Exception("/update/log 디렉토리를 생성하는데 실패했습니다.");
                     }
-                    if (!ftp_chmod($this->conn, 0755, $this->dir_ftp_update . '/log')) {
-                        throw new Exception("디렉토리의 권한을 변경하는데 실패했습니다.");
+                    if (!ftp_chmod($this->conn, 0755, $this->ftp_dir_log) && $this->os != "WINNT") {
+                        throw new Exception("/update/log 디렉토리의 권한을 변경하는데 실패했습니다.");
                     }
                 }
 
                 if (!is_dir($this->dir_backup)) {
-                    if (!ftp_mkdir($this->conn, $this->dir_ftp_update . '/backup')) {
-                        throw new Exception("디렉토리를 생성하는데 실패했습니다.");
+                    if (!ftp_mkdir($this->conn, $this->ftp_dir_backup)) {
+                        throw new Exception("/update/backup 디렉토리를 생성하는데 실패했습니다.");
                     }
-                    if (!ftp_chmod($this->conn, 0707, $this->dir_ftp_update . '/backup')) {
-                        throw new Exception("디렉토리의 권한을 변경하는데 실패했습니다.");
+                    if (!ftp_chmod($this->conn, 0707, $this->ftp_dir_backup) && $this->os != "WINNT") {
+                        throw new Exception("/update/backup 디렉토리의 권한을 변경하는데 실패했습니다.");
                     }
                 }
                 // $list = ftp_nlist($this->conn, $this->dir_ftp_update);
