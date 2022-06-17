@@ -304,6 +304,7 @@ function php_version_check() {
 }
 
 function s3_setup() {
+    let use_check = $('#s3_use_check option:selected').val();
     let is_shop_install = $("input:checkbox[name='g5_shop_install']").is(":checked") === true;
     let region = $("#s3_region").val().trim();
     let access_key = $("#s3_access_key").val().trim();
