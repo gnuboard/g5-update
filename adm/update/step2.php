@@ -16,21 +16,19 @@ if ($conn_result == false) {
 }
 
 $g5['update']->setTargetVersion($target_version);
-
 if ($g5['update']->target_version == $g5['update']->now_version) {
     die("목표버전이 현재버전과 동일합니다.");
 }
 
 $list = $g5['update']->getVersionCompareList();
 if ($list == false) {
-    die("비교파일리스트가 존재하지 않습니다.");
+    die("비교할 원본파일목록이 존재하지 않습니다.");
 }
 
 $result = $g5['update']->downloadVersion($target_version);
 if ($result == false) {
     die("목표버전 다운로드에 실패했습니다.");
 }
-
 ?>
 <h2 class="h2_frm">버전 업데이트 진행</h2>
 <ul class="anchor">
@@ -42,8 +40,7 @@ if ($result == false) {
 <p style="font-size:15px; font-weight:bold;"><?php echo $g5['update']->targetVersion; ?> 버전 파일 다운로드 완료</p>
 <br>
 <?php
-
-$result = $g5['update']->createBackupZipFile(G5_DATA_PATH . "/update/backup/" . date('YmdHis', G5_SERVER_TIME) . ".zip");
+$result = $g5['update']->createBackupZipFile();
 if ($result == "success") {
     $update_check = array();
     foreach ($list as $key => $var) {
@@ -63,7 +60,6 @@ $result = $g5['update']->writeLogFile($update_check['success'], $update_check['f
 $g5['update']->disconnect();
 
 ?>
-
 
 <div>
     <p style="font-weight:bold; font-size:15px;">업데이트 성공</p>

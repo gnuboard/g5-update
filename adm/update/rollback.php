@@ -5,8 +5,7 @@ include_once './_common.php';
 $g5['title'] = '버전 업데이트';
 include_once '../admin.head.php';
 
-$current_version    = "v" . G5_GNUBOARD_VER; // api.github의 tag_name에는 버전번호 앞에 v가 붙어있음.
-$backup_list        = $g5['update']->getBackupList(G5_DATA_PATH . "/update/backup");
+$backup_list        = $g5['update']->getBackupList();
 $latest_version     = $g5['update']->getLatestVersion();
 $content            = $g5['update']->getVersionModifyContent($latest_version);
 $connect_array      = $g5['update']->getProtocolList();
@@ -50,14 +49,14 @@ foreach ($content_url as $key => $var) {
                 <tbody>
                     <tr>
                         <th>현재 그누보드 버전</th>
-                        <td><h3><?php echo $current_version; ?></h3></td>
+                        <td><h3><?php echo $g5['update']->now_version; ?></h3></td>
                     </tr>
                     <tr>
                         <th>복원시점</th>
                         <td>
                             <select class="target_version" name="rollback_file">
                                 <?php foreach ($backup_list as $key => $var) { ?>
-                                    <option value="<?php echo $var['realName']; ?>"><?php echo $var['listName']; ?></option>
+                                    <option value="<?php echo $var['realName']; ?>"><?php echo $var['version'] . " [" . $var['time'] . "]"; ?></option>
                                 <?php } ?>
                             </select>
                         </td>

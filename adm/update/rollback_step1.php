@@ -15,8 +15,6 @@ $freeSize       = $g5['update']->getUseableStorageSize();
 $useSize        = $g5['update']->getUseStorageSize();
 $usePercent     = $g5['update']->getUseStoragePercenty();
 
-$current_version = 'v' . G5_GNUBOARD_VER;
-
 if ($g5['update']->checkInstallAvailable() == false) {
     die("가용용량이 부족합니다. (20MB 이상)");
 }
@@ -38,25 +36,22 @@ if ($conn_result == false) {
     die("연결에 실패했습니다.");
 }
 
-$result = $g5['update']->unzipBackupFile(G5_DATA_PATH . '/update/backup/' . $rollback_file);
+$result = $g5['update']->unzipBackupFile($rollback_file);
 if ($result == false) {
     die("압축해제에 실패했습니다.");
 }
 
-$g5['update']->setRollbackVersion(preg_replace('/.zip/', '', G5_DATA_PATH . '/update/backup/' .  $rollback_file));
-$rollback_version = $g5['update']->getRollbackVersion();
-
+$rollback_version = $g5['update']->setRollbackVersion($rollback_file);
 $g5['update']->setTargetVersion($rollback_version);
 $list = $g5['update']->getVersionCompareList();
 if ($list == null) {
     die("비교파일리스트가 존재하지 않습니다.");
 }
 
-$compare_list = $g5['update']->checkRollbackVersionComparison(G5_DATA_PATH . '/update/backup/' . $rollback_file, $list);
+$compare_list = $g5['update']->checkRollbackVersionComparison($list, $rollback_file);
 if ($compare_list == false) {
     die("파일 비교에 실패했습니다.");
 }
-
 ?>
 
 <h2 class="h2_frm">업데이트 복원 진행</h2>
@@ -84,7 +79,7 @@ if ($compare_list == false) {
             <tbody>
                 <tr>
                     <th scope="row">버전</th>
-                    <td><?php echo $current_version . " ▶ "?><span style="font-weight:bold;"><?php echo $rollback_version ?></span></td>
+                    <td><?php echo $g5['update']->now_version . " ▶ "?><span style="font-weight:bold;"><?php echo $rollback_version ?></span></td>
                     <th>파일 목록</th>
                 </tr>
                 <tr>

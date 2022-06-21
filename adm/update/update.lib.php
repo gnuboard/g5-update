@@ -31,6 +31,8 @@ class G5Update
     public $ftp_dir_log        = null;
     public $ftp_dir_backup     = null;
 
+    public $window_dir_update  = null;
+
     // token값이 없는 경우, 1시간에 60번의 데이터조회가 가능함
     private $token = "";
 
@@ -61,6 +63,8 @@ class G5Update
         $this->dir_log      = G5_DATA_PATH . "/update/log";
 
         $this->os = PHP_OS;
+
+        $this->window_dir_update = str_replace('/', '\\', G5_DATA_PATH) . "\\update";
     }
 
     /**
@@ -90,6 +94,9 @@ class G5Update
                 $this->username = $username;
 
                 ftp_pasv($this->conn, true);
+
+                // ftp경로 설정
+                $this->setFtpDirectoryToG5();
 
                 return true;
             }
@@ -166,8 +173,7 @@ class G5Update
             for ($j = 0; $j < count($arrayPath); $j++) {
                 $relativePath .= $arrayPath[$j] . "/";
             }
-            if (ftp_chdir($this->conn, $relativePath)) {
-
+            if (@ftp_chdir($this->conn, $relativePath)) {
                 // 현재 경로가 그누보드인지 체크해야함. (data폴더)
                 $original_directory = ftp_pwd($this->conn);
                 if (@ftp_chdir($this->conn, ftp_pwd($this->conn) . "/data")) {
@@ -202,9 +208,6 @@ class G5Update
             }
 
             if ($this->port == 'ftp') {
-                // ftp 경로 설정
-                $this->setFtpDirectoryToG5();
-
                 if (!is_dir($this->dir_update)) {
                     if (!ftp_mkdir($this->conn, $this->ftp_dir_update)) {
                         throw new Exception("/update 디렉토리를 생성하는데 실패했습니다.");
@@ -280,8 +283,15 @@ class G5Update
             } else {
                 throw new Exception("ftp/sftp가 아닌 프로토콜로 업데이트가 불가능합니다.");
             }
-
-            exec('rm -rf ' . $this->dir_version . '/*');
+            
+            // 시스템명령어 구분
+            if ($this->os == "WINNT") {
+                $window_dir_version = $this->window_dir_update . "\\version\\*.*";
+                exec('del /q ' . $window_dir_version);
+                exec("for /d %i in (" . $window_dir_version . ") do @rmdir /s /q \"%i\"");
+            } else {
+                exec('rm -rf ' . $this->dir_version . '/*');
+            }
 
             return true;
         } catch (Exception $e) {
@@ -413,21 +423,23 @@ class G5Update
     /**
      * 백업파일 목록 조회
      * @breif zip파일만 조회
-     * @param string    $backupPath    백업파일 경로
      * @return array<array<mixed>>
      */
-    public function getBackupList($backupPath)
+    public function getBackupList()
     {
         if (empty($this->backup_list)) {
-            if (is_dir($backupPath)) {
-                if ($dh = @opendir($backupPath)) {
+            if (is_dir($this->dir_backup)) {
+                if ($dh = @opendir($this->dir_backup)) {
                     $key = 0;
                     while (($dl = @readdir($dh)) !== false) {
                         if (preg_match('/.zip/i', $dl)) {
-                            $backupTime = preg_replace('/.zip/', '', $dl);
-                            $listName = date("Y-m-d H:i:s", (int)strtotime((string)$backupTime));
-                            $this->backup_list[$key]['realName'] = $dl;
-                            $this->backup_list[$key]['listName'] = $listName;
+                            $fileName = preg_replace('/.zip/', '', $dl);
+                            $arrayFileName  = explode("_", (string)$fileName);
+                            $backupTime     = current($arrayFileName);
+                            $backupVersion  = end($arrayFileName);
+                            $this->backup_list[$key]['realName']    = $dl;
+                            $this->backup_list[$key]['version']     = $backupVersion;
+                            $this->backup_list[$key]['time']        = date("Y-m-d H:i:s", (int)strtotime($backupTime));
                             $key++;
                         }
                     }
@@ -469,7 +481,7 @@ class G5Update
                             $time = $date . implode(':', str_split($time, 2));
                             $this->log_list[] = array(
                                 'filename' => $file_name,
-                                'datetime' => date('Y-m-d h:i:s', (int)strtotime($time)),
+                                'datetime' => date('Y-m-d H:i:s', (int)strtotime($time)),
                                 'status' => $status_txt
                             );
                         }
@@ -586,19 +598,29 @@ class G5Update
     }
     /**
      * 백업파일 생성
-     * @param string $backupPath 백업파일 경로
      * @return string
      */
-    public function createBackupZipFile($backupPath)
+    public function createBackupZipFile()
     {
         try {
-            $result = "";
+            $result     = "";
+            $fileName   = date('YmdHis', G5_SERVER_TIME) . "_" . $this->now_version;
+            $exe        = $this->os == "WINNT" ? "tar" : "zip";
+            $backupPath = G5_DATA_PATH . "/update/backup/" . $fileName . "." . $exe;
 
             if (!is_dir(dirname($backupPath))) {
                 mkdir(dirname($backupPath), 0707);
             }
             if (!file_exists($backupPath)) {
-                $result = exec("zip -r " . $backupPath . " ../../" . " -x '../../data/*'");
+                if ($this->os == "WINNT") {
+                    // window 환경에서 압축파일 생성이 잘 안됨. (진행 중)
+                    // $disk = current(explode('/', G5_PATH));
+                    // exec($disk);
+                    // exec("cd " . G5_PATH);
+                    // $result = exec("tar -czf data/update/backup/" . $fileName . "." . $exe ." --exclude data ./*");
+                } else {
+                    $result = exec("zip -r " . $backupPath . " ../../" . " -x '../../data/*'");
+                }
             }
             if ($result == false) {
                 throw new Exception("백업파일 생성이 실패했습니다.");
@@ -612,29 +634,31 @@ class G5Update
     /**
      * 백업파일 압축해제
      * @param string $backupFile
-     * @return string
+     * @return bool
      */
     public function unzipBackupFile($backupFile)
     {
         try {
-            $backupDir = preg_replace('/.zip/', '', $backupFile);
+            $backupPath = $this->dir_backup . "/" . $backupFile;
+            $backupDir = preg_replace('/.zip/', '', $backupPath);
             
-            if (is_dir((string)$backupDir)) {
-                return "suecess";
-            }
+            // 덮어쓰지 않음
+            // if (is_dir((string)$backupDir)) {
+            //     return true;
+            // }
 
-            if (file_exists($backupFile)) {
-                $result = exec("unzip " . $backupFile . " -d " . $backupDir);
+            if (file_exists($backupPath)) {
+                $result = exec("unzip " . $backupPath . " -d " . $backupDir);
+                if ($result == false) {
+                    throw new Exception("압축해제에 실패했습니다.");
+                }
             } else {
-                throw new Exception("해당 파일이 존재하지 않습니다.");
+                throw new Exception("백업파일이 존재하지 않습니다.");
             }
-
-            if ($result == false) {
-                throw new Exception("압축해제에 실패했습니다.");
-            }
-            return "success";
+            return true;
         } catch (Exception $e) {
-            return $e->getMessage();
+            $this->setError($e->getMessage());
+            return false;
         }
     }
 
@@ -643,8 +667,6 @@ class G5Update
      * @brief 백업 원본인 zip파일은 제외하고 삭제함
      * @param string $backupDir
      * @return void
-     * @todo
-     * 1. 롤백 step1 단계에서 생성된 파일을 삭제
      */
     public function deleteBackupDir($backupDir)
     {
@@ -713,7 +735,7 @@ class G5Update
             $dirCheck = $this->checkDirIsEmpty($originDir);
             if ($dirCheck) {
                 $result = false;
-
+                // ftp경로 체크 예정
                 if ($this->port == 'ftp') {
                     $originDir = preg_replace("/(.*?)(?=\\" . ftp_pwd($this->conn) . ")/", '', $originDir);
                     $result = ftp_rmdir($this->conn, (string)$originDir);
@@ -767,48 +789,48 @@ class G5Update
                  * @todo ftp 테스트 필요 (경로문제)
                  */
                 if ($this->port == 'ftp') {
-                    $originPath = preg_replace("/(.*?)(?=\\" . ftp_pwd($this->conn) . ")/", '', $originPath);
-                    $result = ftp_delete($this->conn, (string)$originPath);
+                    $ftpOriginPath = preg_replace("/(.*?)(?=\\" . ftp_pwd($this->conn) . ")/", '', $originPath);
+                    $result = ftp_delete($this->conn, (string)$ftpOriginPath);
                 } elseif ($this->port == 'sftp') {
                     $result = ssh2_sftp_unlink($this->connPath, $originPath);
                 }
                 throw new Exception("업데이트에 삭제되거나 존재하지 않는 파일입니다.");
 
             } else {
-                $file_size = filesize($changePath);
-                if ($file_size <= 0) {
+                $changeFileSize = filesize($changePath);
+                if ($changeFileSize <= 0) {
                     throw new Exception("빈파일 입니다.");
                 }
-                $fp = fopen($changePath, 'r');
-                if ($fp == false) {
+                $changeFile = fopen($changePath, 'r');
+                if ($changeFile == false) {
                     throw new Exception("파일을 여는데 실패했습니다.");
                 }
-                $content = @fread($fp, $file_size);
-                if ($content == false) {
+                $changeContent = @fread($changeFile, $changeFileSize);
+                if ($changeContent == false) {
                     throw new Exception("파일을 읽어들이는데 실패했습니다.");
                 }
 
                 if ($this->port == 'ftp') {
-                    // ftp에서는 경로 변경
-                    // $ftpOriginPath = preg_replace("/(.*?)(?=\\" . ftp_pwd($this->conn) . ")/", '', $originPath);
-                    // $ftpChangePath = preg_replace("/(.*?)(?=\\" . ftp_pwd($this->conn) . ")/", '', $changePath);
-                    $ftpOriginPath = strstr($originPath, $this->dir_ftp_update);
-                    $ftpChangePath = strstr($changePath, $this->dir_ftp_update);
-
-                    if (ftp_nlist($this->conn, dirname((string)$ftpOriginPath)) == false) {
-                        $result = ftp_mkdir($this->conn, dirname((string)$ftpOriginPath));
+                    $ftpOriginPath = preg_replace("/(.*?)(?=\\" . ftp_pwd($this->conn) . ")/", '', $originPath);
+                    $ftpChangePath  = preg_replace("/(.*?)(?=\\" . ftp_pwd($this->conn) . ")/", '', $changePath);
+                    
+                    if (ftp_nlist($this->conn, dirname((string)$ftpChangePath)) == false) {
+                        $result = ftp_mkdir($this->conn, dirname((string)$ftpChangePath));
                         ftp_nb_continue($this->conn); // 디렉토리 생성후 파일을 계속해서 검색/전송
                         if ($result == false) {
                             throw new Exception("ftp를 통한 디렉토리 생성에 실패했습니다.");
                         }
                     }
+                    $restoreFile = @fopen($originPath, 'r+');
+                    $restoreContent = @fread($restoreFile, filesize($originPath));
 
-                    $fg = fopen($originPath, 'w'); // 덮어쓸 파일 포인터 생성
-                    if ($fg == false) {
+                    $originFile = fopen($originPath, 'w'); // 덮어쓸 파일 포인터 생성
+                    if ($originFile == false) {
                         throw new Exception("ftp를 통한 파일전송에 실패했습니다1.");
                     }
-                    $result = ftp_fget($this->conn, $fg, (string)$ftpChangePath, FTP_BINARY);
+                    $result = ftp_fget($this->conn, $originFile, $ftpChangePath, FTP_BINARY);
                     if ($result == false) {
+                        @fwrite($originFile, (string)$restoreContent);
                         throw new Exception("ftp를 통한 파일전송에 실패했습니다2.");
                     }
                 } elseif ($this->port == 'sftp') {
@@ -856,17 +878,15 @@ class G5Update
             }
 
             if ($this->port == 'ftp') {
-                $ftp_log_dir = preg_replace("/(.*?)(?=\\" . ftp_pwd($this->conn) . ")/", '', $this->dir_log);
-
-                if (ftp_nlist($this->conn, dirname($ftp_log_dir)) == false) {
-                    $result = ftp_mkdir($this->conn, $ftp_log_dir);
+                if (ftp_nlist($this->conn, dirname($this->ftp_dir_log)) == false) {
+                    $result = ftp_mkdir($this->conn, $this->ftp_dir_log);
                     if ($result == false) {
                         throw new Exception("디렉토리 생성에 실패했습니다.");
                     }
                 }
 
-                $datetime = date('Y-m-d_his', time());
-                $rand = rand(0000, 9999);
+                $datetime = date('Y-m-d_His', time());
+                $rand = sprintf('%4d', rand(0000, 9999));
 
                 $fp = fopen($this->dir_log . "/" . $datetime . '_' . $status . '_' . $rand . '.log', 'w+');
                 if ($fp == false) {
@@ -883,7 +903,7 @@ class G5Update
                         $fail_txt = "롤백 시 제거된 파일 내역\n";
                         break;
                     default:
-                        ftp_delete($this->conn, $ftp_log_dir . "/" . $datetime . '_' . $status . '_' . $rand . '.log');
+                        ftp_delete($this->conn, $this->ftp_dir_log . "/" . $datetime . '_' . $status . '_' . $rand . '.log');
                         throw new Exception("올바르지 않은 명령입니다.");
                 }
                 if (isset($success_list)) {
@@ -989,14 +1009,15 @@ class G5Update
 
         umask(0002);
 
-        $save = $this->dir_version . "/gnuboard.zip";
-
+        $exe    = $this->os == "WINNT" ? "tar" : "zip";
+        $save   = $this->dir_version . "/gnuboard." . $exe;
+        
         $zip = fopen($save, 'w+');
         if ($zip == false) {
             return false;
         }
 
-        $result = $this->getApiCurlResult('zip', $version);
+        $result = $this->getApiCurlResult($exe, $version);
         if ($result == false) {
             return false;
         }
@@ -1005,11 +1026,21 @@ class G5Update
             return false;
         }
 
-        exec('rm -rf ' . $this->dir_version . '/' . $version);
-        exec('unzip ' . $save . ' -d ' . $this->dir_version . '/' . $version);
-        exec('mv -f ' . $this->dir_version . '/' . $version . '/gnuboard-*/* ' . $this->dir_version . '/' . $version);
-        exec('rm -rf ' . $this->dir_version . '/' . $version . '/gnuboard-*/');
-        exec('rm -rf ' . $save);
+        // 시스템명령어 구분
+        if ($this->os == "WINNT") {
+            $window_dir_version = $this->window_dir_update . "\\version";
+
+            exec("rd /s /q " . $window_dir_version . "\\" . $version);
+            exec("tar -zxf " . $window_dir_version . "\\" . "gnuboard." . $exe . " -C " . $window_dir_version);
+            exec("move " . $window_dir_version . "\\" . "gnuboard-* " . $window_dir_version . "\\" . $version);
+            exec('del /q ' . $window_dir_version . "\\gnuboard." . $exe);
+        } else {
+            exec('rm -rf ' . $this->dir_version . '/' . $version);
+            exec('unzip ' . $save . ' -d ' . $this->dir_version . '/' . $version);
+            exec('mv -f ' . $this->dir_version . '/' . $version . '/gnuboard-*/* ' . $this->dir_version . '/' . $version);
+            exec('rm -rf ' . $this->dir_version . '/' . $version . '/gnuboard-*/');
+            exec('rm -rf ' . $save);
+        }
 
         umask(0022);
 
@@ -1064,17 +1095,22 @@ class G5Update
 
     /**
      * 변경된 파일목록 조회(backup)
-     * @breif 현재 그누보드와 백업 버전의 파일을 비교
+     * @breif 현재 그누보드와 백업파일을 비교
      * @param array<string> $list 동일버전 업데이트 파일목록
      * @param string $backupFile
      * @return array<mixed>|bool
      */
-    public function checkRollbackVersionComparison($backupFile, $list = null)
+    public function checkRollbackVersionComparison($list, $backupFile)
     {
+        $backupFilePath = preg_replace('/.zip/', '', $this->dir_backup . "/" . $backupFile);
+
         if ($this->now_version == null) {
             return false;
         }
         if ($list == null) {
+            return false;
+        }
+        if (!file_exists((string)$backupFilePath)) {
             return false;
         }
 
@@ -1087,20 +1123,14 @@ class G5Update
         $check['type'] = 'Y';
 
         foreach ($list as $key => $var) {
-            $now_file_path = G5_PATH . '/' . $var;
-            $backup_file_path = preg_replace('/.zip/', '', $backupFile);
-
-            if (!file_exists($now_file_path)) {
+            $currentFilePath = G5_PATH . '/' . $var;
+            if (!file_exists($currentFilePath)) {
                 continue;
             }
-            if (!file_exists((string)$backup_file_path)) {
-                continue;
-            }
+            $now_content = preg_replace('/\r/', '', (string)file_get_contents($currentFilePath, true));
+            $backupContent = preg_replace('/\r/', '', (string)file_get_contents((string)$backupFilePath, true));
 
-            $now_content = preg_replace('/\r/', '', (string)file_get_contents($now_file_path, true));
-            $backup_content = preg_replace('/\r/', '', (string)file_get_contents((string)$backup_file_path, true));
-
-            if ($now_content !== $backup_content) {
+            if ($now_content !== $backupContent) {
                 $check['type'] = 'N';
                 $check['item'][] = $var;
             }
@@ -1137,6 +1167,7 @@ class G5Update
     /**
      * 비교파일 목록 조회
      * @breif 현재버전과 목표버전 사이에서 변경된 파일목록 조회
+     * @todo 동일버전업데이트 : 파일이 변경되어서 동일버전으로 복구하려고 하는 케이스도 있기때문에 허용해야함.
      * @return array<string>|bool
      */
     public function getVersionCompareList()
@@ -1148,7 +1179,6 @@ class G5Update
             if ($this->now_version == $this->target_version) {
                 throw new Exception("동일버전으로는 업데이트가 불가능합니다.");
             }
-
             $version_list = $this->getVersionList();
             if ($version_list == false) {
                 throw new Exception("버전리스트를 가져오는데 실패했습니다.");
@@ -1243,7 +1273,7 @@ class G5Update
      * @return array<mixed>|bool
      * @todo 삭제되는 파일들을 어떻게 표시할 것인지?
      */
-    public function getDepthVersionCompareList()
+    public function getDepthVersionCompareList($compare_check)
     {
         try {
             $compare_list = $this->getVersionCompareList();
@@ -1251,14 +1281,14 @@ class G5Update
                 throw new Exception("비교리스트 확인에 실패했습니다.");
             }
 
-            $result = $this->checkSameVersionComparison($compare_list);
-            if ($result == false) {
-                throw new Exception("파일 비교에 실패했습니다.");
-            }
+            // $result = $this->checkSameVersionComparison($compare_list);
+            // if ($result == false) {
+            //     throw new Exception("파일 비교에 실패했습니다.");
+            // }
 
             foreach ($compare_list as $key => $var) {
-                if (isset($result['item'])) {
-                    if (@in_array($var, $result['item'])) {
+                if (isset($compare_check['item'])) {
+                    if (@in_array($var, $compare_check['item'])) {
                         $compare_list[$key] = $var . " (변경)";
                     }
                 }
@@ -1308,6 +1338,12 @@ class G5Update
                 }
                 $url .= "/repos/gnuboard/gnuboard5/zipball/" . $param1;
                 break;
+            case "tar":
+                if ($param1 == null) {
+                    return false;
+                }
+                $url .= "/repos/gnuboard/gnuboard5/tarball/" . $param1;
+                break;
             case "modify":
                 if ($param1 == null) {
                     return false;
@@ -1349,7 +1385,7 @@ class G5Update
         if (curl_errno($curl)) {
             return false;
         }
-        if ($option != 'zip') {
+        if ($option != 'zip' && $option != 'tar') {
             $response = json_decode((string)$response);
         }
         return $response;
@@ -1461,15 +1497,19 @@ class G5Update
     }
 
     /**
+     * 롤백버전 조회
      * @breif 백업경로에서 version.php 파일 내의 버전 값만 추출
-     * @param string $backupDir 백업파일 경로
-     * @return void
+     * @param string $backupFile 백업파일 경로
+     * @return string $rollback_version
      */
-    public function setRollbackVersion($backupDir)
+    public function setRollbackVersion($backupFile)
     {
-        $backup_version_file = file_get_contents($backupDir . '/version.php');
-        preg_match("/(?<=define\('G5_GNUBOARD_VER', ')(.*?)(?='\);)/", (string)$backup_version_file, $rollback_version); // 백업버전 체크
+        $backupDir = preg_replace('/.zip/', '', $this->dir_backup . "/" . $backupFile);
+        $backupVersionFile = file_get_contents($backupDir . '/version.php');
+        preg_match("/(?<=define\('G5_GNUBOARD_VER', ')(.*?)(?='\);)/", (string)$backupVersionFile, $rollback_version); // 백업버전 체크
         $this->rollback_version = "v" . $rollback_version[0];
+
+        return $this->rollback_version;
     }
 
     public function getToken()
