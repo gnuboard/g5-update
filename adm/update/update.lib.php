@@ -7,7 +7,6 @@ if (!defined('_GNUBOARD_')) {
  * 그누보드5 버전 업데이트
  * @todo window 환경에서 rm/unzip/mv 같은 리눅스 명령어가 작동하도록 작업
  * @todo disk_total_space, disk_free_space > 호스팅 환경에서는 용량표시가 제대로 안되는 듯..
- * @todo ftp step 진행 체크 (특히 경로가 잘 안맞을 수 있음.)
  *
  * @ignore $token값을 포함한 채로 github에 push하면 안됨.
  */
@@ -431,9 +430,10 @@ class G5Update
             if (is_dir($this->dir_backup)) {
                 if ($dh = @opendir($this->dir_backup)) {
                     $key = 0;
+                    $exe = ($this->os == "WINNT") ? "tar" : "zip";
                     while (($dl = @readdir($dh)) !== false) {
-                        if (preg_match('/.zip/i', $dl)) {
-                            $fileName = preg_replace('/.zip/', '', $dl);
+                        if (preg_match('/.' . $exe . '/i', $dl)) {
+                            $fileName = preg_replace('/.' . $exe . '/', '', $dl);
                             $arrayFileName  = explode("_", (string)$fileName);
                             $backupTime     = current($arrayFileName);
                             $backupVersion  = end($arrayFileName);
@@ -603,7 +603,6 @@ class G5Update
     public function createBackupZipFile()
     {
         try {
-            $result     = "";
             $fileName   = date('YmdHis', G5_SERVER_TIME) . "_" . $this->now_version;
             $exe        = $this->os == "WINNT" ? "tar" : "zip";
             $backupPath = G5_DATA_PATH . "/update/backup/" . $fileName . "." . $exe;
@@ -613,19 +612,14 @@ class G5Update
             }
             if (!file_exists($backupPath)) {
                 if ($this->os == "WINNT") {
-                    // window 환경에서 압축파일 생성이 잘 안됨. (진행 중)
-                    // $disk = current(explode('/', G5_PATH));
-                    // exec($disk);
-                    // exec("cd " . G5_PATH);
-                    // $result = exec("tar -czf data/update/backup/" . $fileName . "." . $exe ." --exclude data ./*");
+                    exec("tar -czf " . $backupPath ." -C " . G5_PATH . " --exclude data ./*", $output, $result_code);
                 } else {
-                    $result = exec("zip -r " . $backupPath . " ../../" . " -x '../../data/*'");
+                    exec("zip -r " . $backupPath . " ../../" . " -x '../../data/*'", $output, $result_code);
                 }
             }
-            if ($result == false) {
+            if ($result_code != 0) {
                 throw new Exception("백업파일 생성이 실패했습니다.");
             }
-
             return "success";
         } catch (Exception $e) {
             return $e->getMessage();
@@ -639,17 +633,33 @@ class G5Update
     public function unzipBackupFile($backupFile)
     {
         try {
+            $exe        = $this->os == "WINNT" ? "tar" : "zip";
             $backupPath = $this->dir_backup . "/" . $backupFile;
-            $backupDir = preg_replace('/.zip/', '', $backupPath);
+            $backupDir  = preg_replace('/.' . $exe . '/', '', $backupPath);
+            $backupDirName = preg_replace('/.' . $exe . '/', '', $backupFile);
             
             // 덮어쓰지 않음
             // if (is_dir((string)$backupDir)) {
             //     return true;
             // }
-
             if (file_exists($backupPath)) {
-                $result = exec("unzip " . $backupPath . " -d " . $backupDir);
-                if ($result == false) {
+                if ($this->os == "WINNT") {
+                    if (!is_dir($backupDir)) {
+                        if ($this->port == "ftp") {
+                            if (!ftp_mkdir($this->conn, $this->ftp_dir_backup . "/" . $backupDirName)) {
+                                throw new Exception("/update/backup/" . $backupDirName . " 디렉토리를 생성하는데 실패했습니다.");
+                            }
+                        } elseif ($this->port == "sftp") {
+                            if (!ssh2_sftp_mkdir($this->connPath, $backupDir, 0707)) {
+                                throw new Exception("디렉토리를 생성하는데 실패했습니다.");
+                            }
+                        }
+                    }
+                    exec("tar -zxf " . $backupPath . " -C " . $backupDir, $output, $result_code);
+                } else {
+                    exec("unzip " . $backupPath . " -d " . $backupDir, $output, $result_code);
+                }
+                if ($result_code != 0) {
                     throw new Exception("압축해제에 실패했습니다.");
                 }
             } else {
@@ -700,7 +710,7 @@ class G5Update
                 throw new Exception("통신이 연결되지 않았습니다.");
             }
             if ($this->port == 'ftp') {
-                $originPath = preg_replace("/(.*?)(?=\\" . ftp_pwd($this->conn) . ")/", '', $originPath);
+                $originPath = preg_replace("/(.*?)(?=\\" . (string)str_replace("/", "\/", ftp_pwd($this->conn)) . ")/", '', $originPath);
                 $result = ftp_delete($this->conn, (string)$originPath);
             } elseif ($this->port == 'sftp') {
                 $result = ssh2_sftp_unlink($this->connPath, $originPath);
@@ -737,7 +747,7 @@ class G5Update
                 $result = false;
                 // ftp경로 체크 예정
                 if ($this->port == 'ftp') {
-                    $originDir = preg_replace("/(.*?)(?=\\" . ftp_pwd($this->conn) . ")/", '', $originDir);
+                    $originDir = preg_replace("/(.*?)(?=\\" . (string)str_replace("/", "\/", ftp_pwd($this->conn)) . ")/", '', $originDir);
                     $result = ftp_rmdir($this->conn, (string)$originDir);
                 } elseif ($this->port == 'sftp') {
                     $result = ssh2_sftp_rmdir($this->connPath, $originDir);
@@ -789,7 +799,7 @@ class G5Update
                  * @todo ftp 테스트 필요 (경로문제)
                  */
                 if ($this->port == 'ftp') {
-                    $ftpOriginPath = preg_replace("/(.*?)(?=\\" . ftp_pwd($this->conn) . ")/", '', $originPath);
+                    $ftpOriginPath = preg_replace("/(.*?)(?=" . (string)str_replace("/", "\/", ftp_pwd($this->conn)) . ")/", '', $originPath);
                     $result = ftp_delete($this->conn, (string)$ftpOriginPath);
                 } elseif ($this->port == 'sftp') {
                     $result = ssh2_sftp_unlink($this->connPath, $originPath);
@@ -811,9 +821,9 @@ class G5Update
                 }
 
                 if ($this->port == 'ftp') {
-                    $ftpOriginPath = preg_replace("/(.*?)(?=\\" . ftp_pwd($this->conn) . ")/", '', $originPath);
-                    $ftpChangePath  = preg_replace("/(.*?)(?=\\" . ftp_pwd($this->conn) . ")/", '', $changePath);
-                    
+                    $ftpOriginPath = preg_replace("/(.*?)(?=" . (string)str_replace("/", "\/", ftp_pwd($this->conn)) . ")/", '', $originPath);
+                    $ftpChangePath  = preg_replace("/(.*?)(?=" . (string)str_replace("/", "\/", ftp_pwd($this->conn)) . ")/", '', $changePath);
+
                     if (ftp_nlist($this->conn, dirname((string)$ftpChangePath)) == false) {
                         $result = ftp_mkdir($this->conn, dirname((string)$ftpChangePath));
                         ftp_nb_continue($this->conn); // 디렉토리 생성후 파일을 계속해서 검색/전송
@@ -1504,7 +1514,8 @@ class G5Update
      */
     public function setRollbackVersion($backupFile)
     {
-        $backupDir = preg_replace('/.zip/', '', $this->dir_backup . "/" . $backupFile);
+        $exe = $this->os == "WINNT" ? "tar" : "zip";
+        $backupDir = preg_replace('/.' . $exe . '/', '', $this->dir_backup . "/" . $backupFile);
         $backupVersionFile = file_get_contents($backupDir . '/version.php');
         preg_match("/(?<=define\('G5_GNUBOARD_VER', ')(.*?)(?='\);)/", (string)$backupVersionFile, $rollback_version); // 백업버전 체크
         $this->rollback_version = "v" . $rollback_version[0];
