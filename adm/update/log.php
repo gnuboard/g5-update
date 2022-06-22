@@ -29,7 +29,7 @@ $total_page = $g5['update']->getLogListSize();
         </tr>
         </thead>
         <tbody>
-        <?php if (count($list) > 0) { ?>
+        <?php if (is_array($list) && count($list) > 0) { ?>
             <?php foreach ($list as $key => $var) { ?>
             <tr>
                 <td><a href="./log_detail.php?filename=<?php echo $var['filename']; ?>"><?php echo $var['filename']; ?></a></td>

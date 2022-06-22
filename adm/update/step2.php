@@ -63,14 +63,18 @@ $g5['update']->disconnect();
 
 <div>
     <p style="font-weight:bold; font-size:15px;">업데이트 성공</p>
-    <?php foreach ($update_check['success'] as $key => $var) { ?>
-        <p><?php echo $var; ?></p>
+    <?php if (is_array($update_check['success'])) { ?>
+        <?php foreach ($update_check['success'] as $key => $var) { ?>
+            <p><?php echo $var; ?></p>
+        <?php } ?>
     <?php } ?>
     <br>
 
     <p style="font-weight:bold; font-size:15px;">업데이트 실패</p>
-    <?php foreach ($update_check['fail'] as $key => $var) { ?>
-        <p><span style="color:red;"><?php echo $var['file']; ?></span><?php echo ' : ' . $var['message']; ?></p>
+    <?php if (is_array($update_check['fail'])) { ?>
+        <?php foreach ($update_check['fail'] as $key => $var) { ?>
+            <p><span style="color:red;"><?php echo $var['file']; ?></span><?php echo ' : ' . $var['message']; ?></p>
+        <?php } ?>
     <?php } ?>
 </div>
 

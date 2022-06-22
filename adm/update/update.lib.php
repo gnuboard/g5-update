@@ -211,8 +211,10 @@ class G5Update
                     if (!ftp_mkdir($this->conn, $this->ftp_dir_update)) {
                         throw new Exception("/update 디렉토리를 생성하는데 실패했습니다.");
                     }
-                    if (!ftp_chmod($this->conn, 0707, $this->ftp_dir_update) && $this->os != "WINNT") {
-                        throw new Exception("/update 디렉토리의 권한을 변경하는데 실패했습니다.");
+                    if ($this->os != "WINNT") {
+                        if (!ftp_chmod($this->conn, 0707, $this->ftp_dir_update)) {
+                            throw new Exception("/update 디렉토리의 권한을 변경하는데 실패했습니다.");
+                        }
                     }
                 }
 
@@ -220,8 +222,10 @@ class G5Update
                     if (!ftp_mkdir($this->conn, $this->ftp_dir_version)) {
                         throw new Exception("/update/version 디렉토리를 생성하는데 실패했습니다.");
                     }
-                    if (!ftp_chmod($this->conn, 0707, $this->ftp_dir_version) && $this->os != "WINNT") {
-                        throw new Exception("/update/version 디렉토리의 권한을 변경하는데 실패했습니다.");
+                    if ($this->os != "WINNT") {
+                        if (!ftp_chmod($this->conn, 0707, $this->ftp_dir_version)) {
+                            throw new Exception("/update/version 디렉토리의 권한을 변경하는데 실패했습니다.");
+                        }
                     }
                 }
 
@@ -229,8 +233,10 @@ class G5Update
                     if (!ftp_mkdir($this->conn, $this->ftp_dir_log)) {
                         throw new Exception("/update/log 디렉토리를 생성하는데 실패했습니다.");
                     }
-                    if (!ftp_chmod($this->conn, 0755, $this->ftp_dir_log) && $this->os != "WINNT") {
-                        throw new Exception("/update/log 디렉토리의 권한을 변경하는데 실패했습니다.");
+                    if ($this->os != "WINNT") {
+                        if (!ftp_chmod($this->conn, 0755, $this->ftp_dir_log)) {
+                            throw new Exception("/update/log 디렉토리의 권한을 변경하는데 실패했습니다.");
+                        }
                     }
                 }
 
@@ -238,8 +244,10 @@ class G5Update
                     if (!ftp_mkdir($this->conn, $this->ftp_dir_backup)) {
                         throw new Exception("/update/backup 디렉토리를 생성하는데 실패했습니다.");
                     }
-                    if (!ftp_chmod($this->conn, 0707, $this->ftp_dir_backup) && $this->os != "WINNT") {
-                        throw new Exception("/update/backup 디렉토리의 권한을 변경하는데 실패했습니다.");
+                    if ($this->os != "WINNT") {
+                        if (!ftp_chmod($this->conn, 0707, $this->ftp_dir_backup)) {
+                            throw new Exception("/update/backup 디렉토리의 권한을 변경하는데 실패했습니다.");
+                        }
                     }
                 }
                 // $list = ftp_nlist($this->conn, $this->dir_ftp_update);
