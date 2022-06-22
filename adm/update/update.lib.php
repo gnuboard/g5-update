@@ -790,16 +790,19 @@ class G5Update
     public function writeUpdateFile($originPath, $changePath)
     {
         try {
+            $ftpOriginPath  = "";
+            $ftpChangePath  = "";
+            if ($this->port == 'ftp') {
+                $ftpPwd         = str_replace("/", "\/", (string)ftp_pwd($this->conn));
+                $ftpOriginPath  = preg_replace("/(.*?)(?=" . (string)$ftpPwd . ")/", '', $originPath);
+                $ftpChangePath  = preg_replace("/(.*?)(?=" . (string)$ftpPwd . ")/", '', $changePath);
+            }
+
             if ($this->conn == false) {
                 throw new Exception("통신이 연결되지 않았습니다.");
 
             } elseif (!file_exists($changePath)) {
-                /**
-                 * 파일이 패치버전에 없을 경우 삭제처리
-                 * @todo ftp 테스트 필요 (경로문제)
-                 */
                 if ($this->port == 'ftp') {
-                    $ftpOriginPath = preg_replace("/(.*?)(?=" . (string)str_replace("/", "\/", ftp_pwd($this->conn)) . ")/", '', $originPath);
                     $result = ftp_delete($this->conn, (string)$ftpOriginPath);
                 } elseif ($this->port == 'sftp') {
                     $result = ssh2_sftp_unlink($this->connPath, $originPath);
@@ -821,9 +824,6 @@ class G5Update
                 }
 
                 if ($this->port == 'ftp') {
-                    $ftpOriginPath = preg_replace("/(.*?)(?=" . (string)str_replace("/", "\/", ftp_pwd($this->conn)) . ")/", '', $originPath);
-                    $ftpChangePath  = preg_replace("/(.*?)(?=" . (string)str_replace("/", "\/", ftp_pwd($this->conn)) . ")/", '', $changePath);
-
                     if (ftp_nlist($this->conn, dirname((string)$ftpChangePath)) == false) {
                         $result = ftp_mkdir($this->conn, dirname((string)$ftpChangePath));
                         ftp_nb_continue($this->conn); // 디렉토리 생성후 파일을 계속해서 검색/전송
@@ -1112,7 +1112,8 @@ class G5Update
      */
     public function checkRollbackVersionComparison($list, $backupFile)
     {
-        $backupFilePath = preg_replace('/.zip/', '', $this->dir_backup . "/" . $backupFile);
+        $exe = $this->os == "WINNT" ? "tar" : "zip";
+        $backupPath = preg_replace('/.' . $exe . '/', '', $this->dir_backup . "/" . $backupFile);
 
         if ($this->now_version == null) {
             return false;
@@ -1120,7 +1121,7 @@ class G5Update
         if ($list == null) {
             return false;
         }
-        if (!file_exists((string)$backupFilePath)) {
+        if (!file_exists((string)$backupPath)) {
             return false;
         }
 
@@ -1133,10 +1134,16 @@ class G5Update
         $check['type'] = 'Y';
 
         foreach ($list as $key => $var) {
-            $currentFilePath = G5_PATH . '/' . $var;
+            $currentFilePath    = G5_PATH . '/' . $var;
+            $backupFilePath     = $backupPath . '/' . $var;
+
             if (!file_exists($currentFilePath)) {
                 continue;
             }
+            if (!file_exists($backupFilePath)) {
+                continue;
+            }
+
             $now_content = preg_replace('/\r/', '', (string)file_get_contents($currentFilePath, true));
             $backupContent = preg_replace('/\r/', '', (string)file_get_contents((string)$backupFilePath, true));
 

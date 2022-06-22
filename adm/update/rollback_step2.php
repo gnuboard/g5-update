@@ -30,33 +30,35 @@ $result = $g5['update']->createBackupZipFile();
 if ($result == "success") {
     $update_check = array();
     foreach ($list as $key => $var) {
-        $originPath = G5_PATH . '/' . $var;
-        $backupPath = preg_replace('/.zip/', '', G5_DATA_PATH . '/update/backup/' .  $rollback_file) . '/' . $var;
+        $exe = $g5['update']->os == "WINNT" ? "tar" : "zip";
+        $backupPath = preg_replace('/.' . $exe . '/', '', G5_DATA_PATH . '/update/backup/' .  $rollback_file);
+        $originFilePath = G5_PATH . '/' . $var;
+        $backupFilePath = $backupPath . '/' . $var;
 
-        if (!file_exists($backupPath) && file_exists($originPath)) { // 백업파일은 존재하지않지만 서버파일은 존재할때
-            $result = $g5['update']->deleteOriginFile($originPath);
+        if (!file_exists($backupFilePath) && file_exists($originFilePath)) { // 백업파일은 존재하지않지만 서버파일은 존재할때
+            $result = $g5['update']->deleteOriginFile($originFilePath);
             if ($result == "success") {
                 $update_check['success'][] = $var;
             } else {
                 $update_check['fail'][] = array('file' => $var, 'message' => $result);
             }
         }
-        if (!is_dir(dirname($backupPath)) && is_dir(dirname($originPath))) { // 백업디렉토리는 존재하지않지만 서버디렉토리는 존재할때
-            $result = $g5['update']->removeEmptyOriginDir(dirname($originPath));
+        if (!is_dir(dirname($backupFilePath)) && is_dir(dirname($originFilePath))) { // 백업디렉토리는 존재하지않지만 서버디렉토리는 존재할때
+            $result = $g5['update']->removeEmptyOriginDir(dirname($originFilePath));
             if ($result == "success") {
                 $update_check['success'][] = $var;
             } else {
                 $update_check['fail'][] = array('file' => $var, 'message' => $result);
             }
         }
-        $result = $g5['update']->writeUpdateFile($originPath, $backupPath);
+        $result = $g5['update']->writeUpdateFile($originFilePath, $backupFilePath);
         if ($result == "success") {
             $update_check['success'][] = $var;
         } else {
             $update_check['fail'][] = array('file' => $var, 'message' => $result);
         }
     }
-    $g5['update']->deleteBackupDir(preg_replace('/.zip/', '', G5_DATA_PATH . '/update/backup/' .  $rollback_file));
+    $g5['update']->deleteBackupDir($backupPath);
 } else {
     $update_check['fail'][] = array('file' => "", 'message' => $result);
 }

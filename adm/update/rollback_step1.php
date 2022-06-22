@@ -48,10 +48,12 @@ if ($list == null) {
     die("비교파일리스트가 존재하지 않습니다.");
 }
 
-$compare_list = $g5['update']->checkRollbackVersionComparison($list, $rollback_file);
-if ($compare_list == false) {
+$compare_check = $g5['update']->checkRollbackVersionComparison($list, $rollback_file);
+if ($compare_check == false) {
     die("파일 비교에 실패했습니다.");
 }
+
+$plist = $g5['update']->getDepthVersionCompareList($compare_check);
 ?>
 
 <h2 class="h2_frm">업데이트 복원 진행</h2>
@@ -62,7 +64,7 @@ if ($compare_list == false) {
 </ul>
 
 <form method="POST" name="update_box" class="update_box" action="./rollback_step2.php" onsubmit="return update_submit(this);">
-    <input type="hidden" name="compare_check" value="<?php echo $compare_list['type']; ?>">
+    <input type="hidden" name="compare_check" value="<?php echo $compare_check['type']; ?>">
     <input type="hidden" name="username" value="<?php echo $username; ?>">
     <input type="hidden" name="password" value="<?php echo $userpassword; ?>">
     <input type="hidden" name="port" value="<?php echo $port; ?>">
@@ -90,15 +92,20 @@ if ($compare_list == false) {
                             <table>
                                 <tr>
                                     <td style="line-height:2; border: none !important;">
-                                    <?php foreach ($list as $key => $var) {
+                                    <?php print_r($g5['update']->changeDepthListPrinting($plist)); ?>
+                                    <?php
+                                    /*
+                                    foreach ($list as $key => $var) {
                                         $txt = '';
-                                        if (isset($var) && isset($compare_list['item'])) {
-                                            if (in_array($var, $compare_list['item'])) {
+                                        if (isset($var) && isset($compare_check['item'])) {
+                                            if (in_array($var, $compare_check['item'])) {
                                                 $txt = " (변경)";
                                             }
-                                        } ?>
-                                        <p>파일위치 : <?php echo $var . $txt; ?></p>
-                                    <?php } ?>
+                                        }
+                                        echo "<p>파일위치 : " . $var . $txt ."</p>";
+                                    }
+                                    */
+                                    ?>
                                     </td>
                                 </tr>
                             </table>
@@ -107,10 +114,10 @@ if ($compare_list == false) {
                 </tr>
                 <tr>
                     <td colspan="2" style="vertical-align: top;">
-                    <?php if ($compare_list['type'] == 'Y') { ?>
+                    <?php if ($compare_check['type'] == 'Y') { ?>
                         <button type="submit" class="btn btn_submit">업데이트 진행</button>
                     <?php } else { ?>
-                        <!-- <p style="color:red; font-weight:bold;">롤백이 진행될 파일리스트 입니다.</p> -->
+                        <p style="color:red; font-weight:bold;">롤백이 진행될 파일리스트 입니다.</p>
                         <div style="margin-top:30px;">
                             <button type="submit" class="btn btn_submit">복원 진행</button>
                             <button type="button" class="btn btn_03 btn_cancel">복원 진행 취소</button>
