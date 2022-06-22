@@ -5,7 +5,6 @@ if (!defined('_GNUBOARD_')) {
 
 /**
  * 그누보드5 버전 업데이트
- * @todo window 환경에서 rm/unzip/mv 같은 리눅스 명령어가 작동하도록 작업
  * @todo disk_total_space, disk_free_space > 호스팅 환경에서는 용량표시가 제대로 안되는 듯..
  *
  * @ignore $token값을 포함한 채로 github에 push하면 안됨.
@@ -40,10 +39,6 @@ class G5Update
     private $compare_list = array();
     private $backup_list = array();
     private $log_list = array();
-
-    public $patch = array();
-
-    private $username;
 
     private $conn;
     private $port;
@@ -664,12 +659,16 @@ class G5Update
                         }
                     }
                     exec("tar -zxf " . $backupPath . " -C " . $backupDir, $output, $result_code);
+                    if ($result_code != 0) {
+                        throw new Exception("압축해제에 실패했습니다.");
+                    }
                 } else {
-                    exec("unzip " . $backupPath . " -d " . $backupDir, $output, $result_code);
+                    $result = exec("unzip -o " . $backupPath . " -d " . $backupDir);
+                    if (!$result) {
+                        throw new Exception("압축해제에 실패했습니다.");
+                    }
                 }
-                if ($result_code != 0) {
-                    throw new Exception("압축해제에 실패했습니다.");
-                }
+                
             } else {
                 throw new Exception("백업파일이 존재하지 않습니다.");
             }
@@ -860,7 +859,7 @@ class G5Update
                         $permission = intval(substr(sprintf('%o', fileperms($changePath)), -4), 8);
                         $result = ssh2_scp_send($this->conn, $changePath, $originPath, $permission);
                     } else {
-                        $result = file_put_contents("ssh2.sftp://" . intval($this->connPath) . $originPath, $content);
+                        $result = file_put_contents("ssh2.sftp://" . intval($this->connPath) . $originPath, $changeContent);
                     }
 
                     if ($result == false) {
@@ -904,7 +903,7 @@ class G5Update
                 }
 
                 $datetime = date('Y-m-d_His', time());
-                $rand = sprintf('%4d', rand(0000, 9999));
+                $rand = sprintf('%04d', rand(0000, 9999));
 
                 $fp = fopen($this->dir_log . "/" . $datetime . '_' . $status . '_' . $rand . '.log', 'w+');
                 if ($fp == false) {
