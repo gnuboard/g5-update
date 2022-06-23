@@ -10,10 +10,12 @@ if (file_exists(G5_DATA_PATH . '/s3config.php')) {
     include_once(G5_DATA_PATH . '/s3config.php');
 }
 require_once(G5_LIB_PATH . '/AwsSdk/aws-autoloader.php');
+require_once(G5_LIB_PATH . '/Hook/hook.class.php');
 
 use Aws\Credentials\Credentials;
 use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
+use Hook;
 
 class S3Service
 {
@@ -77,9 +79,10 @@ class S3Service
         //s3 사용시에만 훅스 등록
 
         if ($this->is_only_use_s3 && $this->region && $this->bucket_name && $this->access_key && $this->secret_key) {
+            Hook::setSingletonName('get_instance');
             $this->add_hooks();
         }
-        //칼럼명에 - 안들어가게 방지
+        //칼럼명 필터링
         $this->extra_item_field = preg_replace('/[^a-z0-9_]/i', '', $this->extra_item_field);
     }
 
@@ -110,8 +113,8 @@ class S3Service
             $sql = "select * from $table_name";
             $result = sql_fetch($sql, false);
             $this->acl_default_value = $result['acl_default_value'];
-            $this->is_save_host = $result['is_save_host'] === '1' ? true : false;
-            $this->is_only_use_s3 = $result['is_only_use_s3'] === '1' ? true : false;
+            $this->is_save_host = $result['is_save_host'] == '1' ? true : false;
+            $this->is_only_use_s3 = $result['is_only_use_s3'] == '1' ? true : false;
         }
     }
 
@@ -284,8 +287,8 @@ class S3Service
                     'credentials' => $credentials
                 );
 
-                $s3_client = new S3Client($options);
-                $bucket_region = $s3_client->getBucketLocation(array(
+                $this->s3_client = new S3Client($options);
+                $bucket_region = $this->s3_client->getBucketLocation(array(
                     'Bucket' => $bucket_name
                 ));
 
@@ -716,7 +719,14 @@ class S3Service
             $it[$this->extra_item_field] = '';
         }
 
-        $item_extra_infos = unserialize(base64_decode($it[$this->extra_item_field]));
+
+        if(!is_object(unserialize(base64_decode($it[$this->extra_item_field])))){
+            error_log("it array", var_dump($it));
+            error_log("extra_item before unseri",var_dump($it[$this->extra_item_field]));
+            $item_extra_infos = unserialize(base64_decode($it[$this->extra_item_field]));
+        }
+
+        //$item_extra_infos = \GuzzleHttp\json_decode($it[$this->extra_item_field]);
         $before_infos = array();
 
         foreach ((array)$item_extra_infos as $key => $value) {
@@ -1330,7 +1340,7 @@ class S3Service
     // https://stackoverflow.com/questions/41189477/preg-replace-image-src-using-callback
 
     /**
-     * wr_content 등 내용에서 내 도메인 이미지 url 을 aws s3 https 로 변환
+     * wr_content 등 '에디터' 내용에서 내 도메인 이미지 url 을 aws s3 https 로 변환
      * @param $contents
      * @return array|mixed|string|string[]|null
      */
@@ -1350,6 +1360,10 @@ class S3Service
         return $contents;
     }
 
+    /**
+     * @param $matches
+     * @return array|string|string[]
+     */
     public function replace_url($matches)
     {
         $replace_url = 'https://' . $this->bucket_name . '.s3.' . $this->region . '.amazonaws.com/' . G5_DATA_DIR;
@@ -1797,7 +1811,7 @@ class S3Service
      */
     public function editor_upload_url($fileurl, $filepath, $args = array())
     {
-        if ($this->s3_client !== null && file_exists($filepath)) {
+        if ($this->s3_client() !== null && file_exists($filepath)) {
             $file_key = $this->fileurl_replace_key($fileurl);
             $upload_mime = $this->mime_content_type($filepath);
 
