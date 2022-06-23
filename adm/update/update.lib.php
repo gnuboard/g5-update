@@ -5,7 +5,12 @@ if (!defined('_GNUBOARD_')) {
 
 /**
  * 그누보드5 버전 업데이트
- * @todo disk_total_space, disk_free_space > 호스팅 환경에서는 용량표시가 제대로 안되는 듯..
+ * @todo
+ * 1. disk_total_space, disk_free_space > 호스팅 환경에서는 용량표시가 제대로 안되는 듯..
+ * 2. 업데이트에 필요한 최소용량 및 용량 초과시 발생하는 오류
+ * 3. 사용자의 API요청횟수를 늘리기 위한 PAT(personal access token)를 등록하는 방안
+ * 
+ * @todo 
  *
  * @ignore $token값을 포함한 채로 github에 push하면 안됨.
  */
@@ -156,6 +161,7 @@ class G5Update
     /**
      * ftp connect gnuboard5경로 설정
      * @breif ftp 연결 시 홈 디렉토리가 서버 및 계정 설정에 따라 다 제각각이므로 초기경로를 잡아준다.
+     * @return void
      */
     public function setFtpDirectoryToG5()
     {
@@ -169,8 +175,8 @@ class G5Update
             }
             if (@ftp_chdir($this->conn, $relativePath)) {
                 // 현재 경로가 그누보드인지 체크해야함. (data폴더)
-                $original_directory = ftp_pwd($this->conn);
-                if (@ftp_chdir($this->conn, ftp_pwd($this->conn) . "/data")) {
+                $original_directory = (string)ftp_pwd($this->conn);
+                if (@ftp_chdir($this->conn, (string)ftp_pwd($this->conn) . "/data")) {
                     ftp_chdir($this->conn, $original_directory);
                     break;
                 }
@@ -366,7 +372,8 @@ class G5Update
      * @param int   $decimals     표시할 소수점 자릿수
      * @return string   용량 + 데이터단위
      */
-    private function getFormatFileSize($bytes, $decimals = 2) {
+    private function getFormatFileSize($bytes, $decimals = 2)
+    {
         $size = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
         $factor = floor((strlen((string)$bytes) - 1) / 3);
 
@@ -668,7 +675,6 @@ class G5Update
                         throw new Exception("압축해제에 실패했습니다.");
                     }
                 }
-                
             } else {
                 throw new Exception("백업파일이 존재하지 않습니다.");
             }
@@ -744,7 +750,6 @@ class G5Update
             if ($this->conn == false) {
                 throw new Exception("통신이 연결되지 않았습니다.");
             }
-
             if (!is_dir($originDir)) {
                 throw new Exception("디렉토리가 아닙니다.");
             }
@@ -752,7 +757,6 @@ class G5Update
             $dirCheck = $this->checkDirIsEmpty($originDir);
             if ($dirCheck) {
                 $result = false;
-                // ftp경로 체크 예정
                 if ($this->port == 'ftp') {
                     $originDir = preg_replace("/(.*?)(?=\\" . (string)str_replace("/", "\/", ftp_pwd($this->conn)) . ")/", '', $originDir);
                     $result = ftp_rmdir($this->conn, (string)$originDir);
@@ -807,7 +811,6 @@ class G5Update
 
             if ($this->conn == false) {
                 throw new Exception("통신이 연결되지 않았습니다.");
-
             } elseif (!file_exists($changePath)) {
                 if ($this->port == 'ftp') {
                     $result = ftp_delete($this->conn, (string)$ftpOriginPath);
@@ -815,7 +818,6 @@ class G5Update
                     $result = ssh2_sftp_unlink($this->connPath, $originPath);
                 }
                 throw new Exception("업데이트에 삭제되거나 존재하지 않는 파일입니다.");
-
             } else {
                 $changeFileSize = filesize($changePath);
                 if ($changeFileSize <= 0) {
