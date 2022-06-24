@@ -27,8 +27,9 @@ if ($list == null) {
 <br>
 <?php
 $result = $g5['update']->createBackupZipFile();
+$update_check['success']    = array();
+$update_check['fail']       = array();
 if ($result == "success") {
-    $update_check = array();
     foreach ($list as $key => $var) {
         $exe = $g5['update']->os == "WINNT" ? "tar" : "zip";
         $backupPath = preg_replace('/.' . $exe . '/', '', G5_DATA_PATH . '/update/backup/' .  $rollback_file);
@@ -70,7 +71,7 @@ $g5['update']->disconnect();
 ?>
 <div>
     <p style="font-weight:bold; font-size:15px;">복원 성공</p>
-    <?php if (is_array($update_check['success'])) { ?>
+    <?php if (isset($update_check['success'])) { ?>
         <?php foreach ($update_check['success'] as $key => $var) { ?>
             <p><?php echo $var; ?></p>
         <?php } ?>
@@ -78,7 +79,7 @@ $g5['update']->disconnect();
     <br>
 
     <p style="font-weight:bold; font-size:15px;">백업본에 존재하지 않아 제거된 파일</p>
-    <?php if (is_array($update_check['fail'])) { ?>
+    <?php if (isset($update_check['fail'])) { ?>
         <?php foreach ($update_check['fail'] as $key => $var) { ?>
             <p><span style="color:red;"><?php echo $var['file']; ?></span><?php echo ' : ' . $var['message']; ?></p>
         <?php } ?>

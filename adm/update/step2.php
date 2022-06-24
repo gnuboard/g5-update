@@ -41,8 +41,9 @@ if ($result == false) {
 <br>
 <?php
 $result = $g5['update']->createBackupZipFile();
+$update_check['success']    = array();
+$update_check['fail']       = array();
 if ($result == "success") {
-    $update_check = array();
     foreach ($list as $key => $var) {
         $result = $g5['update']->writeUpdateFile(G5_PATH . '/' . $var, G5_DATA_PATH . '/update/version/' . $target_version . '/' . $var);
         if ($result == "success") {
@@ -63,7 +64,7 @@ $g5['update']->disconnect();
 
 <div>
     <p style="font-weight:bold; font-size:15px;">업데이트 성공</p>
-    <?php if (is_array($update_check['success'])) { ?>
+    <?php if (isset($update_check['success'])) { ?>
         <?php foreach ($update_check['success'] as $key => $var) { ?>
             <p><?php echo $var; ?></p>
         <?php } ?>
@@ -71,7 +72,7 @@ $g5['update']->disconnect();
     <br>
 
     <p style="font-weight:bold; font-size:15px;">업데이트 실패</p>
-    <?php if (is_array($update_check['fail'])) { ?>
+    <?php if (isset($update_check['fail'])) { ?>
         <?php foreach ($update_check['fail'] as $key => $var) { ?>
             <p><span style="color:red;"><?php echo $var['file']; ?></span><?php echo ' : ' . $var['message']; ?></p>
         <?php } ?>
