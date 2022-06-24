@@ -37,7 +37,7 @@ if ($result == false) {
     <li><a href="./log.php">로그</a></li>
 </ul>
 
-<p style="font-size:15px; font-weight:bold;"><?php echo $g5['update']->targetVersion; ?> 버전 파일 다운로드 완료</p>
+<p style="font-size:15px; font-weight:bold;"><?php echo $g5['update']->target_version; ?> 버전 파일 다운로드 완료</p>
 <br>
 <?php
 $result = $g5['update']->createBackupZipFile();
