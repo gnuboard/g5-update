@@ -812,11 +812,11 @@ class G5Update
             if ($this->conn == false) {
                 throw new Exception("통신이 연결되지 않았습니다.");
             } elseif (!file_exists($changePath)) {
-                if ($this->port == 'ftp') {
-                    $result = ftp_delete($this->conn, (string)$ftpOriginPath);
-                } elseif ($this->port == 'sftp') {
-                    $result = ssh2_sftp_unlink($this->connPath, $originPath);
-                }
+                // if ($this->port == 'ftp') {
+                //     $result = ftp_delete($this->conn, (string)$ftpOriginPath);
+                // } elseif ($this->port == 'sftp') {
+                //     $result = ssh2_sftp_unlink($this->connPath, $originPath);
+                // }
                 throw new Exception("업데이트에 삭제되거나 존재하지 않는 파일입니다.");
             } else {
                 $changeFileSize = filesize($changePath);
@@ -840,8 +840,14 @@ class G5Update
                             throw new Exception("ftp를 통한 디렉토리 생성에 실패했습니다.");
                         }
                     }
-                    $restoreFile = @fopen($originPath, 'r+');
-                    $restoreContent = @fread($restoreFile, filesize($originPath));
+
+                    $restoreContent = "";
+                    if (file_exists($originPath)) {
+                        $restoreFile = @fopen($originPath, 'r+');
+                        if ($restoreFile) {
+                            $restoreContent = @fread($restoreFile, filesize($originPath));
+                        }
+                    }
 
                     $originFile = fopen($originPath, 'w'); // 덮어쓸 파일 포인터 생성
                     if ($originFile == false) {
@@ -849,7 +855,9 @@ class G5Update
                     }
                     $result = ftp_fget($this->conn, $originFile, $ftpChangePath, FTP_BINARY);
                     if ($result == false) {
-                        @fwrite($originFile, (string)$restoreContent);
+                        if ($restoreContent) {
+                            @fwrite($originFile, (string)$restoreContent);
+                        }
                         throw new Exception("ftp를 통한 파일전송에 실패했습니다2.");
                     }
                 } elseif ($this->port == 'sftp') {
