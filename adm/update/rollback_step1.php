@@ -65,10 +65,10 @@ $plist = $g5['update']->getDepthVersionCompareList($compare_check);
 
 <form method="POST" name="update_box" class="update_box" action="./rollback_step2.php" onsubmit="return update_submit(this);">
     <input type="hidden" name="compare_check" value="<?php echo $compare_check['type']; ?>">
-    <input type="hidden" name="username" value="<?php echo $username; ?>">
-    <input type="hidden" name="password" value="<?php echo $userpassword; ?>">
-    <input type="hidden" name="port" value="<?php echo $port; ?>">
-    <input type="hidden" name="rollback_file" value="<?php echo $rollback_file; ?>">
+    <input type="hidden" name="username" value="<?php echo get_text($username); ?>">
+    <input type="hidden" name="password" value="<?php echo get_text($userpassword); ?>">
+    <input type="hidden" name="port" value="<?php echo get_text($port); ?>">
+    <input type="hidden" name="rollback_file" value="<?php echo get_text($rollback_file); ?>">
 
     <div class="tbl_frm01 tbl_wrap">
         <table>

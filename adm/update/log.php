@@ -7,7 +7,7 @@ include_once '../admin.head.php';
 
 $log_dir = G5_DATA_PATH . "/update/log";
 
-$page = isset($_REQUEST['page']) ? $_REQUEST['page'] : 1;
+$page = isset($_REQUEST['page']) ? (int)$_REQUEST['page'] : 1;
 $list = $g5['update']->getLogList($page);
 $total_page = $g5['update']->getLogListSize();
 ?>

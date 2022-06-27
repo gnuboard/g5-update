@@ -297,10 +297,10 @@ class G5Update
             // 시스템명령어 구분
             if ($this->os == "WINNT") {
                 $window_dir_version = $this->window_dir_update . "\\version\\*.*";
-                exec('del /q ' . $window_dir_version);
-                exec("for /d %i in (" . $window_dir_version . ") do @rmdir /s /q \"%i\"");
+                $this->escape_exec('del /q ' . $window_dir_version);
+                $this->escape_exec("for /d %i in (" . $window_dir_version . ") do @rmdir /s /q \"%i\"");
             } else {
-                exec('rm -rf ' . $this->dir_version . '/*');
+                $this->escape_exec('rm -rf ' . $this->dir_version . '/*');
             }
 
             return true;
@@ -504,7 +504,7 @@ class G5Update
                     array_multisort($logListTimestamp, SORT_DESC, $this->log_list);
                     
                     // 페이징 처리
-                    $start = ($page - 1) * $this->log_page_list;
+                    $start = $page ? ($page - 1) * $this->log_page_list : 0;
                     $end = $start + $this->log_page_list;
                     $log_list = array_slice($this->log_list, $start, $end, true);
 
@@ -624,9 +624,9 @@ class G5Update
             }
             if (!file_exists($backupPath)) {
                 if ($this->os == "WINNT") {
-                    exec("tar -czf " . $backupPath ." -C " . G5_PATH . " --exclude data ./*", $output, $result_code);
+                    $this->escape_exec("tar -czf " . $backupPath ." -C " . G5_PATH . " --exclude data ./*", $output, $result_code);
                 } else {
-                    exec("zip -r " . $backupPath . " ../../" . " -x '../../data/*'", $output, $result_code);
+                    $this->escape_exec("zip -r " . $backupPath . " ../../" . " -x '../../data/*'", $output, $result_code);
                 }
             }
             if ($result_code != 0) {
@@ -667,12 +667,12 @@ class G5Update
                             }
                         }
                     }
-                    exec("tar -zxf " . $backupPath . " -C " . $backupDir, $output, $result_code);
+                    $this->escape_exec("tar -zxf " . $backupPath . " -C " . $backupDir, $output, $result_code);
                     if ($result_code != 0) {
                         throw new Exception("압축해제에 실패했습니다.");
                     }
                 } else {
-                    $result = exec("unzip -o " . $backupPath . " -d " . $backupDir);
+                    $result = $this->escape_exec("unzip -o " . $backupPath . " -d " . $backupDir);
                     if (!$result) {
                         throw new Exception("압축해제에 실패했습니다.");
                     }
@@ -1064,16 +1064,16 @@ class G5Update
         if ($this->os == "WINNT") {
             $window_dir_version = $this->window_dir_update . "\\version";
 
-            exec("rd /s /q " . $window_dir_version . "\\" . $version);
-            exec("tar -zxf " . $window_dir_version . "\\" . "gnuboard." . $exe . " -C " . $window_dir_version);
-            exec("move " . $window_dir_version . "\\" . "gnuboard-* " . $window_dir_version . "\\" . $version);
-            exec('del /q ' . $window_dir_version . "\\gnuboard." . $exe);
+            $this->escape_exec("rd /s /q " . $window_dir_version . "\\" . $version);
+            $this->escape_exec("tar -zxf " . $window_dir_version . "\\" . "gnuboard." . $exe . " -C " . $window_dir_version);
+            $this->escape_exec("move " . $window_dir_version . "\\" . "gnuboard-* " . $window_dir_version . "\\" . $version);
+            $this->escape_exec('del /q ' . $window_dir_version . "\\gnuboard." . $exe);
         } else {
-            exec('rm -rf ' . $this->dir_version . '/' . $version);
-            exec('unzip ' . $save . ' -d ' . $this->dir_version . '/' . $version);
-            exec('mv -f ' . $this->dir_version . '/' . $version . '/gnuboard-*/* ' . $this->dir_version . '/' . $version);
-            exec('rm -rf ' . $this->dir_version . '/' . $version . '/gnuboard-*/');
-            exec('rm -rf ' . $save);
+            $this->escape_exec('rm -rf ' . $this->dir_version . '/' . $version);
+            $this->escape_exec('unzip ' . $save . ' -d ' . $this->dir_version . '/' . $version);
+            $this->escape_exec('mv -f ' . $this->dir_version . '/' . $version . '/gnuboard-*/* ' . $this->dir_version . '/' . $version);
+            $this->escape_exec('rm -rf ' . $this->dir_version . '/' . $version . '/gnuboard-*/');
+            $this->escape_exec('rm -rf ' . $save);
         }
 
         umask(0022);
@@ -1537,6 +1537,17 @@ class G5Update
         return $this->rollback_version;
     }
 
+    public function escape_exec()
+    {
+        $arg = func_get_args();
+        if ( is_array( $arg[0] ) )  $arg = $arg[0];
+        $exec_cmd = array_shift( $arg );
+        foreach($arg as $k => $i) {
+            $exec_cmd .= " " . ( escapeshellarg($i) ? escapeshellarg($i) : "''" );
+        }
+        $rt = exec( $exec_cmd );
+        return $rt;
+    }
     /**
      * 롤백버전 조회
      * @breif 백업경로에서 version.php 파일 내의 버전 값만 추출
