@@ -287,8 +287,7 @@ class S3Service
                     'credentials' => $credentials
                 );
 
-                $this->s3_client = new S3Client($options);
-                $bucket_region = $this->s3_client->getBucketLocation(array(
+                $bucket_region = $this->s3_client()->getBucketLocation(array(
                     'Bucket' => $bucket_name
                 ));
 
@@ -396,6 +395,8 @@ class S3Service
 
         // 쇼핑몰 상품을 삭제시
         add_event('shop_admin_delete_item_file', array($this, 'delete_shop_file'), 1, 1);
+
+        add_event('tail_sub', array($this,'add_onerror'), 1, 0);
     }
 
     public function bucket_exists($bucket)
@@ -721,8 +722,6 @@ class S3Service
 
 
         if(!is_object(unserialize(base64_decode($it[$this->extra_item_field])))){
-            error_log("it array", var_dump($it));
-            error_log("extra_item before unseri",var_dump($it[$this->extra_item_field]));
             $item_extra_infos = unserialize(base64_decode($it[$this->extra_item_field]));
         }
 
@@ -1886,6 +1885,39 @@ class S3Service
                 'Key' => $keyname
             ));
         }
+    }
+
+    /**
+     * (에디터만 해당) 이미지 없을때 대체이미지 onerror 등록
+     * @return void
+     */
+    public function add_onerror()
+    {
+        echo <<<'EOD'
+        <script>
+            let imgs = document.getElementsByTagName('img');
+            let emptyImage = g5_url + '/img/no_img.png'; //기본 빈 이미지
+
+            //ie 11 지원
+            for (let i = 0; i < imgs.length; i++) {
+                if(imgs[i].getAttribute('src').includes(g5_url +'/data/editor/')) {
+                    imgs[i].dataset['fallback'] = 0;
+                    imgs[i].onerror = function() {        
+                        let fallbackIndex = this.dataset['fallback'];
+                        HostImage = g5_url + '/data/editor/'+ this.getAttribute('src').split('/data/editor/')[1];
+                        fallbacks = [HostImage, emptyImage]
+                        this.src = fallbacks[fallbackIndex];
+                        if(fallbackIndex < fallbacks.length ){
+                            this.dataset['fallback']++;
+                        }
+                    }
+                }
+            }
+        </script>        
+EOD;
+    // nowdoc 문법에서 끝 태그를 들여쓰기 하면 안됩니다
+    //그것은 PHP7.3부터 지원됩니다.
+
     }
 
     // bbs/download.php 등에서 쓰일수가 있음
