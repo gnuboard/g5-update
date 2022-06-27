@@ -44,8 +44,29 @@ $result = $g5['update']->createBackupZipFile();
 $update_check['success']    = array();
 $update_check['fail']       = array();
 if ($result == "success") {
-    foreach ($list as $key => $var) {
-        $result = $g5['update']->writeUpdateFile(G5_PATH . '/' . $var, G5_DATA_PATH . '/update/version/' . $target_version . '/' . $var);
+    foreach ($compare_list as $key => $var) {
+
+        $originFilePath = G5_PATH . '/' . $var;
+        $changeFilePath = G5_DATA_PATH . '/update/version/' . $target_version . '/' . $var;
+
+        if (!file_exists($changeFilePath) && file_exists($originFilePath)) { // 업데이트파일은 존재하지않지만 현재파일은 존재할때
+            $result = $g5['update']->deleteOriginFile($originFilePath);
+            if ($result == "success") {
+                $update_check['success'][] = $var;
+            } else {
+                $update_check['fail'][] = array('file' => $var, 'message' => $result);
+            }
+        }
+        if (!is_dir(dirname($changeFilePath)) && is_dir(dirname($originFilePath))) { // 업데이트디렉토리는 존재하지않지만 현재디렉토리는 존재할때
+            $result = $g5['update']->removeEmptyOriginDir(dirname($originFilePath));
+            if ($result == "success") {
+                $update_check['success'][] = $var;
+            } else {
+                $update_check['fail'][] = array('file' => $var, 'message' => $result);
+            }
+        }
+        
+        $result = $g5['update']->writeUpdateFile($originFilePath, $changeFilePath);
         if ($result == "success") {
             $update_check['success'][] = $var;
         } else {

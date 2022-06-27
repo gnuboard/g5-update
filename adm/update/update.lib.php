@@ -291,6 +291,15 @@ class G5Update
                 throw new Exception("ftp/sftp가 아닌 프로토콜로 업데이트가 불가능합니다.");
             }
 
+            //.htaccess 파일 생성
+            if (!file_exists($this->dir_update . "/.htaccess")) {
+                $fp = fopen($this->dir_update . "/.htaccess", 'w+');
+                if ($fp) {
+                    fwrite($fp, "Deny from all");
+                    fclose($fp);
+                }
+            }
+
             // 시스템명령어 구분
             if ($this->os == "WINNT") {
                 $window_dir_version = $this->window_dir_update . "\\version\\*.*";
