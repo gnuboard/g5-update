@@ -9,8 +9,6 @@ if (!defined('_GNUBOARD_')) {
  * 1. disk_total_space, disk_free_space > 호스팅 환경에서는 용량표시가 제대로 안되는 듯..
  * 2. 업데이트에 필요한 최소용량 및 용량 초과시 발생하는 오류
  * 3. 사용자의 API요청횟수를 늘리기 위한 PAT(personal access token)를 등록하는 방안
- * 
- * @todo 
  *
  * @ignore $token값을 포함한 채로 github에 push하면 안됨.
  */
@@ -253,7 +251,6 @@ class G5Update
                         }
                     }
                 }
-                // $list = ftp_nlist($this->conn, $this->dir_ftp_update);
             } elseif ($this->port == 'sftp') {
                 if (!is_dir($this->dir_update)) {
                     if (!ssh2_sftp_mkdir($this->connPath, $this->dir_update, 0707)) {
@@ -293,7 +290,7 @@ class G5Update
             } else {
                 throw new Exception("ftp/sftp가 아닌 프로토콜로 업데이트가 불가능합니다.");
             }
-            
+
             // 시스템명령어 구분
             if ($this->os == "WINNT") {
                 $window_dir_version = $this->window_dir_update . "\\version\\*.*";
@@ -803,15 +800,12 @@ class G5Update
     public function writeUpdateFile($originPath, $changePath)
     {
         try {
-            $ftpOriginPath  = "";
             $ftpChangePath  = "";
             if ($this->port == 'ftp') {
                 if (ftp_pwd($this->conn) != "/") {
                     $ftpPwd         = str_replace("/", "\/", (string)ftp_pwd($this->conn));
-                    $ftpOriginPath  = preg_replace("/(.*?)(?=" . (string)$ftpPwd . ")/", '', $originPath);
                     $ftpChangePath  = preg_replace("/(.*?)(?=" . (string)$ftpPwd . ")/", '', $changePath);
                 } else {
-                    $ftpOriginPath  = str_replace(G5_PATH, '', $originPath);
                     $ftpChangePath  = str_replace(G5_PATH, '', $changePath);
                 }
             }
@@ -819,11 +813,6 @@ class G5Update
             if ($this->conn == false) {
                 throw new Exception("통신이 연결되지 않았습니다.");
             } elseif (!file_exists($changePath)) {
-                // if ($this->port == 'ftp') {
-                //     $result = ftp_delete($this->conn, (string)$ftpOriginPath);
-                // } elseif ($this->port == 'sftp') {
-                //     $result = ssh2_sftp_unlink($this->connPath, $originPath);
-                // }
                 throw new Exception("업데이트에 삭제되거나 존재하지 않는 파일입니다.");
             } else {
                 $changeFileSize = filesize($changePath);
@@ -847,7 +836,6 @@ class G5Update
                             throw new Exception("ftp를 통한 디렉토리 생성에 실패했습니다.");
                         }
                     }
-
                     $restoreContent = "";
                     if (file_exists($originPath)) {
                         $restoreFile = @fopen($originPath, 'r+');
@@ -1238,7 +1226,7 @@ class G5Update
             if ($result == false) {
                 throw new Exception("비교리스트확인 통신에 실패했습니다.");
             }
-
+            
             foreach ($result->files as $var) {
                 $this->compare_list[] = $var->filename;
             }
@@ -1311,23 +1299,20 @@ class G5Update
     }
     /**
      * 변경된 파일 표시
+     * @param array $compare_list
+     * @param array $compare_cehck
      * @return array<mixed>|bool
      * @todo 삭제되는 파일들을 어떻게 표시할 것인지?
      */
-    public function getDepthVersionCompareList($compare_check)
+    public function getDepthVersionCompareList($compare_list, $compare_check)
     {
         try {
-            $compare_list = $this->getVersionCompareList();
-            if ($compare_list == false) {
-                throw new Exception("비교리스트 확인에 실패했습니다.");
-            }
-
-            // $result = $this->checkSameVersionComparison($compare_list);
-            // if ($result == false) {
-            //     throw new Exception("파일 비교에 실패했습니다.");
+            // $compare_list = $this->getVersionCompareList();
+            // if ($compare_list == false) {
+            //     throw new Exception("비교리스트 확인에 실패했습니다.");
             // }
-
             foreach ($compare_list as $key => $var) {
+                // 원본버전과 변경된 파일
                 if (isset($compare_check['item'])) {
                     if (@in_array($var, $compare_check['item'])) {
                         $compare_list[$key] = $var . " (변경)";
@@ -1537,15 +1522,22 @@ class G5Update
         return $this->rollback_version;
     }
 
+    /**
+     * exec 함수 escapeshellarg 처리
+     * @breif 쉘 명령어에서 사용하는 변수를 명령어로 조작하지 못하도록 처리
+     */
     public function escape_exec()
     {
         $arg = func_get_args();
-        if ( is_array( $arg[0] ) )  $arg = $arg[0];
-        $exec_cmd = array_shift( $arg );
-        foreach($arg as $k => $i) {
-            $exec_cmd .= " " . ( escapeshellarg($i) ? escapeshellarg($i) : "''" );
+        if (is_array($arg[0])) {
+            $arg = $arg[0];
         }
-        $rt = exec( $exec_cmd );
+        $exec_cmd = array_shift($arg);
+        foreach($arg as $k => $i) {
+            $exec_cmd .= " " . (escapeshellarg($i) ? escapeshellarg($i) : "''");
+        }
+        $rt = exec($exec_cmd);
+
         return $rt;
     }
     /**

@@ -43,17 +43,17 @@ if ($result == false) {
 
 $rollback_version = $g5['update']->setRollbackVersion($rollback_file);
 $g5['update']->setTargetVersion($rollback_version);
-$list = $g5['update']->getVersionCompareList();
-if ($list == null) {
+$compare_list = $g5['update']->getVersionCompareList();
+if ($compare_list == null) {
     die("비교파일리스트가 존재하지 않습니다.");
 }
 
-$compare_check = $g5['update']->checkRollbackVersionComparison($list, $rollback_file);
+$compare_check = $g5['update']->checkRollbackVersionComparison($compare_list, $rollback_file);
 if ($compare_check == false) {
     die("파일 비교에 실패했습니다.");
 }
 
-$plist = $g5['update']->getDepthVersionCompareList($compare_check);
+$plist = $g5['update']->getDepthVersionCompareList($compare_list, $compare_check);
 ?>
 
 <h2 class="h2_frm">업데이트 복원 진행</h2>
@@ -93,19 +93,6 @@ $plist = $g5['update']->getDepthVersionCompareList($compare_check);
                                 <tr>
                                     <td style="line-height:2; border: none !important;">
                                     <?php print_r($g5['update']->changeDepthListPrinting($plist)); ?>
-                                    <?php
-                                    /*
-                                    foreach ($list as $key => $var) {
-                                        $txt = '';
-                                        if (isset($var) && isset($compare_check['item'])) {
-                                            if (in_array($var, $compare_check['item'])) {
-                                                $txt = " (변경)";
-                                            }
-                                        }
-                                        echo "<p>파일위치 : " . $var . $txt ."</p>";
-                                    }
-                                    */
-                                    ?>
                                     </td>
                                 </tr>
                             </table>

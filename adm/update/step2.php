@@ -20,8 +20,8 @@ if ($g5['update']->target_version == $g5['update']->now_version) {
     die("목표버전이 현재버전과 동일합니다.");
 }
 
-$list = $g5['update']->getVersionCompareList();
-if ($list == false) {
+$compare_list = $g5['update']->getVersionCompareList();
+if ($compare_list == false) {
     die("비교할 원본파일목록이 존재하지 않습니다.");
 }
 

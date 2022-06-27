@@ -45,17 +45,17 @@ if ($result == false) {
 }
 
 $g5['update']->setTargetVersion($target_version);
-$list = $g5['update']->getVersionCompareList();
-if ($list == null) {
+$compare_list = $g5['update']->getVersionCompareList();
+if ($compare_list == null) {
     die("비교파일리스트가 존재하지 않습니다.");
 }
 
-$compare_check = $g5['update']->checkSameVersionComparison($list);
+$compare_check = $g5['update']->checkSameVersionComparison($compare_list);
 if ($compare_check == false) {
     die("파일 비교에 실패했습니다.");
 }
 
-$plist = $g5['update']->getDepthVersionCompareList($compare_check);
+$plist = $g5['update']->getDepthVersionCompareList($compare_list, $compare_check);
 ?>
 
 <section>

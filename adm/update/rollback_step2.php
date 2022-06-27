@@ -17,8 +17,8 @@ if ($conn_result == false) {
 
 $rollback_version = $g5['update']->setRollbackVersion($rollback_file);
 $g5['update']->setTargetVersion($rollback_version);
-$list = $g5['update']->getVersionCompareList();
-if ($list == null) {
+$compare_list = $g5['update']->getVersionCompareList();
+if ($compare_list == null) {
     die("비교파일리스트가 존재하지 않습니다.");
 }
 
@@ -30,7 +30,7 @@ $result = $g5['update']->createBackupZipFile();
 $update_check['success']    = array();
 $update_check['fail']       = array();
 if ($result == "success") {
-    foreach ($list as $key => $var) {
+    foreach ($compare_list as $key => $var) {
         $exe = $g5['update']->os == "WINNT" ? "tar" : "zip";
         $backupPath = preg_replace('/.' . $exe . '/', '', G5_DATA_PATH . '/update/backup/' .  $rollback_file);
         $originFilePath = G5_PATH . '/' . $var;
