@@ -11,7 +11,7 @@ $g5_path['path'] = '..';
 include_once('../config.php');
 include_once('./install.function.php');    // 인스톨 과정 함수 모음
 include_once('../lib/common.lib.php');    // 공통 라이브러리
-include_once '../lib/AwsSDK/aws-autoloader.php';
+include_once '../lib/AwsSdk/aws-autoloader.php';
 
 $check_mode = isset($_POST['check_mode']) ? $_POST['check_mode'] : null;
 

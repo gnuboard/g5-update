@@ -12,8 +12,8 @@ header('Cache-Control: pre-check=0, post-check=0, max-age=0'); // HTTP/1.1
 $g5_path['path'] = '..';
 include_once('../config.php');
 include_once('./install.function.php');  // 인스톨 과정 함수 모음
-include_once('./install.inc.php');  //설치되어있는지 확인
-include_once('../lib/AwsSDK/aws-autoloader.php');
+include_once('./install.inc.php');  //설치되어있으면 중단
+include_once('../lib/AwsSdk/aws-autoloader.php');
 include_once('../lib/common.lib.php');
 include_once('../lib/hook.lib.php');    // hook 함수 파일
 include_once('../lib/uri.lib.php');  // URL 함수 파일
@@ -119,4 +119,8 @@ function create_s3_config($s3_access_key, $s3_secret_key, $s3_bucket_name, $s3_r
 
     fclose($f);
     @chmod($file, G5_FILE_PERMISSION);
+}
+
+function create_s3_config_table(){
+
 }

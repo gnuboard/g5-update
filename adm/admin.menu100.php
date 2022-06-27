@@ -21,4 +21,4 @@ if (version_compare(PHP_VERSION, '5.3.0', '>=') && defined('G5_BROWSCAP_USE') &&
 
 $menu['menu100'][] = array('100410', 'DB업그레이드', G5_ADMIN_URL . '/dbupgrade.php', 'db_upgrade');
 $menu['menu100'][] = array('100400', '부가서비스', G5_ADMIN_URL . '/service.php', 'cf_service');
-$menu['menu100'][] = array('100920', 's3 설정', G5_ADMIN_URL . '/aws_s3/config.php', 's3_service');
+$menu['menu100'][] = array('100920', 's3 설정', G5_ADMIN_URL . '/aws_s3/index.php', 's3_service');
