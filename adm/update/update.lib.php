@@ -88,8 +88,6 @@ class G5Update
                     return false;
                 }
 
-                $this->username = $username;
-
                 ftp_pasv($this->conn, true);
 
                 // ftp경로 설정
@@ -111,7 +109,6 @@ class G5Update
                     return false;
                 }
 
-                $this->username = $username;
                 $this->connPath = @ssh2_sftp($this->conn);
                 
                 if (!$this->connPath) {
@@ -624,6 +621,7 @@ class G5Update
             $fileName   = date('YmdHis', G5_SERVER_TIME) . "_" . $this->now_version;
             $exe        = $this->os == "WINNT" ? "tar" : "zip";
             $backupPath = G5_DATA_PATH . "/update/backup/" . $fileName . "." . $exe;
+            $result_code = 0;
 
             if (!is_dir(dirname($backupPath))) {
                 mkdir(dirname($backupPath), 0707);
@@ -731,8 +729,14 @@ class G5Update
                 throw new Exception("통신이 연결되지 않았습니다.");
             }
             if ($this->port == 'ftp') {
-                $originPath = preg_replace("/(.*?)(?=\\" . (string)str_replace("/", "\/", ftp_pwd($this->conn)) . ")/", '', $originPath);
-                $result = ftp_delete($this->conn, (string)$originPath);
+                $ftpOriginPath = "";
+                if (ftp_pwd($this->conn) != "/") {
+                    $ftpPwd         = str_replace("/", "\/", (string)ftp_pwd($this->conn));
+                    $ftpOriginPath  = preg_replace("/(.*?)(?=" . (string)$ftpPwd . ")/", '', $originPath);
+                } else {
+                    $ftpOriginPath  = str_replace(G5_PATH, '', $originPath);
+                }
+                $result = ftp_delete($this->conn, (string)$ftpOriginPath);
             } elseif ($this->port == 'sftp') {
                 $result = ssh2_sftp_unlink($this->connPath, $originPath);
             }
@@ -753,7 +757,6 @@ class G5Update
      */
     public function removeEmptyOriginDir($originDir)
     {
-
         try {
             if ($this->conn == false) {
                 throw new Exception("통신이 연결되지 않았습니다.");
@@ -766,8 +769,14 @@ class G5Update
             if ($dirCheck) {
                 $result = false;
                 if ($this->port == 'ftp') {
-                    $originDir = preg_replace("/(.*?)(?=\\" . (string)str_replace("/", "\/", ftp_pwd($this->conn)) . ")/", '', $originDir);
-                    $result = ftp_rmdir($this->conn, (string)$originDir);
+                    $ftpOriginDir = "";
+                    if (ftp_pwd($this->conn) != "/") {
+                        $ftpPwd         = str_replace("/", "\/", (string)ftp_pwd($this->conn));
+                        $ftpOriginDir   = preg_replace("/(.*?)(?=" . (string)$ftpPwd . ")/", '', $originDir);
+                    } else {
+                        $ftpOriginDir   = str_replace(G5_PATH, '', $originDir);
+                    }
+                    $result = ftp_rmdir($this->conn, (string)$ftpOriginDir);
                 } elseif ($this->port == 'sftp') {
                     $result = ssh2_sftp_rmdir($this->connPath, $originDir);
                 }
@@ -781,6 +790,7 @@ class G5Update
             return $e->getMessage();
         }
     }
+
     /**
      * 경로가 비었는지 체크
      * @param string    $originDir 경로
@@ -799,6 +809,7 @@ class G5Update
 
         return true;
     }
+
     /**
      * 업데이트버전 파일 적용
      * @breif downloadVersion에서 만들어놓은 임시경로(/update/version)에서 실제 경로로 적용시킨다
@@ -1043,10 +1054,10 @@ class G5Update
 
         umask(0002);
 
-        $exe    = $this->os == "WINNT" ? "tar" : "zip";
-        $save   = $this->dir_version . "/gnuboard." . $exe;
+        $exe            = $this->os == "WINNT" ? "tar" : "zip";
+        $archiveFile    = $this->dir_version . "/gnuboard." . $exe;
         
-        $zip = fopen($save, 'w+');
+        $zip = fopen($archiveFile, 'w+');
         if ($zip == false) {
             return false;
         }
@@ -1063,17 +1074,22 @@ class G5Update
         // 시스템명령어 구분
         if ($this->os == "WINNT") {
             $window_dir_version = $this->window_dir_update . "\\version";
+            $versionDir         = $window_dir_version . '\\' . $version;
+            $escapeVersionDir   = escapeshellarg($versionDir);
 
-            exec("rd /s /q " . escapeshellarg($window_dir_version . "\\" . $version));
-            exec("tar -zxf " . escapeshellarg($window_dir_version . "\\" . "gnuboard." . $exe) . " -C " . escapeshellarg($window_dir_version));
-            exec("move " . escapeshellarg($window_dir_version . "\\" . "gnuboard-*") . " " . escapeshellarg($window_dir_version . "\\" . $version));
+            exec("rd /s /q " . $escapeVersionDir);
+            exec("tar -zxf " . escapeshellarg($window_dir_version . "\\gnuboard." . $exe) . " -C " . escapeshellarg($window_dir_version));
+            exec("move " . escapeshellarg($window_dir_version . "\\gnuboard-*") . " " . $escapeVersionDir);
             exec('del /q ' .escapeshellarg($window_dir_version . "\\gnuboard." . $exe));
         } else {
-            exec('rm -rf ' . escapeshellarg($this->dir_version . '/' . $version));
-            exec('unzip ' . escapeshellarg($save) . ' -d ' . escapeshellarg($this->dir_version . '/' . $version));
-            exec('mv -f ' . escapeshellarg($this->dir_version . '/' . $version . '/gnuboard-*/*') . " " . escapeshellarg($this->dir_version . '/' . $version));
-            exec('rm -rf ' . escapeshellarg($this->dir_version . '/' . $version . '/gnuboard-*/'));
-            exec('rm -rf ' . escapeshellarg($save));
+            $versionDir         = $this->dir_version . '/' . $version;
+            $escapeVersionDir   = escapeshellarg($versionDir);
+
+            exec('rm -rf ' . $escapeVersionDir);
+            exec('unzip ' . escapeshellarg($archiveFile) . ' -d ' . $escapeVersionDir);
+            exec('mv -f ' . escapeshellarg($versionDir . '/gnuboard-') . '*/* ' . $escapeVersionDir);
+            exec('rm -rf ' . escapeshellarg($versionDir . '/gnuboard-*/'));
+            exec('rm -rf ' . escapeshellarg($archiveFile));
         }
 
         umask(0022);
@@ -1319,10 +1335,6 @@ class G5Update
     public function getDepthVersionCompareList($compare_list, $compare_check)
     {
         try {
-            // $compare_list = $this->getVersionCompareList();
-            // if ($compare_list == false) {
-            //     throw new Exception("비교리스트 확인에 실패했습니다.");
-            // }
             foreach ($compare_list as $key => $var) {
                 // 원본버전과 변경된 파일
                 if (isset($compare_check['item'])) {
