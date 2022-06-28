@@ -312,6 +312,10 @@ if (!empty($_POST['sync'])) {
             return true;
         }
 
+        function sync_onsubmit() {
+            return true;
+        }
+
         function disableF5(e) {
             if ((e.which || e.keyCode) === 116) e.preventDefault();
         }

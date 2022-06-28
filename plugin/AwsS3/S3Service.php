@@ -98,10 +98,18 @@ class S3Service
     private function get_config()
     {
         if (file_exists(G5_DATA_PATH . '/s3config.php')) {
-            $this->bucket_name = G5_S3_BUCKET_NAME;
-            $this->region = G5_S3_REGION;
-            $this->access_key = G5_S3_ACCESS_KEY;
-            $this->secret_key = G5_S3_SECRET_KEY;
+            if (defined('G5_S3_BUCKET_NAME')){
+                $this->bucket_name = G5_S3_BUCKET_NAME;
+            }
+            if (defined('G5_S3_REGION')){
+                $this->region = G5_S3_REGION;
+            }
+            if (defined('G5_S3_ACCESS_KEY')){
+                $this->access_key = G5_S3_SECRET_KEY;
+            }
+            if (defined('G5_S3_SECRET_KEY')) {
+                $this->secret_key = G5_S3_SECRET_KEY;
+            }
         }
 
         $table_name = G5_TABLE_PREFIX . $this->table_name;
@@ -266,7 +274,7 @@ class S3Service
 
     /**
      * 연결 상태 확인
-     * @return array
+     * @return array|string
      */
     public function get_connect_status()
     {
@@ -277,6 +285,10 @@ class S3Service
         $secret_key = $this->secret_key;
         $region = $this->region;
         $bucket_name = $this->bucket_name;
+        if(empty($access_key) || empty($secret_key) || empty($region) || empty($bucket_name)){
+            $response['message'] = '설치 되어있지않습니다.';
+            return  $response;
+        }
         try {
             $credentials = new Credentials($access_key, $secret_key);
 
@@ -286,7 +298,6 @@ class S3Service
                     'version' => 'latest',
                     'credentials' => $credentials
                 );
-
                 $bucket_region = $this->s3_client()->getBucketLocation(array(
                     'Bucket' => $bucket_name
                 ));
@@ -722,6 +733,8 @@ class S3Service
 
 
         if(!is_object(unserialize(base64_decode($it[$this->extra_item_field])))){
+            error_log("it array", var_dump($it));
+            error_log("extra_item before unseri",var_dump($it[$this->extra_item_field]));
             $item_extra_infos = unserialize(base64_decode($it[$this->extra_item_field]));
         }
 
@@ -739,7 +752,11 @@ class S3Service
         }
 
         $merges = array_merge($img_arrays, $before_infos);
-        $save_str = base64_encode(serialize($merges));
+
+        var_dump($merges);
+        error_log($merges);
+        //$save_str = base64_encode(\GuzzleHttp\json_encode($merges));
+        $save_str = \GuzzleHttp\json_encode($merges);//base64_encode(serialize($merges));
 
         if ($it[$this->extra_item_field] !== $save_str) {
             // item 테이블에서 필드 extra_item_field 를 업데이트합니다.
@@ -811,7 +828,8 @@ class S3Service
 
             if ($this->object_exists($this->bucket_name, $file_key)) {
                 $extra_infos['img' . $index] = $this->get_object_url($this->bucket_name, $file_key);
-                $save_str = base64_encode(serialize($extra_infos));
+
+                $save_str = \GuzzleHttp\json_encode($extra_infos);//base64_encode(serialize($extra_infos));
 
                 if ($it[$this->extra_item_field] !== $save_str) {
                     // item 테이블에서 필드 extra_item_field 를 업데이트합니다.
@@ -1142,7 +1160,7 @@ class S3Service
 
                                 $extra_infos['thumb' . $array_thumb_key] = $thumb_object_url;
 
-                                $base64_str = base64_encode(serialize($extra_infos));
+                                $base64_str = \GuzzleHttp\json_encode($extra_infos);//base64_encode(serialize($extra_infos));
 
                                 $sql = " update `{$g5['g5_shop_item_table']}`
                                             set {$this->extra_item_field} = '$base64_str'
@@ -1895,17 +1913,19 @@ class S3Service
     {
         echo <<<'EOD'
         <script>
+        
+        function addOnError(){
             let imgs = document.getElementsByTagName('img');
             let emptyImage = g5_url + '/img/no_img.png'; //기본 빈 이미지
 
             //ie 11 지원
             for (let i = 0; i < imgs.length; i++) {
-                if(imgs[i].getAttribute('src').includes(g5_url +'/data/editor/')) {
+                if(imgs[i].getAttribute('src')) {
                     imgs[i].dataset['fallback'] = 0;
                     imgs[i].onerror = function() {        
                         let fallbackIndex = this.dataset['fallback'];
                         HostImage = g5_url + '/data/editor/'+ this.getAttribute('src').split('/data/editor/')[1];
-                        fallbacks = [HostImage, emptyImage]
+                        fallbacks = [HostImage, emptyImage, '']
                         this.src = fallbacks[fallbackIndex];
                         if(fallbackIndex < fallbacks.length ){
                             this.dataset['fallback']++;
@@ -1913,6 +1933,9 @@ class S3Service
                     }
                 }
             }
+        }
+        
+        addOnError();
         </script>        
 EOD;
     // nowdoc 문법에서 끝 태그를 들여쓰기 하면 안됩니다
