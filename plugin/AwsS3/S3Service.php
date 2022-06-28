@@ -105,7 +105,7 @@ class S3Service
                 $this->region = G5_S3_REGION;
             }
             if (defined('G5_S3_ACCESS_KEY')){
-                $this->access_key = G5_S3_SECRET_KEY;
+                $this->access_key = G5_S3_ACCESS_KEY;
             }
             if (defined('G5_S3_SECRET_KEY')) {
                 $this->secret_key = G5_S3_SECRET_KEY;
@@ -298,15 +298,16 @@ class S3Service
                     'version' => 'latest',
                     'credentials' => $credentials
                 );
-                $bucket_region = $this->s3_client()->getBucketLocation(array(
+                $s3_client = new S3Client($options);
+                $bucket_region = $s3_client->getBucketLocation(array(
                     'Bucket' => $bucket_name
                 ));
-
-                $message = "연결 되었습니다.";
 
                 if ($bucket_region['LocationConstraint'] !== $region) {
                     $message = "버킷 지역을 확인후 다시 입력해주세요";
                     $is_error = true;
+                } else {
+                    $message = "연결 되었습니다.";
                 }
             } catch (S3Exception $s3Exception) {
                 $is_error = true;
@@ -451,11 +452,106 @@ class S3Service
     }
 
     /**
+     * 업로드할 폴더설정, 업로더 실행
+     * @param $sync_dir_name
+     * @return string
+     */
+    public function upload_dir($sync_dir_name){
+        $source_dir = '';
+        switch($sync_dir_name){
+            case 'editor':
+                $source_dir = G5_EDITOR_DIR;
+                break;
+            case 'item': //$shop_folder 폴더
+                $source_dir = 'item';
+                break;
+            case 'thumb_gnu':
+                $source_dir = 'file';
+                break;
+        }
+
+        if(empty($source_dir)){
+            $response['message'] = 'not found';
+            return \GuzzleHttp\json_encode($response);
+        }
+        //실행후 json 출력
+        $this->upload_sync($sync_dir_name);
+    }
+
+    /**
+     * 코드나 서버의 리눅스 경로를 윈도우 경로로 변경
+     * @param $path
+     * @return array|string|string[]|void
+     */
+    private function change_linux_path_window_path($path) {
+        if($this->detect_os() === 'Windows'){
+            return str_replace('/', '\\', $path);
+        }
+    }
+
+    private function detect_os(){
+        $OS = strtoupper(PHP_OS);
+        switch (substr($OS, 0, 3)) {
+            case "WIN":
+                return "Windows";
+            case "LIN":
+                return "Linux";
+            case "DAR":
+                return "Mac";
+            default:
+                return "Unknown";
+        }
+    }
+
+    /**
+     * 호스트 서버에서 s3로 업로드 동기화
+     * DATA 폴더안의 폴더를 동기화
+     * @param string $source_dir 호스트 서버의 이동할 폴더이름
+     * @return void json 출력
+     *
+     */
+    private function upload_sync($source_dir)
+    {
+        $source_path = G5_DATA_PATH . "/$source_dir" ;
+        $dest = 's3://' . $this->bucket_name . '/' . G5_DATA_DIR . "/$source_dir"; //프로토콜은 s3://
+        $manager = new \Aws\S3\Transfer($this->s3_client(), $this->change_linux_path_window_path($source_path), $dest, [
+            'before' => function (\Aws\Command $command) {
+                $command['ACL'] = $this->set_file_acl($command['Key']);
+            }
+        ]);
+
+
+        //비동기 프로미스 실행
+        define("CONCURRENT_PROMISS_COUNT", 4);
+        \GuzzleHttp\Promise\Each::ofLimit(
+            $promise = $manager->promise(),
+            CONCURRENT_PROMISS_COUNT, // 동시 요청 실행갯수(프로세스를 쓰므로 갯수 주의)
+            function ($response, $index) { // Callback on success
+                $result_upload['message'] = 'transfer end';
+                echo \GuzzleHttp\json_encode($result_upload);
+            },
+            function ($reason, $index) { // Callback on failure
+                $result_upload['message'] = 'transfer fail';
+                $result_upload['error_index'] = $index;
+                $result_upload['error_reason'] = $reason;
+                echo \GuzzleHttp\json_encode($result_upload);
+
+            }
+        )->wait();
+        //프로미스 거부(reject)시 처리
+        $promise->otherwise(function ($rejected) {
+            $result_upload['message'] = 'transfer fail';
+            $result_upload['error_reason'] = $rejected;
+            echo \GuzzleHttp\json_encode($result_upload);
+        });
+    }
+
+    /**
      * 개체(파일)의 ACL 권한 부여
      * @param string $file_key
      * @return string 권한명
      */
-    public function set_file_acl($file_key = '')
+    public function set_file_acl($file_key)
     {
         // https://docs.aws.amazon.com/ko_kr/AmazonS3/latest/dev/acl-overview.html
 

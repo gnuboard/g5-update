@@ -2,7 +2,6 @@
 
 $sub_menu = '100920'; //메뉴는 admin.head 이전에 선언
 include_once(dirname(__FILE__) . '/_common.php');
-include_once(G5_ADMIN_PATH . '/admin.head.php');
 include_once(G5_ADMIN_PATH . '/admin.lib.php');
 
 if (version_compare(PHP_VERSION, '5.5', '<')) {
@@ -24,8 +23,13 @@ $admin_aws_config = array(
 );
 
 if (file_exists(G5_DATA_PATH . '/s3config.php')) {
-    $admin_aws_config['bucket_name'] = G5_S3_BUCKET_NAME;
-    $admin_aws_config['bucket_region'] = G5_S3_REGION;
+    if (defined('G5_S3_BUCKET_NAME')){
+        $admin_aws_config['bucket_name'] = G5_S3_BUCKET_NAME;
+    }
+
+    if (defined('G5_S3_REGION')){
+        $admin_aws_config['bucket_region'] = G5_S3_REGION;
+    }
 }
 
 $table_name = G5_TABLE_PREFIX . \Gnuboard\Plugin\AwsS3\S3Service::get_instance()->get_table_name();
@@ -39,7 +43,6 @@ if ($row = sql_fetch($sql, false)) {
 $all_regions = \Gnuboard\Plugin\AwsS3\S3Service::get_instance()->get_regions();
 $status = \Gnuboard\Plugin\AwsS3\S3Service::get_instance()->get_connect_status();
 
-echo $status['message'];
 if (!empty($_POST['save_key']) && !empty($_POST['token']) && !empty($_POST['bucket_name'])
     && !empty($_POST['access_key']) && !empty($_POST['secret_key']) && !empty($_POST['bucket_region'])) {
     auth_check($auth, 'w');
@@ -56,7 +59,7 @@ if (!empty($_POST['save_key']) && !empty($_POST['token']) && !empty($_POST['buck
     }
 }
 
-if (!empty($_POST['save_status'] && !empty($_POST['token']) )) {
+if (!empty($_POST['save'] && ($_POST['save'] === 'status') && !empty($_POST['token']) )) {
     auth_check($auth, 'w');
     if ($GLOBALS['is_admin'] === 'super') {
         $access_control_list = strip_tags(get_text(trim($_POST['access_control_list'])));
@@ -75,6 +78,7 @@ if (!empty($_POST['save_status'] && !empty($_POST['token']) )) {
         }
 
         if (function_exists('mysqli_query') && G5_MYSQLI_USE) {
+            //쿼리 바인딩
             $sql_common = "
 				SET acl_default_value = ?,
 				is_save_host = ?,
@@ -162,13 +166,23 @@ function sql_bind_query($sql, $args)
 }
 
 
-if (!empty($_POST['sync'])) {
+if (!empty($_POST['save']) && $_POST['save'] === 'sync' && !empty($_POST['sync_dir'])) {
+    //비동기 요청
     auth_check($auth, 'w');
     if ($GLOBALS['is_admin'] === 'super') {
-        \Gnuboard\Plugin\AwsS3\S3Service::get_instance()->upload_test();
+        $sync_dir = strip_tags(get_text(trim($_POST['sync_dir'])));
+        
+        $result = Gnuboard\Plugin\AwsS3\S3Service::get_instance()->upload_dir($sync_dir);
+        /**
+         * @result string 이미 json으로 인코딩됨
+         */
+        echo $result;
+        exit;
     }
 }
 
+
+include_once(G5_ADMIN_PATH . '/admin.head.php');
 // 관리자 페이지 aws s3 설정
 ?>
     <div class="aws-s3-area">
@@ -176,7 +190,11 @@ if (!empty($_POST['sync'])) {
               autocomplete="off" role="presentation">
             <input type="hidden" name="save_key" value="save">
             <input type="hidden" name="token" value="" id="token">
-            <button id="anc_cf_basic" type="button" class="tab_tit close">AWS S3 설정</button>
+            <p id="anc_cf_basic" class="tab_tit close">AWS S3 연결 상태:
+                <?php
+                echo $status['message'];
+                ?>
+            </p>
             <section class="tab_con">
                 <h2 class="h2_frm">AWS S3 설정</h2>
                 <ul class="frm_ul">
@@ -218,7 +236,7 @@ if (!empty($_POST['sync'])) {
                                size="60">
                     </li>
                 </ul>
-                <div class="">
+                <div class="btn_space">
                     <input type="submit" value="s3 설정" class="btn_submit btn" accesskey="s">
                 </div>
 
@@ -229,7 +247,7 @@ if (!empty($_POST['sync'])) {
               autocomplete="off" role="presentation">
             <section class="tab_con">
                 <ul class="frm_ul">
-                    <input type="hidden" name="save_status" value="save">
+                    <input type="hidden" name="save" value="status">
                     <input type="hidden" name="token" value="">
                     <li>
 					<span class="lb_block"><label for="access_control_list">파일 권한 ACL</label>
@@ -271,10 +289,36 @@ if (!empty($_POST['sync'])) {
                         </label>
                     </li>
                 </ul>
-                <div class="">
+                <div class="btn_space">
                     <input type="submit" id="s3_state_submit" value="사용여부 및 권한 설정하기" class="btn_submit btn" accesskey="s">
                 </div>
             </section>
+        </form>
+
+        <form name="f_sync" id="f_sync" method="post" onsubmit="return sync_onsubmit(this)">
+            <section class="tab_con">
+                <div>
+                    <span class="lb_block"><label for="is_only_use_s3">S3 에 업로드 동기화</label>
+					<?php
+                    echo help(
+                        '서버에 있는 데이터를 AWS S3에 업로드합니다'
+                    ); ?>
+					</span>
+                    <input type="hidden" name="save" value="sync">
+                    <input type="hidden" name="token" value="" id="token">
+                    <label for="sync_dir">동기화할 폴더를 선택해주세요</label>
+                    <select name="sync_dir" id="sync_dir">
+                        <option value="editor">editor - 그누보드 에디터 등록이미지</option>
+                        <option value="thumb_gnu">그누보드 썸네일</option>
+                        <option value="item">쇼핑몰</option>
+                        <option value="k">test</option>
+                    </select>
+                </div>
+                <div class="btn_space">
+                    <input type="submit" id="s3_sync_submit" value="동기화 시작" class="btn_submit btn" accesskey="s">
+                </div>
+            </section>
+
         </form>
     </div>
 
