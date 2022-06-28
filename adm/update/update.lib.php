@@ -601,7 +601,7 @@ class G5Update
             $time = $date . implode(':', str_split($time, 2));
             $log_detail = array(
                 'filename' => $file_name,
-                'datetime' => date('Y-m-d h:i:s', (int)strtotime($time)),
+                'datetime' => date('Y-m-d H:i:s', (int)strtotime($time)),
                 'status' => $status_txt,
                 'content' => $file_content,
             );
@@ -932,8 +932,8 @@ class G5Update
 
                 $datetime = date('Y-m-d_His', time());
                 $rand = sprintf('%04d', rand(0000, 9999));
-
-                $fp = fopen($this->dir_log . "/" . $datetime . '_' . $status . '_' . $rand . '.log', 'w+');
+                $logFileName = $datetime . '_' . $status . '_' . $rand . '.log';
+                $fp = fopen($this->dir_log . "/" . $logFileName, 'w+');
                 if ($fp == false) {
                     throw new Exception('파일생성에 실패했습니다.');
                 }
@@ -948,7 +948,7 @@ class G5Update
                         $fail_txt = "롤백 시 제거된 파일 내역\n";
                         break;
                     default:
-                        ftp_delete($this->conn, $this->ftp_dir_log . "/" . $datetime . '_' . $status . '_' . $rand . '.log');
+                        ftp_delete($this->conn, $this->ftp_dir_log . "/" . $logFileName);
                         throw new Exception("올바르지 않은 명령입니다.");
                 }
                 if (isset($success_list)) {
@@ -983,8 +983,8 @@ class G5Update
                     }
                 }
 
-                $datetime = date('Y-m-d_his', time());
-                $rand = rand(0000, 9999);
+                $datetime = date('Y-m-d_His', time());
+                $rand = sprintf('%04d', rand(0000, 9999));
                 $logFileName = $datetime . '_' . $status . '_' . $rand . '.log';
                 $fp = fopen("ssh2.sftp://" . intval($this->connPath) . $this->dir_log . "/" . $logFileName, 'w+');
                 if ($fp == false) {
