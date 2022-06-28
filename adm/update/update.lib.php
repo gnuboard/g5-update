@@ -302,11 +302,11 @@ class G5Update
 
             // 시스템명령어 구분
             if ($this->os == "WINNT") {
-                $window_dir_version = $this->window_dir_update . "\\version\\*.*";
-                $this->escape_exec('del /q ' . $window_dir_version);
-                $this->escape_exec("for /d %i in (" . $window_dir_version . ") do @rmdir /s /q \"%i\"");
+                $dirRemove = escapeshellarg($this->window_dir_update . "\\version\\*.*");
+                exec("for /d %i in (" . $dirRemove . ") do @rmdir /s /q \"%i\"");
             } else {
-                $this->escape_exec('rm -rf ' . $this->dir_version . '/*');
+                $dirRemove = escapeshellarg($this->dir_version . '/*');
+                exec('rm -rf ' . $dirRemove);
             }
 
             return true;
@@ -630,9 +630,9 @@ class G5Update
             }
             if (!file_exists($backupPath)) {
                 if ($this->os == "WINNT") {
-                    $this->escape_exec("tar -czf " . $backupPath ." -C " . G5_PATH . " --exclude data ./*", $output, $result_code);
+                    exec("tar -czf " . escapeshellarg($backupPath) ." -C " . G5_PATH . " --exclude data ./*", $output, $result_code);
                 } else {
-                    $this->escape_exec("zip -r " . $backupPath . " ../../" . " -x '../../data/*'", $output, $result_code);
+                    exec("zip -r " . escapeshellarg($backupPath) . " ../../" . " -x '../../data/*'", $output, $result_code);
                 }
             }
             if ($result_code != 0) {
@@ -673,12 +673,12 @@ class G5Update
                             }
                         }
                     }
-                    $this->escape_exec("tar -zxf " . $backupPath . " -C " . $backupDir, $output, $result_code);
+                    exec("tar -zxf " . escapeshellarg($backupPath) . " -C " . escapeshellarg($backupDir), $output, $result_code);
                     if ($result_code != 0) {
                         throw new Exception("압축해제에 실패했습니다.");
                     }
                 } else {
-                    $result = $this->escape_exec("unzip -o " . $backupPath . " -d " . $backupDir);
+                    $result = exec("unzip -o " . escapeshellarg($backupPath) . " -d " . escapeshellarg($backupDir));
                     if (!$result) {
                         throw new Exception("압축해제에 실패했습니다.");
                     }
@@ -810,11 +810,14 @@ class G5Update
     {
         try {
             $ftpChangePath  = "";
+            $ftpOriginPath  = "";
             if ($this->port == 'ftp') {
                 if (ftp_pwd($this->conn) != "/") {
                     $ftpPwd         = str_replace("/", "\/", (string)ftp_pwd($this->conn));
+                    $ftpOriginPath  = preg_replace("/(.*?)(?=" . (string)$ftpPwd . ")/", '', $originPath);
                     $ftpChangePath  = preg_replace("/(.*?)(?=" . (string)$ftpPwd . ")/", '', $changePath);
                 } else {
+                    $ftpOriginPath  = str_replace(G5_PATH, '', $originPath);
                     $ftpChangePath  = str_replace(G5_PATH, '', $changePath);
                 }
             }
@@ -838,8 +841,8 @@ class G5Update
                 }
 
                 if ($this->port == 'ftp') {
-                    if (ftp_nlist($this->conn, dirname((string)$ftpChangePath)) == false) {
-                        $result = ftp_mkdir($this->conn, dirname((string)$ftpChangePath));
+                    if (ftp_nlist($this->conn, dirname((string)$ftpOriginPath)) == false) {
+                        $result = ftp_mkdir($this->conn, dirname((string)$ftpOriginPath));
                         ftp_nb_continue($this->conn); // 디렉토리 생성후 파일을 계속해서 검색/전송
                         if ($result == false) {
                             throw new Exception("ftp를 통한 디렉토리 생성에 실패했습니다.");
@@ -1061,16 +1064,16 @@ class G5Update
         if ($this->os == "WINNT") {
             $window_dir_version = $this->window_dir_update . "\\version";
 
-            $this->escape_exec("rd /s /q " . $window_dir_version . "\\" . $version);
-            $this->escape_exec("tar -zxf " . $window_dir_version . "\\" . "gnuboard." . $exe . " -C " . $window_dir_version);
-            $this->escape_exec("move " . $window_dir_version . "\\" . "gnuboard-* " . $window_dir_version . "\\" . $version);
-            $this->escape_exec('del /q ' . $window_dir_version . "\\gnuboard." . $exe);
+            exec("rd /s /q " . escapeshellarg($window_dir_version . "\\" . $version));
+            exec("tar -zxf " . escapeshellarg($window_dir_version . "\\" . "gnuboard." . $exe) . " -C " . escapeshellarg($window_dir_version));
+            exec("move " . escapeshellarg($window_dir_version . "\\" . "gnuboard-*") . " " . escapeshellarg($window_dir_version . "\\" . $version));
+            exec('del /q ' .escapeshellarg($window_dir_version . "\\gnuboard." . $exe));
         } else {
-            $this->escape_exec('rm -rf ' . $this->dir_version . '/' . $version);
-            $this->escape_exec('unzip ' . $save . ' -d ' . $this->dir_version . '/' . $version);
-            $this->escape_exec('mv -f ' . $this->dir_version . '/' . $version . '/gnuboard-*/* ' . $this->dir_version . '/' . $version);
-            $this->escape_exec('rm -rf ' . $this->dir_version . '/' . $version . '/gnuboard-*/');
-            $this->escape_exec('rm -rf ' . $save);
+            exec('rm -rf ' . escapeshellarg($this->dir_version . '/' . $version));
+            exec('unzip ' . escapeshellarg($save) . ' -d ' . escapeshellarg($this->dir_version . '/' . $version));
+            exec('mv -f ' . escapeshellarg($this->dir_version . '/' . $version . '/gnuboard-*/*') . " " . escapeshellarg($this->dir_version . '/' . $version));
+            exec('rm -rf ' . escapeshellarg($this->dir_version . '/' . $version . '/gnuboard-*/'));
+            exec('rm -rf ' . escapeshellarg($save));
         }
 
         umask(0022);
@@ -1531,24 +1534,6 @@ class G5Update
         return $this->rollback_version;
     }
 
-    /**
-     * exec 함수 escapeshellarg 처리
-     * @breif 쉘 명령어에서 사용하는 변수를 명령어로 조작하지 못하도록 처리
-     */
-    public function escape_exec()
-    {
-        $arg = func_get_args();
-        if (is_array($arg[0])) {
-            $arg = $arg[0];
-        }
-        $exec_cmd = array_shift($arg);
-        foreach($arg as $k => $i) {
-            $exec_cmd .= " " . (escapeshellarg($i) ? escapeshellarg($i) : "''");
-        }
-        $rt = exec($exec_cmd);
-
-        return $rt;
-    }
     /**
      * 롤백버전 조회
      * @breif 백업경로에서 version.php 파일 내의 버전 값만 추출
