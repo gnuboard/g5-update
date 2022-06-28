@@ -56,14 +56,23 @@ if (!empty($_POST['save_key']) && !empty($_POST['token']) && !empty($_POST['buck
     }
 }
 
-if (!empty($_POST['save_status'] && !empty($_POST['token']) && !empty($_POST['access_control_list']) && !empty($is_only_use_s3))) {
+if (!empty($_POST['save_status'] && !empty($_POST['token']) )) {
     auth_check($auth, 'w');
     if ($GLOBALS['is_admin'] === 'super') {
         $access_control_list = strip_tags(get_text(trim($_POST['access_control_list'])));
+        if($access_control_list !== 'public-read'){ //유효성 검사
+            $access_control_list = 'private';
+        }
 
-        $is_save_host = (int)strip_tags(get_text(trim(($_POST['is_save_host']))));
+        $is_save_host = empty($_POST['access_control_list']) ? 0 : (int)strip_tags(get_text(trim(($_POST['is_save_host']))));
+        if ($is_save_host !== 1) {
+            $is_save_host = 0;
+        }
 
-        $is_only_use_s3 = (int)strip_tags(get_text(trim((($_POST['is_only_use_s3'])))));
+        $is_only_use_s3 = empty($is_only_use_s3) ? 0 : (int)strip_tags(get_text(trim((($_POST['is_only_use_s3'])))));
+        if ($is_save_host !== 1) {
+            $is_save_host = 0;
+        }
 
         if (function_exists('mysqli_query') && G5_MYSQLI_USE) {
             $sql_common = "
@@ -163,7 +172,7 @@ if (!empty($_POST['sync'])) {
 // 관리자 페이지 aws s3 설정
 ?>
     <div class="aws-s3-area">
-        <form name="s3_key" id="f_s3_key" method="post" onsubmit="return s3_key_submit(this);"
+        <form name="f_s3_key" id="f_s3_key" method="post" onsubmit="return s3_key_submit(this);"
               autocomplete="off" role="presentation">
             <input type="hidden" name="save_key" value="save">
             <input type="hidden" name="token" value="" id="token">
@@ -216,12 +225,12 @@ if (!empty($_POST['sync'])) {
             </section>
         </form>
 
-        <form method="post" onsubmit="return s3_state_submit(this);"
+        <form name="f_s3_state" id="f_s3_state" method="post" onsubmit="return s3_state_submit(this);"
               autocomplete="off" role="presentation">
             <section class="tab_con">
                 <ul class="frm_ul">
                     <input type="hidden" name="save_status" value="save">
-                    <input type="hidden" name="token" value="" id="token">
+                    <input type="hidden" name="token" value="">
                     <li>
 					<span class="lb_block"><label for="access_control_list">파일 권한 ACL</label>
 					<?php
@@ -245,29 +254,32 @@ if (!empty($_POST['sync'])) {
                 </ul>
                 <ul class="frm_ul">
                     <li>
-					<span class="lb_block"><label for="is_only_use_s3">S3 사용하기</label>
-					<?php
-                    echo help(
-                        '내 서버 안에 모든 데이터를 aws s3 에 업로드 했고, 데이터를 aws s3 에만 저장 ( https://bucket_name.amazonaws.com/ ) 하고 싶다면 체크합니다.'
-                    ); ?>
-					</span>
-                        <input type="checkbox" name="is_only_use_s3" value="1" id="is_only_use_s3" <?php
-                        $is_use = $admin_aws_config['is_only_use_s3'];
-                        echo $is_use == 1 ? 'checked' : ''; ?>> <label for="is_only_use_s3">
-                            첨부된 데이터경로를 무조건 aws s3으로 할시에 체크</label>
+                        <span class="lb_block"><label for="is_only_use_s3">S3 사용하기</label>
+                        <?php
+                        echo help(
+                            '내 서버 안에 모든 데이터를 aws s3 에 업로드 했고, 데이터를 aws s3 에만 저장 ( https://bucket_name.amazonaws.com/ ) 하고 싶다면 체크합니다.'
+                        ); ?>
+                        </span>
+                            <input type="checkbox" name="is_only_use_s3" value="1"
+                                   id="is_only_use_s3"
+                                <?php
+                                $is_use = $admin_aws_config['is_only_use_s3'];
+                                echo $is_use == 1 ? 'checked="true"' : '' ?>
+                            >
+                        <label for="is_only_use_s3">
+                                첨부된 데이터경로를 무조건 aws s3으로 할시에 체크
+                        </label>
                     </li>
                 </ul>
                 <div class="">
-                    <input type="submit" value="사용여부 및 권한 설정하기" class="btn_submit btn" accesskey="s">
+                    <input type="submit" id="s3_state_submit" value="사용여부 및 권한 설정하기" class="btn_submit btn" accesskey="s">
                 </div>
             </section>
         </form>
-
-
     </div>
 
     <script>
-        //재전송 방지
+        //폼 재전송 방지
         if (window.history.replaceState) {
             window.history.replaceState(null, null, window.location.href);
         }
