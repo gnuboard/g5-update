@@ -280,7 +280,7 @@ class G5Update
                     if (!ssh2_sftp_mkdir($this->connPath, $this->dir_backup, 0707)) {
                         throw new Exception("디렉토리를 생성하는데 실패했습니다.");
                     }
-                    if (!ssh2_sftp_chmod($this->connPath, $this->dir_backup . '/backup', 0707)) {
+                    if (!ssh2_sftp_chmod($this->connPath, $this->dir_backup, 0707)) {
                         throw new Exception("디렉토리의 권한을 변경하는데 실패했습니다.");
                     }
                 }
