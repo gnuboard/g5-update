@@ -12,7 +12,7 @@ if (version_compare(PHP_VERSION, '5.5', '<')) {
 
 include_once(G5_LIB_PATH . '/AwsSdk/aws-autoloader.php');
 include_once(G5_PLUGIN_PATH . '/AwsS3/S3Service.php');
-include_once(G5_PATH . '/install/install.function.php');  // 인스톨 과정 함수 모음
+include_once(G5_PATH . '/install/install.function.php');
 
 auth_check_menu($auth, $sub_menu, 'r');
 
@@ -64,7 +64,7 @@ if (!empty($_POST['save_key']) && !empty($_POST['token']) && !empty($_POST['buck
     }
 }
 
-if (!empty($_POST['save'] && ($_POST['save'] === 'status') && !empty($_POST['token']) )) {
+if (isset($_POST['save']) && ($_POST['save'] === 'status') && !empty($_POST['token'])) {
     auth_check($auth, 'w');
     if ($GLOBALS['is_admin'] === 'super') {
         $access_control_list = strip_tags(get_text(trim($_POST['access_control_list'])));
@@ -285,14 +285,14 @@ add_stylesheet('<link rel="stylesheet" href="' . G5_ADMIN_URL . '/aws_s3/adm.sty
                             '내 서버 안에 모든 데이터를 aws s3 에 업로드 했고, 데이터를 aws s3 에만 저장 ( https://bucket_name.amazonaws.com/ ) 하고 싶다면 체크합니다.'
                         ); ?>
                         </span>
-                            <input type="checkbox" name="is_only_use_s3" value="1"
-                                   id="is_only_use_s3"
-                                <?php
-                                $is_use = $admin_aws_config['is_only_use_s3'];
-                                echo $is_use == 1 ? 'checked="true"' : '' ?>
-                            >
+                        <input type="checkbox" name="is_only_use_s3" value="1"
+                               id="is_only_use_s3"
+                            <?php
+                            $is_use = $admin_aws_config['is_only_use_s3'];
+                            echo $is_use == 1 ? 'checked="true"' : '' ?>
+                        >
                         <label for="is_only_use_s3">
-                                첨부된 데이터경로를 무조건 aws s3으로 할시에 체크
+                            첨부된 데이터경로를 무조건 aws s3으로 할시에 체크
                         </label>
                     </li>
                 </ul>
@@ -302,7 +302,7 @@ add_stylesheet('<link rel="stylesheet" href="' . G5_ADMIN_URL . '/aws_s3/adm.sty
             </section>
         </form>
 
-        <form name="f_sync" id="f_sync" method="post" onsubmit="return sync_onsubmit(this)">
+        <form name="f_sync" id="f_sync" method="post">
             <section class="tab_con">
                 <div>
                     <span class="lb_block"><label for="is_only_use_s3">S3 에 업로드 동기화</label>
@@ -322,7 +322,7 @@ add_stylesheet('<link rel="stylesheet" href="' . G5_ADMIN_URL . '/aws_s3/adm.sty
                     </select>
                 </div>
                 <div class="btn_space">
-                    <input type="submit" id="s3_sync_submit" value="동기화 시작" class="btn_submit btn">
+                    <input type="button" id="s3_sync_submit" value="동기화 시작" class="btn_submit btn" onclick="sync_onsubmit()">
                 </div>
             </section>
 
@@ -330,13 +330,40 @@ add_stylesheet('<link rel="stylesheet" href="' . G5_ADMIN_URL . '/aws_s3/adm.sty
     </div>
 
     <script>
+        let gnuAdmin = {};
+        gnuAdmin.loading = function (element, src, title) {
+            if (!element || !src) {
+                return;
+            }
+            $(element).append(
+                "<div class='loading-area'>"
+                + "<div>"
+                +   "<img src='"+ src + "' alt='upload'>"
+                +       "<p> "+ title +"</p>"
+                +   "</div>"
+                + "</div>"
+            )
+        }
+
+        gnuAdmin.loadingHide = function (element) {
+            $(".loading-area", $(element)).remove();
+        }
+
+        function loadingShow() {
+            gnuAdmin.loading($('#f_sync'), g5_url + '/css/images/ajax-loader.gif', '업로드중 입니다..' );
+        }
+
+        function loadingHide() {
+            gnuAdmin.loadingHide($('#f_sync'));
+        }
+
         //폼 재전송 방지
         if (window.history.replaceState) {
             window.history.replaceState(null, null, window.location.href);
         }
 
         function s3_key_submit(f) {
-            $result = confirm("s3 저장소를 새로 설정하시겠습니까?")
+            let $result = confirm("s3 저장소를 새로 설정하시겠습니까?")
             if (!$result) {
                 return false;
             }
@@ -364,7 +391,35 @@ add_stylesheet('<link rel="stylesheet" href="' . G5_ADMIN_URL . '/aws_s3/adm.sty
         }
 
         function sync_onsubmit() {
-            return true;
+            let form = document.getElementById('f_sync');
+            let formData = new FormData(form);
+            formData.append('save', 'sync')
+            formData.append('sync_dir', form.sync_dir.value)
+
+            console.log(form.sync_dir.value);
+            console.log(window.location.href);
+            loadingShow();
+            $.ajax({
+                url: window.location.href,
+                data: formData,
+                processData: false,
+                contentType: false,
+                type: 'POST',
+                success: function (res) { //res : {message, is_error, error_reason}
+                    console.log(res);
+                    if (!res.is_error) {
+                        alert('업로가 끝났습니다.')
+                    } else {
+                        alert('업로드가 실패했습니다' + res)
+                    }
+                    loadingHide();
+                },
+                error: function (res) {
+                    console.log(res);
+                    alert('연결에 실패했습니다' + res)
+                    loadingHide();
+                }
+            })
         }
 
         function disableF5(e) {

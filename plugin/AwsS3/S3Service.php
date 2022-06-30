@@ -307,7 +307,7 @@ class S3Service
                     $message = "버킷 지역을 확인후 다시 입력해주세요";
                     $is_error = true;
                 } else {
-                    $message = "연결 되었습니다.";
+                    $message = "연결되어 있습니다.";
                 }
             } catch (S3Exception $s3Exception) {
                 $is_error = true;
@@ -522,16 +522,18 @@ class S3Service
 
 
         //비동기 프로미스 실행
-        define("CONCURRENT_PROMISS_COUNT", 4);
+        define("CONCURRENT_PROMISS_COUNT", 3);
         \GuzzleHttp\Promise\Each::ofLimit(
             $promise = $manager->promise(),
             CONCURRENT_PROMISS_COUNT, // 동시 요청 실행갯수(프로세스를 쓰므로 갯수 주의)
             function ($response, $index) { // Callback on success
                 $result_upload['message'] = 'transfer end';
+                $result_upload['is_error'] = 'false';
                 echo \GuzzleHttp\json_encode($result_upload);
             },
             function ($reason, $index) { // Callback on failure
                 $result_upload['message'] = 'transfer fail';
+                $result_upload['is_error'] = 'true';
                 $result_upload['error_index'] = $index;
                 $result_upload['error_reason'] = $reason;
                 echo \GuzzleHttp\json_encode($result_upload);
@@ -542,6 +544,7 @@ class S3Service
         $promise->otherwise(function ($rejected) {
             $result_upload['message'] = 'transfer fail';
             $result_upload['error_reason'] = $rejected;
+            $result_upload['is_error'] = 'false';
             echo \GuzzleHttp\json_encode($result_upload);
         });
     }

@@ -23,3 +23,7 @@
 .aws-s3-area .frm_ul .select2-container{margin:5px 0}
 select {font-family: "Arial",'Malgun Gothic',"맑은 고딕",AppleGothic,Dotum,"돋움", sans-serif; font-size: 0.8rem;}
 body {background: #ffffff;}
+.loading-area {position: fixed;display: flex; bottom: 0;left: 0;width: 100%;height: 100%;opacity: 0.4;z-index: 100;background-color: rgb(0, 0, 0);}
+.loading-area > div {width: 100%;height: 100%;display: flex;flex-direction: column;justify-content: center;margin-left: 50px;color: white}
+.loading-area > div > img {align-self: center;margin-left: 50px;}
+.loading-area > div > p {align-self: center;margin-left: 50px;}
