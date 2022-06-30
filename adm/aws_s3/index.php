@@ -72,14 +72,16 @@ if (isset($_POST['save']) && ($_POST['save'] === 'status') && !empty($_POST['tok
             $access_control_list = 'private';
         }
 
-        $is_save_host = empty($_POST['access_control_list']) ? 0 : (int)strip_tags(get_text(trim(($_POST['is_save_host']))));
+        $is_save_host = !isset($_POST['is_save_host']) ? 0 : (int)strip_tags(
+            get_text(trim(($_POST['is_save_host'])))
+        );
         if ($is_save_host !== 1) {
             $is_save_host = 0;
         }
 
         $is_only_use_s3 = empty($is_only_use_s3) ? 0 : (int)strip_tags(get_text(trim((($_POST['is_only_use_s3'])))));
-        if ($is_save_host !== 1) {
-            $is_save_host = 0;
+        if ($is_only_use_s3 !== 1) {
+            $is_only_use_s3 = 0;
         }
 
         if (function_exists('mysqli_query') && G5_MYSQLI_USE) {
