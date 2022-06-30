@@ -57,3 +57,20 @@ if( ! function_exists('install_json_msg') ){
         return json_encode(array('error'=>$error_msg, 'success'=>$success_msg, 'exists'=>$exists_msg));
     }
 }
+
+// S3 설정 파일 생성
+function create_s3_config($s3_access_key, $s3_secret_key, $s3_bucket_name, $s3_region)
+{
+    $file = G5_DATA_PATH . '/' . G5_S3CONFIG_FILE;
+    $f = fopen($file, 'wb');
+
+    fwrite($f, "<?php\n");
+    fwrite($f, "if (!defined('_GNUBOARD_')) exit;\n");
+    fwrite($f, "define('G5_S3_ACCESS_KEY', '" . addcslashes($s3_access_key, "\\'") . "');\n");
+    fwrite($f, "define('G5_S3_SECRET_KEY', '" . addcslashes($s3_secret_key, "\\'") . "');\n");
+    fwrite($f, "define('G5_S3_BUCKET_NAME', '" . addcslashes($s3_bucket_name, "\\'") . "');\n");
+    fwrite($f, "define('G5_S3_REGION', '" . addcslashes($s3_region, "\\'") . "');\n");
+
+    fclose($f);
+    @chmod($file, G5_FILE_PERMISSION);
+}

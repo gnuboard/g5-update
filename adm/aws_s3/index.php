@@ -9,11 +9,13 @@ if (version_compare(PHP_VERSION, '5.5', '<')) {
     include_once(G5_ADMIN_PATH . '/admin.tail.php');
     exit;
 }
-auth_check_menu($auth, $sub_menu, 'r');
-add_stylesheet('<link rel="stylesheet" href="' . G5_ADMIN_URL . '/aws_s3/adm.style.css">', 0);
 
 include_once(G5_LIB_PATH . '/AwsSdk/aws-autoloader.php');
 include_once(G5_PLUGIN_PATH . '/AwsS3/S3Service.php');
+include_once(G5_PATH . '/install/install.function.php');  // 인스톨 과정 함수 모음
+
+auth_check_menu($auth, $sub_menu, 'r');
+
 $admin_aws_config = array(
     'bucket_name' => '',
     'access_key' => '',
@@ -22,7 +24,7 @@ $admin_aws_config = array(
     'is_only_use_s3' => ''
 );
 
-if (file_exists(G5_DATA_PATH . '/s3config.php')) {
+if (file_exists(G5_DATA_PATH .'/' . G5_S3CONFIG_FILE)) {
     if (defined('G5_S3_BUCKET_NAME')){
         $admin_aws_config['bucket_name'] = G5_S3_BUCKET_NAME;
     }
@@ -48,14 +50,17 @@ if (!empty($_POST['save_key']) && !empty($_POST['token']) && !empty($_POST['buck
     auth_check($auth, 'w');
     if ($GLOBALS['is_admin'] === 'super') {
         $tmp = sql_fetch("select * from $table_name limit 1");
-
-        $bucket_name = strip_tags(get_text(trim($_POST['bucket_name'])));
-
         $access_key = strip_tags(get_text(trim($_POST['access_key'])));
-
         $secret_key = strip_tags(get_text(trim($_POST['secret_key'])));
-
+        $bucket_name = strip_tags(get_text(trim($_POST['bucket_name'])));
         $bucket_region = strip_tags(get_text(trim($_POST['bucket_region'])));
+
+        create_s3_config($access_key, $secret_key, $bucket_name, $bucket_region);
+        if (file_exists(G5_DATA_PATH .'/' . G5_S3CONFIG_FILE)) {
+            alert('설정이 완료되었습니다.');
+        } else {
+            alert('설정파일 수정에 실패했습니다.');
+        }
     }
 }
 
@@ -171,7 +176,7 @@ if (!empty($_POST['save']) && $_POST['save'] === 'sync' && !empty($_POST['sync_d
     auth_check($auth, 'w');
     if ($GLOBALS['is_admin'] === 'super') {
         $sync_dir = strip_tags(get_text(trim($_POST['sync_dir'])));
-        
+
         $result = Gnuboard\Plugin\AwsS3\S3Service::get_instance()->upload_dir($sync_dir);
         /**
          * @result string 이미 json으로 인코딩됨
@@ -183,6 +188,8 @@ if (!empty($_POST['save']) && $_POST['save'] === 'sync' && !empty($_POST['sync_d
 
 
 include_once(G5_ADMIN_PATH . '/admin.head.php');
+add_stylesheet('<link rel="stylesheet" href="' . G5_ADMIN_URL . '/aws_s3/adm.style.css">', 0);
+
 // 관리자 페이지 aws s3 설정
 ?>
     <div class="aws-s3-area">
