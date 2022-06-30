@@ -49,7 +49,6 @@ if (!empty($_POST['save_key']) && !empty($_POST['token']) && !empty($_POST['buck
     && !empty($_POST['access_key']) && !empty($_POST['secret_key']) && !empty($_POST['bucket_region'])) {
     auth_check($auth, 'w');
     if ($GLOBALS['is_admin'] === 'super') {
-        $tmp = sql_fetch("select * from $table_name limit 1");
         $access_key = strip_tags(get_text(trim($_POST['access_key'])));
         $secret_key = strip_tags(get_text(trim($_POST['secret_key'])));
         $bucket_name = strip_tags(get_text(trim($_POST['bucket_name'])));
@@ -67,6 +66,7 @@ if (!empty($_POST['save_key']) && !empty($_POST['token']) && !empty($_POST['buck
 if (isset($_POST['save']) && ($_POST['save'] === 'status') && !empty($_POST['token'])) {
     auth_check($auth, 'w');
     if ($GLOBALS['is_admin'] === 'super') {
+        $row_count = sql_fetch("select * from $table_name limit 1");
         $access_control_list = strip_tags(get_text(trim($_POST['access_control_list'])));
         if($access_control_list !== 'public-read'){ //유효성 검사
             $access_control_list = 'private';
@@ -92,7 +92,7 @@ if (isset($_POST['save']) && ($_POST['save'] === 'status') && !empty($_POST['tok
 				is_only_use_s3 = ?
 				";
 
-            if ($tmp) {
+            if ($row_count) {
                 $sql = "UPDATE $table_name $sql_common ";
                 $res = sql_bind_query($sql, array('sii', $access_control_list, $is_save_host, $is_only_use_s3));
             } else {
@@ -117,12 +117,12 @@ if (isset($_POST['save']) && ($_POST['save'] === 'status') && !empty($_POST['tok
                 }
             }
         } else {
-//            mysqli 안쓰는 경우
+            //mysqli 안쓰는 경우
             $sql_common = "
 				SET acl_default_value = '{$access_control_list}',
 				is_save_host = '{$is_save_host}',
 				is_only_use_s3 = '{$is_only_use_s3}' ";
-            if ($tmp) {
+            if ($row_count) {
                 $sql = "UPDATE $table_name $sql_common ";
             } else {
                 $sql = "INSERT INTO $table_name $sql_common ";
@@ -148,7 +148,7 @@ if (isset($_POST['save']) && ($_POST['save'] === 'status') && !empty($_POST['tok
 function sql_bind_query($sql, $args)
 {
     if (!function_exists('mysqli_query')) {
-        die('사용 불가');
+        die('mysqli가 설치되어있지않습니다.'); //php 5.2
     }
     global $g5;
     $link = $g5['connect_db'];
