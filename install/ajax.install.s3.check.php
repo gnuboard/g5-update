@@ -16,9 +16,9 @@ include_once '../lib/AwsSdk/aws-autoloader.php';
 $check_mode = isset($_POST['check_mode']) ? $_POST['check_mode'] : null;
 
 if ($check_mode === null) {
+    http_response_code(400);
     die;
 }
-
 if ($check_mode === 's3_connect_check') {
     $region = isset($_POST['region']) ? $_POST['region'] : '';
     $name = isset($_POST['bucket_name']) ? $_POST['bucket_name'] : '';

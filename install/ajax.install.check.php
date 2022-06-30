@@ -1,4 +1,5 @@
 <?php
+
 $g5_path['path'] = '..';
 include_once('../config.php');
 include_once('./install.function.php');    // 인스톨 과정 함수 모음
@@ -6,10 +7,10 @@ include_once('../lib/common.lib.php');    // 공통 라이브러리
 include_once('../lib/hook.lib.php');    // hook 함수 파일
 include_once('../lib/get_data.lib.php');    // 데이터 가져오는 함수 모음
 
-$data_path = '../'.G5_DATA_DIR;
+$data_path = '../' . G5_DATA_DIR;
 
 // 파일이 존재한다면 설치할 수 없다.
-$dbconfig_file = $data_path.'/'.G5_DBCONFIG_FILE;
+$dbconfig_file = $data_path . '/' . G5_DBCONFIG_FILE;
 if (file_exists($dbconfig_file)) {
     die(install_json_msg('프로그램이 이미 설치되어 있습니다.'));
 }
@@ -22,14 +23,16 @@ if (isset($_POST['s3_compatible_check'])) {
     s3_compatible_check();
 }
 
-$mysql_host  = isset($_POST['mysql_host']) ? safe_install_string_check($_POST['mysql_host'], 'json') : '';
-$mysql_user  = isset($_POST['mysql_user']) ? safe_install_string_check($_POST['mysql_user'], 'json') : '';
-$mysql_pass  = isset($_POST['mysql_pass']) ? safe_install_string_check($_POST['mysql_pass'], 'json') : '';
-$mysql_db    = isset($_POST['mysql_db']) ? safe_install_string_check($_POST['mysql_db'], 'json') : '';
-$table_prefix= isset($_POST['table_prefix']) ? safe_install_string_check(preg_replace('/[^a-zA-Z0-9_]/', '_', $_POST['table_prefix'])) : '';
+$mysql_host = isset($_POST['mysql_host']) ? safe_install_string_check($_POST['mysql_host'], 'json') : '';
+$mysql_user = isset($_POST['mysql_user']) ? safe_install_string_check($_POST['mysql_user'], 'json') : '';
+$mysql_pass = isset($_POST['mysql_pass']) ? safe_install_string_check($_POST['mysql_pass'], 'json') : '';
+$mysql_db = isset($_POST['mysql_db']) ? safe_install_string_check($_POST['mysql_db'], 'json') : '';
+$table_prefix = isset($_POST['table_prefix']) ? safe_install_string_check(
+    preg_replace('/[^a-zA-Z0-9_]/', '_', $_POST['table_prefix'])
+) : '';
 
 $tmp_str = isset($_SERVER['SERVER_SOFTWARE']) ? $_SERVER['SERVER_SOFTWARE'] : '';
-$ajax_token = md5($tmp_str.$_SERVER['REMOTE_ADDR'].dirname(dirname(__FILE__).'/'));
+$ajax_token = md5($tmp_str . $_SERVER['REMOTE_ADDR'] . dirname(dirname(__FILE__) . '/'));
 
 $bool_ajax_token = (isset($_POST['ajax_token']) && ($ajax_token == $_POST['ajax_token'])) ? true : false;
 

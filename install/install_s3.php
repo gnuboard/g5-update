@@ -11,7 +11,7 @@ header('Cache-Control: pre-check=0, post-check=0, max-age=0'); // HTTP/1.1
 
 $g5_path['path'] = '..';
 include_once('../config.php');
-include_once('./install.function.php');  // 인스톨 과정 함수 모음
+include_once('./install.function.php');  // 설치 과정 함수 모음
 include_once('./install.inc.php');  //설치되어있으면 중단
 include_once('../lib/AwsSdk/aws-autoloader.php');
 include_once('../lib/common.lib.php');

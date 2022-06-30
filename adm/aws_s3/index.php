@@ -17,8 +17,8 @@ include_once(G5_PATH . '/install/install.function.php');
 auth_check_menu($auth, $sub_menu, 'r');
 
 $admin_aws_config = array(
-    'bucket_name' => '',
     'access_key' => '',
+    'bucket_name' => '',
     'bucket_region' => '',
     'is_save_host' => '',
     'is_only_use_s3' => ''
@@ -397,9 +397,6 @@ add_stylesheet('<link rel="stylesheet" href="' . G5_ADMIN_URL . '/aws_s3/adm.sty
             let formData = new FormData(form);
             formData.append('save', 'sync')
             formData.append('sync_dir', form.sync_dir.value)
-
-            console.log(form.sync_dir.value);
-            console.log(window.location.href);
             loadingShow();
             $.ajax({
                 url: window.location.href,
@@ -408,7 +405,6 @@ add_stylesheet('<link rel="stylesheet" href="' . G5_ADMIN_URL . '/aws_s3/adm.sty
                 contentType: false,
                 type: 'POST',
                 success: function (res) { //res : {message, is_error, error_reason}
-                    console.log(res);
                     if (!res.is_error) {
                         alert('업로가 끝났습니다.')
                     } else {
@@ -417,7 +413,6 @@ add_stylesheet('<link rel="stylesheet" href="' . G5_ADMIN_URL . '/aws_s3/adm.sty
                     loadingHide();
                 },
                 error: function (res) {
-                    console.log(res);
                     alert('연결에 실패했습니다' + res)
                     loadingHide();
                 }
@@ -425,7 +420,9 @@ add_stylesheet('<link rel="stylesheet" href="' . G5_ADMIN_URL . '/aws_s3/adm.sty
         }
 
         function disableF5(e) {
-            if ((e.which || e.keyCode) === 116) e.preventDefault();
+            if ((e.which || e.keyCode) === 116) {
+                e.preventDefault();
+            }
         }
 
         $(document).on("keydown", disableF5);

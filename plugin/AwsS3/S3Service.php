@@ -7,14 +7,16 @@ if (!defined('_GNUBOARD_')) {
 } // 개별 페이지 접근 불가
 
 if (file_exists(G5_DATA_PATH . '/' . G5_S3CONFIG_FILE)) {
-    include_once(G5_DATA_PATH . '/'. G5_S3CONFIG_FILE);
+    include_once(G5_DATA_PATH . '/' . G5_S3CONFIG_FILE);
 }
 require_once(G5_LIB_PATH . '/AwsSdk/aws-autoloader.php');
 require_once(G5_LIB_PATH . '/Hook/hook.class.php');
 
+use Aws\Command;
 use Aws\Credentials\Credentials;
 use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
+use Aws\S3\Transfer;
 use Hook;
 
 class S3Service
@@ -76,8 +78,8 @@ class S3Service
     public function __construct()
     {
         $this->get_config();
-        //s3 사용시에만 훅스 등록
 
+        //s3 사용시에만 훅스 등록
         if ($this->is_only_use_s3 && $this->region && $this->bucket_name && $this->access_key && $this->secret_key) {
             Hook::setSingletonName('get_instance');
             $this->add_hooks();
@@ -86,25 +88,20 @@ class S3Service
         $this->extra_item_field = preg_replace('/[^a-z0-9_]/i', '', $this->extra_item_field);
     }
 
-    public function get_table_name()
-    {
-        return $this->table_name;
-    }
-
     /**
      * 객체 생성시 설정값 불러오기
      * @return void
      */
     private function get_config()
     {
-        if (file_exists(G5_DATA_PATH . '/'. G5_S3CONFIG_FILE)) {
-            if (defined('G5_S3_BUCKET_NAME')){
+        if (file_exists(G5_DATA_PATH . '/' . G5_S3CONFIG_FILE)) {
+            if (defined('G5_S3_BUCKET_NAME')) {
                 $this->bucket_name = G5_S3_BUCKET_NAME;
             }
-            if (defined('G5_S3_REGION')){
+            if (defined('G5_S3_REGION')) {
                 $this->region = G5_S3_REGION;
             }
-            if (defined('G5_S3_ACCESS_KEY')){
+            if (defined('G5_S3_ACCESS_KEY')) {
                 $this->access_key = G5_S3_ACCESS_KEY;
             }
             if (defined('G5_S3_SECRET_KEY')) {
@@ -168,6 +165,11 @@ class S3Service
             'us-gov-east-1' => 'AWS GovCloud (미국 동부)',
             'us-gov-west-1' => 'AWS GovCloud (US)',
         );
+    }
+
+    public function get_table_name()
+    {
+        return $this->table_name;
     }
 
     public function mime_content_type($filename)
@@ -285,9 +287,9 @@ class S3Service
         $secret_key = $this->secret_key;
         $region = $this->region;
         $bucket_name = $this->bucket_name;
-        if(empty($access_key) || empty($secret_key) || empty($region) || empty($bucket_name)){
+        if (empty($access_key) || empty($secret_key) || empty($region) || empty($bucket_name)) {
             $response['message'] = '설치 되어있지않습니다.';
-            return  $response;
+            return $response;
         }
         try {
             $credentials = new Credentials($access_key, $secret_key);
@@ -408,7 +410,8 @@ class S3Service
         // 쇼핑몰 상품을 삭제시
         add_event('shop_admin_delete_item_file', array($this, 'delete_shop_file'), 1, 1);
 
-        add_event('tail_sub', array($this,'add_onerror'), 1, 0);
+        // 화면 랜더링 마지막에 실행
+        add_event('tail_sub', array($this, 'add_onerror'), 1, 0);
     }
 
     public function bucket_exists($bucket)
@@ -453,12 +456,13 @@ class S3Service
 
     /**
      * 업로드할 폴더설정, 업로더 실행
-     * @param $sync_dir_name
+     * @param string $sync_dir_name
      * @return string
      */
-    public function upload_dir($sync_dir_name){
+    public function upload_dir($sync_dir_name)
+    {
         $source_dir = '';
-        switch($sync_dir_name){
+        switch ($sync_dir_name) {
             case 'editor':
                 $source_dir = G5_EDITOR_DIR;
                 break;
@@ -470,7 +474,7 @@ class S3Service
                 break;
         }
 
-        if(empty($source_dir)){
+        if (empty($source_dir)) {
             $response['message'] = 'not found';
             return \GuzzleHttp\json_encode($response);
         }
@@ -481,15 +485,18 @@ class S3Service
     /**
      * 코드나 서버의 리눅스 경로를 윈도우 경로로 변경
      * @param $path
-     * @return array|string|string[]|void
+     * @return array|string|string[]
      */
-    private function change_linux_path_window_path($path) {
-        if($this->detect_os() === 'Windows'){
+    private function change_linux_path_window_path($path)
+    {
+        if ($this->detect_os() === 'Windows') {
             return str_replace('/', '\\', $path);
         }
+        return $path;
     }
 
-    private function detect_os(){
+    private function detect_os()
+    {
         $OS = strtoupper(PHP_OS);
         switch (substr($OS, 0, 3)) {
             case "WIN":
@@ -512,10 +519,10 @@ class S3Service
      */
     private function upload_sync($source_dir)
     {
-        $source_path = G5_DATA_PATH . "/$source_dir" ;
+        $source_path = G5_DATA_PATH . "/$source_dir";
         $dest = 's3://' . $this->bucket_name . '/' . G5_DATA_DIR . "/$source_dir"; //프로토콜은 s3://
-        $manager = new \Aws\S3\Transfer($this->s3_client(), $this->change_linux_path_window_path($source_path), $dest, [
-            'before' => function (\Aws\Command $command) {
+        $manager = new Transfer($this->s3_client(), $this->change_linux_path_window_path($source_path), $dest, [
+            'before' => function (Command $command) {
                 $command['ACL'] = $this->set_file_acl($command['Key']);
             }
         ]);
@@ -537,7 +544,6 @@ class S3Service
                 $result_upload['error_index'] = $index;
                 $result_upload['error_reason'] = $reason;
                 echo \GuzzleHttp\json_encode($result_upload);
-
             }
         )->wait();
         //프로미스 거부(reject)시 처리
@@ -602,7 +608,7 @@ class S3Service
     }
 
     /**
-     * @param $dirname
+     * @param string $dirname
      * @return false|void
      */
     private function delete_folder($dirname)
@@ -831,9 +837,9 @@ class S3Service
         }
 
 
-        if(!is_object(unserialize(base64_decode($it[$this->extra_item_field])))){
+        if (!is_object(unserialize(base64_decode($it[$this->extra_item_field])))) {
             error_log("it array", var_dump($it));
-            error_log("extra_item before unseri",var_dump($it[$this->extra_item_field]));
+            error_log("extra_item before unseri", print_r($it[$this->extra_item_field]));
             $item_extra_infos = unserialize(base64_decode($it[$this->extra_item_field]));
         }
 
@@ -851,8 +857,6 @@ class S3Service
         }
 
         $merges = array_merge($img_arrays, $before_infos);
-
-        var_dump($merges);
         error_log($merges);
         //$save_str = base64_encode(\GuzzleHttp\json_encode($merges));
         $save_str = \GuzzleHttp\json_encode($merges);//base64_encode(serialize($merges));
@@ -1052,6 +1056,7 @@ class S3Service
     /**
      * 쇼핑몰 상품 썸네일 html tag 리턴
      *
+     * @return string
      */
     public function get_it_thumbnail_tag($str, $img, $width, $height, $id, $is_crop)
     {
@@ -1292,6 +1297,8 @@ class S3Service
     /**
      * 쇼핑몰 상품 이미지 미리보기
      *
+     *
+     * @return string
      */
     public function shop_item_image_tag($image_tag = '', $it, $i)
     {
@@ -1383,7 +1390,8 @@ class S3Service
     public function bbs_move_update_file($files, $file_name, $bo_table, $move_bo_table, $insert_id = 0)
     {
         if ($files['bf_fileurl'] && $files['bf_storage'] === $this->storage()) {
-            if ($ori_filename = $this->get_url_filename('', @parse_url($files['bf_fileurl']))) {
+            $ori_filename = $this->get_url_filename('', @parse_url($files['bf_fileurl']));
+            if ($ori_filename) {
                 $ori_key = G5_DATA_DIR . '/file/' . $bo_table . '/' . $ori_filename;
                 $copy_key = G5_DATA_DIR . '/file/' . $move_bo_table . '/' . $file_name;
 
@@ -1619,7 +1627,7 @@ class S3Service
         // https://docs.aws.amazon.com/ko_kr/AmazonS3/latest/API/RESTBucketGET.html
         $image_url = 'https://' . $this->bucket_name . '.s3.' . $this->region . '.amazonaws.com/' . $file_key;
 
-        if (strpos(strtolower($image_url), "https") != 0 || strlen($image_url) > 255) {
+        if (stripos($image_url, "https") != 0 || strlen($image_url) > 255) {
             $image_url = '';
         }
 
@@ -1907,7 +1915,7 @@ class S3Service
     /**
      * file url 이 aws s3 url 이 맞는지 확인
      */
-    public function get_url_filename($filename = '', $parses)
+    public function get_url_filename($filename, $parses)
     {
         if (!$filename && isset($parses['host']) && 'https' === $parses['scheme']) {
             if ($this->aws_s3_url_validate('https://' . $parses['host'])) {
@@ -2023,8 +2031,8 @@ class S3Service
                     imgs[i].dataset['fallback'] = 0;
                     imgs[i].onerror = function() {  
                         let fallbackIndex = this.dataset['fallback'];
-                        HostImage = g5_url + '/data/editor/'+ this.getAttribute('src').split('/data/editor/')[1];
-                        fallbacks = [HostImage, emptyImage, '']
+                        hostImage = g5_url + '/data/editor/'+ this.getAttribute('src').split('/data/editor/')[1];
+                        fallbacks = [hostImage, emptyImage, '']
                         this.src = fallbacks[fallbackIndex];
                         if(fallbackIndex < fallbacks.length ){
                             this.dataset['fallback']++;
@@ -2037,8 +2045,8 @@ class S3Service
         addOnError();
         </script>        
 EOD;
-    // nowdoc 문법에서 끝 태그를 들여쓰기 하면 안됩니다
-    //그것은 PHP7.3부터 지원됩니다.
+        // nowdoc 문법에서 끝 태그를 들여쓰기 하면 안됩니다
+        //그것은 PHP7.3부터 지원됩니다.
 
     }
 
@@ -2078,7 +2086,7 @@ EOD;
      */
     public function upload_file($upload_info, $filepath, $board, $wr_id, $w = '')
     {
-        global $board;// TODO 알고보니 필수.
+        global $board;// TODO
 
         $return_value = array(
             'fileurl' => '',
@@ -2182,7 +2190,7 @@ EOD;
     }
 
     /**
-     * AWS S3 에서 특정폴더 이하 썸네일 파일을 삭제하는 함수.
+     * AWS S3 에서 특정폴더 이하 썸네일 파일을 삭제합니다.
      * @param string $filePrefix 파일경로(s3객체 키)
      * @return void
      */
