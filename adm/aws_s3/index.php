@@ -244,7 +244,7 @@ add_stylesheet('<link rel="stylesheet" href="' . G5_ADMIN_URL . '/aws_s3/adm.sty
                     </li>
                 </ul>
                 <div class="btn_space">
-                    <input type="submit" value="s3 설정" class="btn_submit btn" accesskey="s">
+                    <input type="submit" value="s3 설정" class="btn_submit btn">
                 </div>
 
             </section>
@@ -297,7 +297,7 @@ add_stylesheet('<link rel="stylesheet" href="' . G5_ADMIN_URL . '/aws_s3/adm.sty
                     </li>
                 </ul>
                 <div class="btn_space">
-                    <input type="submit" id="s3_state_submit" value="사용여부 및 권한 설정하기" class="btn_submit btn" accesskey="s">
+                    <input type="submit" id="s3_state_submit" value="사용여부 및 권한 설정하기" class="btn_submit btn">
                 </div>
             </section>
         </form>
@@ -322,7 +322,7 @@ add_stylesheet('<link rel="stylesheet" href="' . G5_ADMIN_URL . '/aws_s3/adm.sty
                     </select>
                 </div>
                 <div class="btn_space">
-                    <input type="submit" id="s3_sync_submit" value="동기화 시작" class="btn_submit btn" accesskey="s">
+                    <input type="submit" id="s3_sync_submit" value="동기화 시작" class="btn_submit btn">
                 </div>
             </section>
 
