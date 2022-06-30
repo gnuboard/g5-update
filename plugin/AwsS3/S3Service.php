@@ -6,8 +6,8 @@ if (!defined('_GNUBOARD_')) {
     exit;
 } // 개별 페이지 접근 불가
 
-if (file_exists(G5_DATA_PATH . '/s3config.php')) {
-    include_once(G5_DATA_PATH . '/s3config.php');
+if (file_exists(G5_DATA_PATH . '/' . G5_S3CONFIG_FILE)) {
+    include_once(G5_DATA_PATH . '/'. G5_S3CONFIG_FILE);
 }
 require_once(G5_LIB_PATH . '/AwsSdk/aws-autoloader.php');
 require_once(G5_LIB_PATH . '/Hook/hook.class.php');
@@ -97,7 +97,7 @@ class S3Service
      */
     private function get_config()
     {
-        if (file_exists(G5_DATA_PATH . '/s3config.php')) {
+        if (file_exists(G5_DATA_PATH . '/'. G5_S3CONFIG_FILE)) {
             if (defined('G5_S3_BUCKET_NAME')){
                 $this->bucket_name = G5_S3_BUCKET_NAME;
             }
