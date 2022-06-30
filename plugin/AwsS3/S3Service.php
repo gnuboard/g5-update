@@ -2019,9 +2019,9 @@ class S3Service
 
             //ie 11 지원
             for (let i = 0; i < imgs.length; i++) {
-                if(imgs[i].getAttribute('src')) {
+                if(imgs[i].getAttribute('src').includes(g5_url +'/data/editor/')) {
                     imgs[i].dataset['fallback'] = 0;
-                    imgs[i].onerror = function() {        
+                    imgs[i].onerror = function() {  
                         let fallbackIndex = this.dataset['fallback'];
                         HostImage = g5_url + '/data/editor/'+ this.getAttribute('src').split('/data/editor/')[1];
                         fallbacks = [HostImage, emptyImage, '']
