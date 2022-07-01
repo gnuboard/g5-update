@@ -9,6 +9,7 @@ if (!defined('_GNUBOARD_')) {
 if (file_exists(G5_DATA_PATH . '/' . G5_S3CONFIG_FILE)) {
     include_once(G5_DATA_PATH . '/' . G5_S3CONFIG_FILE);
 }
+
 require_once(G5_LIB_PATH . '/AwsSdk/aws-autoloader.php');
 require_once(G5_LIB_PATH . '/Hook/hook.class.php');
 
@@ -837,16 +838,10 @@ class S3Service
         }
 
 
-        if (!is_object(unserialize(base64_decode($it[$this->extra_item_field])))) {
-            error_log("it array", var_dump($it));
-            error_log("extra_item before unseri", print_r($it[$this->extra_item_field]));
-            $item_extra_infos = unserialize(base64_decode($it[$this->extra_item_field]));
-        }
-
-        //$item_extra_infos = \GuzzleHttp\json_decode($it[$this->extra_item_field]);
+        $item_extra_infos = \GuzzleHttp\json_decode($it[$this->extra_item_field], true);
         $before_infos = array();
 
-        foreach ((array)$item_extra_infos as $key => $value) {
+        foreach ($item_extra_infos as $key => $value) {
             if (empty($value)) {
                 continue;
             }
@@ -857,9 +852,8 @@ class S3Service
         }
 
         $merges = array_merge($img_arrays, $before_infos);
-        error_log($merges);
-        //$save_str = base64_encode(\GuzzleHttp\json_encode($merges));
-        $save_str = \GuzzleHttp\json_encode($merges);//base64_encode(serialize($merges));
+        error_log(print_r($merges));
+        $save_str = \GuzzleHttp\json_encode($merges);
 
         if ($it[$this->extra_item_field] !== $save_str) {
             // item 테이블에서 필드 extra_item_field 를 업데이트합니다.
@@ -890,7 +884,7 @@ class S3Service
             return $url;
         }
 
-        $extra_infos = unserialize(base64_decode($it[$this->extra_item_field]));
+        $extra_infos = \GuzzleHttp\json_decode($it[$this->extra_item_field], true);
 
         if (isset($extra_infos['img' . $index]) && $extra_infos['img' . $index]) {
             $url = $extra_infos['img' . $index];
@@ -914,7 +908,7 @@ class S3Service
             return $is_exist_file;
         }
 
-        $extra_infos = unserialize(base64_decode($it[$this->extra_item_field]));
+        $extra_infos = \GuzzleHttp\json_decode($it[$this->extra_item_field], true);
 
         if ($it['it_img' . $index] && isset($extra_infos['img' . $index]) && $extra_infos['img' . $index] && $this->aws_s3_url_validate(
                 $extra_infos['img' . $index]
@@ -932,7 +926,7 @@ class S3Service
             if ($this->object_exists($this->bucket_name, $file_key)) {
                 $extra_infos['img' . $index] = $this->get_object_url($this->bucket_name, $file_key);
 
-                $save_str = \GuzzleHttp\json_encode($extra_infos);//base64_encode(serialize($extra_infos));
+                $save_str = \GuzzleHttp\json_encode($extra_infos);
 
                 if ($it[$this->extra_item_field] !== $save_str) {
                     // item 테이블에서 필드 extra_item_field 를 업데이트합니다.
@@ -971,8 +965,7 @@ class S3Service
             return $infos;
         }
 
-        $extra_infos = unserialize(base64_decode($it[$this->extra_item_field]));
-
+        $extra_infos = \GuzzleHttp\json_decode($it[$this->extra_item_field], true);
         if ($this->is_only_use_s3) {
             $infos['imageurl'] = $this->replace_url($infos['imageurl']);
             $infos['imagehtml'] = '<img src="' . $infos['imageurl'] . '" alt="' . get_text(
@@ -1019,7 +1012,7 @@ class S3Service
             return $img;
         }
 
-        $extra_infos = unserialize(base64_decode($it[$this->extra_item_field]));
+        $extra_infos = \GuzzleHttp\json_decode($it[$this->extra_item_field], true);
         $find_tag = $find_img = '';
 
         for ($i = 1; $i <= 10; $i++) {
@@ -1068,7 +1061,7 @@ class S3Service
 
         $extra_infos = array();
         if ($this->check_extra_item_field($it)) {
-            $extra_infos = unserialize(base64_decode($it[$this->extra_item_field]));
+            $extra_infos = \GuzzleHttp\json_decode($it[$this->extra_item_field], true);
         }
 
         if ($key = array_search($img, $it, true)) {
@@ -1171,7 +1164,7 @@ class S3Service
         }
 
         $array_thumb_key = $index . '_' . (string)$width . 'x' . (string)$height;
-        $extra_infos = unserialize(base64_decode($it[$this->extra_item_field]));
+        $extra_infos = \GuzzleHttp\json_decode($it[$this->extra_item_field], true);
         $before_file_exists = false;
 
         if (isset($extra_infos['thumb' . $array_thumb_key]) && $extra_infos['thumb' . $array_thumb_key]) {
@@ -1260,14 +1253,14 @@ class S3Service
                                 }
 
                                 $it = get_shop_item($it['it_id'], false);
-                                $extra_infos = unserialize(base64_decode($it[$this->extra_item_field]));
+                                $extra_infos = \GuzzleHttp\json_decode($it[$this->extra_item_field], true);
 
                                 $extra_infos['thumb' . $array_thumb_key] = $thumb_object_url;
 
-                                $base64_str = \GuzzleHttp\json_encode($extra_infos);//base64_encode(serialize($extra_infos));
+                                $encode_str = \GuzzleHttp\json_encode($extra_infos);
 
                                 $sql = " update `{$g5['g5_shop_item_table']}`
-                                            set {$this->extra_item_field} = '$base64_str'
+                                            set {$this->extra_item_field} = '$encode_str'
                                           where it_id = '{$it['it_id']}' ";
 
                                 sql_query($sql, false);
@@ -1875,10 +1868,10 @@ class S3Service
             return;
         }
 
-        $extra_infos = unserialize(base64_decode($it[$this->extra_item_field]));
+        $extra_infos = \GuzzleHttp\json_decode($it[$this->extra_item_field], true);
 
         if ($extra_infos && $this->s3_client()) {
-            foreach ((array)$extra_infos as $info) {
+            foreach ($extra_infos as $info) {
                 if ($this->aws_s3_url_validate($info)) {
                     $filename = $this->get_url_filename('', @parse_url($info));
                     $aws_s3_key = G5_DATA_DIR . '/' . $this->shop_folder . '/' . $it_id . '/' . $filename;
