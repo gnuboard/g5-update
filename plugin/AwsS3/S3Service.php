@@ -138,36 +138,6 @@ class S3Service
         sql_query($sql);
     }
 
-    public function get_regions()
-    {
-        // https://docs.aws.amazon.com/ko_kr/general/latest/gr/rande.html
-        return array(
-            'ap-northeast-2' => '아시아 태평양(서울)',
-            'us-east-1' => '미국 동부(버지니아 북부)',
-            'us-east-2' => '미국 동부(오하이오)',
-            'us-west-1' => '미국 서부(캘리포니아 북부)',
-            'us-west-2' => '미국 서부(오레곤)',
-            'ap-east-1' => '아시아 태평양(홍콩)',
-            'ap-south-1' => '아시아 태평양(뭄바이)',
-            'ap-southeast-1' => '아시아 태평양(싱가포르)',
-            'ap-southeast-2' => '아시아 태평양(시드니)',
-            'ap-northeast-1' => '아시아 태평양(도쿄)',
-            'ap-northeast-3' => '아시아 태평양(오사카)',
-            'ca-central-1' => '캐나다(중부)',
-            'cn-north-1' => '중국(베이징)',
-            'cn-northwest-1' => '중국(닝샤)',
-            'eu-central-1' => 'EU(프랑크푸르트)',
-            'eu-west-1' => 'EU(아일랜드)',
-            'eu-west-2' => 'EU(런던)',
-            'eu-west-3' => 'EU(파리)',
-            'eu-north-1' => 'EU(스톡홀름)',
-            'me-south-1' => '중동(바레인)',
-            'sa-east-1' => '남아메리카(상파울루)',
-            'us-gov-east-1' => 'AWS GovCloud (미국 동부)',
-            'us-gov-west-1' => 'AWS GovCloud (US)',
-        );
-    }
-
     public function get_table_name()
     {
         return $this->table_name;

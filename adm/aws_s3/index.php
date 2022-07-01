@@ -24,12 +24,12 @@ $admin_aws_config = array(
     'is_only_use_s3' => ''
 );
 
-if (file_exists(G5_DATA_PATH .'/' . G5_S3CONFIG_FILE)) {
-    if (defined('G5_S3_BUCKET_NAME')){
+if (file_exists(G5_DATA_PATH . '/' . G5_S3CONFIG_FILE)) {
+    if (defined('G5_S3_BUCKET_NAME')) {
         $admin_aws_config['bucket_name'] = G5_S3_BUCKET_NAME;
     }
 
-    if (defined('G5_S3_REGION')){
+    if (defined('G5_S3_REGION')) {
         $admin_aws_config['bucket_region'] = G5_S3_REGION;
     }
 }
@@ -42,7 +42,7 @@ if ($row = sql_fetch($sql, false)) {
     $admin_aws_config['access_control_list'] = $row['acl_default_value'];
 }
 
-$all_regions = \Gnuboard\Plugin\AwsS3\S3Service::get_instance()->get_regions();
+$all_region = get_aws_regions();
 $status = \Gnuboard\Plugin\AwsS3\S3Service::get_instance()->get_connect_status();
 
 if (!empty($_POST['save_key']) && !empty($_POST['token']) && !empty($_POST['bucket_name'])
@@ -55,7 +55,7 @@ if (!empty($_POST['save_key']) && !empty($_POST['token']) && !empty($_POST['buck
         $bucket_region = strip_tags(get_text(trim($_POST['bucket_region'])));
 
         create_s3_config($access_key, $secret_key, $bucket_name, $bucket_region);
-        if (file_exists(G5_DATA_PATH .'/' . G5_S3CONFIG_FILE)) {
+        if (file_exists(G5_DATA_PATH . '/' . G5_S3CONFIG_FILE)) {
             alert('설정이 완료되었습니다.');
         } else {
             alert('설정파일 수정에 실패했습니다.');
@@ -68,7 +68,7 @@ if (isset($_POST['save']) && ($_POST['save'] === 'status') && !empty($_POST['tok
     if ($GLOBALS['is_admin'] === 'super') {
         $row_count = sql_fetch("select * from $table_name limit 1");
         $access_control_list = strip_tags(get_text(trim($_POST['access_control_list'])));
-        if($access_control_list !== 'public-read'){ //유효성 검사
+        if ($access_control_list !== 'public-read') { //유효성 검사
             $access_control_list = 'private';
         }
 
@@ -138,6 +138,21 @@ if (isset($_POST['save']) && ($_POST['save'] === 'status') && !empty($_POST['tok
     }
 }
 
+if (!empty($_POST['save']) && $_POST['save'] === 'sync' && !empty($_POST['sync_dir'])) {
+    //비동기 요청
+    auth_check($auth, 'w');
+    if ($GLOBALS['is_admin'] === 'super') {
+        $sync_dir = strip_tags(get_text(trim($_POST['sync_dir'])));
+
+        $result = Gnuboard\Plugin\AwsS3\S3Service::get_instance()->upload_dir($sync_dir);
+        /**
+         * @result string 이미 json으로 인코딩됨
+         */
+        echo $result;
+        exit;
+    }
+}
+
 /**
  * 기존 DB 커넥션을 받아서 (mysqli_stmt_bind_param 함수받아서) prepared 쿼리문 실행
  *
@@ -172,22 +187,35 @@ function sql_bind_query($sql, $args)
     return $stmt;
 }
 
-
-if (!empty($_POST['save']) && $_POST['save'] === 'sync' && !empty($_POST['sync_dir'])) {
-    //비동기 요청
-    auth_check($auth, 'w');
-    if ($GLOBALS['is_admin'] === 'super') {
-        $sync_dir = strip_tags(get_text(trim($_POST['sync_dir'])));
-
-        $result = Gnuboard\Plugin\AwsS3\S3Service::get_instance()->upload_dir($sync_dir);
-        /**
-         * @result string 이미 json으로 인코딩됨
-         */
-        echo $result;
-        exit;
-    }
+function get_aws_regions()
+{
+    // https://docs.aws.amazon.com/ko_kr/general/latest/gr/rande.html
+    return array(
+        'ap-northeast-2' => '아시아 태평양(서울)',
+        'us-east-1' => '미국 동부(버지니아 북부)',
+        'us-east-2' => '미국 동부(오하이오)',
+        'us-west-1' => '미국 서부(캘리포니아 북부)',
+        'us-west-2' => '미국 서부(오레곤)',
+        'ap-east-1' => '아시아 태평양(홍콩)',
+        'ap-south-1' => '아시아 태평양(뭄바이)',
+        'ap-southeast-1' => '아시아 태평양(싱가포르)',
+        'ap-southeast-2' => '아시아 태평양(시드니)',
+        'ap-northeast-1' => '아시아 태평양(도쿄)',
+        'ap-northeast-3' => '아시아 태평양(오사카)',
+        'ca-central-1' => '캐나다(중부)',
+        'cn-north-1' => '중국(베이징)',
+        'cn-northwest-1' => '중국(닝샤)',
+        'eu-central-1' => 'EU(프랑크푸르트)',
+        'eu-west-1' => 'EU(아일랜드)',
+        'eu-west-2' => 'EU(런던)',
+        'eu-west-3' => 'EU(파리)',
+        'eu-north-1' => 'EU(스톡홀름)',
+        'me-south-1' => '중동(바레인)',
+        'sa-east-1' => '남아메리카(상파울루)',
+        'us-gov-east-1' => 'AWS GovCloud (미국 동부)',
+        'us-gov-west-1' => 'AWS GovCloud (US)',
+    );
 }
-
 
 include_once(G5_ADMIN_PATH . '/admin.head.php');
 add_stylesheet('<link rel="stylesheet" href="' . G5_ADMIN_URL . '/aws_s3/adm.style.css">', 0);
@@ -222,7 +250,7 @@ add_stylesheet('<link rel="stylesheet" href="' . G5_ADMIN_URL . '/aws_s3/adm.sty
 					</span>
                         <select name="bucket_region" id="bucket_region">
                             <?php
-                            foreach ($all_regions as $k => $v) {
+                            foreach ($all_region as $k => $v) {
                                 $selected = ($admin_aws_config['bucket_region'] === $k) ? 'selected="selected"' : '';
                                 echo '<option value="' . $k . '" ' . $selected . ' >' . $v . '</option>';
                             }
@@ -324,7 +352,8 @@ add_stylesheet('<link rel="stylesheet" href="' . G5_ADMIN_URL . '/aws_s3/adm.sty
                     </select>
                 </div>
                 <div class="btn_space">
-                    <input type="button" id="s3_sync_submit" value="동기화 시작" class="btn_submit btn" onclick="sync_onsubmit()">
+                    <input type="button" id="s3_sync_submit" value="동기화 시작" class="btn_submit btn"
+                           onclick="sync_onsubmit()">
                 </div>
             </section>
 
@@ -340,9 +369,9 @@ add_stylesheet('<link rel="stylesheet" href="' . G5_ADMIN_URL . '/aws_s3/adm.sty
             $(element).append(
                 "<div class='loading-area'>"
                 + "<div>"
-                +   "<img src='"+ src + "' alt='upload'>"
-                +       "<p> "+ title +"</p>"
-                +   "</div>"
+                + "<img src='" + src + "' alt='upload'>"
+                + "<p> " + title + "</p>"
+                + "</div>"
                 + "</div>"
             )
         }
@@ -352,7 +381,7 @@ add_stylesheet('<link rel="stylesheet" href="' . G5_ADMIN_URL . '/aws_s3/adm.sty
         }
 
         function loadingShow() {
-            gnuAdmin.loading($('#f_sync'), g5_url + '/css/images/ajax-loader.gif', '업로드중 입니다..' );
+            gnuAdmin.loading($('#f_sync'), g5_url + '/css/images/ajax-loader.gif', '업로드중 입니다..');
         }
 
         function loadingHide() {
