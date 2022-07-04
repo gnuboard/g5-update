@@ -27,6 +27,11 @@ class S3Service
     private $region = '';
     private $bucket_name = '';
     /**
+     * @var string 저장소 주소 외부연결시 사용
+     */
+    private $storage_host_name = '';
+
+    /**
      * @var string
      * S3 ACL 사용시 개별 파일의 기본 ACL(access control list) 상태값
      * set_file_acl() 에서 설정.
@@ -110,6 +115,7 @@ class S3Service
             }
         }
 
+        $this->storage_host_name = 'https://' . $this->bucket_name . '.s3.' . $this->region . '.amazonaws.com';
         $table_name = G5_TABLE_PREFIX . $this->table_name;
         $sql = "SHOW TABLES LIKE '{$table_name}'";
         $is_install = sql_fetch($sql, false);
@@ -822,7 +828,6 @@ class S3Service
         }
 
         $merges = array_merge($img_arrays, $before_infos);
-        error_log(print_r($merges));
         $save_str = \GuzzleHttp\json_encode($merges);
 
         if ($it[$this->extra_item_field] !== $save_str) {
@@ -880,7 +885,7 @@ class S3Service
 
         $extra_infos = \GuzzleHttp\json_decode($it[$this->extra_item_field], true);
 
-        if ($it['it_img' . $index] && isset($extra_infos['img' . $index]) && $extra_infos['img' . $index] && $this->aws_s3_url_validate(
+        if ($it['it_img' . $index] && isset($extra_infos['img' . $index]) && $extra_infos['img' . $index] && $this->url_validate(
                 $extra_infos['img' . $index]
             )) {
             return true;
@@ -942,7 +947,7 @@ class S3Service
                     $it['it_name']
                 ) . '" id="largeimage_' . $index . '" class="aws_s3_image">';
         } else {
-            if ($it['it_img' . $index] && isset($extra_infos['img' . $index]) && $extra_infos['img' . $index] && $this->aws_s3_url_validate(
+            if ($it['it_img' . $index] && isset($extra_infos['img' . $index]) && $extra_infos['img' . $index] && $this->url_validate(
                     $extra_infos['img' . $index]
                 )) {
                 $infos['imageurl'] = $extra_infos['img' . $index];
@@ -1000,7 +1005,7 @@ class S3Service
                     }
                 }
 
-                if (isset($matches[1]) && $this->aws_s3_url_validate($matches[1])) {
+                if (isset($matches[1]) && $this->url_validate($matches[1])) {
                     preg_match('/< *img[^>]*src *= *["\']?([^"\']*)/i', $img, $tmps);
                     if (isset($tmps[1]) && stripos($tmps[1], G5_URL) !== false
                         && preg_match('/(\.jpg|\.jpeg|\.gif|\.png|\.bmp)$/i', $tmps[1])) {
@@ -1041,7 +1046,7 @@ class S3Service
                 if (isset($extra_infos['img' . $index]) && stripos(
                         $extra_infos['img' . $index],
                         $it['it_img' . $index]
-                    ) !== false && $this->aws_s3_url_validate($extra_infos['img' . $index]) && preg_match(
+                    ) !== false && $this->url_validate($extra_infos['img' . $index]) && preg_match(
                         '/(\.gif|\.bmp)$/i',
                         $extra_infos['img' . $index]
                     )) {
@@ -1270,7 +1275,7 @@ class S3Service
             return $image_tag;
         }
 
-        $image_path = 'https://' . $this->bucket_name . '.s3.' . $this->region . '.amazonaws.com/' . G5_DATA_DIR;
+        $image_path = $this->storage_host_name . '/' . G5_DATA_DIR;
 
         return '<img src="' . $image_path . '/' . $item_file . '" class="shop_item_preview_image aws_s3_image" >';
     }
@@ -1322,7 +1327,7 @@ class S3Service
         }
 
         // https://docs.aws.amazon.com/ko_kr/AmazonS3/latest/API/RESTBucketGET.html
-        $aws_image_url = 'https://' . $this->bucket_name . '.s3.' . $this->region . '.amazonaws.com' . str_replace(
+        $aws_image_url = $this->storage_host_name . str_replace(
                 G5_URL,
                 '',
                 $fileurl
@@ -1433,17 +1438,17 @@ class S3Service
      */
     public function get_view_thumbnail($contents)
     {
+
         if (class_exists('DOMDocument') && method_exists(
                 'DOMDocument',
                 'loadHTML'
-            ) && $this->is_only_use_s3) {
+            ) ) {
             $contents = preg_replace_callback(
                 "/(<img[^>]*src *= *[\"']?)([^\"']*)/i",
                 array($this, 'replace_url'),
                 $contents
             );
         }
-
         return $contents;
     }
 
@@ -1453,7 +1458,7 @@ class S3Service
      */
     public function replace_url($matches)
     {
-        $replace_url = 'https://' . $this->bucket_name . '.s3.' . $this->region . '.amazonaws.com/' . G5_DATA_DIR;
+        $replace_url = $this->storage_host_name . '/' . G5_DATA_DIR;
 
         if (is_array($matches)) {
             $matches[2] = str_replace(G5_DATA_URL, $replace_url, $matches[2]);
@@ -1588,7 +1593,7 @@ class S3Service
     public function get_curl_image($download_path, $file_key)
     {
         // https://docs.aws.amazon.com/ko_kr/AmazonS3/latest/API/RESTBucketGET.html
-        $image_url = 'https://' . $this->bucket_name . '.s3.' . $this->region . '.amazonaws.com/' . $file_key;
+        $image_url = $this->storage_host_name . '/' . $file_key;
 
         if (stripos($image_url, "https") != 0 || strlen($image_url) > 255) {
             $image_url = '';
@@ -1842,7 +1847,7 @@ class S3Service
 
         if ($extra_infos && $this->s3_client()) {
             foreach ($extra_infos as $info) {
-                if ($this->aws_s3_url_validate($info)) {
+                if ($this->url_validate($info)) {
                     $filename = $this->get_url_filename('', @parse_url($info));
                     $aws_s3_key = G5_DATA_DIR . '/' . $this->shop_folder . '/' . $it_id . '/' . $filename;
 
@@ -1859,17 +1864,21 @@ class S3Service
     }
 
     /**
-     * url이 AWS 주소인지 유효성검사
+     * url이 AWS 주소또는 host 로 설정한 주소인지 유효성검사
      * @param $url
      * @return bool
      */
-    public function aws_s3_url_validate($url)
+    public function url_validate($url)
     {
         if (preg_match('/^https:/i', $url) && stripos(
                 $url,
                 $this->bucket_name . '.s3.'
             ) !== false && stripos($url, 'amazonaws.com') !== false) {
             return true;
+        } else {
+            if (stripos($url, $this->storage_host_name) !== false) {
+                return true;
+            }
         }
 
         return false;
@@ -1881,7 +1890,7 @@ class S3Service
     public function get_url_filename($filename, $parses)
     {
         if (!$filename && isset($parses['host']) && 'https' === $parses['scheme']) {
-            if ($this->aws_s3_url_validate('https://' . $parses['host'])) {
+            if ($this->url_validate('https://' . $parses['host'])) {
                 $filename = basename($parses['path']);
             }
         }
@@ -1891,8 +1900,8 @@ class S3Service
 
     /**
      * 에디터로 업로드한 url 얻기
-     * @param $fileurl
-     * @param $filepath
+     * @param $fileurl  string 파일이름
+     * @param $filepath string 파일위치
      * @param $args
      * @return string url
      */
