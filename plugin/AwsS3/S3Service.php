@@ -1438,17 +1438,17 @@ class S3Service
      */
     public function get_view_thumbnail($contents)
     {
-
-        if (class_exists('DOMDocument') && method_exists(
-                'DOMDocument',
-                'loadHTML'
-            ) ) {
             $contents = preg_replace_callback(
                 "/(<img[^>]*src *= *[\"']?)([^\"']*)/i",
                 array($this, 'replace_url'),
                 $contents
             );
-        }
+
+            $contents = preg_replace_callback(
+                "/(<video[^>]*poster *= *[\"']?)([^\"']*)/i",
+                array($this, 'replace_url'),
+                $contents
+            );
         return $contents;
     }
 
@@ -1870,17 +1870,9 @@ class S3Service
      */
     public function url_validate($url)
     {
-        if (preg_match('/^https:/i', $url) && stripos(
-                $url,
-                $this->bucket_name . '.s3.'
-            ) !== false && stripos($url, 'amazonaws.com') !== false) {
+        if (stripos($url, $this->storage_host_name) !== false) {
             return true;
-        } else {
-            if (stripos($url, $this->storage_host_name) !== false) {
-                return true;
-            }
         }
-
         return false;
     }
 
