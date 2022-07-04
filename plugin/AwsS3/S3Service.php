@@ -1999,7 +1999,7 @@ class S3Service
 
             //ie 11 지원
             for (let i = 0; i < imgs.length; i++) {
-                if(imgs[i].getAttribute('src').includes(g5_url +'/data/editor/')) {
+                if(imgs[i].getAttribute('src').includes('/data/editor/')) {
                     imgs[i].dataset['fallback'] = 0;
                     imgs[i].onerror = function() {  
                         let fallbackIndex = this.dataset['fallback'];
