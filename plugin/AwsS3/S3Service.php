@@ -316,7 +316,7 @@ class S3Service
 
         // 에디터에서 파일삭제시
         add_event('delete_editor_file', array($this, 'delete_editor_file'), 1, 2);
-
+        
         // bbs/write_update.php 등에서 쓰일수가 있음
         add_replace('write_update_upload_array', array($this, 'upload_file'), 1, 5);
 
@@ -396,9 +396,14 @@ class S3Service
         return $this->s3_client()->doesBucketExist($bucket);
     }
 
-    public function object_exists($bucket, $key, $options = array())
+    /**
+     * @param $key
+     * @param $options
+     * @return bool
+     */
+    public function object_exists($key, $options = array())
     {
-        return $this->s3_client()->doesObjectExist($bucket, $key, $options);
+        return $this->s3_client()->doesObjectExist($this->bucket_name, $key, $options);
     }
 
     public function get_object($args)
@@ -1573,7 +1578,6 @@ class S3Service
 
         if ((isset($file_array['bf_fileurl']) && $file_array['bf_fileurl']) || (isset($file_array['bf_thumburl']) && $file_array['bf_thumburl'])) {
             $thumburl = (isset($file_array['bf_thumburl']) && $file_array['bf_thumburl']) ? $file_array['bf_thumburl'] : $file_array['bf_fileurl'];
-
             $thumb_tag = '<a href="' . G5_BBS_URL . '/view_image.php?bo_table=' . $board['bo_table'] . '&amp;fn=' . urlencode(
                     $file_array['file']
                 ) . '" target="_blank" class="view_image"><img src="' . $thumburl . '" alt="' . get_text(
@@ -2014,16 +2018,20 @@ EOD;
 
     }
 
-    // bbs/download.php 등에서 쓰일수가 있음
+    /**
+     * bbs/download.php 등에서 파일 다운로드시 사용
+     * @param $fileinfo
+     * @param $file_exist_check
+     * @return void
+     */
     public function download_file_header($fileinfo, $file_exist_check)
     {
-        if (!$file_exist_check) {
-            $aws_s3_key = G5_DATA_DIR . '/file/' . $fileinfo['bo_table'] . '/' . basename($fileinfo['bf_fileurl']);
-
+        $file_key = G5_DATA_DIR . '/file/' . $fileinfo['bo_table'] . '/' . basename($fileinfo['bf_fileurl']);
+        if ($this->object_exists($file_key)) {
             if ($this->s3_client()) {
                 $result = $this->get_object(array(
                     'Bucket' => $this->bucket_name,
-                    'Key' => $aws_s3_key
+                    'Key' => $file_key
                 ));
 
                 $original_name = urlencode($fileinfo['bf_source']);
