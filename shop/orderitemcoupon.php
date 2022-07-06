@@ -23,7 +23,12 @@ $sql = " select SUM( IF(io_type = '1', io_price * ct_qty, (ct_price + io_price) 
 $ct = sql_fetch($sql);
 $item_price = $ct['sum_price'];
 
-// 쿠폰정보
+/**
+ * 쿠폰정보
+ * @todo 
+ * 등록된 전체 쿠폰목록 조회 => 실제로 사용 가능한 목록만 조회 (아니면 최소한 $result에서 처리해서 view 부분으로 넘기던지..)
+ * 
+ */
 $sql = " select *
             from {$g5['g5_shop_coupon_table']}
             where mb_id IN ( '{$member['mb_id']}', '전체회원' )
