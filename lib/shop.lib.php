@@ -2795,6 +2795,44 @@ function is_coupon_downloaded($mb_id, $cz_id)
     return ($row['cnt'] > 0);
 }
 
+/**
+ * 쿠폰 사용기록 삭제
+ *
+ * @param int $od_id 주문번호
+ * @return bool
+ */
+function delete_coupon_log($od_id)
+{
+    global $g5;
+    
+    if ($od_id == '') { 
+        return false;
+    }
+    
+    // 반환쿠폰 정보 기록
+    $cp_history = G5_TIME_YMDHIS . " 사용쿠폰 반환\n";
+    $sql = "SELECT 
+                cp_id
+            FROM {$g5['g5_shop_coupon_log_table']}
+            WHERE od_id = '{$od_id}'";
+    $cp_result = sql_query($sql);
+    if (sql_num_rows($cp_result) <= 0) { 
+        return false;
+    }
+    for ($i = 0; $row = sql_fetch_array($cp_result); $i++) {
+        $cp_history .= "{$row['cp_id']}\n";
+    }
+    
+    $sql = "UPDATE {$g5['g5_shop_order_table']} SET
+                od_mod_history = CONCAT(od_mod_history, '{$cp_history}')
+            WHERE od_id = '{$od_id}'";
+    sql_query($sql);
+    
+    // 쿠폰사용정보 테이블에서 삭제
+    sql_query("DELETE FROM {$g5['g5_shop_coupon_log_table']} WHERE od_id = '$od_id' ");
+
+    return true;
+}
 //==============================================================================
 // 쇼핑몰 라이브러리 모음 끝
 //==============================================================================;

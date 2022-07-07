@@ -153,12 +153,13 @@ $sql = " update {$g5['g5_shop_order_table']}
             where od_id = '$od_id' ";
 sql_query($sql);
 
-/**
- * 주문 취소시 포인트 & 쿠폰 반환
- * @todo 쿠폰 반환 프로세스 추가해야함.
- */
+// 주문취소 회원의 포인트를 되돌려 줌
 if ($od['od_receipt_point'] > 0) {
     insert_point($member['mb_id'], $od['od_receipt_point'], "주문번호 $od_id 본인 취소");
+}
+// 주문취소 회원의 쿠폰을 되돌려 줌 (SIR 그누위즈님 코드 제안)
+if (($od['od_coupon'] + $od['od_cart_coupon']) > 0) {
+    delete_coupon_log($od_id);
 }
 
 goto_url(G5_SHOP_URL."/orderinquiryview.php?od_id=$od_id&amp;uid=$uid");
