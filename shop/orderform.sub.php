@@ -74,7 +74,6 @@ if($is_kakaopay_use) {
 
         $good_info = '';
         $it_send_cost = 0;
-        $it_cp_count = 0;
 
         $comm_tax_mny = 0; // 과세금액
         $comm_vat_mny = 0; // 부가세
@@ -132,34 +131,29 @@ if($is_kakaopay_use) {
             $point      = $sum['point'];
             $sell_price = $sum['price'];
 
-            // 쿠폰
+            // 사용가능한 쿠폰목록 조회
             $cp_button = '';
-            if($is_member) {
+            if ($is_member) {
                 $cp_count = 0;
-
-                $sql = " select cp_id
-                            from {$g5['g5_shop_coupon_table']}
-                            where mb_id IN ( '{$member['mb_id']}', '전체회원' )
-                              and cp_start <= '".G5_TIME_YMD."'
-                              and cp_end >= '".G5_TIME_YMD."'
-                              and cp_minimum <= '$sell_price'
-                              and (
-                                    ( cp_method = '0' and cp_target = '{$row['it_id']}' )
-                                    OR
-                                    ( cp_method = '1' and ( cp_target IN ( '{$row['ca_id']}', '{$row['ca_id2']}', '{$row['ca_id3']}' ) ) )
-                                  ) ";
+                $datetime = G5_TIME_YMD;
+                $sql = "SELECT 
+                            cp.cp_id
+                        FROM {$g5['g5_shop_coupon_table']} AS cp
+                        LEFT JOIN g5_shop_coupon_log AS cp_log ON cp.cp_id = cp_log.cp_id AND cp_log.mb_id = '{$member['mb_id']}'
+                        WHERE cp.mb_id IN ('{$member['mb_id']}', '전체회원')
+                            AND '{$datetime}' BETWEEN cp_start AND cp_end 
+                            AND cp_minimum <= '{$sell_price}'
+                            AND (
+                                (cp_method = '0' AND cp_target = '{$row['it_id']}')
+                                OR
+                                (cp_method = '1' AND cp_target IN ('{$row['ca_id']}', '{$row['ca_id2']}', '{$row['ca_id3']}'))
+                                )
+                            AND cp_log.cp_id IS NULL";
                 $res = sql_query($sql);
+                $cp_count = sql_num_rows($res);
 
-                for($k=0; $cp=sql_fetch_array($res); $k++) {
-                    if(is_used_coupon($member['mb_id'], $cp['cp_id']))
-                        continue;
-
-                    $cp_count++;
-                }
-
-                if($cp_count) {
+                if ($cp_count) {
                     $cp_button = '<button type="button" class="cp_btn">쿠폰적용</button>';
-                    $it_cp_count++;
                 }
             }
 

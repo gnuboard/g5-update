@@ -23,23 +23,21 @@ $sql = " select SUM( IF(io_type = '1', io_price * ct_qty, (ct_price + io_price) 
 $ct = sql_fetch($sql);
 $item_price = $ct['sum_price'];
 
-/**
- * 쿠폰정보
- * @todo 
- * 등록된 전체 쿠폰목록 조회 => 실제로 사용 가능한 목록만 조회 (아니면 최소한 $result에서 처리해서 view 부분으로 넘기던지..)
- * 
- */
-$sql = " select *
-            from {$g5['g5_shop_coupon_table']}
-            where mb_id IN ( '{$member['mb_id']}', '전체회원' )
-              and cp_start <= '".G5_TIME_YMD."'
-              and cp_end >= '".G5_TIME_YMD."'
-              and cp_minimum <= '$item_price'
-              and (
-                    ( cp_method = '0' and cp_target = '{$it['it_id']}' )
-                    OR
-                    ( cp_method = '1' and ( cp_target IN ( '{$it['ca_id']}', '{$it['ca_id2']}', '{$it['ca_id3']}' ) ) )
-                  ) ";
+// 사용가능한 쿠폰목록 조회
+$datetime = G5_TIME_YMD;
+$sql = "SELECT 
+			cp.*
+		FROM {$g5['g5_shop_coupon_table']} AS cp
+		LEFT JOIN g5_shop_coupon_log AS cp_log ON cp.cp_id = cp_log.cp_id AND cp_log.mb_id = '{$member['mb_id']}'
+		WHERE cp.mb_id IN ('{$member['mb_id']}', '전체회원')
+			AND '{$datetime}' BETWEEN cp_start AND cp_end 
+			AND cp_minimum <= '{$item_price}'
+			AND (
+				(cp_method = '0' AND cp_target = '{$it['it_id']}')
+				OR
+				(cp_method = '1' AND cp_target IN ('{$it['ca_id']}', '{$it['ca_id2']}', '{$it['ca_id3']}'))
+				)
+			AND cp_log.cp_id IS NULL";
 $result = sql_query($sql);
 $count = sql_num_rows($result);
 ?>
@@ -49,7 +47,7 @@ $count = sql_num_rows($result);
 	<div id="cp_frm" class="od_coupon">
     <h3>쿠폰선택</h3>
     
-	    <?php if($count > 0) { ?>
+	    <?php if ($count > 0) { ?>
 	    <div class="tbl_head02 tbl_wrap">
 	        <table>
 	        <caption>쿠폰 선택</caption>
@@ -62,20 +60,17 @@ $count = sql_num_rows($result);
 	        </thead>
 	        <tbody>
 	        <?php
-	        for($i=0; $row=sql_fetch_array($result); $i++) {
-	            // 사용한 쿠폰인지 체크
-	            if(is_used_coupon($member['mb_id'], $row['cp_id']))
-	                continue;
-	
+	        for ($i = 0; $row =sql_fetch_array($result); $i++) {
 	            $dc = 0;
-	            if($row['cp_type']) {
+	            if ($row['cp_type']) {
 	                $dc = floor(($item_price * ($row['cp_price'] / 100)) / $row['cp_trunc']) * $row['cp_trunc'];
 	            } else {
 	                $dc = $row['cp_price'];
 	            }
 	
-	            if($row['cp_maximum'] && $dc > $row['cp_maximum'])
+	            if ($row['cp_maximum'] && $dc > $row['cp_maximum']) {
 	                $dc = $row['cp_maximum'];
+				}
 	        ?>
 	        <tr>
 	            <td>
