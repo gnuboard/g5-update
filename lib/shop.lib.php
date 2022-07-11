@@ -1041,12 +1041,16 @@ function get_item_options($it_id, $subject, $is_div='', $is_first_option_title='
             else
                 $price = '&nbsp;&nbsp; '.number_format($row['io_price']).'원';
 
-            if($row['io_stock_qty'] < 1)
+            $io_stock_qty = get_option_stock_qty($it_id, $row['io_id'], $row['io_type']);
+            if ($io_stock_qty < 1) {
                 $soldout = '&nbsp;&nbsp;[품절]';
-            else
+            } else {
                 $soldout = '';
+            }
 
-            $select .= '<option value="'.$row['io_id'].','.$row['io_price'].','.$row['io_stock_qty'].'">'.$row['io_id'].$price.$soldout.'</option>'.PHP_EOL;
+            $select .= '<option value="' . $row['io_id'] . ', ' . $row['io_price'] . ', ' . $io_stock_qty . '">';
+            $select .= $row['io_id'] . $price . $soldout;
+            $select .= '</option>' . PHP_EOL;
         }
         $select .= '</select>'.PHP_EOL;
         
