@@ -1041,11 +1041,13 @@ function get_item_options($it_id, $subject, $is_div='', $is_first_option_title='
             else
                 $price = '&nbsp;&nbsp; '.number_format($row['io_price']).'원';
 
-            $io_stock_qty = get_option_stock_qty($it_id, $row['io_id'], $row['io_type']);
-            if ($io_stock_qty < 1) {
-                $soldout = '&nbsp;&nbsp;[품절]';
-            } else {
+            $check_stockout = check_stockout_item($row, null, false);
+            if ($check_stockout['result']) {
                 $soldout = '';
+                $io_stock_qty = $check_stockout['it_stock'];
+            } else {
+                $soldout = '&nbsp;&nbsp;[품절]';
+                $io_stock_qty = 0;
             }
 
             $select .= '<option value="' . $row['io_id'] . ', ' . $row['io_price'] . ', ' . $io_stock_qty . '">';
@@ -1098,12 +1100,15 @@ function get_item_supply($it_id, $subject, $is_div='', $is_first_option_title=''
                 $price = '&nbsp;&nbsp;+ '.number_format($row['io_price']).'원';
             else
                 $price = '&nbsp;&nbsp; '.number_format($row['io_price']).'원';
-            $io_stock_qty = get_option_stock_qty($it_id, $row['io_id'], $row['io_type']);
 
-            if($io_stock_qty < 1)
-                $soldout = '&nbsp;&nbsp;[품절]';
-            else
+            $check_stockout = check_stockout_item($row, null, false);
+            if ($check_stockout['result']) {
                 $soldout = '';
+                $io_stock_qty = $check_stockout['it_stock'];
+            } else {
+                $soldout = '&nbsp;&nbsp;[품절]';
+                $io_stock_qty = 0;
+            }
 
             $options[$opt_id[0]][] = '<option value="'.$opt_id[1].','.$row['io_price'].','.$io_stock_qty.'">'.$opt_id[1].$price.$soldout.'</option>';
         }
@@ -2799,6 +2804,118 @@ function is_coupon_downloaded($mb_id, $cz_id)
     return ($row['cnt'] > 0);
 }
 
+/**
+ * 장바구니 상품재고 체크
+ * 
+ * @param int $od_id 주문번호
+ * @param int $it_id 상품번호
+ * @param bool $is_wait_qty 대기수량 포함여부
+ * @return array<bool, string>
+ */
+function check_stockout_cart($od_id, $it_id, $is_wait_qty = true)
+{
+    global $g5;
+
+    $return = array(
+        "result" => true,
+        "message" => ""
+    );
+    
+    // 장바구니 상품 정보
+    $sql = "SELECT
+                it_id,
+                it_name,
+                ct_option,
+                ct_qty,
+                io_id,
+                io_type
+            FROM {$g5['g5_shop_cart_table']}
+            WHERE od_id = '{$od_id}'
+                AND it_id = '{$it_id}'";
+    $result = sql_query($sql);
+
+    for ($i = 0; $row = sql_fetch_array($result); $i++) {
+        $result = check_stockout_item($row, $od_id, $is_wait_qty);
+
+        if (!$result['result']) {
+            $return['result']   = $result['result'];
+            $return['message']  = $row['ct_option'] . " 의 재고수량이 부족합니다.\\n\\n현재 재고수량 : " . number_format((float)$result['it_stock']) . "개";
+            break;
+        }
+    }
+
+    return $return;
+}
+
+/**
+ * 상품재고 체크
+ * 
+ * @param array<mix>    $item   상품정보
+ * @param bool          $is_wait_qty 대기수량 포함여부
+ * @param int           $od_id  주문번호
+ * @return bool|array<mix>
+ */
+function check_stockout_item($item, $od_id = null, $is_wait_qty = true) {
+
+    global $g5;
+
+    $cart_qty       = 0;
+    $wait_qty       = 0;
+    $it_stock_qty   = 0;
+    $total_qty      = 0;
+    $return         = array(
+        "result"    => true,
+        "it_name"   => "",
+        "it_stock"  => 0
+    );
+
+    if (!$item['it_id']) {
+        return false;
+    }
+
+    // 장바구니 수량
+    $cart_qty = isset($item['ct_qty']) ? (int)$item['ct_qty'] : 0;
+
+    // 대기수량
+    if ($is_wait_qty) {
+        $sql = "SELECT
+                    SUM(ct_qty) AS cnt
+                FROM {$g5['g5_shop_cart_table']}
+                WHERE od_id         <> '{$od_id}'
+                    AND it_id       = '{$item['it_id']}'
+                    AND io_id       = '{$item['io_id']}'
+                    AND io_type     = '{$item['io_type']}'
+                    AND ct_status   = '쇼핑'
+                    AND ct_select   = '1'
+                    AND ct_stock_use = 0 ";
+        $wait = sql_fetch($sql);
+        $wait_qty = (int)$wait['cnt'];
+    }
+
+    // 상품 재고
+    if (!$item['io_id']) {
+        $it_stock_qty = get_it_stock_qty($item['it_id']);
+    } else {
+        $it_stock_qty = get_option_stock_qty($item['it_id'], $item['io_id'], $item['io_type']);
+    }
+
+    $total_qty = $it_stock_qty - $wait_qty;
+
+    // 재고체크 (장바구니)
+    if ($cart_qty > 0) {
+        if ($cart_qty > $total_qty) {
+            $return['result'] = false;
+        }
+    // 재고체크 (상품)
+    } else {
+        if (1 > $total_qty) {
+            $return['result'] = false;
+        }
+    }
+    $return['it_stock'] = $total_qty;
+
+    return $return;
+}
 //==============================================================================
 // 쇼핑몰 라이브러리 모음 끝
 //==============================================================================;

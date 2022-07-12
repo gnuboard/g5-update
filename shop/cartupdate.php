@@ -58,6 +58,11 @@ if($act == "buy")
             }
 
             // 주문 상품의 재고체크
+            $check_stockout = check_stockout_cart($tmp_cart_id, $it_id, true);
+            if (!$check_stockout['result']) {
+                alert($check_stockout['message']);
+            }
+            /*
             $sql = " select ct_qty, it_name, ct_option, io_id, io_type
                         from {$g5['g5_shop_cart_table']}
                         where od_id = '$tmp_cart_id'
@@ -92,6 +97,7 @@ if($act == "buy")
                     alert($item_option." 의 재고수량이 부족합니다.\\n\\n현재 재고수량 : " . number_format($it_stock_qty - $sum_qty) . " 개");
                 }
             }
+            */
 
             $sql = " update {$g5['g5_shop_cart_table']}
                         set ct_select = '1',
