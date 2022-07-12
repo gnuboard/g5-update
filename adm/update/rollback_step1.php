@@ -45,7 +45,7 @@ $rollback_version = $g5['update']->setRollbackVersion($rollback_file);
 $g5['update']->setTargetVersion($rollback_version);
 $compare_list = $g5['update']->getVersionCompareList();
 if ($compare_list == null) {
-    die("비교파일리스트가 존재하지 않습니다.");
+    die("비교파일 리스트가 존재하지 않습니다.");
 }
 
 $compare_check = $g5['update']->checkRollbackVersionComparison($compare_list, $rollback_file);

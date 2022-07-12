@@ -47,7 +47,7 @@ if ($result == false) {
 $g5['update']->setTargetVersion($target_version);
 $compare_list = $g5['update']->getVersionCompareList();
 if ($compare_list == null) {
-    die("비교파일리스트가 존재하지 않습니다.");
+    die("비교파일 리스트가 존재하지 않습니다.");
 }
 
 $compare_check = $g5['update']->checkSameVersionComparison($compare_list);

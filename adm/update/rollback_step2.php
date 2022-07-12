@@ -2,7 +2,7 @@
 $sub_menu = '100600';
 include_once './_common.php';
 
-$g5['title'] = '그누보드 step2';
+$g5['title'] = '버전 업데이트';
 include_once '../admin.head.php';
 
 $rollback_file  = isset($_POST['rollback_file']) ? $_POST['rollback_file'] : null;
@@ -19,7 +19,7 @@ $rollback_version = $g5['update']->setRollbackVersion($rollback_file);
 $g5['update']->setTargetVersion($rollback_version);
 $compare_list = $g5['update']->getVersionCompareList();
 if ($compare_list == null) {
-    die("비교파일리스트가 존재하지 않습니다.");
+    die("비교파일 리스트가 존재하지 않습니다.");
 }
 
 ?>

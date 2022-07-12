@@ -87,8 +87,8 @@ foreach ($content_url as $key => $var) {
                             <label for="password">사용자 비밀번호</label>
                         </th>
                         <td>
-                            <input id="password" name="password" class="frm_input">
-                            <button type="button" class="btn_connect_check btn_frmline">FTP 연결확인</button>
+                            <input type="password" id="password" name="password" class="frm_input">
+                            <button type="button" class="btn_connect_check btn_frmline">연결확인</button>
                             <span class="update_btn_area"></span>
                         </td>
                     </tr>

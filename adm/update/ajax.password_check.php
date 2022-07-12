@@ -4,7 +4,7 @@ include_once "./_common.php";
 try {
     $admin_password = isset($_POST['admin_password']) ? $_POST['admin_password'] : '';
     if ($admin_password == '') {
-        throw new Exception("관리자패스워드가 입력되지 않았습니다.");
+        throw new Exception("관리자 비밀번호가 입력되지 않았습니다.");
     }
 
     // 관리자 비밀번호 비교

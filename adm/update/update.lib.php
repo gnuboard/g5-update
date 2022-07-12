@@ -35,7 +35,7 @@ class G5Update
     public $window_dir_update  = null;
 
     // token값이 없는 경우, 1시간에 60번의 데이터조회가 가능함
-    private $token = "";
+    private $token = "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";
 
     private $url = "https://api.github.com";
     private $version_list = array();

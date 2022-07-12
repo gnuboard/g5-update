@@ -2,7 +2,7 @@
 $sub_menu = '100600';
 include_once './_common.php';
 
-$g5['title'] = '그누보드 step2';
+$g5['title'] = '버전 업데이트';
 include_once '../admin.head.php';
 
 $target_version = isset($_POST['target_version']) ? $_POST['target_version'] : null;

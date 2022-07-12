@@ -15,7 +15,7 @@ try {
         throw new Exception("사용자 비밀번호를 입력해주세요");
     }
     if ($port == null) {
-        throw new Exception("프로토콜을 선택해주세요");
+        throw new Exception("포트를 선택해주세요");
     }
 
     $conn_result = $g5['update']->connect($_SERVER['HTTP_HOST'], $port, $username, $userpassword);
