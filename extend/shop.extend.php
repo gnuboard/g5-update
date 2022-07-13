@@ -67,6 +67,9 @@ define('G5_SOLDOUT_CHECK', true);
 // 0 이면 재고 차감에 계속 포함됨
 define('G5_CART_STOCK_LIMIT', 3);
 
+// 상품 재고체크 진행 시, 주문대기 상품 재고 포함 여부 선택
+define('G5_IS_WAIT_STOCK', true);
+
 // 아이코드 코인 최소금액 설정
 // 코인 잔액이 설정 금액보다 작을 때는 주문시 SMS 발송 안함
 define('G5_ICODE_COIN', 100);

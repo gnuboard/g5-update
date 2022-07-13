@@ -1,8 +1,6 @@
 <?php
 include_once('./_common.php');
 
-// print_r2($_POST); exit;
-
 // 보관기간이 지난 상품 삭제
 cart_item_clean();
 
@@ -58,52 +56,16 @@ if($act == "buy")
             }
 
             // 주문 상품의 재고체크
-            $check_stockout = check_stockout_cart($tmp_cart_id, $it_id, true);
+            $check_stockout = check_stockout_cart($tmp_cart_id, $it_id, G5_IS_WAIT_STOCK);
             if (!$check_stockout['result']) {
                 alert($check_stockout['message']);
             }
-            /*
-            $sql = " select ct_qty, it_name, ct_option, io_id, io_type
-                        from {$g5['g5_shop_cart_table']}
-                        where od_id = '$tmp_cart_id'
-                          and it_id = '$it_id' ";
-            $result = sql_query($sql);
 
-            for($k=0; $row=sql_fetch_array($result); $k++) {
-                $sql = " select SUM(ct_qty) as cnt from {$g5['g5_shop_cart_table']}
-                          where od_id <> '$tmp_cart_id'
-                            and it_id = '$it_id'
-                            and io_id = '{$row['io_id']}'
-                            and io_type = '{$row['io_type']}'
-                            and ct_stock_use = 0
-                            and ct_status = '쇼핑'
-                            and ct_select = '1' ";
-                $sum = sql_fetch($sql);
-                $sum_qty = (int)$sum['cnt'];
-
-                // 재고 구함
-                $ct_qty = $row['ct_qty'];
-                if(!$row['io_id'])
-                    $it_stock_qty = get_it_stock_qty($it_id);
-                else
-                    $it_stock_qty = get_option_stock_qty($it_id, $row['io_id'], $row['io_type']);
-
-                if ($ct_qty + $sum_qty > $it_stock_qty)
-                {
-                    $item_option = $row['it_name'];
-                    if($row['io_id'])
-                        $item_option .= '('.$row['ct_option'].')';
-
-                    alert($item_option." 의 재고수량이 부족합니다.\\n\\n현재 재고수량 : " . number_format($it_stock_qty - $sum_qty) . " 개");
-                }
-            }
-            */
-
-            $sql = " update {$g5['g5_shop_cart_table']}
-                        set ct_select = '1',
-                            ct_select_time = '".G5_TIME_YMDHIS."'
-                        where od_id = '$tmp_cart_id'
-                          and it_id = '$it_id' ";
+            $sql = "UPDATE {$g5['g5_shop_cart_table']}
+                    SET ct_select = '1',
+                        ct_select_time = '" . G5_TIME_YMDHIS . "'
+                    WHERE od_id = '$tmp_cart_id'
+                        AND it_id = '$it_id' ";
             sql_query($sql);
         }
     }
@@ -235,32 +197,16 @@ else if ($act == "seldelete") // 선택삭제
         //--------------------------------------------------------
         // 이미 주문폼에 있는 같은 상품의 수량합계를 구한다.
         if($sw_direct) {
-            for($k=0; $k<$opt_count; $k++) {
-                $io_id = isset($_POST['io_id'][$it_id][$k]) ? preg_replace(G5_OPTION_ID_FILTER, '', $_POST['io_id'][$it_id][$k]) : '';
-                $io_type = isset($_POST['io_type'][$it_id][$k]) ? preg_replace('#[^01]#', '', $_POST['io_type'][$it_id][$k]) : '';
+            for ($k = 0; $k < $opt_count; $k++) {
+                $item['it_id'] = $it_id;
+                $item['io_id'] = isset($_POST['io_id'][$it_id][$k]) ? preg_replace(G5_OPTION_ID_FILTER, '', $_POST['io_id'][$it_id][$k]) : '';
+                $item['io_type'] = isset($_POST['io_type'][$it_id][$k]) ? preg_replace('#[^01]#', '', $_POST['io_type'][$it_id][$k]) : '';
+                $item['ct_qty'] = isset($_POST['ct_qty'][$it_id][$k]) ? (int)$_POST['ct_qty'][$it_id][$k] : 0;
                 $io_value = isset($_POST['io_value'][$it_id][$k]) ? $_POST['io_value'][$it_id][$k] : '';
-
-                $sql = " select SUM(ct_qty) as cnt from {$g5['g5_shop_cart_table']}
-                          where od_id <> '$tmp_cart_id'
-                            and it_id = '$it_id'
-                            and io_id = '$io_id'
-                            and io_type = '$io_type'
-                            and ct_stock_use = 0
-                            and ct_status = '쇼핑'
-                            and ct_select = '1' ";
-                $row = sql_fetch($sql);
-                $sum_qty = (int)$row['cnt'];
-
-                // 재고 구함
-                $ct_qty = isset($_POST['ct_qty'][$it_id][$k]) ? (int)$_POST['ct_qty'][$it_id][$k] : 0;
-                if(!$io_id)
-                    $it_stock_qty = get_it_stock_qty($it_id);
-                else
-                    $it_stock_qty = get_option_stock_qty($it_id, $io_id, $io_type);
-
-                if ($ct_qty + $sum_qty > $it_stock_qty)
-                {
-                    alert($io_value." 의 재고수량이 부족합니다.\\n\\n현재 재고수량 : " . number_format($it_stock_qty - $sum_qty) . " 개");
+    
+                $check_result = check_stockout_item($item, $tmp_cart_id, G5_IS_WAIT_STOCK);
+                if (!$check_result['result']) {
+                    alert($io_value." 의 재고수량이 부족합니다.\\n\\n현재 재고수량 : " . number_format((int)$check_result['it_stock']) . " 개");
                 }
             }
         }
@@ -282,14 +228,16 @@ else if ($act == "seldelete") // 선택삭제
 
         // 장바구니에 Insert
         $comma = '';
-        $sql = " INSERT INTO {$g5['g5_shop_cart_table']}
-                        ( od_id, mb_id, it_id, it_name, it_sc_type, it_sc_method, it_sc_price, it_sc_minimum, it_sc_qty, ct_status, ct_price, ct_point, ct_point_use, ct_stock_use, ct_option, ct_qty, ct_notax, io_id, io_type, io_price, ct_time, ct_ip, ct_send_cost, ct_direct, ct_select, ct_select_time )
-                    VALUES ";
+        $sql = "INSERT INTO {$g5['g5_shop_cart_table']}
+                    (od_id, mb_id, it_id, it_name, it_sc_type, it_sc_method, it_sc_price, it_sc_minimum, it_sc_qty, ct_status, ct_price, ct_point, ct_point_use, ct_stock_use, ct_option, ct_qty, ct_notax, io_id, io_type, io_price, ct_time, ct_ip, ct_send_cost, ct_direct, ct_select, ct_select_time)
+                VALUES";
 
-        for($k=0; $k<$opt_count; $k++) {
+        for ($k = 0; $k < $opt_count; $k++) {
             $io_id = isset($_POST['io_id'][$it_id][$k]) ? preg_replace(G5_OPTION_ID_FILTER, '', $_POST['io_id'][$it_id][$k]) : '';
             $io_type = isset($_POST['io_type'][$it_id][$k]) ? preg_replace('#[^01]#', '', $_POST['io_type'][$it_id][$k]) : '';
             $io_value = isset($_POST['io_value'][$it_id][$k]) ? $_POST['io_value'][$it_id][$k] : '';
+            $io_price = isset($opt_list[$io_type][$io_id]['price']) ? $opt_list[$io_type][$io_id]['price'] : 0;
+            $ct_qty = isset($_POST['ct_qty'][$it_id][$k]) ? (int) $_POST['ct_qty'][$it_id][$k] : 0;
 
             // 선택옵션정보가 존재하는데 선택된 옵션이 없으면 건너뜀
             if($lst_count && $io_id == '')
@@ -312,29 +260,18 @@ else if ($act == "seldelete") // 선택삭제
             }
 
             // 동일옵션의 상품이 있으면 수량 더함
-            $sql2 = " select ct_id, io_type, ct_qty
-                        from {$g5['g5_shop_cart_table']}
-                        where od_id = '$tmp_cart_id'
-                          and it_id = '$it_id'
-                          and io_id = '$io_id'
-                          and ct_status = '쇼핑' ";
+            $sql2 = "SELECT
+                        ct_id, io_type, ct_qty
+                    FROM {$g5['g5_shop_cart_table']}
+                    WHERE od_id = '$tmp_cart_id'
+                        AND it_id = '$it_id'
+                        AND io_id = '$io_id'
+                        AND ct_status = '쇼핑'";
             $row2 = sql_fetch($sql2);
-            if(isset($row2['ct_id']) && $row2['ct_id']) {
-                // 재고체크
-                $tmp_ct_qty = (int)$row2['ct_qty'];
-                if(!$io_id)
-                    $tmp_it_stock_qty = get_it_stock_qty($it_id);
-                else
-                    $tmp_it_stock_qty = get_option_stock_qty($it_id, $io_id, $row2['io_type']);
-
-                if ($tmp_ct_qty + $ct_qty > $tmp_it_stock_qty)
-                {
-                    alert($io_value." 의 재고수량이 부족합니다.\\n\\n현재 재고수량 : " . number_format($tmp_it_stock_qty) . " 개");
-                }
-
-                $sql3 = " update {$g5['g5_shop_cart_table']}
-                            set ct_qty = ct_qty + '$ct_qty'
-                            where ct_id = '{$row2['ct_id']}' ";
+            if (isset($row2['ct_id'])) {
+                $sql3 = "UPDATE {$g5['g5_shop_cart_table']}
+                            SET ct_qty = ct_qty + '$ct_qty'
+                        WHERE ct_id = '{$row2['ct_id']}' ";
                 sql_query($sql3);
                 continue;
             }

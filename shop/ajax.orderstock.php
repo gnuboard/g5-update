@@ -82,18 +82,14 @@ for($i=0; $row=sql_fetch_array($result); $i++) {
         die( $item_option." 상품이 ".$soldout_txt." 되었습니다.\n\n장바구니에서 해당 상품을 삭제후 다시 주문해 주세요." );
     }
 
-    if(!$row['io_id'])
-        $it_stock_qty = get_it_stock_qty($row['it_id']);
-    else
-        $it_stock_qty = get_option_stock_qty($row['it_id'], $row['io_id'], $row['io_type']);
-
-    if ($ct_qty > $it_stock_qty)
-    {
+    $check_stockout = check_stockout_item($row, $tmp_cart_id, false);
+    if (!$check_stockout['result']) {
         $item_option = $row['it_name'];
-        if($row['io_id'])
-            $item_option .= '('.$row['ct_option'].')';
+        if ($row['io_id']) {
+            $item_option .= '(' . $row['ct_option'] . ')';
+        }
 
-        die($item_option." 의 재고수량이 부족합니다.\n\n현재 재고수량 : " . number_format($it_stock_qty) . " 개");
+        die($item_option . " 의 재고수량이 부족합니다.\n\n현재 재고수량 : " . number_format((float)$check_stockout['it_stock']) . " 개");
     }
 }
 
