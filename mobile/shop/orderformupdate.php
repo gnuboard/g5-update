@@ -72,41 +72,23 @@ $od_temp_point = isset($_POST['od_temp_point']) ? (int) $_POST['od_temp_point'] 
 $od_hope_date = isset($_POST['od_hope_date']) ? clean_xss_tags($_POST['od_hope_date'], 1, 1) : '';
 $ad_default = isset($_POST['ad_default']) ? (int) $_POST['ad_default'] : 0;
 
-$error = "";
-// 장바구니 상품 재고 검사
-$sql = " select it_id,
-                ct_qty,
-                it_name,
-                io_id,
-                io_type,
-                ct_option
-           from {$g5['g5_shop_cart_table']}
-          where od_id = '$tmp_cart_id'
-            and ct_select = '1' ";
-$result = sql_query($sql);
-for ($i=0; $row=sql_fetch_array($result); $i++)
-{
-    // 상품에 대한 현재고수량
-    if($row['io_id']) {
-        $it_stock_qty = (int)get_option_stock_qty($row['it_id'], $row['io_id'], $row['io_type']);
-    } else {
-        $it_stock_qty = (int)get_it_stock_qty($row['it_id']);
+// 장바구니 재고 확인
+$check_stockout = check_stockout_cart($tmp_cart_id, null, false);
+if (!$check_stockout['result'])  {
+    $alert_message = $check_stockout['message'];
+    $return_url = "";
+
+    if ($check_stockout['type'] == "stockout") {
+        $alert_message .= "\\n\\n다른 고객님께서 {$od_name}님 보다 먼저 주문하신 경우입니다. 불편을 끼쳐 죄송합니다.";
+        $return_url = $page_return_url;
+    } elseif ($check_stockout['type'] == "cart") {
+        $return_url = G5_SHOP_URL . "/cart.php";
     }
-    // 장바구니 수량이 재고수량보다 많다면 오류
-    if ($row['ct_qty'] > $it_stock_qty)
-        $error .= "{$row['ct_option']} 의 재고수량이 부족합니다. 현재고수량 : $it_stock_qty 개\\n\\n";
-}
 
-if($i == 0) {
-    if(function_exists('add_order_post_log')) add_order_post_log('장바구니가 비어 있습니다.');
-    alert('장바구니가 비어 있습니다.\\n\\n이미 주문하셨거나 장바구니에 담긴 상품이 없는 경우입니다.', G5_SHOP_URL.'/cart.php');
-}
-
-if ($error != "")
-{
-    $error .= "다른 고객님께서 {$od_name}님 보다 먼저 주문하신 경우입니다. 불편을 끼쳐 죄송합니다.";
-    if(function_exists('add_order_post_log')) add_order_post_log($error);
-    alert($error, $page_return_url);
+    if (function_exists('add_order_post_log')) {
+        add_order_post_log($alert_message);
+    }
+    alert($alert_message, $return_url);
 }
 
 $i_price     = isset($_POST['od_price']) ? (int) $_POST['od_price'] : 0;

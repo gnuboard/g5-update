@@ -49,7 +49,20 @@ $ad_default = ! empty($_POST['ad_default']) ? (int) $_POST['ad_default'] : 0;
 // 장바구니 재고 확인
 $check_stockout = check_stockout_cart($tmp_cart_id, null, false);
 if (!$check_stockout['result'])  {
-    alert($check_stockout['message'], G5_SHOP_URL . "/cart.php");
+    $alert_message = $check_stockout['message'];
+    $return_url = "";
+
+    if ($check_stockout['type'] == "stockout") {
+        $alert_message .= "\\n\\n다른 고객님께서 {$od_name}님 보다 먼저 주문하신 경우입니다. 불편을 끼쳐 죄송합니다.";
+        $return_url = $page_return_url;
+    } elseif ($check_stockout['type'] == "cart") {
+        $return_url = G5_SHOP_URL . "/cart.php";
+    }
+
+    if (function_exists('add_order_post_log')) {
+        add_order_post_log($alert_message);
+    }
+    alert($alert_message, $return_url);
 }
 
 

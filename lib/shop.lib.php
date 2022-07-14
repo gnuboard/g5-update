@@ -2828,6 +2828,7 @@ function check_stockout_cart($od_id, $it_id = null, $is_wait_qty = true)
 
     $return = array(
         "result" => true,
+        "type" => "",
         "message" => ""
     );
     
@@ -2851,13 +2852,15 @@ function check_stockout_cart($od_id, $it_id = null, $is_wait_qty = true)
             $check_stockout = check_stockout_item($row, $od_id, $is_wait_qty);
     
             if (!$check_stockout['result']) {
-                $return['result']   = $check_stockout['result'];
+                $return['result']   = false;
+                $return['type']     = "stockout";
                 $return['message']  = $row['ct_option'] . " 의 재고수량이 부족합니다.\\n\\n현재 재고수량 : " . number_format((float)$check_stockout['it_stock']) . "개";
                 break;
             }
         }
     } else {
         $return['result']   = false;
+        $return['type']     = "cart";
         $return['message']  = "장바구니가 비어 있습니다.\\n\\n이미 주문하셨거나 장바구니에 담긴 상품이 없는 경우입니다.";
     }
 
