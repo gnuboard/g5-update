@@ -49,7 +49,7 @@ $ad_default = ! empty($_POST['ad_default']) ? (int) $_POST['ad_default'] : 0;
 // 장바구니 재고 확인
 $check_stockout = check_stockout_cart($tmp_cart_id, null, false);
 if (!$check_stockout['result'])  {
-    alert($check_stockout['message'], G5_SHOP_URL . "cart.php");
+    alert($check_stockout['message'], G5_SHOP_URL . "/cart.php");
 }
 
 
