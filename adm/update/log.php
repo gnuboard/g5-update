@@ -5,11 +5,9 @@ include_once './_common.php';
 $g5['title'] = '버전 업데이트';
 include_once '../admin.head.php';
 
-$log_dir = G5_DATA_PATH . "/update/log";
-
 $page = isset($_REQUEST['page']) ? (int)$_REQUEST['page'] : 1;
-$list = $g5['update']->getLogList($page);
-$total_page = $g5['update']->getLogListSize();
+$logList = $g5['update']->getLogList($page);
+$totalPage = $g5['update']->getLogListSize();
 ?>
 <h2 class="h2_frm">업데이트 로그 목록</h2>
 <ul class="anchor">
@@ -29,8 +27,8 @@ $total_page = $g5['update']->getLogListSize();
         </tr>
         </thead>
         <tbody>
-        <?php if (is_array($list) && count($list) > 0) { ?>
-            <?php foreach ($list as $key => $var) { ?>
+        <?php if (is_array($logList) && count($logList) > 0) { ?>
+            <?php foreach ($logList as $key => $var) { ?>
             <tr>
                 <td><a href="./log_detail.php?filename=<?php echo $var['filename']; ?>"><?php echo $var['filename']; ?></a></td>
                 <td><a><?php echo $var['status']; ?></a></td>
@@ -43,8 +41,8 @@ $total_page = $g5['update']->getLogListSize();
         </tbody>
     </table>
     <?php
-    if ($total_page > 1) {
-        echo get_paging(G5_IS_MOBILE ? $config['cf_mobile_pages'] : $config['cf_write_pages'], $page, $total_page, $_SERVER['SCRIPT_NAME'] . '?' . $qstr . '&amp;page=');
+    if ($totalPage > 1) {
+        echo get_paging(G5_IS_MOBILE ? $config['cf_mobile_pages'] : $config['cf_write_pages'], $page, $totalPage, $_SERVER['SCRIPT_NAME'] . '?' . $qstr . '&amp;page=');
     }
     ?>
 </div>

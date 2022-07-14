@@ -133,15 +133,12 @@ foreach ($content_url as $key => $var) {
                     }
                 },
                 success: function(data) {
-                    alert(data.message);
-                    if (data.error != 0) {
-                        return false;
-                    }
-
+                    alert("성공적으로 연결되었습니다.");
                     $(".update_btn_area").html("<button type=\"submit\" class=\"btn btn_submit\" style=\"height:35px\">선택한 시점으로 롤백</button>");
                 },
                 error: function(request, status, error) {
                     alert("code:" + request.status + "\n" + "message:" + request.responseText + "\n" + "error:" + error);
+                    $(".update_btn_area").html("");
                 },
                 complete: function() {
                     inAjax = false;
@@ -174,16 +171,13 @@ foreach ($content_url as $key => $var) {
                     }
                 },
                 success: function(data) {
-                    inAjax = false;
                     if (data.error != 0) {
                         alert(data.message);
                         return false;
                     }
-
                     f.submit();
                 },
                 error: function(request, status, error) {
-                    inAjax = false;
                     alert("code:" + request.status + "\n" + "message:" + request.responseText + "\n" + "error:" + error);
                 },
                 complete: function() {

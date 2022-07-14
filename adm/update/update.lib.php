@@ -34,8 +34,11 @@ class G5Update
 
     public $window_dir_update  = null;
 
+    // 가용용량
+    const INSTALLED_DISK_CAPITAL = 20971520;
+
     // token값이 없는 경우, 1시간에 60번의 데이터조회가 가능함
-    private $token = "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";
+    private $token = "";
 
     private $url = "https://api.github.com";
     private $version_list = array();
@@ -70,59 +73,66 @@ class G5Update
      * @param string $port          접속 프로토콜 ("ftp", "sftp")
      * @param string $username      사용자 이름
      * @param string $userPassword  사용자 비밀번호
-     * @return bool
+     * @throws Exception
      */
     public function connect($hostname, $port, $username, $userPassword)
     {
-        $this->port = $port;
-
-        if ($port == "ftp") {
-            if (function_exists("ftp_connect")) {
-                $this->conn = @ftp_connect($hostname, 21, 5);
-                if ($this->conn == false) {
-                    return false;
-                }
-
-                $login = ftp_login($this->conn, $username, $userPassword);
-                if ($login == false) {
-                    return false;
-                }
-
-                ftp_pasv($this->conn, true);
-
-                // ftp경로 설정
-                $this->setFtpDirectoryToG5();
-
-                return true;
+        try {
+            if ($port == null) {
+                throw new Exception("포트가 입력되지 않았습니다.");
             }
-        } elseif ($port == "sftp") {
-            if (function_exists("ssh2_connect")) {
-                if ($this->conn != false) {
-                    return true;
-                }
-                $this->conn = @ssh2_connect($hostname, 22);
-
-                if ($this->conn == false) {
-                    return false;
-                }
-                if (!ssh2_auth_password($this->conn, $username, $userPassword)) {
-                    return false;
-                }
-
-                $this->connPath = @ssh2_sftp($this->conn);
-                
-                if (!$this->connPath) {
-                    $this->conn = false;
-                    $this->connPath = false;
-
-                    return false;
-                }
-
-                return true;
+            if ($username == null) {
+                throw new Exception("{$port} 계정이 입력되지 않았습니다.");
             }
+            if ($userPassword == null) {
+                throw new Exception("{$port} 비밀번호가 입력되지 않았습니다.");
+            }
+            $this->port = $port;
+
+            if ($port == "ftp") {
+                if (function_exists("ftp_connect")) {
+                    $this->conn = @ftp_connect($hostname, 21, 5);
+                    if ($this->conn == false) {
+                        throw new Exception("FTP 연결에 실패했습니다.");
+                    }
+                    if (ftp_login($this->conn, $username, $userPassword)) {
+                        throw new Exception("FTP 계정 로그인에 실패했습니다.");
+                    }
+                    // 패시브모드 설정
+                    ftp_pasv($this->conn, true);
+                    // ftp경로 설정
+                    $this->setFtpDirectoryToG5();
+                } else {
+                    throw new Exception("ftp_connect 함수를 사용할 수 없습니다.");    
+                }
+            } elseif ($port == "sftp") {
+                if (function_exists("ssh2_connect")) {
+                    if (!$this->conn) {
+                        $this->conn = @ssh2_connect($hostname, 22);
+                        if ($this->conn == false) {
+                            throw new Exception("SFTP 연결에 실패했습니다.");
+                        }
+                        if (!ssh2_auth_password($this->conn, $username, $userPassword)) {
+                            throw new Exception("SFTP 계정 로그인에 실패했습니다.");
+                        }
+        
+                        $this->connPath = @ssh2_sftp($this->conn);
+                        
+                        if (!$this->connPath) {
+                            $this->conn = false;
+                            $this->connPath = false;
+                            throw new Exception("SFTP 시스템초기화에 실패했습니다.");
+                        }    
+                    }
+                } else {
+                    throw new Exception("ssh2_connect 함수를 사용할 수 없습니다.");    
+                }
+            } else {
+                throw new Exception("올바르지 않은 프로토콜입니다.");
+            }
+        } catch (Exception $exc) {
+            $this->setError($exc);
         }
-
-        return false;
     }
 
     /**
@@ -192,7 +202,7 @@ class G5Update
 
     /**
      * 버전업데이트 경로 생성 및 권한처리
-     * @return bool
+     * @throws Exception
      */
     public function makeUpdateDir()
     {
@@ -251,37 +261,37 @@ class G5Update
             } elseif ($this->port == 'sftp') {
                 if (!is_dir($this->dir_update)) {
                     if (!ssh2_sftp_mkdir($this->connPath, $this->dir_update, 0707)) {
-                        throw new Exception("디렉토리를 생성하는데 실패했습니다.");
+                        throw new Exception("/update 디렉토리를 생성하는데 실패했습니다.");
                     }
                     if (!ssh2_sftp_chmod($this->connPath, $this->dir_update, 0707)) {
-                        throw new Exception("디렉토리의 권한을 변경하는데 실패했습니다.");
+                        throw new Exception("/update 디렉토리의 권한을 변경하는데 실패했습니다.");
                     }
                 }
 
                 if (!is_dir($this->dir_version)) {
                     if (!ssh2_sftp_mkdir($this->connPath, $this->dir_version, 0707)) {
-                        throw new Exception("디렉토리를 생성하는데 실패했습니다.");
+                        throw new Exception("/update/version 디렉토리를 생성하는데 실패했습니다.");
                     }
                     if (!ssh2_sftp_chmod($this->connPath, $this->dir_version, 0707)) {
-                        throw new Exception("디렉토리의 권한을 변경하는데 실패했습니다.");
+                        throw new Exception("/update/version 디렉토리의 권한을 변경하는데 실패했습니다.");
                     }
                 }
 
                 if (!is_dir($this->dir_log)) {
                     if (!ssh2_sftp_mkdir($this->connPath, $this->dir_log, 0755)) {
-                        throw new Exception("디렉토리를 생성하는데 실패했습니다.");
+                        throw new Exception("/update/log 디렉토리를 생성하는데 실패했습니다.");
                     }
                     if (!ssh2_sftp_chmod($this->connPath, $this->dir_log, 0755)) {
-                        throw new Exception("디렉토리의 권한을 변경하는데 실패했습니다.");
+                        throw new Exception("/update/log 디렉토리의 권한을 변경하는데 실패했습니다.");
                     }
                 }
 
                 if (!is_dir($this->dir_backup)) {
                     if (!ssh2_sftp_mkdir($this->connPath, $this->dir_backup, 0707)) {
-                        throw new Exception("디렉토리를 생성하는데 실패했습니다.");
+                        throw new Exception("/update/backup 디렉토리를 생성하는데 실패했습니다.");
                     }
                     if (!ssh2_sftp_chmod($this->connPath, $this->dir_backup, 0707)) {
-                        throw new Exception("디렉토리의 권한을 변경하는데 실패했습니다.");
+                        throw new Exception("/update/backup 디렉토리의 권한을 변경하는데 실패했습니다.");
                     }
                 }
             } else {
@@ -294,6 +304,8 @@ class G5Update
                 if ($fp) {
                     fwrite($fp, "Deny from all");
                     fclose($fp);
+                } else {
+                    throw new Exception(".htaccess 파일생성에 실패했습니다.");
                 }
             }
 
@@ -306,26 +318,25 @@ class G5Update
                 exec('rm -rf ' . $dirRemove);
             }
 
-            return true;
         } catch (Exception $e) {
-            $this->setError($e->getMessage());
-            return false;
+            $this->setError($e);
         }
     }
 
     /**
-     * 가용용량 체크 (20MB의 여유공간)
-     * @return bool
+     * 가용용량 체크
+     * @throws Exception
      */
     public function checkInstallAvailable()
     {
-        $dfs = disk_free_space("/");
-
-        if (($dfs - 20971520) > 0) {
-            return true;
+        try {
+            $dfs = disk_free_space("/");
+            if ($dfs < self::INSTALLED_DISK_CAPITAL) {
+                throw new Exception("설치가능 공간이 부족합니다. (" . $this->getFormatFileSize(self::INSTALLED_DISK_CAPITAL, 0) . " 이상 필요)");
+            }
+        } catch (Exception $e) {
+            $this->setError($e);
         }
-
-        return false;
     }
 
     /**
@@ -491,7 +502,8 @@ class G5Update
                                     $status_txt = '롤백';
                                     break;
                                 default:
-                                    throw new Exception("상태값이 올바르지 않은 파일입니다.");
+                                    $status_txt = "상태값이 올바르지 않은 파일입니다.";
+                                    break;
                             }
                             $time = $date . implode(':', str_split($time, 2));
                             $this->log_list[] = array(
@@ -524,6 +536,7 @@ class G5Update
     /**
      * 전체 로그파일 갯수 조회
      * @return int|bool
+     * @throws Exception
      */
     public function getLogTotalCount()
     {
@@ -564,21 +577,25 @@ class G5Update
      * 로그파일 상세정보 조회
      * @param string    $file_name  로그파일 이름
      * @return array<mixed>|bool 로그파일 상세정보
+     * @throws Exception
      */
     public function getLogDetail($file_name = null)
     {
         try {
             $file = $this->dir_log . '/' . $file_name;
 
+            if (!is_dir($this->dir_log)) {
+                throw new Exception("로그파일 경로가 존재하지 않습니다.");
+            }
             if ($file_name == null) {
-                throw new Exception("");
+                throw new Exception("로그파일이 전달되지 않았습니다.");
             }
 
             $file_size = filesize($file);
             $file_pointer = fopen($file, 'r');
 
             if ($file_size <= 0) {
-                throw new Exception("빈 파일입니다.");
+                throw new Exception("빈 로그 파일입니다.");
             }
             if (is_resource($file_pointer) === false) {
                 throw new Exception("파일을 열람할 권한이 없습니다.");
@@ -608,7 +625,7 @@ class G5Update
 
             return $log_detail;
         } catch (Exception $e) {
-            return false;
+            return $this->setError($e);
         }
     }
     /**
@@ -645,8 +662,9 @@ class G5Update
      * 백업파일 압축해제
      * @param string $backupFile
      * @return bool
+     * @throws Exception
      */
-    public function unzipBackupFile($backupFile)
+    public function unzipBackupFile($backupFile = null)
     {
         try {
             $exe        = $this->os == "WINNT" ? "tar" : "zip";
@@ -667,7 +685,7 @@ class G5Update
                             }
                         } elseif ($this->port == "sftp") {
                             if (!ssh2_sftp_mkdir($this->connPath, $backupDir, 0707)) {
-                                throw new Exception("디렉토리를 생성하는데 실패했습니다.");
+                                throw new Exception("/update/backup/" . $backupDirName . " 디렉토리를 생성하는데 실패했습니다.");
                             }
                         }
                     }
@@ -686,8 +704,7 @@ class G5Update
             }
             return true;
         } catch (Exception $e) {
-            $this->setError($e->getMessage());
-            return false;
+            $this->setError($e);
         }
     }
 
@@ -719,6 +736,7 @@ class G5Update
      * 롤백 파일 삭제
      * @param string $originPath
      * @return string
+     * @throws Exception
      */
     public function deleteOriginFile($originPath)
     {
@@ -740,11 +758,13 @@ class G5Update
             } elseif ($this->port == 'sftp') {
                 $result = ssh2_sftp_unlink($this->connPath, $originPath);
             }
+
             if ($result == false) {
                 throw new Exception("파일삭제가 실패하였습니다.");
             }
 
             return "success";
+
         } catch (Exception $e) {
             return $e->getMessage();
         }
@@ -754,6 +774,7 @@ class G5Update
      * 비어있는 경로 삭제
      * @param string $originDir 경로
      * @return string
+     * @throws Exception
      */
     public function removeEmptyOriginDir($originDir)
     {
@@ -816,10 +837,18 @@ class G5Update
      * @param string $originPath   원본 파일 경로
      * @param string $changePath   업데이트 파일 경로
      * @return string|void
+     * @throws Exception
      */
     public function writeUpdateFile($originPath, $changePath)
     {
         try {
+            if ($this->conn == false) {
+                throw new Exception("통신이 연결되지 않았습니다.");
+            }
+            if (!file_exists($changePath)) {
+                throw new Exception("업데이트에 삭제되거나 존재하지 않는 파일입니다.");
+            }
+
             $ftpChangePath  = "";
             $ftpOriginPath  = "";
             if ($this->port == 'ftp') {
@@ -833,66 +862,60 @@ class G5Update
                 }
             }
 
-            if ($this->conn == false) {
-                throw new Exception("통신이 연결되지 않았습니다.");
-            } elseif (!file_exists($changePath)) {
-                throw new Exception("업데이트에 삭제되거나 존재하지 않는 파일입니다.");
-            } else {
-                $changeFileSize = filesize($changePath);
-                if ($changeFileSize <= 0) {
-                    throw new Exception("빈파일 입니다.");
-                }
-                $changeFile = fopen($changePath, 'r');
-                if ($changeFile == false) {
-                    throw new Exception("파일을 여는데 실패했습니다.");
-                }
-                $changeContent = @fread($changeFile, $changeFileSize);
-                if ($changeContent == false) {
-                    throw new Exception("파일을 읽어들이는데 실패했습니다.");
-                }
+            $changeFileSize = filesize($changePath);
+            if ($changeFileSize <= 0) {
+                throw new Exception("빈파일 입니다.");
+            }
+            $changeFile = fopen($changePath, 'r');
+            if ($changeFile == false) {
+                throw new Exception("파일을 여는데 실패했습니다.");
+            }
+            $changeContent = @fread($changeFile, $changeFileSize);
+            if ($changeContent == false) {
+                throw new Exception("파일을 읽어들이는데 실패했습니다.");
+            }
 
-                if ($this->port == 'ftp') {
-                    if (ftp_nlist($this->conn, dirname((string)$ftpOriginPath)) == false) {
-                        $result = ftp_mkdir($this->conn, dirname((string)$ftpOriginPath));
-                        ftp_nb_continue($this->conn); // 디렉토리 생성후 파일을 계속해서 검색/전송
-                        if ($result == false) {
-                            throw new Exception("ftp를 통한 디렉토리 생성에 실패했습니다.");
-                        }
-                    }
-                    $restoreContent = "";
-                    if (file_exists($originPath)) {
-                        $restoreFile = @fopen($originPath, 'r+');
-                        if ($restoreFile) {
-                            $restoreContent = @fread($restoreFile, filesize($originPath));
-                        }
-                    }
-
-                    $originFile = fopen($originPath, 'w'); // 덮어쓸 파일 포인터 생성
-                    if ($originFile == false) {
-                        throw new Exception("ftp를 통한 파일전송에 실패했습니다1.");
-                    }
-                    $result = ftp_fget($this->conn, $originFile, $ftpChangePath, FTP_BINARY);
+            if ($this->port == 'ftp') {
+                if (ftp_nlist($this->conn, dirname((string)$ftpOriginPath)) == false) {
+                    $result = ftp_mkdir($this->conn, dirname((string)$ftpOriginPath));
+                    ftp_nb_continue($this->conn); // 디렉토리 생성후 파일을 계속해서 검색/전송
                     if ($result == false) {
-                        if ($restoreContent) {
-                            @fwrite($originFile, (string)$restoreContent);
-                        }
-                        throw new Exception("ftp를 통한 파일전송에 실패했습니다2.");
+                        throw new Exception("FTP를 통한 디렉토리 생성에 실패했습니다.");
                     }
-                } elseif ($this->port == 'sftp') {
-                    if (!file_exists("ssh2.sftp://" . intval($this->connPath) . $originPath)) {
-                        if (!is_dir(dirname($originPath))) {
-                            mkdir("ssh2.sftp://" . intval($this->connPath) . dirname($originPath));
-                        }
+                }
+                $restoreContent = "";
+                if (file_exists($originPath)) {
+                    $restoreFile = @fopen($originPath, 'r+');
+                    if ($restoreFile) {
+                        $restoreContent = @fread($restoreFile, filesize($originPath));
+                    }
+                }
 
-                        $permission = intval(substr(sprintf('%o', fileperms($changePath)), -4), 8);
-                        $result = ssh2_scp_send($this->conn, $changePath, $originPath, $permission);
-                    } else {
-                        $result = file_put_contents("ssh2.sftp://" . intval($this->connPath) . $originPath, $changeContent);
+                $originFile = fopen($originPath, 'w'); // 덮어쓸 파일 포인터 생성
+                if ($originFile == false) {
+                    throw new Exception("FTP를 통한 파일전송에 실패했습니다1.");
+                }
+                $result = ftp_fget($this->conn, $originFile, $ftpChangePath, FTP_BINARY);
+                if ($result == false) {
+                    if ($restoreContent) {
+                        @fwrite($originFile, (string)$restoreContent);
+                    }
+                    throw new Exception("FTP를 통한 파일전송에 실패했습니다2.");
+                }
+            } elseif ($this->port == 'sftp') {
+                if (!file_exists("ssh2.sftp://" . intval($this->connPath) . $originPath)) {
+                    if (!is_dir(dirname($originPath))) {
+                        mkdir("ssh2.sftp://" . intval($this->connPath) . dirname($originPath));
                     }
 
-                    if ($result == false) {
-                        throw new Exception("sftp를 통한 파일전송에 실패했습니다.");
-                    }
+                    $permission = intval(substr(sprintf('%o', fileperms($changePath)), -4), 8);
+                    $result = ssh2_scp_send($this->conn, $changePath, $originPath, $permission);
+                } else {
+                    $result = file_put_contents("ssh2.sftp://" . intval($this->connPath) . $originPath, $changeContent);
+                }
+
+                if ($result == false) {
+                    throw new Exception("SFTP를 통한 파일전송에 실패했습니다.");
                 }
             }
 
@@ -1041,15 +1064,16 @@ class G5Update
      * 업데이트버전 파일 다운로드
      * @breif 해당 버전에 맞는 압축파일 다운로드 후, 디렉토리 생성
      * @param string $version 다운로드 버전
-     * @return  bool
+     * @return void
+     * @throws Exception
      */
     public function downloadVersion($version = null)
     {
         if ($version == null) {
-            return false;
+            throw new Exception('다운로드 버전이 설정되지 않았습니다.');
         }
         if ($this->conn == false) {
-            return false;
+            throw new Exception("통신이 연결되지 않았습니다.");
         }
 
         umask(0002);
@@ -1059,16 +1083,16 @@ class G5Update
         
         $zip = fopen($archiveFile, 'w+');
         if ($zip == false) {
-            return false;
+            throw new Exception('압축파일 생성에 실패했습니다.');
         }
 
         $result = $this->getApiCurlResult($exe, $version);
         if ($result == false) {
-            return false;
+            throw new Exception($version . '버전 다운로드 통신이 실패했습니다.');
         }
         $file_result = @fwrite($zip, (string)$result);
         if ($file_result == false) {
-            return false;
+            throw new Exception('압축파일 생성에 실패했습니다.');
         }
 
         // 시스템명령어 구분
@@ -1078,23 +1102,34 @@ class G5Update
             $escapeVersionDir   = escapeshellarg($versionDir);
 
             exec("rd /s /q " . $escapeVersionDir);
-            exec("tar -zxf " . escapeshellarg($window_dir_version . "\\gnuboard." . $exe) . " -C " . escapeshellarg($window_dir_version));
-            exec("move " . escapeshellarg($window_dir_version . "\\gnuboard-*") . " " . $escapeVersionDir);
+            exec("tar -zxf " . escapeshellarg($window_dir_version . "\\gnuboard." . $exe) . " -C " . escapeshellarg($window_dir_version), $output, $result_code);
+            if ($result_code != 0) {
+                throw new Exception("압축해제에 실패했습니다.");
+            }
+            exec("move " . escapeshellarg($window_dir_version . "\\gnuboard-*") . " " . $escapeVersionDir, $output, $result_code);
+            if ($result_code != 0) {
+                throw new Exception("압축파일 이동에 실패했습니다.");
+            }
             exec('del /q ' .escapeshellarg($window_dir_version . "\\gnuboard." . $exe));
+
         } else {
             $versionDir         = $this->dir_version . '/' . $version;
             $escapeVersionDir   = escapeshellarg($versionDir);
 
             exec('rm -rf ' . $escapeVersionDir);
-            exec('unzip ' . escapeshellarg($archiveFile) . ' -d ' . $escapeVersionDir);
-            exec('mv -f ' . escapeshellarg($versionDir . '/gnuboard-') . '*/* ' . $escapeVersionDir);
+            $result = exec('unzip ' . escapeshellarg($archiveFile) . ' -d ' . $escapeVersionDir);
+            if (!$result) {
+                throw new Exception("압축해제에 실패했습니다.");
+            }
+            $result = exec('mv -f ' . escapeshellarg($versionDir . '/gnuboard-') . '*/* ' . $escapeVersionDir);
+            if (!$result) {
+                throw new Exception("압축파일 이동에 실패했습니다.");
+            }
             exec('rm -rf ' . escapeshellarg($versionDir . '/gnuboard-*/'));
             exec('rm -rf ' . escapeshellarg($archiveFile));
-        }
+        }   
 
         umask(0022);
-
-        return true;
     }
 
     /**
@@ -1102,20 +1137,18 @@ class G5Update
      * @breif 현재 그누보드와 github의 같은 버전의 파일을 비교
      * @param array<string> $list 동일버전 업데이트 파일목록
      * @return array<mixed>|bool
+     * @throws Exception
      */
     public function checkSameVersionComparison($list = null)
     {
         if ($this->now_version == null) {
-            return false;
+            throw new Exception('현재 버전이 설정되지 않았습니다.');
         }
         if ($list == null) {
-            return false;
+            throw new Exception('업데이트 파일목록이 전달되지 않았습니다.');
         }
-
-        $result = $this->downloadVersion($this->now_version);
-        if ($result == false) {
-            return false;
-        }
+        
+        $this->downloadVersion($this->now_version);
 
         $check = array();
         $check['type'] = 'Y';
@@ -1156,23 +1189,21 @@ class G5Update
         $backupPath = preg_replace('/.' . $exe . '/', '', $this->dir_backup . "/" . $backupFile);
 
         if ($this->now_version == null) {
-            return false;
+            throw new Exception('현재 버전이 설정되지 않았습니다.');
         }
         if ($list == null) {
-            return false;
+            throw new Exception('비교파일 목록이 없습니다.');
         }
         if (!file_exists((string)$backupPath)) {
-            return false;
+            throw new Exception('백업파일이 존재하지 않습니다.');
         }
 
-        $result = $this->downloadVersion($this->now_version);
-        if ($result == false) {
-            return false;
-        }
+        $this->downloadVersion($this->now_version);
 
         $check = array();
         $check['type'] = 'Y';
 
+        // 변경내역 확인
         foreach ($list as $key => $var) {
             $currentFilePath    = G5_PATH . '/' . $var;
             $backupFilePath     = $backupPath . '/' . $var;
@@ -1231,14 +1262,14 @@ class G5Update
     {
         try {
             if ($this->now_version == null || $this->target_version == null) {
-                throw new Exception("현재버전 및 목표버전이 설정되지 않았습니다.");
+                throw new Exception("현재버전 또는 목표버전이 설정되지 않았습니다.");
             }
             if ($this->now_version == $this->target_version) {
                 throw new Exception("동일버전으로는 업데이트가 불가능합니다.");
             }
             $version_list = $this->getVersionList();
             if ($version_list == false) {
-                throw new Exception("버전리스트를 가져오는데 실패했습니다.");
+                throw new Exception("버전목록 조회가 실패했습니다.");
             }
 
             // 숫자가 작을수록 상위버전
@@ -1261,14 +1292,13 @@ class G5Update
 
             return $this->compare_list;
         } catch (Exception $e) {
-            $this->setError($e->getMessage());
-
+            $this->setError($e);
             return false;
         }
     }
 
     /**
-     * 계단식 표시처리
+     * 디렉토리 => 배열형태로 변경
      * @param array<mixed> &$dirs
      * @param array<mixed> $path_array
      * @return void
@@ -1326,7 +1356,7 @@ class G5Update
         return $txt;
     }
     /**
-     * 변경된 파일 표시
+     * 업데이트 파일목록 데이터 처리
      * @param array $compare_list
      * @param array $compare_cehck
      * @return array<mixed>|bool
@@ -1352,7 +1382,7 @@ class G5Update
 
             return $parray;
         } catch (Exception $e) {
-            $this->setError($e->getMessage());
+            $this->setError($e);
             return false;
         }
     }
@@ -1443,12 +1473,13 @@ class G5Update
 
     /**
      * 에러 출력
-     * @param string $msg
+     * @param Exception $exc
      * @return void
      */
-    public function setError($msg)
+    public function setError($exc)
     {
-        echo $msg;
+        echo "Error : " . $exc->getMessage();
+        // . "<br>" . $exc->getTraceAsString()
         exit;
     }
 
@@ -1551,16 +1582,26 @@ class G5Update
      * @breif 백업경로에서 version.php 파일 내의 버전 값만 추출
      * @param string $backupFile 백업파일 경로
      * @return string $rollback_version
+     * @throws Exception
      */
     public function setRollbackVersion($backupFile)
     {
-        $exe = $this->os == "WINNT" ? "tar" : "zip";
-        $backupDir = preg_replace('/.' . $exe . '/', '', $this->dir_backup . "/" . $backupFile);
-        $backupVersionFile = file_get_contents($backupDir . '/version.php');
-        preg_match("/(?<=define\('G5_GNUBOARD_VER', ')(.*?)(?='\);)/", (string)$backupVersionFile, $rollback_version); // 백업버전 체크
-        $this->rollback_version = "v" . $rollback_version[0];
-
-        return $this->rollback_version;
+        try {
+            $exe = $this->os == "WINNT" ? "tar" : "zip";
+            $backupDir = preg_replace('/.' . $exe . '/', '', $this->dir_backup . "/" . $backupFile);
+            $backupVersionFile = file_get_contents($backupDir . '/version.php');
+            preg_match("/(?<=define\('G5_GNUBOARD_VER', ')(.*?)(?='\);)/", (string)$backupVersionFile, $rollback_version); // 백업버전 체크
+    
+            if (!$rollback_version[0]) {
+                throw new Exception("롤백파일의 버전정보를 불러올 수 없습니다.");
+            } 
+            $this->rollback_version = "v" . $rollback_version[0];
+    
+            return $this->rollback_version;
+            
+        } catch (Exception $e) {
+            $this->setError($e);
+        }
     }
 
     public function getToken()

@@ -5,59 +5,33 @@ include_once './_common.php';
 $g5['title'] = '버전 업데이트';
 include_once '../admin.head.php';
 
-$target_version = isset($_POST['target_version']) ? $_POST['target_version'] : null;
-$username       = isset($_POST['username']) ? $_POST['username'] : null;
-$userpassword   = isset($_POST['password']) ? $_POST['password'] : null;
-$port           = isset($_POST['port']) ? $_POST['port'] : null;
+$targetVersion  = isset($_POST['target_version']) ? clean_xss_tags($_POST['target_version'], 1, 1) : null;
+$username       = isset($_POST['username']) ? clean_xss_tags($_POST['username'], 1, 1) : null;
+$userPassword   = isset($_POST['password']) ? clean_xss_tags($_POST['password'], 1, 1) : null;
+$port           = isset($_POST['port']) ? clean_xss_tags($_POST['port'], 1, 1) : null;
 
 $totalSize      = $g5['update']->getTotalStorageSize();
 $freeSize       = $g5['update']->getUseableStorageSize();
 $useSize        = $g5['update']->getUseStorageSize();
 $usePercent     = $g5['update']->getUseStoragePercenty();
 
-if ($g5['update']->checkInstallAvailable() == false) {
-    die("가용용량이 부족합니다. (20MB 이상 필요)");
-}
-if ($target_version == null) {
-    die("목표버전 정보가 입력되지 않았습니다.");
-}
-if ($port == null) {
-    die("포트가 입력되지 않았습니다.");
-}
-if ($username == null) {
-    die("{$port} 계정명이 입력되지 않았습니다.");
-}
-if ($userpassword == null) {
-    die("{$port} 비밀번호가 입력되지 않았습니다.");
-}
-if ($target_version == 'v' . G5_GNUBOARD_VER) {
-    die("현재버전과 목표버전이 동일합니다.");
-}
-
-$conn_result = $g5['update']->connect($_SERVER['HTTP_HOST'], $port, $username, $userpassword);
-if ($conn_result == false) {
-    die("연결에 실패했습니다.");
-}
-
-$result = $g5['update']->makeUpdateDir();
-if ($result == false) {
-    die("디렉토리 생성에 실패했습니다.");
-}
-
-$g5['update']->setTargetVersion($target_version);
-$compare_list = $g5['update']->getVersionCompareList();
-if ($compare_list == null) {
-    die("비교파일 리스트가 존재하지 않습니다.");
-}
-
-$compare_check = $g5['update']->checkSameVersionComparison($compare_list);
-if ($compare_check == false) {
-    die("파일 비교에 실패했습니다.");
-}
-
-$plist = $g5['update']->getDepthVersionCompareList($compare_list, $compare_check);
+// 포트 연결
+$g5['update']->connect($_SERVER['HTTP_HOST'], $port, $username, $userPassword);
+// 설치가능한 디스크 공간 체크
+$g5['update']->checkInstallAvailable();
+// update 디렉토리 생성
+$g5['update']->makeUpdateDir();
+// 목표버전 설정
+$g5['update']->setTargetVersion($targetVersion);
+// 업데이트할 파일 목록 조회
+$updateFileList = $g5['update']->getVersionCompareList();
+// 업데이트 파일과 현재 그누보드 파일 비교
+$checkCustomFile = $g5['update']->checkSameVersionComparison($updateFileList);
+// 업데이트 파일목록 데이터 처리
+$updateList = $g5['update']->getDepthVersionCompareList($updateFileList, $checkCustomFile);
+// html 태그 추가
+$viewUpdateList = $g5['update']->changeDepthListPrinting($updateList);
 ?>
-
 <section>
     <h2 class="h2_frm">버전 업데이트 진행</h2>
     <ul class="anchor">
@@ -67,11 +41,11 @@ $plist = $g5['update']->getDepthVersionCompareList($compare_list, $compare_check
     </ul>
 
     <form method="POST" name="update_box" class="update_box" action="./step2.php" onsubmit="return update_submit(this);">
-        <input type="hidden" name="compare_check" value="<?php echo $compare_check['type']; ?>">
+        <input type="hidden" name="compare_check" value="<?php echo $checkCustomFile['type']; ?>">
         <input type="hidden" name="username" value="<?php echo get_text($username); ?>">
-        <input type="hidden" name="password" value="<?php echo get_text($userpassword); ?>">
+        <input type="hidden" name="password" value="<?php echo get_text($userPassword); ?>">
         <input type="hidden" name="port" value="<?php echo get_text($port); ?>">
-        <input type="hidden" name="target_version" value="<?php echo get_text($target_version); ?>">
+        <input type="hidden" name="target_version" value="<?php echo get_text($targetVersion); ?>">
 
         <div class="tbl_frm01 tbl_wrap">
             <table>
@@ -84,7 +58,7 @@ $plist = $g5['update']->getDepthVersionCompareList($compare_list, $compare_check
                 <tbody>
                     <tr>
                         <th scope="row">업데이트 버전</th>
-                        <td><h3><?php echo $target_version ?></h3></td>
+                        <td><h3><?php echo $targetVersion ?></h3></td>
                         <th>업데이트 파일 목록</th>
                     </tr>
                     <tr>
@@ -95,7 +69,7 @@ $plist = $g5['update']->getDepthVersionCompareList($compare_list, $compare_check
                                 <table>
                                     <tr>
                                         <td style="line-height:2; border: none !important;">
-                                        <?php print_r($g5['update']->changeDepthListPrinting($plist)); ?>
+                                        <?php print_r($viewUpdateList); ?>
                                         </td>
                                     </tr>
                                 </table>
@@ -104,7 +78,7 @@ $plist = $g5['update']->getDepthVersionCompareList($compare_list, $compare_check
                     </tr>
                     <tr>
                         <td colspan="2" style="vertical-align: top;">
-                        <?php if ($compare_check['type'] == 'Y') { ?>
+                        <?php if ($checkCustomFile['type'] == 'Y') { ?>
                             <button type="submit" class="btn btn_submit">업데이트 진행</button>
                         <?php } else { ?>
                             <p style="color:red; font-weight:bold;">기존 버전간의 변경된 파일이 존재합니다.</p>
@@ -129,10 +103,8 @@ $plist = $g5['update']->getDepthVersionCompareList($compare_list, $compare_check
             if (confirm("기존에 변경한 파일에 문제가 발생할 수 있습니다.\n업데이트를 진행하시겠습니까?")) {
                 return true;
             }
-
             return false;
         }
-
         return true;
     }
 </script>

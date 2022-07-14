@@ -5,34 +5,33 @@ include_once './_common.php';
 $g5['title'] = '버전 업데이트';
 include_once '../admin.head.php';
 
-$rollback_file  = isset($_POST['rollback_file']) ? $_POST['rollback_file'] : null;
-$username       = isset($_POST['username']) ? $_POST['username'] : null;
-$userpassword   = isset($_POST['password']) ? $_POST['password'] : null;
-$port           = isset($_POST['port']) ? $_POST['port'] : null;
+$rollbackFile   = isset($_POST['rollback_file']) ? clean_xss_tags($_POST['rollback_file'], 1, 1) : null;
+$username       = isset($_POST['username']) ? clean_xss_tags($_POST['username'], 1, 1) : null;
+$userPassword   = isset($_POST['password']) ? clean_xss_tags($_POST['password'], 1, 1) : null;
+$port           = isset($_POST['port']) ? clean_xss_tags($_POST['port'], 1, 1) : null;
 
-$conn_result = $g5['update']->connect($_SERVER['HTTP_HOST'], $port, $username, $password);
-if ($conn_result == false) {
-    die("연결에 실패했습니다.");
-}
-
-$rollback_version = $g5['update']->setRollbackVersion($rollback_file);
+// 포트 연결
+$g5['update']->connect($_SERVER['HTTP_HOST'], $port, $username, $userPassword);
+// 복구버전 조회
+$rollback_version = $g5['update']->setRollbackVersion($rollbackFile);
+// 목표버전 설정
 $g5['update']->setTargetVersion($rollback_version);
-$compare_list = $g5['update']->getVersionCompareList();
-if ($compare_list == null) {
-    die("비교파일 리스트가 존재하지 않습니다.");
-}
+// 롤백할 파일 목록 조회
+$rollbackFileList = $g5['update']->getVersionCompareList();
 
 ?>
-<p style="font-size:15px; font-weight:bold;">현재 서버 버전 : <?php echo $g5['update']->now_version; ?> -> 백업 파일 버전 : <?php echo $g5['update']->target_version; ?> 복원 진행</p>
+<p style="font-size:15px; font-weight:bold;">
+    현재 서버 버전 : <?php echo $g5['update']->now_version; ?> -> 백업 파일 버전 : <?php echo $g5['update']->target_version; ?> 복원 진행
+</p>
 <br>
 <?php
 $result = $g5['update']->createBackupZipFile();
 $update_check['success']    = array();
 $update_check['fail']       = array();
 if ($result == "success") {
-    foreach ($compare_list as $key => $var) {
+    foreach ($rollbackFileList as $key => $var) {
         $exe = $g5['update']->os == "WINNT" ? "tar" : "zip";
-        $backupPath = preg_replace('/.' . $exe . '/', '', G5_DATA_PATH . '/update/backup/' .  $rollback_file);
+        $backupPath = preg_replace('/.' . $exe . '/', '', G5_DATA_PATH . '/update/backup/' .  $rollbackFile);
         $originFilePath = G5_PATH . '/' . $var;
         $backupFilePath = $backupPath . '/' . $var;
 
@@ -85,7 +84,5 @@ $g5['update']->disconnect();
         <?php } ?>
     <?php } ?>
 </div>
-
 <?php
 include_once '../admin.tail.php';
-?>

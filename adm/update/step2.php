@@ -5,30 +5,19 @@ include_once './_common.php';
 $g5['title'] = '버전 업데이트';
 include_once '../admin.head.php';
 
-$target_version = isset($_POST['target_version']) ? $_POST['target_version'] : null;
-$username       = isset($_POST['username']) ? $_POST['username'] : null;
-$userpassword   = isset($_POST['password']) ? $_POST['password'] : null;
-$port           = isset($_POST['port']) ? $_POST['port'] : null;
+$targetVersion  = isset($_POST['target_version']) ? clean_xss_tags($_POST['target_version'], 1, 1) : null;
+$username       = isset($_POST['username']) ? clean_xss_tags($_POST['username'], 1, 1) : null;
+$userPassword   = isset($_POST['password']) ? clean_xss_tags($_POST['password'], 1, 1) : null;
+$port           = isset($_POST['port']) ? clean_xss_tags($_POST['port'], 1, 1) : null;
 
-$conn_result = $g5['update']->connect($_SERVER['HTTP_HOST'], $port, $username, $password);
-if ($conn_result == false) {
-    die("연결에 실패했습니다.");
-}
-
-$g5['update']->setTargetVersion($target_version);
-if ($g5['update']->target_version == $g5['update']->now_version) {
-    die("목표버전이 현재버전과 동일합니다.");
-}
-
-$compare_list = $g5['update']->getVersionCompareList();
-if ($compare_list == false) {
-    die("비교할 원본파일목록이 존재하지 않습니다.");
-}
-
-$result = $g5['update']->downloadVersion($target_version);
-if ($result == false) {
-    die("목표버전 다운로드에 실패했습니다.");
-}
+// 포트 연결
+$g5['update']->connect($_SERVER['HTTP_HOST'], $port, $username, $userPassword);
+// 목표버전 설정
+$g5['update']->setTargetVersion($targetVersion);
+// 비교파일 목록 조회
+$g5['update']->getVersionCompareList();
+// 업데이트 버전 다운로드
+$g5['update']->downloadVersion($targetVersion);
 ?>
 <h2 class="h2_frm">버전 업데이트 진행</h2>
 <ul class="anchor">
@@ -47,7 +36,7 @@ if ($result == "success") {
     foreach ($compare_list as $key => $var) {
 
         $originFilePath = G5_PATH . '/' . $var;
-        $changeFilePath = G5_DATA_PATH . '/update/version/' . $target_version . '/' . $var;
+        $changeFilePath = G5_DATA_PATH . '/update/version/' . $targetVersion . '/' . $var;
 
         if (!file_exists($changeFilePath) && file_exists($originFilePath)) { // 업데이트파일은 존재하지않지만 현재파일은 존재할때
             $result = $g5['update']->deleteOriginFile($originFilePath);
@@ -99,7 +88,5 @@ $g5['update']->disconnect();
         <?php } ?>
     <?php } ?>
 </div>
-
 <?php
 include_once '../admin.tail.php';
-?>

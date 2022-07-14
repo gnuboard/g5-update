@@ -2,7 +2,6 @@
 include_once "./_common.php";
 
 $data = array();
-$title = "";
 $content = "";
 
 try {
@@ -22,20 +21,16 @@ try {
     foreach ($content_url as $key => $var) {
         $result = str_replace($var, "@" . $key . "@", $result);
     }
-
-    $title .= "<p>" . $version . " 버전 수정</p>";
-    $content .= "<p>";
     foreach ($content_url as $key => $var) {
         $result = str_replace('@' . $key . '@', '<a class="a_style" href="' . $var . '" target="_blank">변경코드확인</a>', $result);
     }
     $content .= $g5['update']->setHtmlspecialcharsDecode($result);
-    $content .= "</p><br>";
 
-    $data['error']      = 0;
-    $data['title']      = $title;
-    $data['item']       = $content;
+    $data['error'] = 0;
+    $data['content'] = $content;
 } catch (Exception $e) {
-    $data['code']    = $e->getCode();
+    $data['error'] = 1;
+    $data['code'] = $e->getCode();
     $data['message'] = $e->getMessage();
 }
 

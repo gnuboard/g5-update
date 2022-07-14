@@ -1,23 +1,21 @@
 <?php
 $sub_menu = '100600';
-include_once('./_common.php');
+include_once './_common.php';
 
 $g5['title'] = '버전 업데이트';
-include_once('../admin.head.php');
+include_once '../admin.head.php';
 
-$current_version    = "v" . G5_GNUBOARD_VER; // api.github의 tag_name에는 버전번호 앞에 v가 붙어있음.
-$version_list       = $g5['update']->getVersionList();
-$latest_version     = $g5['update']->getLatestVersion();
-$content            = $g5['update']->getVersionModifyContent($latest_version);
-$connect_array      = $g5['update']->getProtocolList();
+$versionList    = $g5['update']->getVersionList();
+$latestVersion  = $g5['update']->getLatestVersion();
+$content        = $g5['update']->getVersionModifyContent($latestVersion);
+$connectList    = $g5['update']->getProtocolList();
 
 preg_match_all('/(?:(?:https?|ftp):)?\/\/[a-z0-9+&@#\/%?=~_|!:,.;]*[a-z0-9+&@#\/%=~_|]/i', $content, $match);
-$content_url = $match[0];
-foreach ($content_url as $key => $url) {
+$contentUrl = $match[0];
+foreach ($contentUrl as $key => $url) {
     $content = str_replace($url, "@" . $key . "@", $content);
 }
 ?>
-
 <style>
     .a_style {
         font-weight: 400;
@@ -49,7 +47,7 @@ foreach ($content_url as $key => $url) {
         <li><a href="./rollback.php">복원</a></li>
         <li><a href="./log.php">로그</a></li>
     </ul>
-    <?php if ($latest_version != false) { ?>
+    <?php if ($latestVersion != false) { ?>
     <form method="POST" name="update_box" class="update_box" action="./step1.php" onsubmit="return update_submit(this);">
         <div class="tbl_frm01 tbl_wrap">
             <table>
@@ -62,14 +60,14 @@ foreach ($content_url as $key => $url) {
                 <tbody>
                     <tr>
                         <th scope="row"><label for="current_version">현재 그누보드 버전</label></th>
-                        <td><h3><?php echo $current_version; ?></h3></td>
+                        <td><h3><?php echo $g5['update']->now_version; ?></h3></td>
                         <th class="version_title_box">
-                            <?php echo (!empty($content)) ? "<p>" . $latest_version . " 버전 수정</p>" : ""; ?>
+                            <?php echo (!empty($content)) ? "<p>" . $latestVersion . " 버전 수정</p>" : ""; ?>
                         </th>
                     </tr>
                     <tr>
                         <th scope="row"><label for="latest_version">최신 그누보드 버전</label></th>
-                        <td><h3><?php echo $latest_version; ?></h3></td>
+                        <td><h3><?php echo $latestVersion; ?></h3></td>
                         <td rowspan="5" style="padding:0px;">
                             <div style="width:100%; height:300px; overflow:auto;">
                                 <table>
@@ -77,7 +75,7 @@ foreach ($content_url as $key => $url) {
                                         <td class="version_content_box">
                                         <?php if (!empty($content)) {
                                             echo "<p>";
-                                            foreach ($content_url as $key => $url) {
+                                            foreach ($contentUrl as $key => $url) {
                                                 $content = str_replace('@' . $key . '@', '<a class="a_style" href="' . $url . '" target="_blank">변경코드확인</a>', $content);
                                             }
                                             echo $g5['update']->setHtmlspecialcharsDecode($content);
@@ -93,7 +91,7 @@ foreach ($content_url as $key => $url) {
                         <th scope="row"><label for="target_version">업데이트 버전 선택</label></th>
                         <td>
                             <select class="target_version" name="target_version">
-                                <?php foreach ($version_list as $key => $version) { ?>
+                                <?php foreach ($versionList as $key => $version) { ?>
                                     <option value="<?php echo $version; ?>"><?php echo $version; ?></option>
                                 <?php } ?>
                             </select>
@@ -102,8 +100,8 @@ foreach ($content_url as $key => $url) {
                     <tr>
                         <th scope="row"><label for="latest_version">포트</label></th>
                         <td>
-                        <?php if (!empty($connect_array)) { ?>
-                            <?php foreach ($connect_array as $key => $connect) { ?>
+                        <?php if (!empty($connectList)) { ?>
+                            <?php foreach ($connectList as $key => $connect) { ?>
                                 <label for="<?php echo $connect; ?>"><?php echo $connect; ?></label>
                                 <input id="<?php echo $connect; ?>" type="radio" name="port" value="<?php echo $connect; ?>" <?php echo $key == 0 ? "checked" : "" ?>>
                             <?php } ?>
@@ -138,14 +136,14 @@ foreach ($content_url as $key => $url) {
 <script>
     var inAjax = false;
     $(function() {
-
         $(".target_version").change(function() {
+            var version = $(this).val();
             $.ajax({
                 url     : "./ajax.version_content.php",
                 type    : "POST",
                 dataType: "json",
                 data    : {
-                    'version': $(this).val(),
+                    'version': version,
                 },
                 beforeSend: function(xhr) {
                     if (inAjax == false) {
@@ -160,8 +158,8 @@ foreach ($content_url as $key => $url) {
                         alert(data.message);
                         return false;
                     } else {
-                        $(".version_title_box").html(data['title']);
-                        $(".version_content_box").html(data['item']);
+                        $(".version_title_box").html("<p>" + version + " 버전 수정</p>");
+                        $(".version_content_box").html("<p>" + data['content'] + "</p><br>");
                     }
                 },
                 error: function(request, status, error) {
@@ -198,15 +196,12 @@ foreach ($content_url as $key => $url) {
                     }
                 },
                 success: function(data) {
-                    alert(data.message);
-                    if (data.error == 0) {
-                        $(".update_btn_area").html("<button type=\"submit\" class=\"btn btn_submit\" style=\"height:35px\">지금 업데이트</button>");
-                    } else {
-                        $(".update_btn_area").html("");
-                    }
+                    alert("성공적으로 연결되었습니다.");
+                    $(".update_btn_area").html("<button type=\"submit\" class=\"btn btn_submit\" style=\"height:35px\">지금 업데이트</button>");
                 },
                 error: function(request, status, error) {
                     alert("code:" + request.status + "\n" + "message:" + request.responseText + "\n" + "error:" + error);
+                    $(".update_btn_area").html("");
                 },
                 complete: function() {
                     inAjax = false;
@@ -244,7 +239,6 @@ foreach ($content_url as $key => $url) {
                         alert(data.message);
                         return false;
                     }
-
                     f.submit();
                 },
                 error: function(request, status, error) {
@@ -261,4 +255,4 @@ foreach ($content_url as $key => $url) {
 </script>
 
 <?php
-include_once('../admin.tail.php');
+include_once '../admin.tail.php';

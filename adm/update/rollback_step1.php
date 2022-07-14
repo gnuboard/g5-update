@@ -5,55 +5,34 @@ include_once './_common.php';
 $g5['title'] = '버전 업데이트';
 include_once '../admin.head.php';
 
-$rollback_file  = isset($_POST['rollback_file']) ? $_POST['rollback_file'] : null;
-$username       = isset($_POST['username']) ? $_POST['username'] : null;
-$userpassword   = isset($_POST['password']) ? $_POST['password'] : null;
-$port           = isset($_POST['port']) ? $_POST['port'] : null;
+$rollbackFile   = isset($_POST['rollback_file']) ? clean_xss_tags($_POST['rollback_file'], 1, 1) : null;
+$username       = isset($_POST['username']) ? clean_xss_tags($_POST['username'], 1, 1) : null;
+$userPassword   = isset($_POST['password']) ? clean_xss_tags($_POST['password'], 1, 1) : null;
+$port           = isset($_POST['port']) ? clean_xss_tags($_POST['port'], 1, 1) : null;
 
 $totalSize      = $g5['update']->getTotalStorageSize();
 $freeSize       = $g5['update']->getUseableStorageSize();
 $useSize        = $g5['update']->getUseStorageSize();
 $usePercent     = $g5['update']->getUseStoragePercenty();
 
-if ($g5['update']->checkInstallAvailable() == false) {
-    die("가용용량이 부족합니다. (20MB 이상)");
-}
-if ($rollback_file == null) {
-    die("롤백할 파일이 선택되지 않았습니다.");
-}
-if ($port == null) {
-    die("포트가 입력되지 않았습니다.");
-}
-if ($username == null) {
-    die("{$port} 계정명이 입력되지 않았습니다.");
-}
-if ($userpassword == null) {
-    die("{$port} 비밀번호가 입력되지 않았습니다.");
-}
-
-$conn_result = $g5['update']->connect($_SERVER['HTTP_HOST'], $port, $username, $userpassword);
-if ($conn_result == false) {
-    die("연결에 실패했습니다.");
-}
-
-$result = $g5['update']->unzipBackupFile($rollback_file);
-if ($result == false) {
-    die("압축해제에 실패했습니다.");
-}
-
-$rollback_version = $g5['update']->setRollbackVersion($rollback_file);
-$g5['update']->setTargetVersion($rollback_version);
-$compare_list = $g5['update']->getVersionCompareList();
-if ($compare_list == null) {
-    die("비교파일 리스트가 존재하지 않습니다.");
-}
-
-$compare_check = $g5['update']->checkRollbackVersionComparison($compare_list, $rollback_file);
-if ($compare_check == false) {
-    die("파일 비교에 실패했습니다.");
-}
-
-$plist = $g5['update']->getDepthVersionCompareList($compare_list, $compare_check);
+// 포트 연결
+$g5['update']->connect($_SERVER['HTTP_HOST'], $port, $username, $userPassword);
+// 설치가능한 디스크 공간 체크
+$g5['update']->checkInstallAvailable();
+// 백업파일 압축해제
+$g5['update']->unzipBackupFile($rollbackFile);
+// 복구버전 조회
+$rollbackVersion = $g5['update']->setRollbackVersion($rollbackFile);
+// 목표버전 설정
+$g5['update']->setTargetVersion($rollbackVersion);
+// 롤백할 파일 목록 조회
+$rollbackFileList = $g5['update']->getVersionCompareList();
+// 원본파일과 현재 그누보드 파일 비교
+$checkCustomFile = $g5['update']->checkRollbackVersionComparison($rollbackFileList, $rollbackFile);
+// 롤백 파일목록 데이터 처리
+$rollbackList = $g5['update']->getDepthVersionCompareList($rollbackFileList, $checkCustomFile);
+// html 태그 추가
+$viewRollbackList = $g5['update']->changeDepthListPrinting($rollbackList);
 ?>
 
 <h2 class="h2_frm">업데이트 복원 진행</h2>
@@ -64,11 +43,11 @@ $plist = $g5['update']->getDepthVersionCompareList($compare_list, $compare_check
 </ul>
 
 <form method="POST" name="update_box" class="update_box" action="./rollback_step2.php" onsubmit="return update_submit(this);">
-    <input type="hidden" name="compare_check" value="<?php echo $compare_check['type']; ?>">
+    <input type="hidden" name="compare_check" value="<?php echo $checkCustomFile['type']; ?>">
     <input type="hidden" name="username" value="<?php echo get_text($username); ?>">
-    <input type="hidden" name="password" value="<?php echo get_text($userpassword); ?>">
+    <input type="hidden" name="password" value="<?php echo get_text($userPassword); ?>">
     <input type="hidden" name="port" value="<?php echo get_text($port); ?>">
-    <input type="hidden" name="rollback_file" value="<?php echo get_text($rollback_file); ?>">
+    <input type="hidden" name="rollback_file" value="<?php echo get_text($rollbackFile); ?>">
 
     <div class="tbl_frm01 tbl_wrap">
         <table>
@@ -81,7 +60,7 @@ $plist = $g5['update']->getDepthVersionCompareList($compare_list, $compare_check
             <tbody>
                 <tr>
                     <th scope="row">버전</th>
-                    <td><?php echo $g5['update']->now_version . " ▶ "?><span style="font-weight:bold;"><?php echo $rollback_version ?></span></td>
+                    <td><?php echo $g5['update']->now_version . " ▶ "?><span style="font-weight:bold;"><?php echo $rollbackVersion ?></span></td>
                     <th>파일 목록</th>
                 </tr>
                 <tr>
@@ -92,7 +71,7 @@ $plist = $g5['update']->getDepthVersionCompareList($compare_list, $compare_check
                             <table>
                                 <tr>
                                     <td style="line-height:2; border: none !important;">
-                                    <?php print_r($g5['update']->changeDepthListPrinting($plist)); ?>
+                                    <?php print_r($viewRollbackList); ?>
                                     </td>
                                 </tr>
                             </table>
@@ -101,7 +80,7 @@ $plist = $g5['update']->getDepthVersionCompareList($compare_list, $compare_check
                 </tr>
                 <tr>
                     <td colspan="2" style="vertical-align: top;">
-                    <?php if ($compare_check['type'] == 'Y') { ?>
+                    <?php if ($checkCustomFile['type'] == 'Y') { ?>
                         <button type="submit" class="btn btn_submit">업데이트 진행</button>
                     <?php } else { ?>
                         <p style="color:red; font-weight:bold;">롤백이 진행될 파일리스트 입니다.</p>
