@@ -186,24 +186,18 @@ switch ($action) {
                 }
 
                 // 동일옵션의 상품이 있으면 수량 더함
-                $sql2 = " select ct_id, io_type, ct_qty
+                $sql2 = " select ct_id, it_id, io_id, io_type, ct_qty
                             from {$g5['g5_shop_cart_table']}
                             where od_id = '$tmp_cart_id'
                               and it_id = '$it_id'
                               and io_id = '$io_id'
                               and ct_status = '쇼핑' ";
                 $row2 = sql_fetch($sql2);
-                if(isset($row2['ct_id']) && $row2['ct_id']) {
-                    // 재고체크
-                    $tmp_ct_qty = $row2['ct_qty'];
-                    if(!$io_id)
-                        $tmp_it_stock_qty = get_it_stock_qty($it_id);
-                    else
-                        $tmp_it_stock_qty = get_option_stock_qty($it_id, $io_id, $row2['io_type']);
-
-                    if ($tmp_ct_qty + $ct_qty > $tmp_it_stock_qty)
-                    {
-                        die(json_encode(array('error' => $io_value." 의 재고수량이 부족합니다.\n\n현재 재고수량 : " . number_format($tmp_it_stock_qty) . " 개")));
+                if(isset($row2['ct_id'])) {
+                    $row2['ct_qty'] = $row2['ct_qty'] + $ct_qty;
+                    $check_stockout = check_stockout_item($row2, $tmp_cart_id, G5_IS_WAIT_STOCK);
+                    if (!$check_stockout['result']) {
+                        die(json_encode(array('error' => $io_value." 의 재고수량이 부족합니다.\n\n현재 재고수량 : " . number_format((float)$check_stockout['it_stock']) . " 개")));
                     }
 
                     $sql3 = " update {$g5['g5_shop_cart_table']}

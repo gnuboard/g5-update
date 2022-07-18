@@ -255,12 +255,17 @@ function get_shop_item_options($it_id, $subject, $no)
             else
                 $price = '&nbsp;&nbsp; '.number_format($row['io_price']).'원';
 
-            if(!$row['io_stock_qty'])
-                $soldout = '&nbsp;&nbsp;[품절]';
-            else
+            $check_stockout = check_stockout_item($row, null, G5_IS_WAIT_STOCK);
+            if ($check_stockout['result']) {
                 $soldout = '';
+                $io_stock_qty = $check_stockout['it_stock'];
+            } else {
+                $soldout = '&nbsp;&nbsp;[품절]';
+                $io_stock_qty = 0;
+            }
 
-            $select .= '<option value="'.$row['io_id'].','.$row['io_price'].','.$row['io_stock_qty'].'">'.$row['io_id'].$price.$soldout.'</option>'.PHP_EOL;
+
+            $select .= '<option value="'.$row['io_id'].','.$row['io_price'].','.$io_stock_qty.'">'.$row['io_id'].$price.$soldout.'</option>'.PHP_EOL;
         }
         $select .= '</select>'.PHP_EOL;
 

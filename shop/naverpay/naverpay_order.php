@@ -154,17 +154,12 @@ for($i=0; $i<$count; $i++) {
         $io_id = isset($_POST['io_id'][$it_id][$k]) ? preg_replace(G5_OPTION_ID_FILTER, '', trim(stripslashes($_POST['io_id'][$it_id][$k]))) : '';
         $io_type = isset($_POST['io_type'][$it_id][$k]) ? (int) $_POST['io_type'][$it_id][$k] : 0;
         $io_value = isset($_POST['io_value'][$it_id][$k]) ? (int) $_POST['io_value'][$it_id][$k] : 0;
-
-        // 재고 구함
         $ct_qty = isset($_POST['ct_qty'][$it_id][$k]) ? (int) $_POST['ct_qty'][$it_id][$k] : 0;
-        if(!$io_id)
-            $it_stock_qty = get_it_stock_qty($it_id);
-        else
-            $it_stock_qty = get_option_stock_qty($it_id, $io_id, $io_type);
-
-        if ($ct_qty > $it_stock_qty)
-        {
-            return_error2json($io_value." 의 재고수량이 부족합니다.\\n\\n현재 재고수량 : " . number_format($it_stock_qty) . " 개");
+        // 재고 구함
+        $item = array("ct_qty" => $ct_qty, "io_id" => $io_id, "io_type" => $io_type, "io_value" => $io_value);
+        $check_stockout = check_stockout_item($item, null, false);
+        if (!$check_stockout['result']) {
+            return_error2json($io_value." 의 재고수량이 부족합니다.\\n\\n현재 재고수량 : " . number_format((float)$check_stockout['it_stock']) . " 개");
         }
     }
     //--------------------------------------------------------

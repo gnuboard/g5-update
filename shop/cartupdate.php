@@ -247,9 +247,6 @@ else if ($act == "seldelete") // 선택삭제
             if($io_id && !$opt_list[$io_type][$io_id]['use'])
                 continue;
 
-            $io_price = isset($opt_list[$io_type][$io_id]['price']) ? $opt_list[$io_type][$io_id]['price'] : 0;
-            $ct_qty = isset($_POST['ct_qty'][$it_id][$k]) ? (int) $_POST['ct_qty'][$it_id][$k] : 0;
-
             // 구매가격이 음수인지 체크
             if($io_type) {
                 if((int)$io_price < 0)
@@ -261,7 +258,7 @@ else if ($act == "seldelete") // 선택삭제
 
             // 동일옵션의 상품이 있으면 수량 더함
             $sql2 = "SELECT
-                        ct_id, io_type, ct_qty
+                        ct_id, it_id, io_id, io_type, ct_qty
                     FROM {$g5['g5_shop_cart_table']}
                     WHERE od_id = '$tmp_cart_id'
                         AND it_id = '$it_id'
@@ -269,6 +266,12 @@ else if ($act == "seldelete") // 선택삭제
                         AND ct_status = '쇼핑'";
             $row2 = sql_fetch($sql2);
             if (isset($row2['ct_id'])) {
+                $row2['ct_qty'] = $row2['ct_qty'] + $ct_qty;
+                $check_stockout = check_stockout_item($row2, $tmp_cart_id, G5_IS_WAIT_STOCK);
+                if (!$check_stockout['result']) {
+                    alert($io_value." 의 재고수량이 부족합니다.\\n\\n현재 재고수량 : " . number_format((float)$check_stockout['it_stock']) . " 개");
+                }
+
                 $sql3 = "UPDATE {$g5['g5_shop_cart_table']}
                             SET ct_qty = ct_qty + '$ct_qty'
                         WHERE ct_id = '{$row2['ct_id']}' ";

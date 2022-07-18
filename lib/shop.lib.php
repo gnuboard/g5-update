@@ -1966,20 +1966,20 @@ function is_soldout($it_id, $is_cache=false)
     $row = sql_fetch($sql);
 
     if($row['cnt']) {
-        $sql = " select io_id, io_type, io_stock_qty
+        $sql = " select it_id, io_id, io_type, io_stock_qty
                     from {$g5['g5_shop_item_option_table']}
                     where it_id = '$it_id'
                       and io_type = '0'
                       and io_use = '1' ";
         $result = sql_query($sql);
 
-        for($i=0; $row=sql_fetch_array($result); $i++) {
+        for($i = 0; $item = sql_fetch_array($result); $i++) {
             // 옵션 재고수량
-            $stock_qty = get_option_stock_qty($it_id, $row['io_id'], $row['io_type']);
+            $stock_qty = get_option_stock_qty($it_id, $item['io_id'], $item['io_type']);
             // 주문대기 수량
             $wait_qty = 0;
             if (G5_IS_WAIT_STOCK) {
-                $wait_qty = get_wait_stock($it_id, $row['io_id'], $row['io_type']);
+                $wait_qty = get_wait_stock($item);
             }
             if ($stock_qty - $wait_qty <= 0) {
                 $count++;
@@ -1990,12 +1990,13 @@ function is_soldout($it_id, $is_cache=false)
         if($i == $count)
             $soldout = true;
     } else {
+        $item['it_id'] = $it_id;
         // 상품 재고수량
         $stock_qty = get_it_stock_qty($it_id);
         // 주문대기 수량
         $wait_qty = 0;
         if (G5_IS_WAIT_STOCK) {
-            $wait_qty = get_wait_stock($it_id);
+            $wait_qty = get_wait_stock($item);
         }
         if ($stock_qty - $wait_qty <= 0) {
             $soldout = true;
@@ -2877,42 +2878,35 @@ function check_stockout_cart($od_id, $it_id = null, $is_wait_qty = true)
  */
 function check_stockout_item($item, $od_id = null, $is_wait_qty = true) {
 
-    $cart_qty = 0;
-    $wait_qty = 0;
-    $it_stock_qty = 0;
-    $total_qty = 0;
+    $cart_qty = 0;      // 장바구니 수량
+    $wait_qty = 0;      // 주문대기 수량
+    $it_stock_qty = 0;  // 상품 재고
+    $total_qty = 0;     // 최종 상품 재고
     $return = array(
         "result"    => true,
         "it_stock"  => 0
     );
 
     if (!$item['it_id']) {
+        echo "상품ID가 없습니다.";
         return false;
     }
 
-    // 장바구니 수량
     $cart_qty = isset($item['ct_qty']) ? (int)$item['ct_qty'] : 0;
-
-    // 대기수량
-    if ($is_wait_qty) {
-        $wait_qty = get_wait_stock($item['it_id'], $item['io_id'], $item['io_type'], $od_id);
-    }
-
-    // 상품 재고
-    if (!$item['io_id']) {
-        $it_stock_qty = get_it_stock_qty($item['it_id']);
-    } else {
+    if ($item['io_id']) {
         $it_stock_qty = get_option_stock_qty($item['it_id'], $item['io_id'], $item['io_type']);
+    } else {
+        $it_stock_qty = get_it_stock_qty($item['it_id']);
     }
-    
+    $wait_qty = $is_wait_qty ? get_wait_stock($item, $od_id) : 0;
     $total_qty = $it_stock_qty - $wait_qty;
     
-    // 장바구니 상품 재고체크
+    // 장바구니 주문상품
     if ($cart_qty > 0) {
         if ($cart_qty > $total_qty) {
             $return['result'] = false;
         }
-    // 상품 재고체크
+    // 일반상품
     } else {
         if (1 > $total_qty) {
             $return['result'] = false;
@@ -2926,27 +2920,30 @@ function check_stockout_item($item, $od_id = null, $is_wait_qty = true) {
 /**
  * 주문 대기 중인 재고수량
  * 
- * @param int $it_id 상품번호
- * @param string $io_id 상품 옵션 이름
- * @param int $io_type 상품 옵션 타입 (0 : 선택옵션, 1 : 추가옵션)
+ * @param array $item 상품정보
  * @param int $od_id 주문번호
+ * @return int
  */
-function get_wait_stock($it_id, $io_id = null, $io_type = null, $od_id = null)
+function get_wait_stock($item, $od_id = null)
 {
     global $g5;
+
+    if (empty($item['it_id'])) {
+        return 0;
+    }
     
     $sql = "SELECT
                 SUM(ct_qty) AS cnt
             FROM {$g5['g5_shop_cart_table']}
-            WHERE it_id = '{$it_id}'
+            WHERE it_id = '{$item['it_id']}'
                 AND ct_status = '쇼핑'
                 AND ct_select = '1'
                 AND ct_stock_use = 0";
-    if (isset($io_id)) {
-        $sql .= " AND io_id = '{$io_id}'";
+    if (isset($item['io_id'])) {
+        $sql .= " AND io_id = '{$item['io_id']}'";
     }
-    if (isset($io_type)) {
-        $sql .= " AND io_type = '{$io_type}'";
+    if (isset($item['io_type'])) {
+        $sql .= " AND io_type = '{$item['io_type']}'";
     }
     if (isset($od_id)) {
         $sql .= " AND od_id <> '{$od_id}'";
