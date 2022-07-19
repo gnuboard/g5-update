@@ -2798,18 +2798,22 @@ function is_coupon_downloaded($mb_id, $cz_id)
  * @param int $od_id 주문번호
  * @return bool
  */
-function delete_coupon_log($od_id)
+function delete_coupon_log($od_id = null)
 {
     global $g5;
     
-    if ($od_id == '') {
+    if ($od_id == null) {
         return false;
     }
     
     $sql = "SELECT 
-                cp_id
-            FROM {$g5['g5_shop_coupon_log_table']}
-            WHERE od_id = '{$od_id}'";
+                cp_log.cp_id,
+                cp_log.cp_price,
+                cp.cp_subject
+            FROM {$g5['g5_shop_coupon_log_table']} AS cp_log,
+                 {$g5['g5_shop_coupon_table']} AS cp
+            WHERE cp_log.cp_id = cp.cp_id
+                AND cp_log.od_id = '{$od_id}'";
     $cp_result = sql_query($sql);
     if (sql_num_rows($cp_result) <= 0) {
         return false;
@@ -2818,7 +2822,7 @@ function delete_coupon_log($od_id)
     // 반환쿠폰 정보 기록
     $cp_history = G5_TIME_YMDHIS . " 사용쿠폰 반환\n";
     for ($i = 0; $row = sql_fetch_array($cp_result); $i++) {
-        $cp_history .= "{$row['cp_id']}\n";
+        $cp_history .= "{$row['cp_id']} - {$row['cp_subject']} (" . number_format((int)$row['cp_price']) . "원)\n";
     }
     
     $sql = "UPDATE {$g5['g5_shop_order_table']} 
@@ -2827,7 +2831,7 @@ function delete_coupon_log($od_id)
     sql_query($sql);
     
     // 쿠폰 사용기록 삭제
-    sql_query("DELETE FROM {$g5['g5_shop_coupon_log_table']} WHERE od_id = '$od_id' ");
+    sql_query("DELETE FROM {$g5['g5_shop_coupon_log_table']} WHERE od_id = '{$od_id}' ");
 
     return true;
 }
