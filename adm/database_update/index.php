@@ -7,8 +7,6 @@ include_once '../admin.head.php';
 
 $migration = new G5Migration();
 
-echo G5_DB_ENGINE;
-
 ?>
 <h2 class="h2_frm">DB 업그레이드 테스트 페이지</h2>
 
