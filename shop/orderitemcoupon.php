@@ -28,7 +28,7 @@ $datetime = G5_TIME_YMD;
 $sql = "SELECT 
 			cp.*
 		FROM {$g5['g5_shop_coupon_table']} AS cp
-		LEFT JOIN g5_shop_coupon_log AS cp_log ON cp.cp_id = cp_log.cp_id AND cp_log.mb_id = '{$member['mb_id']}'
+		LEFT JOIN {$g5['g5_shop_coupon_log_table']} AS cp_log ON cp.cp_id = cp_log.cp_id AND cp_log.mb_id = '{$member['mb_id']}'
 		WHERE cp.mb_id IN ('{$member['mb_id']}', '전체회원')
 			AND '{$datetime}' BETWEEN cp_start AND cp_end 
 			AND cp_minimum <= '{$item_price}'
