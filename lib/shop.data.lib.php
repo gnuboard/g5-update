@@ -255,7 +255,7 @@ function get_shop_item_options($it_id, $subject, $no)
             else
                 $price = '&nbsp;&nbsp; '.number_format($row['io_price']).'원';
 
-            $check_stockout = check_stockout_item($row, null, G5_IS_WAIT_STOCK);
+            $check_stockout = check_stockout_item($row);
             if ($check_stockout['result']) {
                 $soldout = '';
                 $io_stock_qty = $check_stockout['it_stock'];

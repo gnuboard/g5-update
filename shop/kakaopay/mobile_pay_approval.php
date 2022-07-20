@@ -47,7 +47,7 @@ if(isset($data['pp_id']) && $data['pp_id']) {
         alert('세션을 잃거나 다른 브라우저에서 데이터가 변경된 경우입니다. 장바구니 상태를 확인후에 다시 시도해 주세요.', G5_SHOP_URL.'/cart.php');
 
     // 장바구니 재고 확인
-    $check_stockout = check_stockout_cart($tmp_cart_id, null, false);
+    $check_stockout = check_stockout_cart($tmp_cart_id);
     if (!$check_stockout['result'])  {
         $alert_message = $check_stockout['message'];
         $return_url = G5_SHOP_URL . "/cart.php";

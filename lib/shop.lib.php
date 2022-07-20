@@ -1041,7 +1041,7 @@ function get_item_options($it_id, $subject, $is_div='', $is_first_option_title='
             else
                 $price = '&nbsp;&nbsp; '.number_format($row['io_price']).'원';
 
-            $check_stockout = check_stockout_item($row, null, G5_IS_WAIT_STOCK);
+            $check_stockout = check_stockout_item($row);
             if ($check_stockout['result']) {
                 $soldout = '';
                 $io_stock_qty = $check_stockout['it_stock'];
@@ -1101,7 +1101,7 @@ function get_item_supply($it_id, $subject, $is_div='', $is_first_option_title=''
             else
                 $price = '&nbsp;&nbsp; '.number_format($row['io_price']).'원';
 
-            $check_stockout = check_stockout_item($row, null, G5_IS_WAIT_STOCK);
+            $check_stockout = check_stockout_item($row);
             if ($check_stockout['result']) {
                 $soldout = '';
                 $io_stock_qty = $check_stockout['it_stock'];
@@ -1976,12 +1976,7 @@ function is_soldout($it_id, $is_cache=false)
         for($i = 0; $item = sql_fetch_array($result); $i++) {
             // 옵션 재고수량
             $stock_qty = get_option_stock_qty($it_id, $item['io_id'], $item['io_type']);
-            // 주문대기 수량
-            $wait_qty = 0;
-            if (G5_IS_WAIT_STOCK) {
-                $wait_qty = get_wait_stock($item);
-            }
-            if ($stock_qty - $wait_qty <= 0) {
+            if ($stock_qty <= 0) {
                 $count++;
             }
         }
@@ -1993,12 +1988,7 @@ function is_soldout($it_id, $is_cache=false)
         $item['it_id'] = $it_id;
         // 상품 재고수량
         $stock_qty = get_it_stock_qty($it_id);
-        // 주문대기 수량
-        $wait_qty = 0;
-        if (G5_IS_WAIT_STOCK) {
-            $wait_qty = get_wait_stock($item);
-        }
-        if ($stock_qty - $wait_qty <= 0) {
+        if ($stock_qty <= 0) {
             $soldout = true;
         }
     }
@@ -2601,39 +2591,27 @@ function before_check_cart_price($s_cart_id, $is_ct_select_condition=false, $is_
 // 장바구니 상품삭제
 function cart_item_clean()
 {
-    global $g5, $default;
+    global $g5;
 
-    // 장바구니 보관일
-    $keep_term = $default['de_cart_keep_term'];
-    if(!$keep_term)
-        $keep_term = 15; // 기본값 15일
+    $keep_day = isset($default['de_cart_keep_term']) ? (int)$default['de_cart_keep_term'] : 15;
 
-    // ct_select_time이 기준시간 이상 경과된 경우 변경
-    if(defined('G5_CART_STOCK_LIMIT'))
-        $cart_stock_limit = G5_CART_STOCK_LIMIT;
-    else
-        $cart_stock_limit = 3;
+    $limit_time = get_select_limit_time();
 
-    $stocktime = 0;
-    if($cart_stock_limit > 0) {
-        if($cart_stock_limit > $keep_term * 24)
-            $cart_stock_limit = $keep_term * 24;
-
-        $stocktime = G5_SERVER_TIME - (3600 * $cart_stock_limit);
-        $sql = " update {$g5['g5_shop_cart_table']}
-                    set ct_select = '0'
-                    where ct_select = '1'
-                      and ct_status = '쇼핑'
-                      and UNIX_TIMESTAMP(ct_select_time) < '$stocktime' ";
+    if ($limit_time > 0) {
+        $sql = "UPDATE {$g5['g5_shop_cart_table']}
+                SET ct_select = '0'
+                WHERE ct_select = '1'
+                    AND ct_status = '쇼핑'
+                    AND UNIX_TIMESTAMP() > (UNIX_TIMESTAMP(ct_select_time) + " . $limit_time . ")";
         sql_query($sql);
     }
 
     // 설정 시간이상 경과된 상품 삭제
-    $statustime = G5_SERVER_TIME - (86400 * $keep_term);
+    $keep_time = 86400 * $keep_day;
 
-    $sql = " delete from {$g5['g5_shop_cart_table']}
-                where ct_status = '쇼핑'
-                  and UNIX_TIMESTAMP(ct_time) < '$statustime' ";
+    $sql = "DELETE FROM {$g5['g5_shop_cart_table']}
+            WHERE ct_status = '쇼핑'
+                AND UNIX_TIMESTAMP() > UNIX_TIMESTAMP(ct_time) + " . $keep_time;
     sql_query($sql);
 }
 
@@ -2823,7 +2801,7 @@ function is_coupon_downloaded($mb_id, $cz_id)
  * @param bool $is_wait_qty 대기수량 포함여부
  * @return array<bool, string>
  */
-function check_stockout_cart($od_id, $it_id = null, $is_wait_qty = true)
+function check_stockout_cart($od_id, $it_id = null, $is_wait_qty = false)
 {
     global $g5;
 
@@ -2872,11 +2850,11 @@ function check_stockout_cart($od_id, $it_id = null, $is_wait_qty = true)
  * 상품재고 체크
  * 
  * @param array<mix> $item   상품정보
- * @param bool $is_wait_qty 대기수량 포함여부
  * @param int $od_id  주문번호
+ * @param bool $is_wait_qty 대기수량 포함여부
  * @return bool|array<mix>
  */
-function check_stockout_item($item, $od_id = null, $is_wait_qty = true) {
+function check_stockout_item($item, $od_id = null, $is_wait_qty = false) {
 
     $cart_qty = 0;      // 장바구니 수량
     $wait_qty = 0;      // 주문대기 수량
@@ -2903,12 +2881,12 @@ function check_stockout_item($item, $od_id = null, $is_wait_qty = true) {
     
     // 장바구니 주문상품
     if ($cart_qty > 0) {
-        if ($cart_qty > $total_qty) {
+        if ($total_qty < $cart_qty) {
             $return['result'] = false;
         }
     // 일반상품
     } else {
-        if (1 > $total_qty) {
+        if ($total_qty < 1) {
             $return['result'] = false;
         }
     }
@@ -2918,7 +2896,7 @@ function check_stockout_item($item, $od_id = null, $is_wait_qty = true) {
 }
 
 /**
- * 주문 대기 중인 재고수량
+ * 주문서 작성단계인 재고 조회
  * 
  * @param array $item 상품정보
  * @param int $od_id 주문번호
@@ -2951,6 +2929,66 @@ function get_wait_stock($item, $od_id = null)
     $wait = sql_fetch($sql);
 
     return (int)$wait['cnt'];
+}
+
+/**
+ * 주문 폼 상품의 시간이 기준초과되었는지 확인
+ * @param int $cart_id  주문번호
+ * @return bool
+ */
+function is_select_time_over($cart_id)
+{
+    global $g5;
+
+    $is_over = false;
+
+    $limit_time = get_select_limit_time();
+
+    if ($limit_time > 0) {
+        $sql = "SELECT EXISTS (
+                    SELECT
+                        1
+                    FROM {$g5['g5_shop_cart_table']}
+                    WHERE od_id = '$cart_id'
+                        AND ct_status = '쇼핑'
+                        AND ct_select = '1'
+                        AND (UNIX_TIMESTAMP(ct_select_time) + " . $limit_time . ") < UNIX_TIMESTAMP()
+                ) AS time_over";
+        $row = sql_fetch($sql);
+    
+        if ($row['time_over'] == "1") {
+            $is_over = true;
+        }
+    }
+
+    return $is_over;
+}
+
+/**
+ * 주문폼의 상품이 재고 차감에 포함되는 기준 시간 구하기
+ * @return int UNIX_TIMESTAMP
+ */
+function get_select_limit_time($unit = "second")
+{
+    global $default;
+
+    $select_limit_time = 0;
+
+    $keep_day = isset($default['de_cart_keep_term']) ? (int)$default['de_cart_keep_term'] : 15;
+    $limit_minute = defined('G5_CART_STOCK_LIMIT') ? G5_CART_STOCK_LIMIT : 10;
+
+    if ($limit_minute > 0) {
+        if ($limit_minute > $keep_day * 24 * 60) {
+            $limit_minute = $keep_day * 24 * 60;
+        }
+        if ($unit == "minute") {
+            $select_limit_time = $limit_minute;
+        } else {
+            $select_limit_time = 60 * $limit_minute;
+        }
+    }
+
+    return $select_limit_time;
 }
 //==============================================================================
 // 쇼핑몰 라이브러리 모음 끝

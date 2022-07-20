@@ -73,7 +73,7 @@ $od_hope_date = isset($_POST['od_hope_date']) ? clean_xss_tags($_POST['od_hope_d
 $ad_default = isset($_POST['ad_default']) ? (int) $_POST['ad_default'] : 0;
 
 // 장바구니 재고 확인
-$check_stockout = check_stockout_cart($tmp_cart_id, null, false);
+$check_stockout = check_stockout_cart($tmp_cart_id);
 if (!$check_stockout['result'])  {
     $alert_message = $check_stockout['message'];
     $return_url = "";
@@ -103,6 +103,12 @@ $sql = " select SUM(IF(io_type = 1, (io_price * ct_qty), ((ct_price + io_price) 
               COUNT(distinct it_id) as cart_count
             from {$g5['g5_shop_cart_table']} where od_id = '$tmp_cart_id' and ct_select = '1' ";
 $row = sql_fetch($sql);
+
+// ct_select 1 => 0 오류메시지 추가
+if ($row['cart_count'] == 0) {
+    alert("주문 요청 때까지 " . get_select_limit_time("minute") . "분 이상 경과되어 주문 상품이 초기화 됐습니다.\\n\\n장바구니에서 주문하실 상품을 다시 확인해 주십시오.", G5_SHOP_URL.'/cart.php');
+}
+
 $tot_ct_price = $row['od_price'];
 $cart_count = $row['cart_count'];
 $tot_od_price = $tot_ct_price;

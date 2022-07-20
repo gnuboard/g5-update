@@ -65,7 +65,8 @@ define('G5_SOLDOUT_CHECK', true);
 
 // 주문폼의 상품이 재고 차감에 포함되는 기준 시간설정
 // 0 이면 재고 차감에 계속 포함됨
-define('G5_CART_STOCK_LIMIT', 3);
+// 22.07.20 '시간' => '분'으로 단위 변경
+define('G5_CART_STOCK_LIMIT', 10);
 
 // 상품 재고체크 진행 시, 주문대기 상품 재고 포함 여부 선택
 define('G5_IS_WAIT_STOCK', true);

@@ -157,7 +157,7 @@ for($i=0; $i<$count; $i++) {
         $ct_qty = isset($_POST['ct_qty'][$it_id][$k]) ? (int) $_POST['ct_qty'][$it_id][$k] : 0;
         // 재고 구함
         $item = array("ct_qty" => $ct_qty, "io_id" => $io_id, "io_type" => $io_type, "io_value" => $io_value);
-        $check_stockout = check_stockout_item($item, null, false);
+        $check_stockout = check_stockout_item($item);
         if (!$check_stockout['result']) {
             return_error2json($io_value." 의 재고수량이 부족합니다.\\n\\n현재 재고수량 : " . number_format((float)$check_stockout['it_stock']) . " 개");
         }
