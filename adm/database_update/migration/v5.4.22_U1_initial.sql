@@ -1,1 +1,0 @@
-INSERT INTO g5_migrations SET mi_version = "v5.4.22", mi_sort = 1, mi_script = "v5.4.22_U1_initial.sql", mi_execution_date = NOW();
