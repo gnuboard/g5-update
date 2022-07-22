@@ -1,19 +1,12 @@
 <?php
 
-class G5MigrationSetup {
+class G5MigrationSetup extends G5Migration
+{
+    private const CREATE_TABLE_PATH  = parent::MIGRATION_PATH . "/core/create_migration_table.sql";
 
-    public $mysqli = null;
-    public const CREATE_TABLE_PATH  = G5Migration::MIGRATION_PATH . "/core/create_migration_table.sql";
-
-    public function __construct($mysqli)
+    public function __construct()
     {
-        try {
-            $this->mysqli = $mysqli;
-            
-        } catch (Exception $e) {
-            echo $e->getMessage();
-            exit;
-        }
+
     }
 
     /**
@@ -22,8 +15,8 @@ class G5MigrationSetup {
      */
     public function checkExistMigrationTable()
     {
-        $table = G5Migration::MIGRATION_TABLE;
-        $statement = $this->mysqli->prepare("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?");
+        $table = parent::MIGRATION_TABLE;
+        $statement = parent::$mysqli->prepare("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?");
         $statement->bind_param("s", $table);
         $statement->execute();
         $statement->store_result();
@@ -32,7 +25,6 @@ class G5MigrationSetup {
         } else {
             return false;
         }
-        $statement->close();
     }
 
     /**
@@ -49,19 +41,20 @@ class G5MigrationSetup {
                 throw new Exception("스크립트 파일을 읽을 수 없습니다.\n경로 : " . self::CREATE_TABLE_PATH);
             }
         
-            $createQuery = G5Migration::setQueryFromScript($createFile);
+            $createQuery = parent::setQueryFromScript($createFile);
 
-            $result = $this->mysqli->multi_query($createQuery);
-            while(mysqli_more_results($this->mysqli)) {
-                mysqli_next_result($this->mysqli);
+            $result = parent::$mysqli->multi_query($createQuery);
+            while(mysqli_more_results(parent::$mysqli)) {
+                mysqli_next_result(parent::$mysqli);
             }
 
             if (!$result) {
-                throw new Exception("query 실행이 실패했습니다.\n[" . $this->mysqli->errno . "] " . $this->mysqli->error);
+                throw new Exception("테이블 생성에 실패했습니다.\n[" . parent::$mysqli->errno . "] " . parent::$mysqli->error);
             }
 
         } catch (Exception $e) {
             echo $e->getMessage();
+            exit;
         }
     }
 }

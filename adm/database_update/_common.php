@@ -4,3 +4,4 @@ include_once '../../common.php';
 include_once G5_ADMIN_PATH . '/admin.lib.php';
 include_once './database.update.lib.php';
 include_once './setup.lib.php';
+include_once './version.lib.php';

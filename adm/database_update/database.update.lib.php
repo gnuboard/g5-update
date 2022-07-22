@@ -7,14 +7,15 @@ if (!defined('_GNUBOARD_')) {
  * - 파일 명명 규칙 : {버전명}__{설명}.sql
  * 
  * @todo
- * 1. 마이그레이션 테이블 생성 => [완료]
+ * 1. 마이그레이션 기본설정
+ *  1) 테이블 생성 (Class G5MigrationSetup)
  *      - 테이블 존재여부 체크
  *      - 테이블 생성
  * 
  * 2. 마이그레이션 파일 실행
  *      - G5_DB_AUTO_UPDATE 체크 (true 일 경우에만 실행) 
  *      - DB 체크 및 업데이트 진행 여부 결정
- *      - 버전목록 조회 
+ *      - 버전목록 조회 (Class G5MigrationVersion)
  *      - 마이그레이션 파일 리스트 조회
  *      - 파일명 => 유효 데이터 변환
  *      - 파일 리스트 정렬
@@ -28,38 +29,31 @@ if (!defined('_GNUBOARD_')) {
  * 2. 트랜잭션
  * 3. 보안관련 체크필요
  * 4. 예외처리 추가
- * 5. 버전목록 API 요청 => 파일로 저장해서 조회하는방법
  */
 class G5Migration
 {
-    public $mysqli;
+    protected static $mysqli;
     
-    public $versionList         = array();
-    public $versionListReverse  = array();
-    public $latestVersion       = null;
-
     const AUTO_UPDATE               = true;
-    public const CURRENT_VERSION    = "v5.5.1";//G5_GNUBOARD_VER;
+    public const CURRENT_VERSION    = "v" . G5_GNUBOARD_VER;
     public const MIGRATION_TABLE    = G5_TABLE_PREFIX . "migrations";
     public const MIGRATION_PATH     = G5_ADMIN_PATH . "/database_update";
     public const SCRIPT_PATH        = self::MIGRATION_PATH . "/migration";
 
-    // token값이 없는 경우, 1시간에 60번의 데이터조회가 가능함
-    private $token = "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";
-    
     public function __construct()
     {
         try {
             echo "현재 그누보드 버전 : " . self::CURRENT_VERSION . "<br><br>";
-
+            
             // mysqli connect
-            $this->mysqli   = new mysqli(G5_MYSQL_HOST, G5_MYSQL_USER, G5_MYSQL_PASSWORD, G5_MYSQL_DB);
-            if ($this->mysqli->connect_error) {
-                throw new Exception('데이터베이스 연결에 실패했습니다. Error Message : ' . $this->mysqli->connect_error);
+            self::$mysqli = new mysqli(G5_MYSQL_HOST, G5_MYSQL_USER, G5_MYSQL_PASSWORD, G5_MYSQL_DB);
+            if (self::$mysqli->connect_error) {
+                throw new Exception('데이터베이스 연결에 실패했습니다. Error Message : ' . self::$mysqli->connect_error);
             }
+            
             // create migration table
             $this->initialSetup();
-            
+
             if (self::AUTO_UPDATE) {
                 $this->update();
             }
@@ -70,11 +64,10 @@ class G5Migration
 
     /**
      * migration 초기설정
-     * - migration Table 생성
      */
-    protected function initialSetup()
+    public function initialSetup()
     {
-        $setup = new G5MigrationSetup($this->mysqli);
+        $setup = new G5MigrationSetup();
         if (!$setup->checkExistMigrationTable()) {
             $setup->createMigrationTable();
         }
@@ -103,14 +96,14 @@ class G5Migration
 
             $query = $this->setQueryFromScript($scriptFlieContent);
 
-            $result = $this->mysqli->multi_query($query);
+            $result = self::$mysqli->multi_query($query);
 
-            while(mysqli_more_results($this->mysqli)) {
-                mysqli_next_result($this->mysqli);
+            while(mysqli_more_results(self::$mysqli)) {
+                mysqli_next_result(self::$mysqli);
             }
 
             if (!$result) {
-                throw new Exception("query 실행이 실패했습니다.\n[" . $this->mysqli->errno . "] " . $this->mysqli->error);
+                throw new Exception("query 실행이 실패했습니다.\n[" . self::$mysqli->errno . "] " . self::$mysqli->error);
             }
 
             return array("result" => "success", "message" => "success");
@@ -136,75 +129,6 @@ class G5Migration
 
         return $query;
     }
-
-    /**
-     * 버전목록 조회
-     * 
-     * @breif 버전 리스트 구성
-     * 1. upgrade : 낮은버전 -> 높은버전으로 진행해야 Table 및 Column이 정상적인 흐름으로 변경이 됨.
-     * 2. downgrade : upgrade의 역순으로 진행.
-     * 
-     * @todo 추후 update.lib.php가 정식버전에 포함된다면 통합
-     * @todo 항상 api로 버전을 불러오지 않아도 될거같음... => 버전목록이 추가가 될 뿐 변하지 않으므로 => 파일로 저장해서 불러오기, 없으면 api 조회
-     */
-    public function getVersionList()
-    {
-        $result = $this->getReleasesListFromGithubApi();
-        
-        if ($result == false) {
-            return false;
-        }
-        foreach ($result as $key => $var) {
-            if (!isset($var->tag_name)) {
-                continue;
-            }
-
-            $this->versionList[] = $var->tag_name;
-        }
-        if (isset($this->versionList[0])) {
-            $this->latestVersion = $this->versionList[0];
-        }
-        // 내림차순
-        $this->versionListReverse = array_reverse($this->versionList);
-    }
-
-    /**
-     * github api
-     * @todo 추후 update.lib.php가 정식버전에 포함된다면 getApiCurlResult로 통합.
-     */
-    public function getReleasesListFromGithubApi()
-    {
-        // query_paramter : per_page (defalut = 30)
-        $url    = "https://api.github.com/repos/gnuboard/gnuboard5/releases?per_page=100";
-        $auth   = ($this->token != null) ? "Authorization: token " . $this->token : "";
-
-        $curl = curl_init();
-        curl_setopt_array(
-            $curl,
-            array(
-                CURLOPT_URL => $url,
-                CURLOPT_HEADER => 0,
-                CURLOPT_CUSTOMREQUEST => "GET",
-                CURLOPT_USERAGENT => 'gnuboard',
-                CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_SSL_VERIFYHOST => false,
-                CURLOPT_TIMEOUT => 3600,
-                CURLOPT_AUTOREFERER => true,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_FOLLOWLOCATION => 1,
-                CURLOPT_FAILONERROR => true,
-                CURLOPT_HTTPHEADER => array(
-                    $auth
-                ),
-            )
-        );
-        $response = curl_exec($curl);
-        
-        if (curl_errno($curl)) {
-            return false;
-        }
-        return json_decode((string)$response);
-    }
     
     /**
      * 업데이트 실행
@@ -213,23 +137,21 @@ class G5Migration
     {
         // 실행 전 migration 테이블 체크 후 실행여부 결정
         if ($this->checkMigrationTable()) {
-            $excuteList = array(); // 실행 스크립트 배열
-            // 버전목록 초기화
-            $this->getVersionList();
-            // 업데이트 진행 버전목록 조회
-            $versionList = $this->getExecuteVersionList();
+            // 실행 스크립트 배열
+            $excuteList = array(); 
+            // 버전 실행목록
+            $migrationVersion = new G5MigrationVersion();
+            $versionList = $migrationVersion->getExecuteVersionList();
             // 마이그레이션 파일 리스트 조회
             $scriptList = $this->getMigrationScriptList();
-            
             // 실행할 파일목록 필터링
             foreach ($scriptList as $script) {
-                $migrationInfo = $this->getMigrationInfoByScriptFileName($script);
+                $migrationInfo = $this->getMigrationInfoByScriptfileName($script);
                 if (in_array($migrationInfo['version'], $versionList)) {
                     $excuteList[] = $migrationInfo;
                 }
             }
             usort($excuteList, array("self", "sortByVersion"));
-            
             // 스크립트 실행
             $beforeVersion = "";
             $sort = 1;
@@ -240,7 +162,7 @@ class G5Migration
                     $beforeVersion = $script['version'];
                     $sort = 1;
                 }
-                $result = $this->executeSqlScriptFile(self::SCRIPT_PATH . "/" . $script['filename']);
+                $result = $this->executeSqlScriptFile(self::SCRIPT_PATH . "/" . $script['fileName']);
                 $result['sort'] = $sort;
 
                 $this->insertMigrationLog($script, $result);
@@ -257,12 +179,12 @@ class G5Migration
                     g5_migrations 
                 SET 
                     mi_version = ?,
-                    mi_sort = ?,
                     mi_script = ?,
                     mi_result = ?,
+                    mi_sort = ?,
                     mi_execution_date = NOW()";
-        $insertLog = $this->mysqli->prepare($sql);
-        $insertLog->bind_param("ssss", $script['version'], $result['sort'], $script['filename'], $result['result']);
+        $insertLog = self::$mysqli->prepare($sql);
+        $insertLog->bind_param("ssss", $script['version'], $script['fileName'], $result['result'], $result['sort']);
         $insertLog->execute();
     }
 
@@ -305,7 +227,7 @@ class G5Migration
                     if ($fileName == '.' || $fileName == '..') {
                         continue;
                     }
-                    if (preg_match('/.sql/i', $fileName)) {
+                    if ($this->isMigrationFile($fileName)) {
                         $scriptList[] = $fileName;
                     }
                 }
@@ -316,42 +238,31 @@ class G5Migration
     }
 
     /**
-     * 실행할 버전 목록 조회
+     * 파일명 => 마이그레이션 정보 추출
      */
-    public function getExecuteVersionList()
+    public function getMigrationInfoByScriptfileName($fileName = null)
     {
-        $versionList = array();
-
-        if (!is_array($this->versionListReverse)) {
-            throw new Exception("전체 버전목록이 없습니다");
+        if (empty($fileName)) {
+            throw new Exception("not exist fileName");
         }
 
-        foreach ($this->versionListReverse as $version) {
-            if (version_compare($version, self::CURRENT_VERSION) <= 0) {
-                $versionList[] = $version;
-            }
+        if ($this->isMigrationFile($fileName)) {
+            list($version, $summary) = explode("__", str_replace('.sql', '', $fileName));
+
+            return array("fileName" => $fileName, "version" => $version, "summary" => $summary);
+            
+        } else {
+            throw new Exception("유효한 파일 형식이 아닙니다.");
         }
-        return $versionList;
     }
 
     /**
-     * 파일명 => 마이그레이션 정보 추출
+     * 마이그레이션 파일인지 체크
+     * @param string $fileName
+     * @return int|false
      */
-    public function getMigrationInfoByScriptFileName($filename = null)
+    public function isMigrationFile($fileName)
     {
-        if (empty($filename)) {
-            throw new Exception("not exist Filename");
-        }
-        
-        $fileInfo = preg_split('/__/', str_replace(".sql", "", $filename));
-
-        if (empty($fileInfo[0]) || empty($fileInfo[1])) {
-            throw new Exception("유효한 파일명 형식이 아닙니다.");
-        }
-        
-        return array("filename" => $filename, "version" => $fileInfo[0], "summary" => $fileInfo[1]);
+        return preg_match('/^v[a-z0-9-\.]+_{2}[\w]+\.sql$/i', $fileName);
     }
-
-    /***********************************************개발 예정*******************************************************/
-    
 }
