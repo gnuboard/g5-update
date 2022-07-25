@@ -1892,6 +1892,11 @@ class S3Service
             //ie 11 지원
             for (let i = 0; i < imgs.length; i++) {
                 if(imgs[i].getAttribute('src').includes('/data/editor/')) {
+                    //- onerror 이벤트 chrome fix
+                    let tempSrc = imgs[i].getAttribute('src');
+                    imgs[i].setAttribute('src', null);
+                    imgs[i].setAttribute('src', tempSrc);
+                    //-
                     imgs[i].dataset['fallback'] = 0;
                     imgs[i].onerror = function() {  
                         let fallbackIndex = this.dataset['fallback'];
