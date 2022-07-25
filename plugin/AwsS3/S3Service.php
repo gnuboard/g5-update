@@ -11,14 +11,10 @@ if (file_exists(G5_DATA_PATH . '/' . G5_S3CONFIG_FILE)) {
 }
 
 require_once(G5_LIB_PATH . '/AwsSdk/aws-autoloader.php');
-require_once(G5_LIB_PATH . '/Hook/hook.class.php');
 
-use Aws\Command;
 use Aws\Credentials\Credentials;
 use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
-use Aws\S3\Transfer;
-use Hook;
 
 class S3Service
 {
@@ -62,7 +58,7 @@ class S3Service
      * Class instance.
      * 싱글톤
      */
-    public static function get_instance()
+    public static function getInstance()
     {
         static $instance = null;
         if (null === $instance) {
@@ -82,7 +78,6 @@ class S3Service
 
         //s3 사용시에만 훅스 등록
         if ($this->is_only_use_s3 && $this->region && $this->bucket_name && $this->access_key && $this->secret_key) {
-            Hook::setSingletonName('get_instance');
             $this->add_hooks();
         }
         //칼럼명 필터링
@@ -120,7 +115,7 @@ class S3Service
             $sql = "select * from $table_name";
             $result = sql_fetch($sql, false);
             $this->acl_default_value = $result['acl_default_value'];
-            $this->is_only_use_s3 = $result['is_only_use_s3'] == '1' ? true : false;
+            $this->is_only_use_s3 = $result['is_only_use_s3'] == '1';
         }
     }
 
@@ -133,7 +128,7 @@ class S3Service
 				) ENGINE=InnoDB DEFAULT CHARSET=utf8;"
         );
         sql_query($sql, false);
-        $sql = "INSERT INTO $table_name (`acl_default_value`, `is_only_use_s3`) VALUES ('private', 0 ,0)";
+        $sql = "INSERT INTO $table_name (`acl_default_value`, `is_only_use_s3`) VALUES ('private' ,0)";
         sql_query($sql);
     }
 
@@ -430,107 +425,6 @@ class S3Service
     public function get_paginator($action, $args)
     {
         return $this->s3_client()->getPaginator($action, $args);
-    }
-
-    /**
-     * 업로드할 폴더설정, 업로더 실행
-     * @param string $sync_dir_name
-     * @return string
-     */
-    public function upload_dir($sync_dir_name)
-    {
-        $source_dir = '';
-        switch ($sync_dir_name) {
-            case 'editor':
-                $source_dir = G5_EDITOR_DIR;
-                break;
-            case 'item': //$shop_folder 폴더
-                $source_dir = 'item';
-                break;
-            case 'thumb_gnu':
-                $source_dir = 'file';
-                break;
-        }
-
-        if (empty($source_dir)) {
-            $response['message'] = 'not found';
-            return \GuzzleHttp\json_encode($response);
-        }
-        //실행후 json 출력
-        $this->upload_sync($sync_dir_name);
-    }
-
-    /**
-     * 코드나 서버의 리눅스 경로를 윈도우 경로로 변경
-     * @param $path
-     * @return array|string|string[]
-     */
-    private function change_linux_path_window_path($path)
-    {
-        if ($this->detect_os() === 'Windows') {
-            return str_replace('/', '\\', $path);
-        }
-        return $path;
-    }
-
-    private function detect_os()
-    {
-        $OS = strtoupper(PHP_OS);
-        switch (substr($OS, 0, 3)) {
-            case "WIN":
-                return "Windows";
-            case "LIN":
-                return "Linux";
-            case "DAR":
-                return "Mac";
-            default:
-                return "Unknown";
-        }
-    }
-
-    /**
-     * 호스트 서버에서 s3로 업로드 동기화
-     * DATA 폴더안의 폴더를 동기화
-     * @param string $source_dir 호스트 서버의 이동할 폴더이름
-     * @return void json 출력
-     *
-     */
-    private function upload_sync($source_dir)
-    {
-        $source_path = G5_DATA_PATH . "/$source_dir";
-        $dest = 's3://' . $this->bucket_name . '/' . G5_DATA_DIR . "/$source_dir"; //프로토콜은 s3://
-        $manager = new Transfer($this->s3_client(), $this->change_linux_path_window_path($source_path), $dest, [
-            'before' => function (Command $command) {
-                $command['ACL'] = $this->set_file_acl($command['Key']);
-            }
-        ]);
-
-
-        //비동기 프로미스 실행
-        define("CONCURRENT_PROMISS_COUNT", 3);
-        \GuzzleHttp\Promise\Each::ofLimit(
-            $promise = $manager->promise(),
-            CONCURRENT_PROMISS_COUNT, // 동시 요청 실행갯수(프로세스를 쓰므로 갯수 주의)
-            function ($response, $index) { // Callback on success
-                $result_upload['message'] = 'transfer end';
-                $result_upload['is_error'] = 'false';
-                echo \GuzzleHttp\json_encode($result_upload);
-            },
-            function ($reason, $index) { // Callback on failure
-                $result_upload['message'] = 'transfer fail';
-                $result_upload['is_error'] = 'true';
-                $result_upload['error_index'] = $index;
-                $result_upload['error_reason'] = $reason;
-                echo \GuzzleHttp\json_encode($result_upload);
-            }
-        )->wait();
-        //프로미스 거부(reject)시 처리
-        $promise->otherwise(function ($rejected) {
-            $result_upload['message'] = 'transfer fail';
-            $result_upload['error_reason'] = $rejected;
-            $result_upload['is_error'] = 'false';
-            echo \GuzzleHttp\json_encode($result_upload);
-        });
     }
 
     /**
@@ -894,30 +788,26 @@ class S3Service
             return $is_exist_file;
         }
 
-        if ($this->s3_client()) {
-            $file_key = G5_DATA_DIR . '/' . $this->shop_folder . '/' . $it['it_img' . $index];
+        $file_key = G5_DATA_DIR . '/' . $this->shop_folder . '/' . $it['it_img' . $index];
 
-            if ($this->object_exists($this->bucket_name, $file_key)) {
-                $extra_infos['img' . $index] = $this->get_object_url($this->bucket_name, $file_key);
+        if ($this->object_exists($this->bucket_name, $file_key)) {
+            $extra_infos['img' . $index] = $this->get_object_url($this->bucket_name, $file_key);
 
-                $save_str = \GuzzleHttp\json_encode($extra_infos);
+            $save_str = \GuzzleHttp\json_encode($extra_infos);
 
-                if ($it[$this->extra_item_field] !== $save_str) {
-                    // item 테이블에서 필드 extra_item_field 를 업데이트합니다.
+            if ($it[$this->extra_item_field] !== $save_str) {
+                // item 테이블에서 필드 extra_item_field 를 업데이트합니다.
 
-                    $sql = " update {$g5['g5_shop_item_table']}
-                                set {$this->extra_item_field} = '$save_str'
-                              where it_id = '{$it['it_id']}' ";
+                $sql = " update {$g5['g5_shop_item_table']}
+                            set {$this->extra_item_field} = '$save_str'
+                          where it_id = '{$it['it_id']}' ";
 
-                    sql_query($sql, false);
+                sql_query($sql, false);
 
-                    $it = get_shop_item($it['it_id'], false);
-                }
-
-                return true;
+                $it = get_shop_item($it['it_id'], false);
             }
 
-            return $is_exist_file;
+            return true;
         }
 
         return $is_exist_file;
@@ -1153,7 +1043,7 @@ class S3Service
                 return '';
             }
 
-            if ($this->is_only_use_s3 || !$before_file_exists) {
+            if (!$before_file_exists) {
                 if (!$this->s3_client()) {
                     return '';
                 }
@@ -1197,7 +1087,6 @@ class S3Service
                         if (isset($matches[1]) && $matches[1]) {
                             $thumb_path = str_replace(G5_DATA_URL, G5_DATA_PATH, $matches[1]);
                             $thumb_key = G5_DATA_DIR . str_replace(G5_DATA_URL, '', $matches[1]);
-
                             $upload_mime = $this->mime_content_type($thumb_key);
 
                             if ($this->object_exists($this->bucket_name, $thumb_key)) {
@@ -1270,7 +1159,7 @@ class S3Service
     public function shop_item_image_tag($image_tag = '', $it, $i)
     {
         $item_file = $this->shop_folder . '/' . $it['it_img' . $i];
-        if (file_exists(G5_DATA_PATH . '/' . $item_file) && !$this->is_only_use_s3) {
+        if (file_exists(G5_DATA_PATH . '/' . $item_file)) {
             return $image_tag;
         }
 
@@ -1362,38 +1251,36 @@ class S3Service
                 $ori_key = G5_DATA_DIR . '/file/' . $bo_table . '/' . $ori_filename;
                 $copy_key = G5_DATA_DIR . '/file/' . $move_bo_table . '/' . $file_name;
 
-                if ($this->s3_client()) {
-                    $result = $this->copy_object(array(
-                        'Bucket' => $this->bucket_name,
-                        'Key' => $copy_key,
-                        'CopySource' => $this->bucket_name . '/' . $ori_key,
-                        'ACL' => $this->set_file_acl($this->bucket_name . '/' . $ori_key),
-                    ));
+                $result = $this->copy_object(array(
+                    'Bucket' => $this->bucket_name,
+                    'Key' => $copy_key,
+                    'CopySource' => $this->bucket_name . '/' . $ori_key,
+                    'ACL' => $this->set_file_acl($this->bucket_name . '/' . $ori_key),
+                ));
 
-                    if (isset($result['ObjectURL']) && $result['ObjectURL']) {
-                        $files['bf_fileurl'] = $result['ObjectURL'];
+                if (isset($result['ObjectURL']) && $result['ObjectURL']) {
+                    $files['bf_fileurl'] = $result['ObjectURL'];
 
-                        if ($files['bf_thumburl'] && $thumbname = $this->get_url_filename(
-                                '',
-                                @parse_url($files['bf_thumburl'])
-                            )) {
-                            $ori_thumb_key = G5_DATA_DIR . '/file/' . $bo_table . '/' . $thumbname;
-                            $copy_thumb_key = G5_DATA_DIR . '/file/' . $move_bo_table . '/' . str_replace(
-                                    'thumb-',
-                                    'thumb-copy-' . $insert_id . '-',
-                                    $thumbname
-                                );
+                    if ($files['bf_thumburl'] && $thumbname = $this->get_url_filename(
+                            '',
+                            @parse_url($files['bf_thumburl'])
+                        )) {
+                        $ori_thumb_key = G5_DATA_DIR . '/file/' . $bo_table . '/' . $thumbname;
+                        $copy_thumb_key = G5_DATA_DIR . '/file/' . $move_bo_table . '/' . str_replace(
+                                'thumb-',
+                                'thumb-copy-' . $insert_id . '-',
+                                $thumbname
+                            );
 
-                            $result2 = $this->copy_object(array(
-                                'Bucket' => $this->bucket_name,
-                                'Key' => $copy_thumb_key,
-                                'CopySource' => $this->bucket_name . '/' . $ori_thumb_key,
-                                'ACL' => $this->set_file_acl($this->bucket_name . '/' . $ori_thumb_key),
-                            ));
+                        $result2 = $this->copy_object(array(
+                            'Bucket' => $this->bucket_name,
+                            'Key' => $copy_thumb_key,
+                            'CopySource' => $this->bucket_name . '/' . $ori_thumb_key,
+                            'ACL' => $this->set_file_acl($this->bucket_name . '/' . $ori_thumb_key),
+                        ));
 
-                            if (isset($result2['ObjectURL']) && $result2['ObjectURL']) {
-                                $files['bf_thumburl'] = $result['ObjectURL'];
-                            }
+                        if (isset($result2['ObjectURL']) && $result2['ObjectURL']) {
+                            $files['bf_thumburl'] = $result['ObjectURL'];
                         }
                     }
                 }
@@ -1417,11 +1304,8 @@ class S3Service
     {
         if ($bool === false && $fileinfo['bf_fileurl']) {
             $aws_s3_key = G5_DATA_DIR . '/file/' . $fileinfo['bo_table'] . '/' . basename($fileinfo['bf_fileurl']);
-
-            if ($this->s3_client()) {
-                if ($this->object_exists($this->bucket_name, $aws_s3_key)) {
-                    return true;
-                }
+            if ($this->object_exists($this->bucket_name, $aws_s3_key)) {
+                return true;
             }
         }
 
@@ -1805,11 +1689,8 @@ class S3Service
      */
     public function delete_all_shop_thumbnail()
     {
-        if ($this->s3_client()) {
-            $file_prefix = G5_DATA_DIR . '/' . $this->shop_folder . '/';
-
-            $this->delete_thumbnamil_by_prefix($file_prefix);
-        }
+        $file_prefix = G5_DATA_DIR . '/' . $this->shop_folder . '/';
+        $this->delete_thumbnamil_by_prefix($file_prefix);
     }
 
     /**
@@ -1819,10 +1700,8 @@ class S3Service
      */
     public function delete_shop_thumbnail_by_id($number)
     {
-        if ($this->s3_client()) {
-            $file_prefix = G5_DATA_DIR . '/' . $this->shop_folder . '/' . $number . '/';
-            $this->delete_thumbnamil_by_prefix($file_prefix);
-        }
+        $file_prefix = G5_DATA_DIR . '/' . $this->shop_folder . '/' . $number . '/';
+        $this->delete_thumbnamil_by_prefix($file_prefix);
     }
 
     /**
@@ -1974,18 +1853,16 @@ class S3Service
             return $cache[$tmp_key];
         }
 
-        if ($this->s3_client()) {
-            $aws_s3_key = G5_DATA_DIR . str_replace(G5_DATA_PATH, '', $filepath);
+        $aws_s3_key = G5_DATA_DIR . str_replace(G5_DATA_PATH, '', $filepath);
 
-            if ($this->object_exists($this->bucket_name, $aws_s3_key)) {
-                if (is_array($files)) {
-                    $cache[$tmp_key] = array(0, 0, 'is_exists' => true);
-                } else {
-                    $cache[$tmp_key] = 1;
-                }
-
-                return $cache[$tmp_key];
+        if ($this->object_exists($this->bucket_name, $aws_s3_key)) {
+            if (is_array($files)) {
+                $cache[$tmp_key] = array(0, 0, 'is_exists' => true);
+            } else {
+                $cache[$tmp_key] = 1;
             }
+
+            return $cache[$tmp_key];
         }
 
         return $files;
@@ -2048,8 +1925,8 @@ class S3Service
                     imgs[i].dataset['fallback'] = 0;
                     imgs[i].onerror = function() {  
                         let fallbackIndex = this.dataset['fallback'];
-                        hostImage = g5_url + '/data/editor/'+ this.getAttribute('src').split('/data/editor/')[1];
-                        fallbacks = [hostImage, emptyImage, '']
+                        let hostImage = g5_url + '/data/editor/'+ this.getAttribute('src').split('/data/editor/')[1];
+                        let fallbacks = [hostImage, emptyImage, '']
                         this.src = fallbacks[fallbackIndex];
                         if(fallbackIndex < fallbacks.length ){
                             this.dataset['fallback']++;
@@ -2072,29 +1949,27 @@ EOD;
     {
         if (!$file_exist_check) {
             $aws_s3_key = G5_DATA_DIR . '/file/' . $fileinfo['bo_table'] . '/' . basename($fileinfo['bf_fileurl']);
+            $result = $this->get_object(array(
+                'Bucket' => $this->bucket_name,
+                'Key' => $aws_s3_key
+            ));
 
-            if ($this->s3_client()) {
-                $result = $this->get_object(array(
-                    'Bucket' => $this->bucket_name,
-                    'Key' => $aws_s3_key
-                ));
+            $original_name = urlencode($fileinfo['bf_source']);
 
-                $original_name = urlencode($fileinfo['bf_source']);
+            header('Content-Description: File Transfer');
+            //this assumes content type is set when uploading the file.
+            header('Content-Type: ' . $result['ContentType']);
+            header('Content-Disposition: attachment; filename=' . $original_name);
+            header('Expires: 0');
+            header('Cache-Control: must-revalidate');
+            header('Pragma: public');
 
-                header('Content-Description: File Transfer');
-                //this assumes content type is set when uploading the file.
-                header('Content-Type: ' . $result['ContentType']);
-                header('Content-Disposition: attachment; filename=' . $original_name);
-                header('Expires: 0');
-                header('Cache-Control: must-revalidate');
-                header('Pragma: public');
+            //send file to browser for download.
+            echo $result['Body'];
 
-                //send file to browser for download.
-                echo $result['Body'];
-
-                exit;
-            }
+            exit;
         }
+
     }
 
     /**
@@ -2112,92 +1987,89 @@ EOD;
         );
 
         $aws_s3_key = G5_DATA_DIR . str_replace(G5_DATA_PATH, '', $filepath);
+        $upload_mime = $this->mime_content_type($filepath);
+        $thumb_result = array();
 
-        if ($this->s3_client()) {
-            $upload_mime = $this->mime_content_type($filepath);
-            $thumb_result = array();
+        // Upload data.
+        $result = $this->put_object(array(
+            'Bucket' => $this->bucket_name,
+            'Key' => $aws_s3_key,
+            'Body' => fopen($filepath, 'rb'),
+            'ACL' => $this->set_file_acl($aws_s3_key),
+            'ContentType' => $upload_mime,
+        ));
 
-            // Upload data.
-            $result = $this->put_object(array(
-                'Bucket' => $this->bucket_name,
-                'Key' => $aws_s3_key,
-                'Body' => fopen($filepath, 'rb'),
-                'ACL' => $this->set_file_acl($aws_s3_key),
-                'ContentType' => $upload_mime,
-            ));
+        // 이미지 파일이면 TODO 이미지 파일 확인
+        if ($result['ObjectURL'] && $upload_info && ($upload_mime === 'image/png' || $upload_mime === 'image/jpeg')) {
+            $size = $upload_info['image'];
 
-            // 이미지 파일이면 TODO 이미지 파일 확인
-            if ($result['ObjectURL'] && $upload_info && ($upload_mime === 'image/png' || $upload_mime === 'image/jpeg')) {
-                $size = $upload_info['image'];
+            if ($size && isset($board['bo_image_width']) && $size[0] > $board['bo_image_width']) {
+                $thumb_width = $board['bo_image_width'];
 
-                if ($size && isset($board['bo_image_width']) && $size[0] > $board['bo_image_width']) {
-                    $thumb_width = $board['bo_image_width'];
-
-                    // jpg 이면 exif 체크
-                    if ($size[2] == 2 && function_exists('exif_read_data')) {
-                        $degree = 0;
-                        $exif = @exif_read_data($upload_file);
-                        if (!empty($exif['Orientation'])) {
-                            switch ($exif['Orientation']) {
-                                case 8:
-                                    $degree = 90;
-                                    break;
-                                case 3:
-                                    $degree = 180;
-                                    break;
-                                case 6:
-                                    $degree = -90;
-                                    break;
-                            }
-
-                            // 세로사진의 경우 가로, 세로 값 바꿈
-                            if ($degree == 90 || $degree == -90) {
-                                $tmp = $size;
-                                $size[0] = $tmp[1];
-                                $size[1] = $tmp[0];
-                            }
+                // jpg 이면 exif 체크
+                if ($size[2] == 2 && function_exists('exif_read_data')) {
+                    $degree = 0;
+                    $exif = @exif_read_data($upload_file);
+                    if (!empty($exif['Orientation'])) {
+                        switch ($exif['Orientation']) {
+                            case 8:
+                                $degree = 90;
+                                break;
+                            case 3:
+                                $degree = 180;
+                                break;
+                            case 6:
+                                $degree = -90;
+                                break;
                         }
-                    }
 
-                    // 썸네일 높이
-                    $thumb_height = round(($thumb_width * $size[1]) / $size[0]);
-                    $thumb_name = basename($filepath);
-                    $thumb_path = dirname($filepath);
-
-                    if ($thumb_file = thumbnail(
-                        $thumb_name,
-                        $thumb_path,
-                        $thumb_path,
-                        $thumb_width,
-                        $thumb_height,
-                        false
-                    )) {
-                        $thumb_key = G5_DATA_DIR . str_replace(G5_DATA_PATH, '', $thumb_path . '/' . $thumb_file);
-
-                        // Upload thumbnail data.
-                        $thumb_result = $this->put_object(array(
-                            'Bucket' => $this->bucket_name,
-                            'Key' => $thumb_key,
-                            'Body' => fopen($thumb_path . '/' . $thumb_file, 'rb'),
-                            'ACL' => $this->set_file_acl($thumb_key),
-                            'ContentType' => $upload_mime,
-                        ));
-
-                        //썸네일 파일을 aws s3에 성공적으로 업로드 했다면, 호스팅 공간에서 삭제합니다.
-                        if (isset($thumb_result['ObjectURL']) && $thumb_result['ObjectURL']) {
-                            $this->file_delete($thumb_path . '/' . $thumb_file);
+                        // 세로사진의 경우 가로, 세로 값 바꿈
+                        if ($degree == 90 || $degree == -90) {
+                            $tmp = $size;
+                            $size[0] = $tmp[1];
+                            $size[1] = $tmp[0];
                         }
                     }
                 }
+
+                // 썸네일 높이
+                $thumb_height = round(($thumb_width * $size[1]) / $size[0]);
+                $thumb_name = basename($filepath);
+                $thumb_path = dirname($filepath);
+
+                if ($thumb_file = thumbnail(
+                    $thumb_name,
+                    $thumb_path,
+                    $thumb_path,
+                    $thumb_width,
+                    $thumb_height,
+                    false
+                )) {
+                    $thumb_key = G5_DATA_DIR . str_replace(G5_DATA_PATH, '', $thumb_path . '/' . $thumb_file);
+
+                    // Upload thumbnail data.
+                    $thumb_result = $this->put_object(array(
+                        'Bucket' => $this->bucket_name,
+                        'Key' => $thumb_key,
+                        'Body' => fopen($thumb_path . '/' . $thumb_file, 'rb'),
+                        'ACL' => $this->set_file_acl($thumb_key),
+                        'ContentType' => $upload_mime,
+                    ));
+
+                    //썸네일 파일을 aws s3에 성공적으로 업로드 했다면, 호스팅 공간에서 삭제합니다.
+                    if (isset($thumb_result['ObjectURL']) && $thumb_result['ObjectURL']) {
+                        $this->file_delete($thumb_path . '/' . $thumb_file);
+                    }
+                }
             }
-
-            // 파일을 aws s3에 성공적으로 업로드 했다면, 호스팅 공간에서 삭제합니다.
-            $this->file_delete($filepath);
-
-            $return_value['fileurl'] = $result['ObjectURL'];
-            $return_value['thumburl'] = isset($thumb_result['ObjectURL']) ? $thumb_result['ObjectURL'] : '';
-            $return_value['storage'] = $this->storage();
         }
+
+        // 파일을 aws s3에 성공적으로 업로드 했다면, 호스팅 공간에서 삭제합니다.
+        $this->file_delete($filepath);
+
+        $return_value['fileurl'] = $result['ObjectURL'];
+        $return_value['thumburl'] = isset($thumb_result['ObjectURL']) ? $thumb_result['ObjectURL'] : '';
+        $return_value['storage'] = $this->storage();
 
         return array_merge($upload_info, $return_value);
     }
@@ -2231,4 +2103,4 @@ EOD;
 
 }
 
-S3Service::get_instance();
+S3Service::getInstance();
