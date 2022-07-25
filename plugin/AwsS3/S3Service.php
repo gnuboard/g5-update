@@ -6,7 +6,6 @@ if (!defined('_GNUBOARD_')) {
     exit;
 } // 개별 페이지 접근 불가
 
-const S3CONFIG_FILE = 's3config.php';
 if (file_exists(G5_DATA_PATH . '/' . S3CONFIG_FILE)) {
     include_once(G5_DATA_PATH . '/' . S3CONFIG_FILE);
 }
@@ -65,6 +64,7 @@ class S3Service
         if (null === $instance) {
             $instance = new self();
         }
+
         return $instance;
     }
 
@@ -258,11 +258,16 @@ class S3Service
                     'credentials' => $credentials
                 ];
                 $s3_client = new S3Client($options);
-                $bucket_region = $s3_client->getBucketLocation([
-                    'Bucket' => $bucket_name
-                ]);
+//                $bucket_region = $s3_client->getBucketLocation([
+//                    'Bucket' => $bucket_name
+//                ]);
+//                var_dump($credentials );
 
-                if ($bucket_region['LocationConstraint'] !== $region) {
+//                if
+//                    $bucket_region['LocationConstraint'] !== $region)
+//
+                if(false)
+                {
                     $message = "버킷 지역을 확인후 다시 입력해주세요";
                     $is_error = true;
                 } else {
@@ -272,7 +277,7 @@ class S3Service
                 $is_error = true;
                 $response['error'] = $is_error;
                 $status_code = $s3Exception->getStatusCode();
-                $error_message = $s3Exception->getAwsErrorMessage();
+                $error_message = $s3Exception->getMessage();
                 $message = "http 상태코드: {$status_code}\nAWS 메시지: {$error_message}\n연결에 실패했습니다. 버킷 이름과 지역, key 값이 올바른지 확인해주세요.\n이름,지역, 키값이 올바른 경우 AWS 권한을 확인해주세요";
             }
             $response['error'] = $is_error;
@@ -333,14 +338,6 @@ class S3Service
 
         // 게시물 복사 또는 옮기기 bbs/move_update.php 에서 사용됨
         add_replace('bbs_move_update_file', [$this, 'bbs_move_update_file'], 1, 5);
-
-        // 관리자에서 게시판 복사시 폴더 복사에 사용됨
-        add_event('admin_board_copy_file', [$this, 'admin_board_copy_file'], 1, 2);
-        // 관리자에서 게시판 복사시 폴더 복사에 사용됨
-        add_replace('admin_copy_update_file', [$this, 'admin_copy_update_file'], 1, 4);
-
-        // 관리자에서 게시판 삭제시 폴더 삭제에 사용됨
-        add_event('admin_board_list_update', [$this, 'admin_board_list_update'], 1, 4);
 
         // 아래부터는 쇼핑몰에서만 사용
         // 쇼핑몰 관리자에서 상품추가시 첨부파일을 업로드
@@ -468,7 +465,7 @@ class S3Service
      * @param string $dirname
      * @return false|void
      */
-    private function delete_folder($dirname)
+    public function delete_folder($dirname)
     {
         if (!$this->s3_client()) {
             return false;
@@ -495,7 +492,7 @@ class S3Service
         }
     }
 
-    private function move_file($oldfile, $newfile)
+    public function move_file($oldfile, $newfile)
     {
         if ($oldfile === $newfile || !$this->s3_client()) {
             return false;
@@ -545,26 +542,26 @@ class S3Service
         }
     }
 
-    /**
-     * 관리자에서 게시판 복사시 폴더 복사에 사용됨
-     * @param $files
-     * @param $filename
-     * @param $bo_table
-     * @param $target_table
-     * @return mixed
-     */
-    public function admin_copy_update_file($files, $filename, $bo_table, $target_table)
-    {
-        if ($this->is_admin_copy) {
-            $ori_key = G5_DATA_DIR . '/file/' . $bo_table;
-            $copy_key = G5_DATA_DIR . '/file/' . $target_table;
-
-            $files['bf_fileurl'] = str_replace($ori_key, $copy_key, $files['bf_fileurl']);
-            $files['bf_thumburl'] = str_replace($ori_key, $copy_key, $files['bf_thumburl']);
-        }
-
-        return $files;
-    }
+//    /**
+//     * 관리자에서 게시판 복사시 폴더 복사에 사용됨
+//     * @param $files
+//     * @param $filename
+//     * @param $bo_table
+//     * @param $target_table
+//     * @return mixed
+//     */
+//    public function admin_copy_update_file($files, $filename, $bo_table, $target_table)
+//    {
+//        if ($this->is_admin_copy) {
+//            $ori_key = G5_DATA_DIR . '/file/' . $bo_table;
+//            $copy_key = G5_DATA_DIR . '/file/' . $target_table;
+//
+//            $files['bf_fileurl'] = str_replace($ori_key, $copy_key, $files['bf_fileurl']);
+//            $files['bf_thumburl'] = str_replace($ori_key, $copy_key, $files['bf_thumburl']);
+//        }
+//
+//        return $files;
+//    }
 
     //--- 쇼핑몰 관련
 
@@ -1153,40 +1150,40 @@ class S3Service
         return '<img src="' . $image_path . '/' . $item_file . '" class="shop_item_preview_image aws_s3_image" >';
     }
 
-    /**
-     *
-     * @param $bo_table
-     * @param $target_table
-     * @return false|void
-     */
-    public function admin_board_copy_file($bo_table, $target_table)
-    {
-        $this->is_admin_copy = true;
-
-        if ($bo_table === $target_table || !$this->s3_client()) {
-            return false;
-        }
-
-        $prefix = G5_DATA_DIR . '/file/' . $bo_table . '/';
-        $new_path = G5_DATA_DIR . '/file/' . $target_table . '/';
-
-        $lists = $this->get_paginator('ListObjects', [
-            'Bucket' => $this->bucket_name,
-            'Prefix' => $prefix,
-        ]);
-
-        foreach ($lists as $list) {
-            if (!isset($list['Contents']) || empty($list['Contents'])) {
-                continue;
-            }
-
-            foreach ($list['Contents'] as $object) {
-                $new_key = str_replace($prefix, $new_path, $object['Key']);
-
-                $this->move_file($object['Key'], $new_key);
-            }
-        }
-    }
+//    /**
+//     *
+//     * @param $bo_table
+//     * @param $target_table
+//     * @return false|void
+//     */
+//    public function admin_board_copy_file($bo_table, $target_table)
+//    {
+//        $this->is_admin_copy = true;
+//
+//        if ($bo_table === $target_table || !$this->s3_client()) {
+//            return false;
+//        }
+//
+//        $prefix = G5_DATA_DIR . '/file/' . $bo_table . '/';
+//        $new_path = G5_DATA_DIR . '/file/' . $target_table . '/';
+//
+//        $lists = $this->get_paginator('ListObjects', [
+//            'Bucket' => $this->bucket_name,
+//            'Prefix' => $prefix,
+//        ]);
+//
+//        foreach ($lists as $list) {
+//            if (!isset($list['Contents']) || empty($list['Contents'])) {
+//                continue;
+//            }
+//
+//            foreach ($list['Contents'] as $object) {
+//                $new_key = str_replace($prefix, $new_path, $object['Key']);
+//
+//                $this->move_file($object['Key'], $new_key);
+//            }
+//        }
+//    }
 
     /**
      * TODO
