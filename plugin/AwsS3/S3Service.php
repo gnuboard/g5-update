@@ -148,7 +148,6 @@ class S3Service
             'js' => 'application/javascript',
             'json' => 'application/json',
             'xml' => 'application/xml',
-            'swf' => 'application/x-shockwave-flash',
             'flv' => 'video/x-flv',
 
             // images
@@ -208,18 +207,18 @@ class S3Service
 
         $filenames = explode('.', $filename);
         $ext = strtolower(array_pop($filenames));
-        if (array_key_exists($ext, $mime_types)) {
+        if (isset($mime_types['$ext'])) {
             return $mime_types[$ext];
-        } else {
-            if (function_exists('finfo_open')) {
-                $finfo = finfo_open(FILEINFO_MIME);
-                $mimetype = finfo_file($finfo, $filename);
-                finfo_close($finfo);
-                return $mimetype;
-            } else {
-                return 'application/octet-stream';
-            }
         }
+
+        if (function_exists('finfo_open')) {
+            $finfo = finfo_open(FILEINFO_MIME);
+            $mimetype = finfo_file($finfo, $filename);
+            finfo_close($finfo);
+            return $mimetype;
+        }
+
+        return 'application/octet-stream';
     }
 
     public function s3_client()
@@ -330,7 +329,7 @@ class S3Service
         add_replace('delete_file_path', array($this, 'delete_file'), 1, 2);
 
         // 에디터 url
-        //add_replace('get_editor_upload_url', array($this, 'editor_upload_url'), 1, 3);
+        add_replace('get_editor_upload_url', array($this, 'editor_upload_url'), 1, 3);
 
         // wr_content 등 내용에서 내 도메인 이미지 url 을 aws s3 https 로 변환
         add_replace('get_view_thumbnail', array($this, 'get_view_thumbnail'), 1, 1);
@@ -457,15 +456,8 @@ class S3Service
     {
         $replace_path = realpath($this->normalize_path($filepath));
 
-        if (!preg_match('/\.\.\//i', $replace_path) && preg_match(
-                '/' . preg_quote(G5_DATA_PATH, '/') . '/i',
-                $replace_path
-            ) !== false) {
-            if (function_exists('gc_collect_cycles')) {
-                gc_collect_cycles();
-            }
-
-            @unlink($replace_path);
+        if (preg_match('/' . preg_quote(G5_DATA_PATH, '/') . '/i', $replace_path) !== false) {
+            unlink($replace_path);
         }
     }
 
@@ -473,7 +465,7 @@ class S3Service
     {
         $path = str_replace('\\', '/', $path);
         $path = preg_replace('|(?<=.)/+|', '/', $path);
-        if (':' === substr($path, 1, 1)) {
+        if (':' === $path[1]) {
             $path = ucfirst($path);
         }
         return $path;
@@ -1744,10 +1736,7 @@ class S3Service
      */
     public function url_validate($url)
     {
-        if (stripos($url, $this->storage_host_name) !== false) {
-            return true;
-        }
-        return false;
+        return stripos($url, $this->storage_host_name) !== false;
     }
 
     /**
@@ -1766,71 +1755,52 @@ class S3Service
 
     /**
      * 에디터로 업로드한 url 얻기
-     * @param string $fileurl
-     * @param string $file_path 파일이름포함 경로
+     * @param string $fileurl 썸네일 함수 처리후 리턴값
+     * @param string $ori_file_path 원본의 파일이름포함 경로
      * @param array $args ['file_name']
      * @return string url
      */
-    public function editor_upload_url($fileurl, $file_path, $args = array())
+    public function editor_upload_url($fileurl, $ori_file_path, $args = array())
     {
-        if ($this->s3_client() !== null && file_exists($file_path)) {
-            if(!isset($args['file_name'])){
-                return '';
-            }
-            $file_name = $args['file_name'];
-            // var_dump('func',func_get_args());
-            $editor_path = G5_DATA_DIR . '/' . G5_EDITOR_DIR;
+            $editor_dir = G5_DATA_DIR . '/' . G5_EDITOR_DIR;
 
-            $image_info = getimagesize($file_path);
-            $width = $image_info[0];  // 너비
-            $height = $image_info[1]; // 높이
-
-            $thumb_width = 730;
-            $img_height = round(($thumb_width * $height) / $width);
-            $img_width = round(($thumb_width * $width) / $height);
-
-            $file_dir = str_replace($file_name, '', $file_path);
-
-            $thumb_file_name = thumbnail($file_name, $file_dir, $file_dir, $img_width, $img_height, false);
-            $thumb_file_path = $file_dir . $thumb_file_name;
-
-            $thumb_file_key = $editor_path . explode($editor_path, $thumb_file_path)[1];
-            // var_dump('thumb_file_name: ----------------------',$thumb_file_name);
-            // var_dump('-----dir:', $file_dir);
-
-            $ori_file_path = $file_path;
-            $ori_file_key = $editor_path . explode($editor_path, $ori_file_path)[1];
-            $upload_mime = $this->mime_content_type($ori_file_path);
-
-            //원본파일
+            $file_path = G5_DATA_PATH . '/' . G5_EDITOR_DIR . explode($editor_dir, $fileurl)[1];
+            $file_key = $editor_dir . explode($editor_dir, $file_path)[1];
+            $upload_mime = $this->mime_content_type($file_path);
+            //썸네일또는 원본
             $result = $this->put_object(array(
                 'Bucket' => $this->bucket_name,
-                'Key' => $ori_file_key,
-                'Body' => fopen($ori_file_path, 'rb'),
-                'ACL' => $this->set_file_acl($ori_file_key),
+                'Key' => $file_key,
+                'Body' => fopen($file_path, 'rb'),
+                'ACL' => $this->set_file_acl($file_key),
                 'ContentType' => $upload_mime,
             ));
 
+            if(strpos($fileurl, 'thumb-') !== false ){
+                //썸네일인 경우 원본도 올려야함
+                $ori_file_path = G5_DATA_PATH . '/' . G5_EDITOR_DIR . explode($editor_dir, $ori_file_path)[1];
+                $ori_file_key = $editor_dir . explode($editor_dir, $ori_file_path)[1];
+                //원본파일
+                $result = $this->put_object(array(
+                    'Bucket' => $this->bucket_name,
+                    'Key' => $ori_file_key,
+                    'Body' => fopen($ori_file_path, 'rb'),
+                    'ACL' => $this->set_file_acl($ori_file_key),
+                    'ContentType' => $upload_mime,
+                ));
 
-            //썸네일
-            $result = $this->put_object(array(
-                'Bucket' => $this->bucket_name,
-                'Key' => $thumb_file_key,
-                'Body' => fopen($thumb_file_path, 'rb'),
-                'ACL' => $this->set_file_acl($thumb_file_key),
-                'ContentType' => $upload_mime,
-            ));
-
-
-            if (isset($result['ObjectURL'])) {
                 $this->file_delete($ori_file_path);
-                $this->file_delete($thumb_file_path);
+                $this->file_delete($file_path);
+                //외부 저장소로 업로드후 웹서버에서 원본삭제
+                if (isset($result['ObjectURL'])) {
+                    return $result['ObjectURL'];
+                }
+            }
 
+            $this->file_delete($file_path);
+            if (isset($result['ObjectURL'])) {
                 return $result['ObjectURL'];
             }
-
-        }
-        //var_dump('fileurl:',$fileurl);
 
         return $fileurl;
     }
