@@ -4,8 +4,8 @@
  * 그누보드 버전 Class
  * @todo 
  * 1. VERSION_LIST_PATH 경로 설정 
- * 2. github api를 별도 class로 분리해서 사용 => 버전 업데이트에도 쓰임.
- * 3. version.json 파일 권한으로 인해 덮어쓰기 불가
+ * 2. version.json 파일 권한으로 인해 덮어쓰기 불가
+ * 3. github api를 별도 class로 분리해서 사용 => 버전 업데이트에도 쓰임.
  * 
  */
 class G5MigrationVersion extends G5Migration
@@ -21,10 +21,13 @@ class G5MigrationVersion extends G5Migration
     {
         if (!$this->existFile() || $this->compareVersion() === 1) {
             $this->createFile();
+        } else {
+            self::$versionList = self::getVersionList();
         }
     }
     /**
      * 현재버전과 파일 최신버전 비교
+     * @return int -1 or 0 or 1
      */
     public function compareVersion()
     {
@@ -33,27 +36,28 @@ class G5MigrationVersion extends G5Migration
 
     /**
      * 마지막버전 조회
+     * @return string
      */
     public function getLastedVersionByFile()
     {
         try {
-            $versionList = self::convertVersionFile();
+            $versionList = self::getVersionList();
             if (!$versionList) {
                 throw new Exception("error");
             }
             return end($versionList);
         } catch (Exception $e) {
-            
+            echo $e->getMessage();
         }
     }
 
     /**
      * version file 유무 체크
+     * @return bool
      */
     private function existFile()
     {
         $filepath = self::VERSION_LIST_PATH;
-
         if (empty($filepath) || !file_exists($filepath)) {
             return false;
         } else {
@@ -63,6 +67,7 @@ class G5MigrationVersion extends G5Migration
 
     /**
      * version file 생성
+     * @return void
      */
     private function createFile()
     {
@@ -76,6 +81,8 @@ class G5MigrationVersion extends G5Migration
 
             fwrite($filePoint, json_encode($versionList));
             fclose($filePoint);
+
+            self::$versionList = $versionList;
 
         } catch(Exception $e) {
             echo $e->getMessage();
@@ -158,19 +165,6 @@ class G5MigrationVersion extends G5Migration
         return json_decode(file_get_contents(self::VERSION_LIST_PATH), true);
     }
 
-    public function setVersionList($versionList)
-    {
-        self::$versionList = $versionList;
-    }
-
-    public static function getVersionList()
-    {
-        if (empty(self::$versionList)) {
-            self::$versionList = self::convertVersionFile();
-        }
-        return self::$versionList;
-    }
-
     /**
      * 실행할 버전 목록 조회
      */
@@ -184,10 +178,25 @@ class G5MigrationVersion extends G5Migration
         }
 
         foreach ($versionList as $version) {
-            if (version_compare($version, self::CURRENT_VERSION) <= 0) {
+            if (version_compare($version, parent::CURRENT_VERSION) <= 0) {
                 $list[] = $version;
             }
         }
         return $list;
     }
+
+    public function setVersionList($versionList)
+    {
+        self::$versionList = $versionList;
+    }
+
+    public static function getVersionList()
+    {
+        if (empty(self::$versionList)) {
+            self::$versionList = self::convertVersionFile();
+        }
+        return self::$versionList;
+    }
+
+    
 }

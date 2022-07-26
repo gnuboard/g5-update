@@ -7,22 +7,6 @@ if (!defined('_GNUBOARD_')) {
  * - 파일 명명 규칙 : {버전명}__{설명}.sql
  * 
  * @todo
- * 1. 마이그레이션 기본설정
- *  1) 테이블 생성 (Class G5MigrationSetup)
- *      - 테이블 존재여부 체크
- *      - 테이블 생성
- * 
- * 2. 마이그레이션 파일 실행
- *      - G5_DB_AUTO_UPDATE 체크 (true 일 경우에만 실행) 
- *      - DB 체크 및 업데이트 진행 여부 결정
- *      - 버전목록 조회 (Class G5MigrationVersion)
- *      - 마이그레이션 파일 리스트 조회
- *      - 파일명 => 유효 데이터 변환
- *      - 파일 리스트 정렬
- *      - 파일 실행
- * 
- * 3. 이력 저장
- * - 테이블 양식에 맞춰서 데이터 insert
  * 
  * 기타
  * 1. off의 경우 수동으로 할 수 있도록 (기존 db 업그레이드와 병합?)
@@ -33,18 +17,18 @@ if (!defined('_GNUBOARD_')) {
 class G5Migration
 {
     protected static $mysqli;
-    
+    protected $scriptList = array();
+
     const AUTO_UPDATE               = true;
     public const CURRENT_VERSION    = "v" . G5_GNUBOARD_VER;
     public const MIGRATION_TABLE    = G5_TABLE_PREFIX . "migrations";
     public const MIGRATION_PATH     = G5_ADMIN_PATH . "/database_update";
     public const SCRIPT_PATH        = self::MIGRATION_PATH . "/migration";
 
+
     public function __construct()
     {
         try {
-            echo "현재 그누보드 버전 : " . self::CURRENT_VERSION . "<br><br>";
-            
             // mysqli connect
             self::$mysqli = new mysqli(G5_MYSQL_HOST, G5_MYSQL_USER, G5_MYSQL_PASSWORD, G5_MYSQL_DB);
             if (self::$mysqli->connect_error) {
@@ -54,6 +38,7 @@ class G5Migration
             // create migration table
             $this->initialSetup();
 
+            // update
             if (self::AUTO_UPDATE) {
                 $this->update();
             }
@@ -135,38 +120,47 @@ class G5Migration
      */
     public function update()
     {
-        // 실행 전 migration 테이블 체크 후 실행여부 결정
-        if ($this->checkMigrationTable()) {
-            // 실행 스크립트 배열
-            $excuteList = array(); 
-            // 버전 실행목록
-            $migrationVersion = new G5MigrationVersion();
-            $versionList = $migrationVersion->getExecuteVersionList();
-            // 마이그레이션 파일 리스트 조회
-            $scriptList = $this->getMigrationScriptList();
-            // 실행할 파일목록 필터링
-            foreach ($scriptList as $script) {
-                $migrationInfo = $this->getMigrationInfoByScriptfileName($script);
-                if (in_array($migrationInfo['version'], $versionList)) {
-                    $excuteList[] = $migrationInfo;
+        // 실행 스크립트 배열
+        $excuteList = array();
+        // 버전 실행목록 (현재 버전까지 필터링)
+        $versionList = G5MigrationVersion::getExecuteVersionList();
+        // 마이그레이션 파일 리스트 조회
+        $scriptList = $this->getMigrationScriptList();
+        
+        foreach ($scriptList as $script) {
+            $scriptInfo = $this->getMigrationInfoByScriptfileName($script);
+            // 버전목록에 미포함 필터링
+            if (!in_array($scriptInfo['version'], $versionList)) {
+                continue;
+            }
+            // DB 성공항목 필터링
+            $statement = self::$mysqli->prepare("SELECT mi_id FROM g5_migrations WHERE mi_version = ? AND mi_result = 'success'");
+            if ($statement) {
+                $statement->bind_param("s", $scriptInfo['version']);
+                $statement->execute();
+                $statement->store_result();
+                if ($statement->num_rows() > 0) {
+                    continue;
                 }
             }
-            usort($excuteList, array("self", "sortByVersion"));
-            // 스크립트 실행
-            $beforeVersion = "";
-            $sort = 1;
-            foreach ($excuteList as $script) {
-                if ($beforeVersion == $script['version']) {
-                    $sort++;
-                } else {
-                    $beforeVersion = $script['version'];
-                    $sort = 1;
-                }
-                $result = $this->executeSqlScriptFile(self::SCRIPT_PATH . "/" . $script['fileName']);
-                $result['sort'] = $sort;
+            $excuteList[] = $scriptInfo;
+        }
+        usort($excuteList, array("self", "sortByVersion"));
 
-                $this->insertMigrationLog($script, $result);
+        // 스크립트 실행
+        $beforeVersion = "";
+        $sort = 1;
+        foreach ($excuteList as $script) {
+            if ($beforeVersion == $script['version']) {
+                $sort++;
+            } else {
+                $beforeVersion = $script['version'];
+                $sort = 1;
             }
+            $result = $this->executeSqlScriptFile(self::SCRIPT_PATH . "/" . $script['fileName']);
+            $result['sort'] = $sort;
+
+            $this->insertMigrationLog($script, $result);
         }
     }
 
@@ -200,41 +194,27 @@ class G5Migration
     }
 
     /**
-     * 업데이트 실행여부 체크 
-     * @todo 함수명이 애매해서 수정해야함.
-     * 
-     * @return bool
-     */
-    public function checkMigrationTable()
-    {
-        /**
-         * v5.5.1 일때 v5.5.1-beta까지 스크립트가 있으면, 마지막이라고 체크하고 실행하지 않아야함.
-         */
-
-        return true;
-    }
-
-    /**
      * sql 스크립트 파일 목록 조회
      */
     public function getMigrationScriptList() 
     {
-        $scriptList = array();
-
-        if (is_dir(self::SCRIPT_PATH)) {
-            if ($dirResource = @opendir(self::SCRIPT_PATH)) {
-                while (($fileName = readdir($dirResource)) !== false) {
-                    if ($fileName == '.' || $fileName == '..') {
-                        continue;
+        if (empty($this->scriptList)) {
+            if (is_dir(self::SCRIPT_PATH)) {
+                if ($dirResource = @opendir(self::SCRIPT_PATH)) {
+                    while (($fileName = readdir($dirResource)) !== false) {
+                        if ($fileName == '.' || $fileName == '..') {
+                            continue;
+                        }
+                        if ($this->isMigrationFile($fileName)) {
+                            $this->scriptList[] = $fileName;
+                        }
                     }
-                    if ($this->isMigrationFile($fileName)) {
-                        $scriptList[] = $fileName;
-                    }
+                    closedir($dirResource);
                 }
-                closedir($dirResource);
             }
         }
-        return $scriptList;
+
+        return $this->scriptList;
     }
 
     /**
