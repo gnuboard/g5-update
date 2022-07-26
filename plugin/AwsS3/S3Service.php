@@ -5,7 +5,7 @@ namespace Gnuboard\Plugin\AwsS3;
 if (!defined('_GNUBOARD_')) {
     exit;
 } // 개별 페이지 접근 불가
-
+const S3CONFIG_FILE = 's3config.php';
 if (file_exists(G5_DATA_PATH . '/' . S3CONFIG_FILE)) {
     include_once(G5_DATA_PATH . '/' . S3CONFIG_FILE);
 }
@@ -80,6 +80,7 @@ class S3Service
         //s3 사용시에만 훅스 등록
         if ($this->is_only_use_s3 && $this->region && $this->bucket_name && $this->access_key && $this->secret_key) {
             $this->add_hooks();
+            $this->s3_client()->registerStreamWrapperV2();
             //칼럼명 필터링
             $this->extra_item_field = preg_replace('/[^a-z0-9_]/i', '', $this->extra_item_field);
         }
@@ -97,8 +98,8 @@ class S3Service
             $this->access_key = G5_S3_ACCESS_KEY;
             $this->secret_key = G5_S3_SECRET_KEY;
         }
+        $this->storage_host_name = "https://{$this->bucket_name}.s3.amazonaws.com";
 
-        $this->storage_host_name = "https://{$this->bucket_name}s3{$this->region}amazonaws.com";
         $table_name = G5_TABLE_PREFIX . $this->table_name;
         $sql = "SHOW TABLES LIKE '{$table_name}'";
         $is_install = sql_fetch($sql, false);
@@ -258,16 +259,12 @@ class S3Service
                     'credentials' => $credentials
                 ];
                 $s3_client = new S3Client($options);
-//                $bucket_region = $s3_client->getBucketLocation([
-//                    'Bucket' => $bucket_name
-//                ]);
-//                var_dump($credentials );
 
-//                if
-//                    $bucket_region['LocationConstraint'] !== $region)
-//
-                if(false)
-                {
+                $bucket_region = $s3_client->getBucketLocation([
+                    'Bucket' => $bucket_name
+                ]);
+
+                if ($bucket_region['LocationConstraint'] !== $region) {
                     $message = "버킷 지역을 확인후 다시 입력해주세요";
                     $is_error = true;
                 } else {
@@ -334,7 +331,7 @@ class S3Service
 
         // bbs/view_image.php 사용됨
         add_replace('exists_view_image', [$this, 'exists_view_image'], 1, 3);
-        add_replace('get_view_imagesize', [$this, 'exists_view_image'], 2, 3);
+        add_replace('get_view_imagesize', [$this, 'get_external_storage_imagesize'], 2, 3);
 
         // 게시물 복사 또는 옮기기 bbs/move_update.php 에서 사용됨
         add_replace('bbs_move_update_file', [$this, 'bbs_move_update_file'], 1, 5);
@@ -510,58 +507,6 @@ class S3Service
         ]);
     }
 
-    /**
-     * 관리자에서 게시판 삭제시 폴더 삭제에 사용됨
-     * @param $act_button
-     * @param $chk
-     * @param $board_table
-     * @param $qstr
-     * @return void
-     */
-    public function admin_board_list_update($act_button, $chk, $board_table, $qstr)
-    {
-        global $is_admin;
-
-        if (empty($chk) || empty($board_table)) {
-            return;
-        }
-
-        if ($act_button === '선택삭제' && $is_admin === 'super') {
-            $iMax = count($chk);
-            for ($i = 0; $i < $iMax; $i++) {
-                // 실제 번호를 넘김
-                $k = $chk[$i];
-
-                // include 전에 $bo_table 값을 반드시 넘겨야 함
-                $tmp_bo_table = trim($board_table[$k]);
-
-                if (preg_match("/^[A-Za-z0-9_]+$/", $tmp_bo_table)) {
-                    $this->delete_folder($tmp_bo_table);
-                }
-            }
-        }
-    }
-
-//    /**
-//     * 관리자에서 게시판 복사시 폴더 복사에 사용됨
-//     * @param $files
-//     * @param $filename
-//     * @param $bo_table
-//     * @param $target_table
-//     * @return mixed
-//     */
-//    public function admin_copy_update_file($files, $filename, $bo_table, $target_table)
-//    {
-//        if ($this->is_admin_copy) {
-//            $ori_key = G5_DATA_DIR . '/file/' . $bo_table;
-//            $copy_key = G5_DATA_DIR . '/file/' . $target_table;
-//
-//            $files['bf_fileurl'] = str_replace($ori_key, $copy_key, $files['bf_fileurl']);
-//            $files['bf_thumburl'] = str_replace($ori_key, $copy_key, $files['bf_thumburl']);
-//        }
-//
-//        return $files;
-//    }
 
     //--- 쇼핑몰 관련
 
@@ -679,7 +624,6 @@ class S3Service
             if (isset($result['ObjectURL']) && $result['ObjectURL']) {
                 $img_arrays['img' . $i] = $result['ObjectURL'];
                 $this->file_delete($filepath);
-
             }
         }
 
@@ -1303,17 +1247,17 @@ class S3Service
      */
     public function get_view_thumbnail($contents)
     {
-            $contents = preg_replace_callback(
-                "/(<img[^>]*src *= *[\"']?)([^\"']*)/i",
-                [$this, 'replace_url'],
-                $contents
-            );
+        $contents = preg_replace_callback(
+            "/(<img[^>]*src *= *[\"']?)([^\"']*)/i",
+            [$this, 'replace_url'],
+            $contents
+        );
 
-            $contents = preg_replace_callback(
-                "/(<video[^>]*poster *= *[\"']?)([^\"']*)/i",
-                [$this, 'replace_url'],
-                $contents
-            );
+        $contents = preg_replace_callback(
+            "/(<video[^>]*poster *= *[\"']?)([^\"']*)/i",
+            [$this, 'replace_url'],
+            $contents
+        );
         return $contents;
     }
 
@@ -1735,9 +1679,10 @@ class S3Service
     public function get_url_filename($filename, $parses)
     {
         if (!$filename && isset($parses['host']) && 'https' === $parses['scheme'] && $this->url_validate(
-                'https://' . $parses['host'])) {
-                $filename = basename($parses['path']);
-            }
+                'https://' . $parses['host']
+            )) {
+            $filename = basename($parses['path']);
+        }
 
         return $filename;
     }
@@ -1751,45 +1696,45 @@ class S3Service
      */
     public function editor_upload_url($fileurl, $ori_file_path, $args = array())
     {
-            $editor_dir = G5_DATA_DIR . '/' . G5_EDITOR_DIR;
+        $editor_dir = G5_DATA_DIR . '/' . G5_EDITOR_DIR;
 
-            $file_path = G5_DATA_PATH . '/' . G5_EDITOR_DIR . explode($editor_dir, $fileurl)[1];
-            $file_key = $editor_dir . explode($editor_dir, $file_path)[1];
-            $upload_mime = $this->mime_content_type($file_path);
-            //썸네일또는 원본
+        $file_path = G5_DATA_PATH . '/' . G5_EDITOR_DIR . explode($editor_dir, $fileurl)[1];
+        $file_key = $editor_dir . explode($editor_dir, $file_path)[1];
+        $upload_mime = $this->mime_content_type($file_path);
+        //썸네일또는 원본
+        $result = $this->put_object([
+            'Bucket' => $this->bucket_name,
+            'Key' => $file_key,
+            'Body' => fopen($file_path, 'rb'),
+            'ACL' => $this->set_file_acl($file_key),
+            'ContentType' => $upload_mime,
+        ]);
+
+        if (strpos($fileurl, 'thumb-') !== false) {
+            //썸네일인 경우 원본도 올려야함
+            $ori_file_path = G5_DATA_PATH . '/' . G5_EDITOR_DIR . explode($editor_dir, $ori_file_path)[1];
+            $ori_file_key = $editor_dir . explode($editor_dir, $ori_file_path)[1];
+            //원본파일
             $result = $this->put_object([
                 'Bucket' => $this->bucket_name,
-                'Key' => $file_key,
-                'Body' => fopen($file_path, 'rb'),
-                'ACL' => $this->set_file_acl($file_key),
+                'Key' => $ori_file_key,
+                'Body' => fopen($ori_file_path, 'rb'),
+                'ACL' => $this->set_file_acl($ori_file_key),
                 'ContentType' => $upload_mime,
             ]);
 
-            if(strpos($fileurl, 'thumb-') !== false ){
-                //썸네일인 경우 원본도 올려야함
-                $ori_file_path = G5_DATA_PATH . '/' . G5_EDITOR_DIR . explode($editor_dir, $ori_file_path)[1];
-                $ori_file_key = $editor_dir . explode($editor_dir, $ori_file_path)[1];
-                //원본파일
-                $result = $this->put_object([
-                    'Bucket' => $this->bucket_name,
-                    'Key' => $ori_file_key,
-                    'Body' => fopen($ori_file_path, 'rb'),
-                    'ACL' => $this->set_file_acl($ori_file_key),
-                    'ContentType' => $upload_mime,
-                ]);
-
-                $this->file_delete($ori_file_path);
-                $this->file_delete($file_path);
-                //외부 저장소로 업로드후 웹서버에서 원본삭제
-                if (isset($result['ObjectURL'])) {
-                    return $result['ObjectURL'];
-                }
-            }
-
+            $this->file_delete($ori_file_path);
             $this->file_delete($file_path);
+            //외부 저장소로 업로드후 웹서버에서 원본삭제
             if (isset($result['ObjectURL'])) {
                 return $result['ObjectURL'];
             }
+        }
+
+        $this->file_delete($file_path);
+        if (isset($result['ObjectURL'])) {
+            return $result['ObjectURL'];
+        }
 
         return $fileurl;
     }
@@ -1800,31 +1745,25 @@ class S3Service
      * @param $files
      * @param $filepath
      * @param $editor_file
-     * @return array|int|mixed
+     * @return bool
      */
     public function exists_view_image($files, $filepath, $editor_file)
     {
-        static $cache = null;
-
-        $tmp_key = md5($filepath);
-
-        if (isset($cache[$tmp_key])) {
-            return $cache[$tmp_key];
-        }
-
         $file_key = G5_DATA_DIR . str_replace(G5_DATA_PATH, '', $filepath);
+        return $this->object_exists($file_key);
+    }
 
-        if ($this->object_exists($this->bucket_name, $file_key)) {
-            if (is_array($files)) {
-                $cache[$tmp_key] = [0, 0, 'is_exists' => true];
-            } else {
-                $cache[$tmp_key] = 1;
-            }
-
-            return $cache[$tmp_key];
-        }
-
-        return $files;
+    /**
+     * 외부 저장소 파일에서 이미지 크기 리턴
+     * @param $files
+     * @param $server_filepath
+     * @param $editor_file
+     * @return array|false
+     */
+    public function get_external_storage_imagesize($files, $server_filepath, $editor_file)
+    {
+        $file_key = G5_DATA_DIR . str_replace(G5_DATA_PATH, '', $server_filepath);
+        return getimagesize("s3://{$this->bucket_name}/$file_key");
     }
 
     /**
@@ -1835,7 +1774,7 @@ class S3Service
      */
     public function delete_editor_file($file_path, $is_success = false)
     {
-        if (!$is_success && stripos($file_path, G5_DATA_PATH) === 0 && $this->s3_client()) {
+        if (!$is_success && stripos($file_path, G5_DATA_PATH) === 0) {
             $keyname = $this->fileurl_replace_key($file_path);
 
             $result = $this->delete_object([
