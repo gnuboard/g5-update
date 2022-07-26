@@ -201,7 +201,7 @@ class S3Service
 
         $filenames = explode('.', $filename);
         $ext = strtolower(array_pop($filenames));
-        if (isset($mime_types['$ext'])) {
+        if (!empty($ext)) {
             return $mime_types[$ext];
         }
 
@@ -378,7 +378,7 @@ class S3Service
      * @param $options
      * @return bool
      */
-    public function object_exists($key, $options = array())
+    public function object_exists(string $key, array $options = array())
     {
         return $this->s3_client()->doesObjectExist($this->bucket_name, $key, $options);
     }
@@ -388,9 +388,9 @@ class S3Service
         return $this->s3_client()->getObject($args);
     }
 
-    public function get_object_url($bucket_name, $key)
+    public function get_object_url($key)
     {
-        return $this->s3_client()->getObjectUrl($bucket_name, $key);
+        return $this->s3_client()->getObjectUrl($this->bucket_name, $key);
     }
 
     public function put_object($args)
@@ -495,7 +495,7 @@ class S3Service
             return false;
         }
 
-        if ($this->object_exists($this->bucket_name, $newfile)) {
+        if ($this->object_exists($newfile)) {
             return false;
         }
 
@@ -557,7 +557,7 @@ class S3Service
 
         $file_key = G5_DATA_DIR . '/' . $this->shop_folder . '/' . $it['it_img' . $i];
 
-        $aws_key_exists = $this->object_exists($this->bucket_name, $file_key);
+        $aws_key_exists = $this->object_exists($file_key);
 
         if ($file_exists && !$aws_key_exists) {
             $this->shop_admin_itemformupdate($it['it_id'], 'a');
@@ -597,11 +597,10 @@ class S3Service
             $filepath = G5_DATA_PATH . '/' . $this->shop_folder . '/' . $it['it_img' . $i];
             $file_key = G5_DATA_DIR . '/' . $this->shop_folder . '/' . $it['it_img' . $i];
 
-            $aws_key_exists = $this->object_exists($this->bucket_name, $file_key);
+            $aws_key_exists = $this->object_exists($file_key);
 
             if ($aws_key_exists) {
                 $img_arrays['img' . $i] = $this->get_object_url(
-                    $this->bucket_name,
                     G5_DATA_DIR . '/' . $this->shop_folder . '/' . $it['it_img' . $i]
                 );
             }
@@ -678,7 +677,7 @@ class S3Service
             return $url;
         }
 
-        $extra_infos = \GuzzleHttp\json_decode($it[$this->extra_item_field], true);
+        $extra_infos = json_decode($it[$this->extra_item_field], true);
 
         if (isset($extra_infos['img' . $index]) && $extra_infos['img' . $index]) {
             $url = $extra_infos['img' . $index];
@@ -716,8 +715,8 @@ class S3Service
 
         $file_key = G5_DATA_DIR . '/' . $this->shop_folder . '/' . $it['it_img' . $index];
 
-        if ($this->object_exists($this->bucket_name, $file_key)) {
-            $extra_infos['img' . $index] = $this->get_object_url($this->bucket_name, $file_key);
+        if ($this->object_exists($file_key)) {
+            $extra_infos['img' . $index] = $this->get_object_url($file_key);
 
             $save_str = \GuzzleHttp\json_encode($extra_infos);
 
@@ -791,10 +790,10 @@ class S3Service
         $img_alt = '',
         $is_crop = false
     ) {
-        if ($thumb && !$this->is_only_use_s3) {
-            // 'is_only_use_s3' 값이 false 이고 && 내 서버 공간에 썸네일이 존재한다면 aws s3에서 조회하지 않고 내 서버 파일의 썸네일을 리턴
-            return $img;
-        }
+//        if ($thumb && !$this->is_only_use_s3) {
+//            // 'is_only_use_s3' 값이 false 이고 && 내 서버 공간에 썸네일이 존재한다면 aws s3에서 조회하지 않고 내 서버 파일의 썸네일을 리턴
+//            return $img;
+//        }
 
         $it = get_shop_item($it_id, true);
 
@@ -803,6 +802,7 @@ class S3Service
         }
 
         $extra_infos = \GuzzleHttp\json_decode($it[$this->extra_item_field], true);
+        var_dump($extra_infos);
         $find_tag = $find_img = '';
 
         for ($i = 1; $i <= 10; $i++) {
@@ -851,7 +851,9 @@ class S3Service
 
         $extra_infos = array();
         if ($this->check_extra_item_field($it)) {
-            $extra_infos = \GuzzleHttp\json_decode($it[$this->extra_item_field], true);
+            if([$it[$this->extra_item_field]] != '') {
+                $extra_infos = json_decode($it[$this->extra_item_field], true);
+            }
         }
 
         if ($key = array_search($img, $it, true)) {
@@ -954,7 +956,9 @@ class S3Service
         }
 
         $array_thumb_key = $index . '_' . $width . 'x' . $height;
-        $extra_infos = \GuzzleHttp\json_decode($it[$this->extra_item_field], true);
+        if(!empty([$it[$this->extra_item_field]])) {
+            $extra_infos = json_decode($it[$this->extra_item_field], true);
+        }
         $before_file_exists = false;
 
         if (isset($extra_infos['thumb' . $array_thumb_key]) && $extra_infos['thumb' . $array_thumb_key]) {
@@ -974,7 +978,7 @@ class S3Service
                     return '';
                 }
 
-                $aws_key_exists = $this->object_exists($this->bucket_name, $file_key);
+                $aws_key_exists = $this->object_exists($file_key);
 
                 if ($aws_key_exists) {
                     $thumb_str = '';
@@ -1015,8 +1019,8 @@ class S3Service
                             $thumb_key = G5_DATA_DIR . str_replace(G5_DATA_URL, '', $matches[1]);
                             $upload_mime = $this->mime_content_type($thumb_key);
 
-                            if ($this->object_exists($this->bucket_name, $thumb_key)) {
-                                $thumb_object_url = $this->get_object_url($this->bucket_name, $thumb_key);
+                            if ($this->object_exists($thumb_key)) {
+                                $thumb_object_url = $this->get_object_url($thumb_key);
                             } else {
                                 // Upload thumbnail data.
                                 $thumb_result = $this->put_object([
@@ -1042,11 +1046,12 @@ class S3Service
                                 }
 
                                 $it = get_shop_item($it['it_id'], false);
-                                $extra_infos = \GuzzleHttp\json_decode($it[$this->extra_item_field], true);
-
+                                if(!empty([$it[$this->extra_item_field]])) {
+                                    $extra_infos = json_decode($it[$this->extra_item_field], true);
+                                }
                                 $extra_infos['thumb' . $array_thumb_key] = $thumb_object_url;
 
-                                $encode_str = \GuzzleHttp\json_encode($extra_infos);
+                                $encode_str = json_encode($extra_infos);
 
                                 $sql = " update `{$g5['g5_shop_item_table']}`
                                             set {$this->extra_item_field} = '$encode_str'
@@ -1230,7 +1235,7 @@ class S3Service
     {
         if ($bool === false && $fileinfo['bf_fileurl']) {
             $file_key = G5_DATA_DIR . '/file/' . $fileinfo['bo_table'] . '/' . basename($fileinfo['bf_fileurl']);
-            if ($this->object_exists($this->bucket_name, $file_key)) {
+            if ($this->object_exists($file_key)) {
                 return true;
             }
         }
@@ -1299,7 +1304,7 @@ class S3Service
             parse_str($queryString, $args);
 
             if ($is_check && $this->s3_client()) {
-                if ($url = $this->get_object_url($this->bucket_name, $file_key)) {
+                if ($url = $this->get_object_url($file_key)) {
                     $file_array['bf_fileurl'] = $url;
 
                     $extension = strtolower(pathinfo($file_array['file'], PATHINFO_EXTENSION));
@@ -1643,7 +1648,7 @@ class S3Service
             return;
         }
 
-        $extra_infos = \GuzzleHttp\json_decode($it[$this->extra_item_field], true);
+        $extra_infos = json_decode($it[$this->extra_item_field], true);
 
         if ($extra_infos && $this->s3_client()) {
             foreach ($extra_infos as $info) {
