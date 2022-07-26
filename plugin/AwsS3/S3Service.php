@@ -1795,7 +1795,7 @@ class S3Service
                 return;
             }
             $imgname = $img_url[1];
-            $filename = $editor_path . '/' . $imgname;
+            $filename = $editor_path . $imgname;
 
             $this->delete_object([
                 'Bucket' => $this->bucket_name,
