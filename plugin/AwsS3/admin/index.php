@@ -1,16 +1,16 @@
 <?php
 
 use Gnuboard\Plugin\AwsS3\S3Admin;
+use Gnuboard\Plugin\AwsS3\S3Service;
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+use const Gnuboard\Plugin\AwsS3\S3CONFIG_FILE;
+
 $sub_menu = '100920'; //메뉴는 admin.head 이전에 선언
 include_once(dirname(__FILE__) . '/_common.php');
 include_once(G5_ADMIN_PATH . '/admin.lib.php');
 
-if (version_compare(PHP_VERSION, '5.5', '<')) {
-    echo help('AWS S3 저장소는 PHP 5.5버전 이상만 이용하실 수있습니다.');
+if (version_compare(PHP_VERSION, '7.0', '<')) {
+    echo help('AWS S3 저장소는 PHP 7 버전 이상만 이용하실 수있습니다.');
     include_once(G5_ADMIN_PATH . '/admin.tail.php');
     exit;
 }
@@ -24,7 +24,6 @@ $admin_aws_config = array(
     'access_key' => '',
     'bucket_name' => '',
     'bucket_region' => '',
-    'is_save_host' => '',
     'is_only_use_s3' => ''
 );
 
@@ -38,7 +37,7 @@ if (file_exists(G5_DATA_PATH . '/' . 's3config.php')) {
     }
 }
 
-$table_name = G5_TABLE_PREFIX . \Gnuboard\Plugin\AwsS3\S3Service::getInstance()->get_table_name();
+$table_name = G5_TABLE_PREFIX . S3Service::getInstance()->get_table_name();
 $sql = "select * from $table_name";
 
 if ($row = sql_fetch($sql, false)) {
@@ -47,7 +46,7 @@ if ($row = sql_fetch($sql, false)) {
 }
 
 $all_region = get_aws_regions();
-$status = \Gnuboard\Plugin\AwsS3\S3Service::getInstance()->get_connect_status();
+$status = S3Service::getInstance()->get_connect_status();
 
 if (!empty($_POST['save_key']) && !empty($_POST['token']) && !empty($_POST['bucket_name'])
     && !empty($_POST['access_key']) && !empty($_POST['secret_key']) && !empty($_POST['bucket_region'])) {
@@ -76,13 +75,6 @@ if (isset($_POST['save']) && ($_POST['save'] === 'status') && !empty($_POST['tok
             $access_control_list = 'private';
         }
 
-        $is_save_host = !isset($_POST['is_save_host']) ? 0 : (int)strip_tags(
-            get_text(trim(($_POST['is_save_host'])))
-        );
-        if ($is_save_host !== 1) {
-            $is_save_host = 0;
-        }
-
         $is_only_use_s3 = empty($is_only_use_s3) ? 0 : (int)strip_tags(get_text(trim((($_POST['is_only_use_s3'])))));
         if ($is_only_use_s3 !== 1) {
             $is_only_use_s3 = 0;
@@ -92,24 +84,22 @@ if (isset($_POST['save']) && ($_POST['save'] === 'status') && !empty($_POST['tok
             //쿼리 바인딩
             $sql_common = "
 				SET acl_default_value = ?,
-				is_save_host = ?,
 				is_only_use_s3 = ?
 				";
 
             if ($row_count) {
                 $sql = "UPDATE $table_name $sql_common ";
-                $res = sql_bind_query($sql, array('sii', $access_control_list, $is_save_host, $is_only_use_s3));
             } else {
                 $sql = "INSERT INTO $table_name $sql_common ";
-                $res = sql_bind_query($sql, array('sii', $access_control_list, $is_save_host, $is_only_use_s3));
             }
+            $res = sql_bind_query($sql, array('si', $access_control_list, $is_only_use_s3));
 
             if ($res->num_rows() === 1) {
                 alert('저장되었습니다.');
             } else {
                 //동일한 데이터가 들어올 경우는 직접체크
-                $sql = "select count(*) from $table_name  where acl_default_value = ? and is_save_host = ? and is_only_use_s3 = ?";
-                $res = sql_bind_query($sql, array('sii', $access_control_list, $is_save_host, $is_only_use_s3));
+                $sql = "select count(*) from $table_name  where acl_default_value = ? and is_only_use_s3 = ?";
+                $res = sql_bind_query($sql, array('si', $access_control_list, $is_only_use_s3));
                 $res->bind_result($count);
                 while ($res->fetch()) {
                     $rows = $count;
@@ -124,7 +114,6 @@ if (isset($_POST['save']) && ($_POST['save'] === 'status') && !empty($_POST['tok
             //mysqli 안쓰는 경우
             $sql_common = "
 				SET acl_default_value = '{$access_control_list}',
-				is_save_host = '{$is_save_host}',
 				is_only_use_s3 = '{$is_only_use_s3}' ";
             if ($row_count) {
                 $sql = "UPDATE $table_name $sql_common ";
