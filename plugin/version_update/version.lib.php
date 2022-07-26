@@ -13,8 +13,6 @@ class G5MigrationVersion extends G5Migration
     public $latestVersion;
     public static $versionList = array();
 
-    private const API_URL = "https://api.github.com/repos/gnuboard/gnuboard5/releases?per_page=100";
-    private const API_TOKEN = "";
     private const VERSION_LIST_PATH  = G5_DATA_PATH  . "/version.json"; // 임시경로
 
     public function __construct()
@@ -91,16 +89,13 @@ class G5MigrationVersion extends G5Migration
 
     /**
      * 버전목록 조회
+     * @breif upgrade : 낮은버전 -> 높은버전으로 진행해야 Table 및 Column이 정상적인 흐름으로 변경이 됨.
      * 
-     * @breif 버전 리스트 구성
-     * upgrade : 낮은버전 -> 높은버전으로 진행해야 Table 및 Column이 정상적인 흐름으로 변경이 됨.
-     * 
-     * @todo 추후 update.lib.php가 정식버전에 포함된다면 통합
      */
     public function getLatestVersionList()
     {
         try {
-            $result = $this->getReleasesFromGithubApi();
+            $result = G5GithubApi::getVersionData();
             
             if ($result == false) {
                 return false;
@@ -120,41 +115,6 @@ class G5MigrationVersion extends G5Migration
         } catch (Exception $e) {
             echo $e->getMessage();
         }
-    }
-
-    /**
-     * github api
-     * @todo 추후 update.lib.php가 정식버전에 포함된다면 getApiCurlResult로 통합.
-     */
-    public function getReleasesFromGithubApi()
-    {
-        $auth = (self::API_TOKEN != null) ? "Authorization: token " . self::API_TOKEN : "";
-        $curl = curl_init();
-        curl_setopt_array(
-            $curl,
-            array(
-                CURLOPT_URL => self::API_URL,
-                CURLOPT_HEADER => 0,
-                CURLOPT_CUSTOMREQUEST => "GET",
-                CURLOPT_USERAGENT => 'gnuboard',
-                CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_SSL_VERIFYHOST => false,
-                CURLOPT_TIMEOUT => 3600,
-                CURLOPT_AUTOREFERER => true,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_FOLLOWLOCATION => 1,
-                CURLOPT_FAILONERROR => true,
-                CURLOPT_HTTPHEADER => array(
-                    $auth
-                ),
-            )
-        );
-        $response = curl_exec($curl);
-        
-        if (curl_errno($curl)) {
-            return false;
-        }
-        return json_decode((string)$response);
     }
     
     /**

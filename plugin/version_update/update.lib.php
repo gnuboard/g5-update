@@ -8,14 +8,10 @@ if (!defined('_GNUBOARD_')) {
  * @todo
  * 1. disk_total_space, disk_free_space > 호스팅 환경에서는 용량표시가 제대로 안되는 듯..
  * 2. 업데이트에 필요한 최소용량 및 용량 초과시 발생하는 오류
- * 3. 사용자의 API요청횟수를 늘리기 위한 PAT(personal access token)를 등록하는 방안
  *
- * @ignore $token값을 포함한 채로 github에 push하면 안됨.
  */
 class G5Update
 {
-    private $g5_update;
-
     public $path = null;
     public $latest_version = null;
     public $target_version = null;
@@ -37,10 +33,6 @@ class G5Update
     // 가용용량
     const INSTALLED_DISK_CAPITAL = 20971520;
 
-    // token값이 없는 경우, 1시간에 60번의 데이터조회가 가능함
-    private $token = "";
-
-    private $url = "https://api.github.com";
     private $version_list = array();
     private $compare_list = array();
     private $backup_list = array();
@@ -404,7 +396,7 @@ class G5Update
     public function getVersionList()
     {
         if (empty($this->version_list)) {
-            $result = $this->getApiCurlResult('version');
+            $result = G5GithubApi::getVersionData(40);
             
             if ($result == false) {
                 return false;
@@ -434,11 +426,7 @@ class G5Update
      */
     public function getVersionModifyContent($tag = null)
     {
-        if ($tag == null) {
-            return false;
-        }
-
-        $result = $this->getApiCurlResult('modify', $tag);
+        $result = G5GithubApi::getModifyData($tag);
         if ($result == false) {
             return false;
         }
@@ -1086,7 +1074,8 @@ class G5Update
             throw new Exception('압축파일 생성에 실패했습니다.');
         }
 
-        $result = $this->getApiCurlResult($exe, $version);
+        $result = G5GithubApi::getArchiveData($exe, $version);
+        // $this->getApiCurlResult($exe, $version);
         if ($result == false) {
             throw new Exception($version . '버전 다운로드 통신이 실패했습니다.');
         }
@@ -1277,9 +1266,11 @@ class G5Update
             $target_version_num = array_search($this->target_version, (array)$version_list);
 
             if ($now_version_num > $target_version_num) {
-                $result = $this->getApiCurlResult("compare", $this->now_version, $this->target_version);
+                $result = G5GithubApi::getCompareData($this->now_version, $this->target_version);
+                // $result = $this->getApiCurlResult("compare", $this->now_version, $this->target_version);
             } else {
-                $result = $this->getApiCurlResult("compare", $this->target_version, $this->now_version);
+                $result = G5GithubApi::getCompareData($this->target_version, $this->now_version);
+                // $result = $this->getApiCurlResult("compare", $this->target_version, $this->now_version);
             }
 
             if ($result == false) {
@@ -1385,90 +1376,6 @@ class G5Update
             $this->setError($e);
             return false;
         }
-    }
-
-    /**
-     * api.github 요청
-     * @breif
-     * @param string $option 요청타입 (version, compare, zip, modify)
-     * @param string $param1 요청 파라미터1
-     * @param string $param2 요청 파라미터2
-     * @return mixed|bool
-     */
-    public function getApiCurlResult($option, $param1 = null, $param2 = null)
-    {
-        $auth = "";
-        if ($this->token != null) {
-            $auth = "Authorization: token " . $this->token;
-        }
-        $url = $this->url;
-        switch ($option) {
-            case "version":
-                $url .= "/repos/gnuboard/gnuboard5/releases";
-                break;
-            case "compare":
-                if ($param1 == null || $param2 == null) {
-                    return false;
-                }
-                $url .= "/repos/gnuboard/gnuboard5/compare/" . $param1 . "..." . $param2;
-                break;
-            case "zip":
-                if ($param1 == null) {
-                    return false;
-                }
-                $url .= "/repos/gnuboard/gnuboard5/zipball/" . $param1;
-                break;
-            case "tar":
-                if ($param1 == null) {
-                    return false;
-                }
-                $url .= "/repos/gnuboard/gnuboard5/tarball/" . $param1;
-                break;
-            case "modify":
-                if ($param1 == null) {
-                    return false;
-                }
-                $url .= "/repos/gnuboard/gnuboard5/releases/tags/" . $param1;
-                break;
-            default:
-                $url = false;
-                break;
-        }
-
-        if ($url == false) {
-            return false;
-        }
-
-        $curl = curl_init();
-        curl_setopt_array(
-            $curl,
-            array(
-                CURLOPT_URL => $url,
-                CURLOPT_HEADER => 0,
-                CURLOPT_CUSTOMREQUEST => "GET",
-                CURLOPT_USERAGENT => 'gnuboard',
-                CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_SSL_VERIFYHOST => false,
-                CURLOPT_TIMEOUT => 3600,
-                CURLOPT_AUTOREFERER => true,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_FOLLOWLOCATION => 1,
-                CURLOPT_FAILONERROR => true,
-                CURLOPT_HTTPHEADER => array(
-                    $auth
-                ),
-            )
-        );
-
-        $response = curl_exec($curl);
-        
-        if (curl_errno($curl)) {
-            return false;
-        }
-        if ($option != 'zip' && $option != 'tar') {
-            $response = json_decode((string)$response);
-        }
-        return $response;
     }
 
     /**
@@ -1602,10 +1509,5 @@ class G5Update
         } catch (Exception $e) {
             $this->setError($e);
         }
-    }
-
-    public function getToken()
-    {
-        return $this->token;
     }
 }

@@ -6,6 +6,7 @@ $g5['title'] = '데이터베이스 업데이트';
 include_once '../admin.head.php';
 
 $migration = new G5Migration();
+
 ?>
 <style>
     .a_style {
