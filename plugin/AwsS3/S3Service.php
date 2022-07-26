@@ -196,7 +196,6 @@ class S3Service
             // font
             'ttf' => 'application/x-font-ttf',
             'woff' => 'application/x-font-woff'
-
         ];
 
         $filenames = explode('.', $filename);
@@ -378,7 +377,7 @@ class S3Service
      * @param $options
      * @return bool
      */
-    public function object_exists(string $key, array $options = array())
+    public function object_exists($key, $options = array())
     {
         return $this->s3_client()->doesObjectExist($this->bucket_name, $key, $options);
     }
@@ -629,12 +628,12 @@ class S3Service
         if (!isset($it[$this->extra_item_field])) {
             $this->update_item_table();
             $it[$this->extra_item_field] = '';
+            return false;
         }
 
 
-        $item_extra_infos = \GuzzleHttp\json_decode($it[$this->extra_item_field], true);
+        $item_extra_infos = json_decode($it[$this->extra_item_field], true);
         $before_infos = array();
-
         foreach ($item_extra_infos as $key => $value) {
             if (empty($value)) {
                 continue;
@@ -673,17 +672,17 @@ class S3Service
             return $this->replace_url($url);
         }
 
-        if (!$this->check_extra_item_field($it)) {
-            return $url;
-        }
-
-        $extra_infos = json_decode($it[$this->extra_item_field], true);
-
-        if (isset($extra_infos['img' . $index]) && $extra_infos['img' . $index]) {
-            $url = $extra_infos['img' . $index];
-        }
-
-        return $url;
+//        if (!$this->check_extra_item_field($it)) {
+//            return $url;
+//        }
+//
+//        $extra_infos = json_decode($it[$this->extra_item_field], true);
+//
+//        if (isset($extra_infos['img' . $index]) && $extra_infos['img' . $index]) {
+//            $url = $extra_infos['img' . $index];
+//        }
+//
+//        return $url;
     }
 
     /**
@@ -700,8 +699,10 @@ class S3Service
         if (!$this->check_extra_item_field($it)) {
             return $is_exist_file;
         }
-
-        $extra_infos = \GuzzleHttp\json_decode($it[$this->extra_item_field], true);
+        if(!isset($it[$this->extra_item_field])){
+            return false;
+        }
+        $extra_infos = json_decode($it[$this->extra_item_field], true);
 
         if ($it['it_img' . $index] && isset($extra_infos['img' . $index]) && $extra_infos['img' . $index] && $this->url_validate(
                 $extra_infos['img' . $index]
@@ -753,8 +754,10 @@ class S3Service
         if (!$this->check_extra_item_field($it)) {
             return $infos;
         }
-
-        $extra_infos = \GuzzleHttp\json_decode($it[$this->extra_item_field], true);
+        if(empty($it[$this->extra_item_field])){
+            return $infos; //TODO
+        }
+        $extra_infos = json_decode($it[$this->extra_item_field], true);
         if ($this->is_only_use_s3) {
             $infos['imageurl'] = $this->replace_url($infos['imageurl']);
             $infos['imagehtml'] = '<img src="' . $infos['imageurl'] . '" alt="' . get_text(
@@ -800,9 +803,10 @@ class S3Service
         if (!$this->check_extra_item_field($it)) {
             return $img;
         }
-
-        $extra_infos = \GuzzleHttp\json_decode($it[$this->extra_item_field], true);
-        var_dump($extra_infos);
+        if(empty($it[$this->extra_item_field])){
+            return $img;
+        }
+        $extra_infos = json_decode($it[$this->extra_item_field], true);
         $find_tag = $find_img = '';
 
         for ($i = 1; $i <= 10; $i++) {
@@ -953,12 +957,13 @@ class S3Service
         if (!isset($it[$this->extra_item_field])) {
             $this->update_item_table();
             $it[$this->extra_item_field] = '';
+            return '';
         }
 
         $array_thumb_key = $index . '_' . $width . 'x' . $height;
-        if(!empty([$it[$this->extra_item_field]])) {
-            $extra_infos = json_decode($it[$this->extra_item_field], true);
-        }
+
+        $extra_infos = json_decode($it[$this->extra_item_field], true);
+
         $before_file_exists = false;
 
         if (isset($extra_infos['thumb' . $array_thumb_key]) && $extra_infos['thumb' . $array_thumb_key]) {
@@ -1098,41 +1103,6 @@ class S3Service
 
         return '<img src="' . $image_path . '/' . $item_file . '" class="shop_item_preview_image aws_s3_image" >';
     }
-
-//    /**
-//     *
-//     * @param $bo_table
-//     * @param $target_table
-//     * @return false|void
-//     */
-//    public function admin_board_copy_file($bo_table, $target_table)
-//    {
-//        $this->is_admin_copy = true;
-//
-//        if ($bo_table === $target_table || !$this->s3_client()) {
-//            return false;
-//        }
-//
-//        $prefix = G5_DATA_DIR . '/file/' . $bo_table . '/';
-//        $new_path = G5_DATA_DIR . '/file/' . $target_table . '/';
-//
-//        $lists = $this->get_paginator('ListObjects', [
-//            'Bucket' => $this->bucket_name,
-//            'Prefix' => $prefix,
-//        ]);
-//
-//        foreach ($lists as $list) {
-//            if (!isset($list['Contents']) || empty($list['Contents'])) {
-//                continue;
-//            }
-//
-//            foreach ($list['Contents'] as $object) {
-//                $new_key = str_replace($prefix, $new_path, $object['Key']);
-//
-//                $this->move_file($object['Key'], $new_key);
-//            }
-//        }
-//    }
 
     /**
      * TODO
@@ -1650,7 +1620,7 @@ class S3Service
 
         $extra_infos = json_decode($it[$this->extra_item_field], true);
 
-        if ($extra_infos && $this->s3_client()) {
+        if (!empty($extra_infos)) {
             foreach ($extra_infos as $info) {
                 if ($this->url_validate($info)) {
                     $filename = $this->get_url_filename('', @parse_url($info));
