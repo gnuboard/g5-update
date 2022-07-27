@@ -24,16 +24,20 @@ $admin_aws_config = array(
     'access_key' => '',
     'bucket_name' => '',
     'bucket_region' => '',
-    'is_only_use_s3' => ''
+    'is_only_use_s3' => '',
+    'is_acl_use' => ''
 );
 
-if (file_exists(G5_DATA_PATH . '/' . 's3config.php')) {
+if (file_exists(G5_DATA_PATH . '/' . S3CONFIG_FILE)) {
     if (defined('G5_S3_BUCKET_NAME')) {
         $admin_aws_config['bucket_name'] = G5_S3_BUCKET_NAME;
     }
 
     if (defined('G5_S3_REGION')) {
         $admin_aws_config['bucket_region'] = G5_S3_REGION;
+    }
+    if (defined('G5_S3_IS_ACL_USE')) {
+        $admin_aws_config['is_acl_use'] = G5_S3_IS_ACL_USE;
     }
 }
 
@@ -49,15 +53,16 @@ $all_region = get_aws_regions();
 $status = S3Service::getInstance()->get_connect_status();
 
 if (!empty($_POST['save_key']) && !empty($_POST['token']) && !empty($_POST['bucket_name'])
-    && !empty($_POST['access_key']) && !empty($_POST['secret_key']) && !empty($_POST['bucket_region'])) {
+    && !empty($_POST['access_key']) && !empty($_POST['secret_key']) && !empty($_POST['bucket_region']) && !empty($_POST['is_acl_use'])) {
     auth_check($auth, 'w');
     if ($GLOBALS['is_admin'] === 'super') {
         $access_key = strip_tags(get_text(trim($_POST['access_key'])));
         $secret_key = strip_tags(get_text(trim($_POST['secret_key'])));
         $bucket_name = strip_tags(get_text(trim($_POST['bucket_name'])));
         $bucket_region = strip_tags(get_text(trim($_POST['bucket_region'])));
+        $is_acl_use = strip_tags(get_text(trim($_POST['is_acl_use'])));
 
-        S3Admin::getInstance()->create_s3_config($access_key, $secret_key, $bucket_name, $bucket_region);
+        S3Admin::getInstance()->create_s3_config($access_key, $secret_key, $bucket_name, $bucket_region, $is_acl_use);
         if (file_exists(G5_DATA_PATH . '/' . S3CONFIG_FILE)) {
             alert('설정이 완료되었습니다.');
         } else {
@@ -169,29 +174,29 @@ function get_aws_regions()
 {
     // https://docs.aws.amazon.com/ko_kr/general/latest/gr/rande.html
     return array(
-        'ap-northeast-2' => '아시아 태평양(서울)',
-        'us-east-1' => '미국 동부(버지니아 북부)',
-        'us-east-2' => '미국 동부(오하이오)',
-        'us-west-1' => '미국 서부(캘리포니아 북부)',
-        'us-west-2' => '미국 서부(오레곤)',
-        'ap-east-1' => '아시아 태평양(홍콩)',
-        'ap-south-1' => '아시아 태평양(뭄바이)',
-        'ap-southeast-1' => '아시아 태평양(싱가포르)',
-        'ap-southeast-2' => '아시아 태평양(시드니)',
-        'ap-northeast-1' => '아시아 태평양(도쿄)',
-        'ap-northeast-3' => '아시아 태평양(오사카)',
-        'ca-central-1' => '캐나다(중부)',
-        'cn-north-1' => '중국(베이징)',
-        'cn-northwest-1' => '중국(닝샤)',
-        'eu-central-1' => 'EU(프랑크푸르트)',
-        'eu-west-1' => 'EU(아일랜드)',
-        'eu-west-2' => 'EU(런던)',
-        'eu-west-3' => 'EU(파리)',
-        'eu-north-1' => 'EU(스톡홀름)',
-        'me-south-1' => '중동(바레인)',
-        'sa-east-1' => '남아메리카(상파울루)',
-        'us-gov-east-1' => 'AWS GovCloud (미국 동부)',
-        'us-gov-west-1' => 'AWS GovCloud (US)',
+        'ap-northeast-2' => '아시아 태평양(서울) - ap_northeast-2',
+        'us-east-1' => '미국 동부(버지니아 북부) - us-east-1',
+        'us-east-2' => '미국 동부(오하이오) - us-east-2',
+        'us-west-1' => '미국 서부(캘리포니아 북부) - us-west-1',
+        'us-west-2' => '미국 서부(오레곤) - us-west-2',
+        'ap-east-1' => '아시아 태평양(홍콩) - ap-east-1',
+        'ap-south-1' => '아시아 태평양(뭄바이) - ap-south-1',
+        'ap-southeast-1' => '아시아 태평양(싱가포르) - ap-southeast-1',
+        'ap-southeast-2' => '아시아 태평양(시드니) - ap-southeast-2',
+        'ap-northeast-1' => '아시아 태평양(도쿄) - ap-northeast-1',
+        'ap-northeast-3' => '아시아 태평양(오사카) - ap-northeast-3',
+        'ca-central-1' => '캐나다(중부) - ca-central-1',
+        'cn-north-1' => '중국(베이징) - cn-north-1',
+        'cn-northwest-1' => '중국(닝샤) - cn-northwest-1',
+        'eu-central-1' => 'EU(프랑크푸르트) - eu-central-1',
+        'eu-west-1' => 'EU(아일랜드) - eu-west-1',
+        'eu-west-2' => 'EU(런던) - eu-west-2',
+        'eu-west-3' => 'EU(파리) - eu-west-3',
+        'eu-north-1' => 'EU(스톡홀름) - eu-north-1',
+        'me-south-1' => '중동(바레인) - me-south-1',
+        'sa-east-1' => '남아메리카(상파울루) - sa-east-1',
+        'us-gov-east-1' => 'AWS GovCloud (미국 동부) - us-gov-east-1',
+        'us-gov-west-1' => 'AWS GovCloud (US) - us-gov-west-1',
     );
 }
 
@@ -224,7 +229,7 @@ add_stylesheet('<link rel="stylesheet" href="' . G5_PLUGIN_URL . '/AwsS3/admin/a
                     <li>
 					<span class="lb_block"><label for="bucket_region">리전</label>
 					<?php
-                    echo help('aws s3에서 버킷의 지역을 선택합니다.'); ?>
+                    echo help('aws s3버킷의 지역을 선택합니다.'); ?>
 					</span>
                         <select name="bucket_region" id="bucket_region">
                             <?php
@@ -249,6 +254,27 @@ add_stylesheet('<link rel="stylesheet" href="' . G5_PLUGIN_URL . '/AwsS3/admin/a
                         <input type="password" autocomplete="new-password" name="secret_key" value="" id="secret_key"
                                class="frm_input"
                                size="60">
+                    </li>
+                    <li>
+					<span class="lb_block"><label for="is_acl_use">ACL 사용여부</label>
+					<?php
+                    echo help('ACL 은 처음에 S3로 옮길 때 설정하셔야 합니다. ACL 설정된 상태에서 해제할경우 모든 파일의 ACL을 해제후 선택하셔야됩니다.'); ?>
+					</span>
+
+                        <label>
+                            <select name="is_acl_use">
+                                <option value="true" <?php
+                                if ($admin_aws_config['is_acl_use'] === true) {
+                                    echo 'selected';
+                                } ?>>ACL 사용
+                                </option>
+                                <option value="false" <?php
+                                if ($admin_aws_config['is_acl_use'] === false) {
+                                    echo 'selected';
+                                } ?>>ACL 사용안함
+                                </option>
+                            </select>
+                        </label>
                     </li>
                 </ul>
                 <div class="btn_space">

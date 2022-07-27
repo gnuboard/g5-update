@@ -1,7 +1,6 @@
 <?php
 
 namespace Gnuboard\Plugin\AwsS3;
-
 class S3Admin
 {
     protected $s3_service;
@@ -153,7 +152,7 @@ class S3Admin
     /**
      * S3 설정 파일 생성및 수정
      */
-    public function create_s3_config($s3_access_key, $s3_secret_key, $s3_bucket_name, $s3_region)
+    public function create_s3_config($s3_access_key, $s3_secret_key, $s3_bucket_name, $s3_region, $s3_is_acl_use)
     {
         $file = G5_DATA_PATH . '/' . S3CONFIG_FILE;
         $f = fopen($file, 'wb');
@@ -164,6 +163,7 @@ class S3Admin
         fwrite($f, "define('G5_S3_SECRET_KEY', '" . addcslashes($s3_secret_key, "\\'") . "');" . PHP_EOL);
         fwrite($f, "define('G5_S3_BUCKET_NAME', '" . addcslashes($s3_bucket_name, "\\'") . "');" . PHP_EOL);
         fwrite($f, "define('G5_S3_REGION', '" . addcslashes($s3_region, "\\'") . "');" . PHP_EOL);
+        fwrite($f, "define('G5_S3_IS_ACL_USE', '" . addcslashes($s3_is_acl_use, "\\'") . "');" . PHP_EOL);
 
         fclose($f);
         @chmod($file, G5_FILE_PERMISSION);

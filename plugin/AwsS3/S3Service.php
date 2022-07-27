@@ -34,12 +34,11 @@ class S3Service
      */
     private $acl_default_value = 'private';
 
-
     /**
      * @var bool
      */
     private $is_only_use_s3 = false;
-
+    private $is_acl_use = false;
     /**
      * @var S3Client
      */
@@ -97,6 +96,7 @@ class S3Service
             $this->region = G5_S3_REGION;
             $this->access_key = G5_S3_ACCESS_KEY;
             $this->secret_key = G5_S3_SECRET_KEY;
+            $this->is_acl_use = G5_S3_IS_ACL_USE;
         }
         $this->storage_host_name = "https://{$this->bucket_name}.s3.amazonaws.com";
 
@@ -398,6 +398,9 @@ class S3Service
 
     public function put_object($args)
     {
+        if($this->is_acl_use === true) {
+            $args['ACL'] = $this->set_file_acl($args['Key']);
+        }
         return $this->s3_client()->putObject($args);
     }
 
@@ -412,6 +415,9 @@ class S3Service
 
     public function copy_object($args)
     {
+        if($this->is_acl_use === true) {
+            $args['ACL'] = $this->set_file_acl($args['Key']);
+        }
         return $this->s3_client()->copyObject($args);
     }
 
@@ -506,8 +512,7 @@ class S3Service
         $this->copy_object([
             'Bucket' => $this->bucket_name,
             'Key' => $newfile,
-            'CopySource' => $this->bucket_name . '/' . $oldfile,
-            'ACL' => $this->set_file_acl($newfile),
+            'CopySource' => $this->bucket_name . '/' . $oldfile
         ]);
     }
 
@@ -620,8 +625,7 @@ class S3Service
                 'Bucket' => $this->bucket_name,
                 'Key' => $file_key,
                 'Body' => fopen($filepath, 'rb'),
-                'ContentType' => $upload_mime,
-                'ACL' => $this->set_file_acl($file_key)
+                'ContentType' => $upload_mime
             ]);
 
             if (isset($result['ObjectURL']) && $result['ObjectURL']) {
@@ -1013,8 +1017,7 @@ class S3Service
                                     'Bucket' => $this->bucket_name,
                                     'Key' => $thumb_key,
                                     'Body' => fopen($thumb_path, 'rb'),
-                                    'ContentType' => $upload_mime,
-                                    'ACL' => $this->set_file_acl($thumb_key)
+                                    'ContentType' => $upload_mime
                                 ]);
 
                                 $thumb_object_url = $thumb_result['ObjectURL'];
@@ -1126,8 +1129,7 @@ class S3Service
                 $result = $this->copy_object([
                     'Bucket' => $this->bucket_name,
                     'Key' => $copy_key,
-                    'CopySource' => $this->bucket_name . '/' . $ori_key,
-                    'ACL' => $this->set_file_acl($this->bucket_name . '/' . $ori_key)
+                    'CopySource' => $this->bucket_name . '/' . $ori_key
                 ]);
 
                 if (isset($result['ObjectURL']) && $result['ObjectURL']) {
@@ -1147,8 +1149,7 @@ class S3Service
                         $result2 = $this->copy_object([
                             'Bucket' => $this->bucket_name,
                             'Key' => $copy_thumb_key,
-                            'CopySource' => $this->bucket_name . '/' . $ori_thumb_key,
-                            'ACL' => $this->set_file_acl($this->bucket_name . '/' . $ori_thumb_key)
+                            'CopySource' => $this->bucket_name . '/' . $ori_thumb_key
                         ]);
 
                         if (isset($result2['ObjectURL']) && $result2['ObjectURL']) {
@@ -1275,8 +1276,7 @@ class S3Service
                                 'Bucket' => $this->bucket_name,
                                 'Key' => $thumb_key,
                                 'Body' => fopen($thumb_path_file, 'rb'),
-                                'ContentType' => $upload_mime,
-                                'ACL' => $this->set_file_acl($thumb_key)
+                                'ContentType' => $upload_mime
                             ]);
 
                             // 썸네일 파일을 aws s3에 성공적으로 업로드 했다면, 호스팅 공간에서 삭제합니다.
@@ -1625,30 +1625,30 @@ class S3Service
         $file_path = G5_DATA_PATH . '/' . G5_EDITOR_DIR . explode($editor_dir, $fileurl)[1];
         $file_key = $editor_dir . explode($editor_dir, $file_path)[1];
         $upload_mime = $this->mime_content_type($file_path);
-        //썸네일또는 원본
+        //원본
         $result = $this->put_object([
             'Bucket' => $this->bucket_name,
             'Key' => $file_key,
             'Body' => fopen($file_path, 'rb'),
-            'ContentType' => $upload_mime,
-            'ACL' => $this->set_file_acl($file_key)
+            'ContentType' => $upload_mime
         ]);
 
-        if (strpos($fileurl, 'thumb-') !== false) {
-            //썸네일인 경우 원본도 올려야함
+        if (strpos($fileurl, 'thumb-') === false) {
+            //썸네일 업로드
             $ori_file_path = G5_DATA_PATH . '/' . G5_EDITOR_DIR . explode($editor_dir, $ori_file_path)[1];
-            $ori_file_key = $editor_dir . explode($editor_dir, $ori_file_path)[1];
-            //원본파일
+            //썸네일
+            $thumb_file_key = $this->create_thumbnail($file_path);
+            $thumb_file_path = dirname($ori_file_path). '/' . $thumb_file_key;
+
             $result = $this->put_object([
                 'Bucket' => $this->bucket_name,
-                'Key' => $ori_file_key,
-                'Body' => fopen($ori_file_path, 'rb'),
-                'ContentType' => $upload_mime,
-                'ACL' => $this->set_file_acl($ori_file_key)
+                'Key' => $thumb_file_key,
+                'Body' => fopen($thumb_file_path, 'rb'),
+                'ContentType' => $upload_mime
             ]);
 
-            $this->file_delete($ori_file_path);
             $this->file_delete($file_path);
+            $this->file_delete($thumb_file_path);
             //외부 저장소로 업로드후 웹서버에서 원본삭제
             if (isset($result['ObjectURL'])) {
                 return $result['ObjectURL'];
@@ -1661,6 +1661,19 @@ class S3Service
         }
 
         return $fileurl;
+    }
+
+    /**
+     * @param string $filepath 웹서버에 올라간 파일이름 포함 전체 경로
+     * @return string $thumb_filepath
+     */
+    private function create_thumbnail ($filepath)
+    {
+        $temp_width = 800;
+        $thumb_width = $temp_width;
+        $file_name = basename($filepath);
+        $thumb_path = dirname($filepath);
+        return thumbnail($file_name, $thumb_path, $thumb_path, $thumb_width,null, false);
     }
 
     /**
@@ -1796,7 +1809,7 @@ EOD;
      */
     public function upload_file($upload_info, $filepath, $board, $wr_id, $w = '')
     {
-        global $board;// TODO
+        global $board;
 
         $return_value = [
             'fileurl' => '',
@@ -1813,8 +1826,7 @@ EOD;
             'Bucket' => $this->bucket_name,
             'Key' => $file_key,
             'Body' => fopen($filepath, 'rb'),
-            'ContentType' => $upload_mime,
-            'ACL' => $this->set_file_acl($file_key)
+            'ContentType' => $upload_mime
         ]);
 
         // 이미지 파일이면 TODO 이미지 파일 확인
@@ -1870,8 +1882,7 @@ EOD;
                         'Bucket' => $this->bucket_name,
                         'Key' => $thumb_key,
                         'Body' => fopen($thumb_path . '/' . $thumb_file, 'rb'),
-                        'ContentType' => $upload_mime,
-                        'ACL' => $this->set_file_acl($thumb_key)
+                        'ContentType' => $upload_mime
                     ]);
 
                     //썸네일 파일을 aws s3에 성공적으로 업로드 했다면, 호스팅 공간에서 삭제합니다.
