@@ -1,5 +1,9 @@
 <?php
-
+/*
+ * S3Service 그누보드용 AWS S3 플러그인
+ * @version 1.0.0 2022.07.27
+ * url: sir 플러그인 게시판
+ */
 namespace Gnuboard\Plugin\AwsS3;
 
 if (!defined('_GNUBOARD_')) {
@@ -373,8 +377,9 @@ class S3Service
     }
 
     /**
-     * @param $key
-     * @param $options
+     * S3 저장소에 파일 존재여부
+     * @param string $key 파일이름
+     * @param array $options
      * @return bool
      */
     public function object_exists($key, $options = array())
@@ -382,6 +387,11 @@ class S3Service
         return $this->s3_client()->doesObjectExist($this->bucket_name, $key, $options);
     }
 
+    /**
+     * S3 저장소에서 파일 가져오기
+     * @param $file_key
+     * @return \Aws\Result
+     */
     public function get_object($file_key)
     {
         $data = [
@@ -391,11 +401,21 @@ class S3Service
         return $this->s3_client()->getObject($data);
     }
 
+    /**
+     * S3 에서 파일의 url 가져오기
+     * @param $file_key
+     * @return string
+     */
     public function get_object_url($file_key)
     {
         return $this->s3_client()->getObjectUrl($this->bucket_name, $file_key);
     }
 
+    /**
+     * s3로 업로드
+     * @param array $args 기본 copy_obejct와 acl 제외하고 동일 acl사용은 관리자에서 설정
+     * @return \Aws\Result
+     */
     public function put_object($args)
     {
         if($this->is_acl_use === true) {
@@ -404,6 +424,11 @@ class S3Service
         return $this->s3_client()->putObject($args);
     }
 
+    /**
+     * S3 에서 파일 삭제
+     * @param $file_key
+     * @return \Aws\Result
+     */
     public function delete_object($file_key)
     {
         $data = [
@@ -413,6 +438,11 @@ class S3Service
         return $this->s3_client()->deleteObject($data);
     }
 
+    /**
+     * S3 파일 복사
+     * @param array $args 기본 copy_obejct와 acl 제외하고 동일 acl사용은 관리자에서 설정
+     * @return \Aws\Result
+     */
     public function copy_object($args)
     {
         if($this->is_acl_use === true) {
@@ -421,6 +451,13 @@ class S3Service
         return $this->s3_client()->copyObject($args);
     }
 
+    /**
+     * php sdk v3 getPaginator 와 동일 주로 개체(파일) 리스트의 페이지화
+     * @url https://docs.aws.amazon.com/sdk-for-php/v3/developer-guide/guide_paginators.html
+     * @param string $action
+     * @param array $args
+     * @return \Aws\ResultPaginator
+     */
     public function get_paginator($action, $args)
     {
         return $this->s3_client()->getPaginator($action, $args);
@@ -452,15 +489,25 @@ class S3Service
         return $this->storage_prefix . '_' . $this->bucket_name;
     }
 
+    /**
+     * 외부저장소가 아닌 웹 서버에서 파일 삭제
+     * @param string $filepath 파일이름포함 전체경로
+     * @return bool
+     */
     private function file_delete($filepath)
     {
         $replace_path = realpath($this->normalize_path($filepath));
 
         if (preg_match('/' . preg_quote(G5_DATA_PATH, '/') . '/i', $replace_path) !== false) {
-            unlink($replace_path);
+            return @unlink($replace_path);
         }
     }
 
+    /**
+     * 웹서버의 파일 가져올때 파일경로 정리
+     * @param string $path
+     * @return array|string|string[]|null
+     */
     public function normalize_path($path)
     {
         $path = str_replace('\\', '/', $path);
@@ -472,6 +519,7 @@ class S3Service
     }
 
     /**
+     * S3 에서 폴더삭제
      * @param string $dirname
      * @return false|void
      */
@@ -499,6 +547,12 @@ class S3Service
         }
     }
 
+    /**
+     * S3 저장소 내부에서 파일 이동
+     * @param string $oldfile  이동할 파일의 이름포함 전체경로
+     * @param string $newfile 새로운 파일이름
+     * @return false|void
+     */
     public function move_file($oldfile, $newfile)
     {
         if ($oldfile === $newfile || !$this->s3_client()) {
@@ -670,10 +724,10 @@ class S3Service
 
     /**
      * 쇼핑몰 핑몰 상품 이미지 url 리턴
-     * @param $url
+     * @param string $url
      * @param $it
      * @param $index
-     * @return array|mixed|string|string[]
+     * @return array|string|string[]
      */
     public function get_item_image_url($url, $it, $index)
     {
@@ -778,10 +832,6 @@ class S3Service
         $img_alt = '',
         $is_crop = false
     ) {
-//       if ($thumb && !$this->is_only_use_s3) {
-//            // 내 서버 공간에 썸네일이 존재한다면 aws s3에서 조회하지 않고 내 서버 파일의 썸네일을 리턴
-//            return $img;
-//        }
 
         $it = get_shop_item($it_id, true);
 
@@ -1503,7 +1553,7 @@ class S3Service
 
     /**
      * 파일 주소를 바꿔주는 유틸 함수.
-     * @param $url
+     * @param string $url
      * @return array|string|string[]|null
      */
     public function fileurl_replace_key($url)
@@ -1589,7 +1639,7 @@ class S3Service
 
     /**
      * url이 AWS 주소또는 host 로 설정한 주소인지 유효성검사
-     * @param $url
+     * @param string $url
      * @return bool
      */
     public function url_validate($url)
@@ -1664,6 +1714,7 @@ class S3Service
     }
 
     /**
+     * 썸네일 생성
      * @param string $filepath 웹서버에 올라간 파일이름 포함 전체 경로
      * @return string $thumb_filepath
      */
@@ -1677,7 +1728,7 @@ class S3Service
     }
 
     /**
-     *
+     * 훅스용 이미지가 있는지 확인
      * bbs/view_image.php 에 사용됨
      * @param $files
      * @param $filepath
@@ -1693,7 +1744,7 @@ class S3Service
     /**
      * 외부 저장소 파일에서 이미지 크기 리턴
      * @param $files
-     * @param $server_filepath
+     * @param string $server_filepath 웹서버의 파일 경로
      * @param $editor_file
      * @return array|false
      */
@@ -1705,8 +1756,8 @@ class S3Service
 
     /**
      * 에디터에서 올린 파일 삭제시
-     * @param $file_path
-     * @param $is_success
+     * @param string $file_path
+     * @param bool $is_success
      * @return void
      */
     public function delete_editor_file($file_path, $is_success = false)
@@ -1718,6 +1769,12 @@ class S3Service
         }
     }
 
+    /**
+     * 에디터 썸네일 삭제
+     * @param $contents
+     * @param $matchs
+     * @return void
+     */
     public function delete_editor_thumbnail($contents, $matchs)
     {
         $editor_path = G5_DATA_DIR . '/' . G5_EDITOR_DIR;
@@ -1778,7 +1835,12 @@ EOD;
 
     }
 
-    // bbs/download.php 등에서 쓰일수가 있음
+    /**
+     * bbs/download.php 등에서 쓰입니다.
+     * @param array $fileinfo 파일정보 배열 ['bo_table'] => '' , ['bf_fileurl'] => ''. ['bf_source'] => ''
+     * @param $file_exist_check
+     * @return void
+     */
     public function download_file_header($fileinfo, $file_exist_check)
     {
         if (!$file_exist_check) {
@@ -1804,8 +1866,10 @@ EOD;
     }
 
     /**
-     * bbs/write_update.php 등에서 쓰일수가 있음
-     * @param $upload_info array 업로드된 파일의 정보
+     * bbs/write_update.php 등에서 쓰입니다
+     * @param array $upload_info 업로드된 파일의 정보
+     * @param string $filepath 파일이름 포함 전체 경로
+     * @param array $board 그누보드 게시판변수
      */
     public function upload_file($upload_info, $filepath, $board, $wr_id, $w = '')
     {
