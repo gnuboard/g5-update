@@ -41,8 +41,8 @@ class S3Service
     /**
      * @var bool
      */
-    private $is_only_use_s3 = false;
-    private $is_acl_use = false;
+    private $is_use_s3 = false;
+    private $is_use_acl = false;
     /**
      * @var S3Client
      */
@@ -81,7 +81,7 @@ class S3Service
         $this->get_config();
 
         //s3 사용시에만 훅스 등록
-        if ($this->is_only_use_s3 && $this->region && $this->bucket_name && $this->access_key && $this->secret_key) {
+        if ($this->is_use_s3 && $this->region && $this->bucket_name && $this->access_key && $this->secret_key) {
             $this->add_hooks();
             $this->s3_client()->registerStreamWrapperV2();
             //칼럼명 필터링
@@ -100,7 +100,7 @@ class S3Service
             $this->region = G5_S3_REGION;
             $this->access_key = G5_S3_ACCESS_KEY;
             $this->secret_key = G5_S3_SECRET_KEY;
-            $this->is_acl_use = G5_S3_IS_ACL_USE;
+            $this->is_use_acl = G5_S3_IS_USE_ACL;
         }
         $this->storage_host_name = "https://{$this->bucket_name}.s3.amazonaws.com";
 
@@ -113,7 +113,7 @@ class S3Service
             $sql = "select * from $table_name";
             $result = sql_fetch($sql, false);
             $this->acl_value = $result['acl_value'];
-            $this->is_only_use_s3 = $result['is_only_use_s3'] == '1';
+            $this->is_use_s3 = $result['is_use_s3'] == '1';
         }
     }
 
@@ -122,11 +122,11 @@ class S3Service
         $sql = get_db_create_replace(
             "CREATE TABLE IF NOT EXISTS `$table_name` (
 				  `acl_value` varchar(50) NOT NULL DEFAULT 'private',
-				  `is_only_use_s3` tinyint(4) NOT NULL DEFAULT '1'
+				  `is_use_s3` tinyint(4) NOT NULL DEFAULT '1'
 				) ENGINE=InnoDB DEFAULT CHARSET=utf8;"
         );
         sql_query($sql, false);
-        $sql = "INSERT INTO $table_name (`acl_value`, `is_only_use_s3`) VALUES ('private' ,0)";
+        $sql = "INSERT INTO $table_name (`acl_value`, `is_use_s3`) VALUES ('private' ,0)";
         sql_query($sql);
     }
 
@@ -418,7 +418,7 @@ class S3Service
      */
     public function put_object($args)
     {
-        if($this->is_acl_use === true) {
+        if($this->is_use_acl === true) {
             $args['ACL'] = $this->set_file_acl($args['Key']);
         }
         return $this->s3_client()->putObject($args);
@@ -445,7 +445,7 @@ class S3Service
      */
     public function copy_object($args)
     {
-        if($this->is_acl_use === true) {
+        if($this->is_use_acl === true) {
             $args['ACL'] = $this->set_file_acl($args['Key']);
         }
         return $this->s3_client()->copyObject($args);
@@ -917,8 +917,8 @@ class S3Service
     /**
      * shop_create_thumbnail
      * @param $img
-     * @param $width
-     * @param $height
+     * @param int | float $width
+     * @param int | float $height
      * @param $id
      * @param $is_crop
      * @return string

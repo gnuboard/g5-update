@@ -24,8 +24,8 @@ $admin_aws_config = array(
     'access_key' => '',
     'bucket_name' => '',
     'bucket_region' => '',
-    'is_only_use_s3' => '',
-    'is_acl_use' => ''
+    'is_use_s3' => '',
+    'is_use_acl' => ''
 );
 
 if (file_exists(G5_DATA_PATH . '/' . S3CONFIG_FILE)) {
@@ -36,8 +36,8 @@ if (file_exists(G5_DATA_PATH . '/' . S3CONFIG_FILE)) {
     if (defined('G5_S3_REGION')) {
         $admin_aws_config['bucket_region'] = G5_S3_REGION;
     }
-    if (defined('G5_S3_IS_ACL_USE')) {
-        $admin_aws_config['is_acl_use'] = G5_S3_IS_ACL_USE;
+    if (defined('G5_S3_IS_USE_ACL')) {
+        $admin_aws_config['is_use_acl'] = G5_S3_IS_USE_ACL;
     }
 }
 
@@ -45,7 +45,7 @@ $table_name = G5_TABLE_PREFIX . S3Service::getInstance()->get_table_name();
 $sql = "select * from $table_name";
 
 if ($row = sql_fetch($sql, false)) {
-    $admin_aws_config['is_only_use_s3'] = $row['is_only_use_s3'];
+    $admin_aws_config['is_use_s3'] = $row['is_use_s3'];
     $admin_aws_config['access_control_list'] = $row['acl_value'];
 }
 
@@ -53,16 +53,16 @@ $all_region = get_aws_regions();
 $status = S3Service::getInstance()->get_connect_status();
 
 if (!empty($_POST['save_key']) && !empty($_POST['token']) && !empty($_POST['bucket_name'])
-    && !empty($_POST['access_key']) && !empty($_POST['secret_key']) && !empty($_POST['bucket_region']) && !empty($_POST['is_acl_use'])) {
+    && !empty($_POST['access_key']) && !empty($_POST['secret_key']) && !empty($_POST['bucket_region']) && !empty($_POST['is_use_acl'])) {
     auth_check($auth, 'w');
     if ($GLOBALS['is_admin'] === 'super') {
         $access_key = strip_tags(get_text(trim($_POST['access_key'])));
         $secret_key = strip_tags(get_text(trim($_POST['secret_key'])));
         $bucket_name = strip_tags(get_text(trim($_POST['bucket_name'])));
         $bucket_region = strip_tags(get_text(trim($_POST['bucket_region'])));
-        $is_acl_use = strip_tags(get_text(trim($_POST['is_acl_use'])));
+        $is_use_acl = strip_tags(get_text(trim($_POST['is_use_acl'])));
 
-        S3Admin::getInstance()->create_s3_config($access_key, $secret_key, $bucket_name, $bucket_region, $is_acl_use);
+        S3Admin::getInstance()->create_s3_config($access_key, $secret_key, $bucket_name, $bucket_region, $is_use_acl);
         if (file_exists(G5_DATA_PATH . '/' . S3CONFIG_FILE)) {
             alert('설정이 완료되었습니다.');
         } else {
@@ -80,16 +80,16 @@ if (isset($_POST['save']) && ($_POST['save'] === 'status') && !empty($_POST['tok
             $access_control_list = 'private';
         }
 
-        $is_only_use_s3 = empty($is_only_use_s3) ? 0 : (int)strip_tags(get_text(trim((($_POST['is_only_use_s3'])))));
-        if ($is_only_use_s3 !== 1) {
-            $is_only_use_s3 = 0;
+        $is_use_s3 = empty($is_use_s3) ? 0 : (int)strip_tags(get_text(trim((($_POST['is_use_s3'])))));
+        if ($is_use_s3 !== 1) {
+            $is_use_s3 = 0;
         }
 
         if (function_exists('mysqli_query') && G5_MYSQLI_USE) {
             //쿼리 바인딩
             $sql_common = "
 				SET acl_value = ?,
-				is_only_use_s3 = ?
+				is_use_s3 = ?
 				";
 
             if ($row_count) {
@@ -97,14 +97,14 @@ if (isset($_POST['save']) && ($_POST['save'] === 'status') && !empty($_POST['tok
             } else {
                 $sql = "INSERT INTO $table_name $sql_common ";
             }
-            $res = sql_bind_query($sql, array('si', $access_control_list, $is_only_use_s3));
+            $res = sql_bind_query($sql, array('si', $access_control_list, $is_use_s3));
 
             if ($res->num_rows() === 1) {
                 alert('저장되었습니다.');
             } else {
                 //동일한 데이터가 들어올 경우는 직접체크
-                $sql = "select count(*) from $table_name  where acl_value = ? and is_only_use_s3 = ?";
-                $res = sql_bind_query($sql, array('si', $access_control_list, $is_only_use_s3));
+                $sql = "select count(*) from $table_name  where acl_value = ? and is_use_s3 = ?";
+                $res = sql_bind_query($sql, array('si', $access_control_list, $is_use_s3));
                 $res->bind_result($count);
                 while ($res->fetch()) {
                     $rows = $count;
@@ -119,7 +119,7 @@ if (isset($_POST['save']) && ($_POST['save'] === 'status') && !empty($_POST['tok
             //mysqli 안쓰는 경우
             $sql_common = "
 				SET acl_value = '{$access_control_list}',
-				is_only_use_s3 = '{$is_only_use_s3}' ";
+				is_use_s3 = '{$is_use_s3}' ";
             if ($row_count) {
                 $sql = "UPDATE $table_name $sql_common ";
             } else {
@@ -256,20 +256,20 @@ add_stylesheet('<link rel="stylesheet" href="' . G5_PLUGIN_URL . '/AwsS3/admin/a
                                size="60">
                     </li>
                     <li>
-					<span class="lb_block"><label for="is_acl_use">ACL 사용여부</label>
+					<span class="lb_block"><label for="is_use_acl">ACL 사용여부</label>
 					<?php
-                    echo help('ACL 은 처음에 S3로 옮길 때 설정하셔야 합니다. ACL 설정된 상태에서 해제할경우 모든 파일의 ACL을 해제후 선택하셔야됩니다.'); ?>
+                    echo help('ACL 은 처음에 S3로 설정할 때 정하셔야 합니다. ACL 설정된 상태에서 해제할경우 s3 콘솔에서 모든 파일의 ACL을 해제한 뒤 선택하셔야됩니다.'); ?>
 					</span>
 
                         <label>
-                            <select name="is_acl_use">
+                            <select name="is_use_acl">
                                 <option value="true" <?php
-                                if ($admin_aws_config['is_acl_use'] === true) {
+                                if ($admin_aws_config['is_use_acl'] === true) {
                                     echo 'selected';
                                 } ?>>ACL 사용
                                 </option>
                                 <option value="false" <?php
-                                if ($admin_aws_config['is_acl_use'] === false) {
+                                if ($admin_aws_config['is_use_acl'] === false) {
                                     echo 'selected';
                                 } ?>>ACL 사용안함
                                 </option>
@@ -313,19 +313,19 @@ add_stylesheet('<link rel="stylesheet" href="' . G5_PLUGIN_URL . '/AwsS3/admin/a
                 </ul>
                 <ul class="frm_ul">
                     <li>
-                        <span class="lb_block"><label for="is_only_use_s3">S3 사용하기</label>
+                        <span class="lb_block"><label for="is_use_s3">S3 사용하기</label>
                         <?php
                         echo help(
                             '내 서버 안에 모든 데이터를 aws s3 에 업로드 했고, 데이터를 aws s3 에만 저장 ( https://bucket_name.amazonaws.com/ ) 하고 싶다면 체크합니다.'
                         ); ?>
                         </span>
-                        <input type="checkbox" name="is_only_use_s3" value="1"
-                               id="is_only_use_s3"
+                        <input type="checkbox" name="is_use_s3" value="1"
+                               id="is_use_s3"
                             <?php
-                            $is_use = $admin_aws_config['is_only_use_s3'];
+                            $is_use = $admin_aws_config['is_use_s3'];
                             echo $is_use == 1 ? 'checked="true"' : '' ?>
                         >
-                        <label for="is_only_use_s3">
+                        <label for="is_use_s3">
                             첨부된 데이터경로를 무조건 aws s3으로 할시에 체크
                         </label>
                     </li>
