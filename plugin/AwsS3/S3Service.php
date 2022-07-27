@@ -382,14 +382,18 @@ class S3Service
         return $this->s3_client()->doesObjectExist($this->bucket_name, $key, $options);
     }
 
-    public function get_object($args)
+    public function get_object($file_key)
     {
-        return $this->s3_client()->getObject($args);
+        $data = [
+            'Bucket' => $this->bucket_name,
+            'Key' => $file_key
+        ];
+        return $this->s3_client()->getObject($data);
     }
 
-    public function get_object_url($key)
+    public function get_object_url($file_key)
     {
-        return $this->s3_client()->getObjectUrl($this->bucket_name, $key);
+        return $this->s3_client()->getObjectUrl($this->bucket_name, $file_key);
     }
 
     public function put_object($args)
@@ -397,9 +401,13 @@ class S3Service
         return $this->s3_client()->putObject($args);
     }
 
-    public function delete_object($args)
+    public function delete_object($file_key)
     {
-        return $this->s3_client()->deleteObject($args);
+        $data = [
+            'Bucket' => $this->bucket_name,
+            'Key' => $file_key
+        ];
+        return $this->s3_client()->deleteObject($data);
     }
 
     public function copy_object($args)
@@ -480,10 +488,7 @@ class S3Service
             }
 
             foreach ($result['Contents'] as $object) {
-                $this->delete_object([
-                    'Bucket' => $this->bucket_name,
-                    'Key' => $object['Key']
-                ]);
+                $this->delete_object($object['Key']);
             }
         }
     }
@@ -615,8 +620,8 @@ class S3Service
                 'Bucket' => $this->bucket_name,
                 'Key' => $file_key,
                 'Body' => fopen($filepath, 'rb'),
-                'ACL' => $this->set_file_acl($file_key),
                 'ContentType' => $upload_mime,
+                'ACL' => $this->set_file_acl($file_key)
             ]);
 
             if (isset($result['ObjectURL']) && $result['ObjectURL']) {
@@ -668,21 +673,9 @@ class S3Service
      */
     public function get_item_image_url($url, $it, $index)
     {
-        if ($this->is_only_use_s3) {
-            return $this->replace_url($url);
-        }
 
-//        if (!$this->check_extra_item_field($it)) {
-//            return $url;
-//        }
-//
-//        $extra_infos = json_decode($it[$this->extra_item_field], true);
-//
-//        if (isset($extra_infos['img' . $index]) && $extra_infos['img' . $index]) {
-//            $url = $extra_infos['img' . $index];
-//        }
-//
-//        return $url;
+        return $this->replace_url($url);
+
     }
 
     /**
@@ -758,22 +751,10 @@ class S3Service
             return $infos; //TODO
         }
         $extra_infos = json_decode($it[$this->extra_item_field], true);
-        if ($this->is_only_use_s3) {
             $infos['imageurl'] = $this->replace_url($infos['imageurl']);
             $infos['imagehtml'] = '<img src="' . $infos['imageurl'] . '" alt="' . get_text(
                     $it['it_name']
                 ) . '" id="largeimage_' . $index . '" class="aws_s3_image">';
-        } else {
-            if ($it['it_img' . $index] && isset($extra_infos['img' . $index]) && $extra_infos['img' . $index] && $this->url_validate(
-                    $extra_infos['img' . $index]
-                )) {
-                $infos['imageurl'] = $extra_infos['img' . $index];
-                $infos['imagehtml'] = '<img src="' . $extra_infos['img' . $index] . '" alt="' . get_text(
-                        $it['it_name']
-                    ) . '" id="largeimage_' . $index . '" class="aws_s3_image">';
-            }
-        }
-
         return $infos;
     }
 
@@ -793,8 +774,8 @@ class S3Service
         $img_alt = '',
         $is_crop = false
     ) {
-//        if ($thumb && !$this->is_only_use_s3) {
-//            // 'is_only_use_s3' 값이 false 이고 && 내 서버 공간에 썸네일이 존재한다면 aws s3에서 조회하지 않고 내 서버 파일의 썸네일을 리턴
+//       if ($thumb && !$this->is_only_use_s3) {
+//            // 내 서버 공간에 썸네일이 존재한다면 aws s3에서 조회하지 않고 내 서버 파일의 썸네일을 리턴
 //            return $img;
 //        }
 
@@ -1032,8 +1013,8 @@ class S3Service
                                     'Bucket' => $this->bucket_name,
                                     'Key' => $thumb_key,
                                     'Body' => fopen($thumb_path, 'rb'),
-                                    'ACL' => $this->set_file_acl($thumb_key),
                                     'ContentType' => $upload_mime,
+                                    'ACL' => $this->set_file_acl($thumb_key)
                                 ]);
 
                                 $thumb_object_url = $thumb_result['ObjectURL'];
@@ -1122,17 +1103,7 @@ class S3Service
                 $fileurl
             );
 
-        if ($this->is_only_use_s3) {
-            return $aws_image_url;
-        }
-
-        $filepath = str_replace(G5_DATA_URL, G5_DATA_PATH, $fileurl);
-
-        if ($this->exists_view_image(1, $filepath, '')) {
-            return $aws_image_url;
-        }
-
-        return $fileurl;
+        return $aws_image_url;
     }
 
     /**
@@ -1156,7 +1127,7 @@ class S3Service
                     'Bucket' => $this->bucket_name,
                     'Key' => $copy_key,
                     'CopySource' => $this->bucket_name . '/' . $ori_key,
-                    'ACL' => $this->set_file_acl($this->bucket_name . '/' . $ori_key),
+                    'ACL' => $this->set_file_acl($this->bucket_name . '/' . $ori_key)
                 ]);
 
                 if (isset($result['ObjectURL']) && $result['ObjectURL']) {
@@ -1177,7 +1148,7 @@ class S3Service
                             'Bucket' => $this->bucket_name,
                             'Key' => $copy_thumb_key,
                             'CopySource' => $this->bucket_name . '/' . $ori_thumb_key,
-                            'ACL' => $this->set_file_acl($this->bucket_name . '/' . $ori_thumb_key),
+                            'ACL' => $this->set_file_acl($this->bucket_name . '/' . $ori_thumb_key)
                         ]);
 
                         if (isset($result2['ObjectURL']) && $result2['ObjectURL']) {
@@ -1186,16 +1157,6 @@ class S3Service
                     }
                 }
             }
-            /* TODO delete
-            $parses = parse_url($files['bf_fileurl']);
-
-            if( stripos($parses['host'], $this->bucket_name.'.s3.') !== false && stripos($parses['host'], 'amazonaws.com') !== false ){
-                $file_key = preg_replace('/^\/(\/)?/', '', $parses['path']);
-
-                $files['bf_fileurl'] = '';
-                $files['bf_thumburl'] = '';
-            }
-            */
         }
 
         return $files;
@@ -1212,8 +1173,6 @@ class S3Service
 
         return $bool;
     }
-
-    // https://stackoverflow.com/questions/41189477/preg-replace-image-src-using-callback
 
     /**
      * wr_content 등 '에디터' 내용에서 내 도메인 이미지 url 을 aws s3 https 로 변환
@@ -1261,7 +1220,7 @@ class S3Service
             $filepath = str_replace(G5_URL, '', $file_array['path'] . '/' . $file_array['file']);
 
             // 내 서버에 해당 파일이 있으면 리턴
-            if (!$this->is_only_use_s3 && file_exists($filepath)) {
+            if (file_exists($filepath)) {
                 return $file_array;
             }
 
@@ -1316,8 +1275,8 @@ class S3Service
                                 'Bucket' => $this->bucket_name,
                                 'Key' => $thumb_key,
                                 'Body' => fopen($thumb_path_file, 'rb'),
-                                'ACL' => $this->set_file_acl($thumb_key),
                                 'ContentType' => $upload_mime,
+                                'ACL' => $this->set_file_acl($thumb_key)
                             ]);
 
                             // 썸네일 파일을 aws s3에 성공적으로 업로드 했다면, 호스팅 공간에서 삭제합니다.
@@ -1566,17 +1525,10 @@ class S3Service
     {
         if ($args['bf_fileurl'] && stripos($args['bf_storage'], 'aws_s3') !== false && $this->s3_client()) {
             $keyname = G5_DATA_DIR . '/file/' . $args['bo_table'] . '/' . $args['bf_file'];
-
-            $this->delete_object([
-                'Bucket' => $this->bucket_name,
-                'Key' => $keyname
-            ]);
+            $this->delete_object($keyname);
 
             if ($args['bf_thumburl']) {
-                $this->delete_object([
-                    'Bucket' => $this->bucket_name,
-                    'Key' => $this->fileurl_replace_key($args['bf_thumburl']),
-                ]);
+                $this->delete_object($this->fileurl_replace_key($args['bf_thumburl']));
             }
         }
 
@@ -1626,10 +1578,7 @@ class S3Service
                     $filename = $this->get_url_filename('', @parse_url($info));
                     $file_key = G5_DATA_DIR . '/' . $this->shop_folder . '/' . $it_id . '/' . $filename;
 
-                    $this->delete_object([
-                        'Bucket' => $this->bucket_name,
-                        'Key' => $file_key
-                    ]);
+                    $this->delete_object($file_key);
                 }
             }
         }
@@ -1681,8 +1630,8 @@ class S3Service
             'Bucket' => $this->bucket_name,
             'Key' => $file_key,
             'Body' => fopen($file_path, 'rb'),
-            'ACL' => $this->set_file_acl($file_key),
             'ContentType' => $upload_mime,
+            'ACL' => $this->set_file_acl($file_key)
         ]);
 
         if (strpos($fileurl, 'thumb-') !== false) {
@@ -1694,8 +1643,8 @@ class S3Service
                 'Bucket' => $this->bucket_name,
                 'Key' => $ori_file_key,
                 'Body' => fopen($ori_file_path, 'rb'),
-                'ACL' => $this->set_file_acl($ori_file_key),
                 'ContentType' => $upload_mime,
+                'ACL' => $this->set_file_acl($ori_file_key)
             ]);
 
             $this->file_delete($ori_file_path);
@@ -1752,10 +1701,7 @@ class S3Service
         if (!$is_success && stripos($file_path, G5_DATA_PATH) === 0) {
             $keyname = $this->fileurl_replace_key($file_path);
 
-            $result = $this->delete_object([
-                'Bucket' => $this->bucket_name,
-                'Key' => $keyname
-            ]);
+            $result = $this->delete_object($keyname);
         }
     }
 
@@ -1772,10 +1718,7 @@ class S3Service
             $imgname = $img_url[1];
             $filename = $editor_path . $imgname;
 
-            $this->delete_object([
-                'Bucket' => $this->bucket_name,
-                'Key' => $filename
-            ]);
+            $this->delete_object($filename);
         }
     }
 
@@ -1827,10 +1770,7 @@ EOD;
     {
         if (!$file_exist_check) {
             $file_key = G5_DATA_DIR . '/file/' . $fileinfo['bo_table'] . '/' . basename($fileinfo['bf_fileurl']);
-            $result = $this->get_object([
-                'Bucket' => $this->bucket_name,
-                'Key' => $file_key
-            ]);
+            $result = $this->get_object($file_key);
 
             $original_name = urlencode($fileinfo['bf_source']);
 
@@ -1873,8 +1813,8 @@ EOD;
             'Bucket' => $this->bucket_name,
             'Key' => $file_key,
             'Body' => fopen($filepath, 'rb'),
-            'ACL' => $this->set_file_acl($file_key),
             'ContentType' => $upload_mime,
+            'ACL' => $this->set_file_acl($file_key)
         ]);
 
         // 이미지 파일이면 TODO 이미지 파일 확인
@@ -1887,7 +1827,7 @@ EOD;
                 // jpg 이면 exif 체크
                 if ($size[2] == 2 && function_exists('exif_read_data')) {
                     $degree = 0;
-                    $exif = @exif_read_data($upload_file);
+                    $exif = @exif_read_data($filepath);
                     if (!empty($exif['Orientation'])) {
                         switch ($exif['Orientation']) {
                             case 8:
@@ -1930,8 +1870,8 @@ EOD;
                         'Bucket' => $this->bucket_name,
                         'Key' => $thumb_key,
                         'Body' => fopen($thumb_path . '/' . $thumb_file, 'rb'),
-                        'ACL' => $this->set_file_acl($thumb_key),
                         'ContentType' => $upload_mime,
+                        'ACL' => $this->set_file_acl($thumb_key)
                     ]);
 
                     //썸네일 파일을 aws s3에 성공적으로 업로드 했다면, 호스팅 공간에서 삭제합니다.
@@ -1971,10 +1911,7 @@ EOD;
         $files = $files['Contents'];
         foreach ($files as $file) {
             if (strpos($file['Key'], 'thumb-') !== false) {
-                $this->delete_object([
-                    'Bucket' => $this->bucket_name,
-                    'Key' => $file['Key']
-                ]);
+                $this->delete_object($file['Key']);
             }
         }
     }
