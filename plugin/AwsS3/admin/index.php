@@ -46,7 +46,7 @@ $sql = "select * from $table_name";
 
 if ($row = sql_fetch($sql, false)) {
     $admin_aws_config['is_only_use_s3'] = $row['is_only_use_s3'];
-    $admin_aws_config['access_control_list'] = $row['acl_default_value'];
+    $admin_aws_config['access_control_list'] = $row['acl_value'];
 }
 
 $all_region = get_aws_regions();
@@ -88,7 +88,7 @@ if (isset($_POST['save']) && ($_POST['save'] === 'status') && !empty($_POST['tok
         if (function_exists('mysqli_query') && G5_MYSQLI_USE) {
             //쿼리 바인딩
             $sql_common = "
-				SET acl_default_value = ?,
+				SET acl_value = ?,
 				is_only_use_s3 = ?
 				";
 
@@ -103,7 +103,7 @@ if (isset($_POST['save']) && ($_POST['save'] === 'status') && !empty($_POST['tok
                 alert('저장되었습니다.');
             } else {
                 //동일한 데이터가 들어올 경우는 직접체크
-                $sql = "select count(*) from $table_name  where acl_default_value = ? and is_only_use_s3 = ?";
+                $sql = "select count(*) from $table_name  where acl_value = ? and is_only_use_s3 = ?";
                 $res = sql_bind_query($sql, array('si', $access_control_list, $is_only_use_s3));
                 $res->bind_result($count);
                 while ($res->fetch()) {
@@ -118,7 +118,7 @@ if (isset($_POST['save']) && ($_POST['save'] === 'status') && !empty($_POST['tok
         } else {
             //mysqli 안쓰는 경우
             $sql_common = "
-				SET acl_default_value = '{$access_control_list}',
+				SET acl_value = '{$access_control_list}',
 				is_only_use_s3 = '{$is_only_use_s3}' ";
             if ($row_count) {
                 $sql = "UPDATE $table_name $sql_common ";

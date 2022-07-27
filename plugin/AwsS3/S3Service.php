@@ -36,7 +36,7 @@ class S3Service
      * S3 ACL 사용시 개별 파일의 기본 ACL(access control list) 상태값
      * set_file_acl() 에서 설정.
      */
-    private $acl_default_value = 'private';
+    private $acl_value = 'private';
 
     /**
      * @var bool
@@ -112,7 +112,7 @@ class S3Service
         } else {
             $sql = "select * from $table_name";
             $result = sql_fetch($sql, false);
-            $this->acl_default_value = $result['acl_default_value'];
+            $this->acl_value = $result['acl_value'];
             $this->is_only_use_s3 = $result['is_only_use_s3'] == '1';
         }
     }
@@ -121,12 +121,12 @@ class S3Service
     {
         $sql = get_db_create_replace(
             "CREATE TABLE IF NOT EXISTS `$table_name` (
-				  `acl_default_value` varchar(50) NOT NULL DEFAULT 'private',
+				  `acl_value` varchar(50) NOT NULL DEFAULT 'private',
 				  `is_only_use_s3` tinyint(4) NOT NULL DEFAULT '1'
 				) ENGINE=InnoDB DEFAULT CHARSET=utf8;"
         );
         sql_query($sql, false);
-        $sql = "INSERT INTO $table_name (`acl_default_value`, `is_only_use_s3`) VALUES ('private' ,0)";
+        $sql = "INSERT INTO $table_name (`acl_value`, `is_only_use_s3`) VALUES ('private' ,0)";
         sql_query($sql);
     }
 
@@ -472,7 +472,7 @@ class S3Service
     {
         // https://docs.aws.amazon.com/ko_kr/AmazonS3/latest/dev/acl-overview.html
 
-        if ($this->acl_default_value === 'public-read') {
+        if ($this->acl_value === 'public-read') {
             return 'public-read';
         }
 
