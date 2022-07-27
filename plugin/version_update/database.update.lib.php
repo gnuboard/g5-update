@@ -123,7 +123,8 @@ class G5Migration
         // 실행 스크립트 배열
         $excuteList = array();
         // 버전 실행목록 (현재 버전까지 필터링)
-        $versionList = G5MigrationVersion::getExecuteVersionList();
+        $versionClass = new G5Version(); 
+        $versionList = $versionClass->getExecuteVersionList();
         // 마이그레이션 파일 리스트 조회
         $scriptList = $this->getMigrationScriptList();
         

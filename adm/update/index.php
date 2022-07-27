@@ -163,7 +163,7 @@ foreach ($contentUrl as $key => $url) {
                     }
                 },
                 error: function(request, status, error) {
-                    alert("code:" + request.status + "\n" + "message:" + request.responseText + "\n" + "error:" + error);
+                    alert("code : " + request.status + "\n" + "message : " + request.responseText + "\n" + "error : " + error);
                 },
                 complete: function() {
                     inAjax = false;
@@ -200,7 +200,7 @@ foreach ($contentUrl as $key => $url) {
                     $(".update_btn_area").html("<button type=\"submit\" class=\"btn btn_submit\" style=\"height:35px\">지금 업데이트</button>");
                 },
                 error: function(request, status, error) {
-                    alert("code:" + request.status + "\n" + "message:" + request.responseText + "\n" + "error:" + error);
+                    alert("code : " + request.status + "\n" + "message : " + request.responseText + "\n" + "error : " + error);
                     $(".update_btn_area").html("");
                 },
                 complete: function() {
@@ -242,7 +242,7 @@ foreach ($contentUrl as $key => $url) {
                     f.submit();
                 },
                 error: function(request, status, error) {
-                    alert("code:" + request.status + "\n" + "message:" + request.responseText + "\n" + "error:" + error);
+                    alert("code : " + request.status + "\n" + "message : " + request.responseText + "\n" + "error : " + error);
                 },
                 complete: function() {
                     inAjax = false;

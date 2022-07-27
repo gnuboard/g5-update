@@ -15,7 +15,7 @@ $g5['update']->connect($_SERVER['HTTP_HOST'], $port, $username, $userPassword);
 // 목표버전 설정
 $g5['update']->setTargetVersion($targetVersion);
 // 비교파일 목록 조회
-$g5['update']->getVersionCompareList();
+$compare_list = $g5['update']->getVersionCompareList();
 // 업데이트 버전 다운로드
 $g5['update']->downloadVersion($targetVersion);
 ?>

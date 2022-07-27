@@ -291,10 +291,14 @@ class G5Update
             }
 
             //.htaccess 파일 생성
-            if (!file_exists($this->dir_update . "/.htaccess")) {
-                $fp = fopen($this->dir_update . "/.htaccess", 'w+');
+            $content = "Deny from all";
+            $dir_htacc = $this->dir_update . "/.htaccess";
+            $fileContent = file_get_contents($dir_htacc);
+
+            if (!file_exists($dir_htacc) || $content != (string)$fileContent) {
+                $fp = fopen($dir_htacc, 'w+');
                 if ($fp) {
-                    fwrite($fp, "Deny from all");
+                    fwrite($fp, $content);
                     fclose($fp);
                 } else {
                     throw new Exception(".htaccess 파일생성에 실패했습니다.");
@@ -391,45 +395,50 @@ class G5Update
     /**
      * 버전목록 조회
      * @brief github > releases정보 중에 tag_name만 배열로 만들어 리턴한다.
-     * @return array<mixed>|bool 버전 목록
+     * @return array<mixed>
      */
     public function getVersionList()
     {
-        if (empty($this->version_list)) {
-            $result = G5GithubApi::getVersionData(40);
-            
-            if ($result == false) {
-                return false;
+        try {
+            if (empty($this->version_list)) {
+                $versionClass = new G5Version();
+                $this->version_list = $versionClass->getVersionListByFile();
             }
 
-            foreach ($result as $key => $var) {
-                if (!isset($var->tag_name)) {
-                    continue;
-                }
-
-                $this->version_list[] = $var->tag_name;
-            }
-            // latest_version 변수선언 추가 (중복 요청 방지)
-            if (isset($this->version_list[0])) {
-                $this->latest_version = $this->version_list[0];
-            }
+            return $this->version_list;
+        } catch (Exception $e) {
+            $this->setError($e);
         }
+    }
 
-        return $this->version_list;
+    /**
+     * 최신버전 조회
+     * @brief 버전목록 중 첫번째 인덱스 값을 조회한다.
+     * @return string
+     */
+    public function getLatestVersion()
+    {
+        try {
+            if (empty($this->latest_version)) {
+                $versionClass = new G5Version();
+                $this->latest_version = $versionClass->getLatestVersionByFile();
+            }
+
+            return $this->latest_version;
+        } catch (Exception $e) {
+            $this->setError($e);
+        }
     }
 
     /**
      * 버전에서 수정된 내용 조회
      * @brief 지정된 태그로 게시된 release를 가져온다.
-     * @param string $tag github 태그
+     * @param  string $tag Github tag(version)
      * @return mixed release
      */
     public function getVersionModifyContent($tag = null)
     {
         $result = G5GithubApi::getModifyData($tag);
-        if ($result == false) {
-            return false;
-        }
 
         return $result->body;
     }
@@ -1057,68 +1066,70 @@ class G5Update
      */
     public function downloadVersion($version = null)
     {
-        if ($version == null) {
-            throw new Exception('다운로드 버전이 설정되지 않았습니다.');
-        }
-        if ($this->conn == false) {
-            throw new Exception("통신이 연결되지 않았습니다.");
-        }
-
-        umask(0002);
-
-        $exe            = $this->os == "WINNT" ? "tar" : "zip";
-        $archiveFile    = $this->dir_version . "/gnuboard." . $exe;
-        
-        $zip = fopen($archiveFile, 'w+');
-        if ($zip == false) {
-            throw new Exception('압축파일 생성에 실패했습니다.');
-        }
-
-        $result = G5GithubApi::getArchiveData($exe, $version);
-        // $this->getApiCurlResult($exe, $version);
-        if ($result == false) {
-            throw new Exception($version . '버전 다운로드 통신이 실패했습니다.');
-        }
-        $file_result = @fwrite($zip, (string)$result);
-        if ($file_result == false) {
-            throw new Exception('압축파일 생성에 실패했습니다.');
-        }
-
-        // 시스템명령어 구분
-        if ($this->os == "WINNT") {
-            $window_dir_version = $this->window_dir_update . "\\version";
-            $versionDir         = $window_dir_version . '\\' . $version;
-            $escapeVersionDir   = escapeshellarg($versionDir);
-
-            exec("rd /s /q " . $escapeVersionDir);
-            exec("tar -zxf " . escapeshellarg($window_dir_version . "\\gnuboard." . $exe) . " -C " . escapeshellarg($window_dir_version), $output, $result_code);
-            if ($result_code != 0) {
-                throw new Exception("압축해제에 실패했습니다.");
+        try {
+            if ($version == null) {
+                throw new Exception('다운로드 버전이 설정되지 않았습니다.');
             }
-            exec("move " . escapeshellarg($window_dir_version . "\\gnuboard-*") . " " . $escapeVersionDir, $output, $result_code);
-            if ($result_code != 0) {
-                throw new Exception("압축파일 이동에 실패했습니다.");
+            if ($this->conn == false) {
+                throw new Exception("통신이 연결되지 않았습니다.");
             }
-            exec('del /q ' .escapeshellarg($window_dir_version . "\\gnuboard." . $exe));
-
-        } else {
-            $versionDir         = $this->dir_version . '/' . $version;
-            $escapeVersionDir   = escapeshellarg($versionDir);
-
-            exec('rm -rf ' . $escapeVersionDir);
-            $result = exec('unzip ' . escapeshellarg($archiveFile) . ' -d ' . $escapeVersionDir);
-            if (!$result) {
-                throw new Exception("압축해제에 실패했습니다.");
+    
+            umask(0002);
+    
+            $exe            = $this->os == "WINNT" ? "tar" : "zip";
+            $archiveFile    = $this->dir_version . "/gnuboard." . $exe;
+            
+            $zip = fopen($archiveFile, 'w+');
+            if ($zip == false) {
+                throw new Exception('압축파일 생성에 실패했습니다.');
             }
-            $result = exec('mv -f ' . escapeshellarg($versionDir . '/gnuboard-') . '*/* ' . $escapeVersionDir);
-            if (!$result) {
-                throw new Exception("압축파일 이동에 실패했습니다.");
+    
+            $result = G5GithubApi::getArchiveData($exe, $version);
+    
+            $file_result = @fwrite($zip, (string)$result);
+            if ($file_result == false) {
+                throw new Exception('압축파일 생성에 실패했습니다.');
             }
-            exec('rm -rf ' . escapeshellarg($versionDir . '/gnuboard-*/'));
-            exec('rm -rf ' . escapeshellarg($archiveFile));
-        }   
+    
+            // 시스템명령어 구분
+            if ($this->os == "WINNT") {
+                $window_dir_version = $this->window_dir_update . "\\version";
+                $versionDir         = $window_dir_version . '\\' . $version;
+                $escapeVersionDir   = escapeshellarg($versionDir);
+    
+                exec("rd /s /q " . $escapeVersionDir);
+                exec("tar -zxf " . escapeshellarg($window_dir_version . "\\gnuboard." . $exe) . " -C " . escapeshellarg($window_dir_version), $output, $result_code);
+                if ($result_code != 0) {
+                    throw new Exception("압축해제에 실패했습니다.");
+                }
+                exec("move " . escapeshellarg($window_dir_version . "\\gnuboard-*") . " " . $escapeVersionDir, $output, $result_code);
+                if ($result_code != 0) {
+                    throw new Exception("압축파일 이동에 실패했습니다. code : " . $result_code);
+                }
+                exec('del /q ' .escapeshellarg($window_dir_version . "\\gnuboard." . $exe));
+    
+            } else {
+                $versionDir         = $this->dir_version . '/' . $version;
+                $escapeVersionDir   = escapeshellarg($versionDir);
+    
+                exec('rm -rf ' . $escapeVersionDir);
+                $result = exec('unzip ' . escapeshellarg($archiveFile) . ' -d ' . $escapeVersionDir);
+                if (!$result) {
+                    throw new Exception("압축해제에 실패했습니다.");
+                }
+                exec('mv -f ' . escapeshellarg($versionDir . '/gnuboard-') . '*/* ' . $escapeVersionDir, $output, $result_code);
+                if ($result_code != 0) {
+                    throw new Exception("압축파일 이동에 실패했습니다. code : " . $result_code);
+                }
+                exec('rm -rf ' . escapeshellarg($versionDir . '/gnuboard-') . '*/');
+                exec('rm -rf ' . escapeshellarg($archiveFile));
+            }   
+    
+            umask(0022);
 
-        umask(0022);
+        } catch (Exception $e) {
+            $this->setError($e);
+        }
     }
 
     /**
@@ -1130,39 +1141,44 @@ class G5Update
      */
     public function checkSameVersionComparison($list = null)
     {
-        if ($this->now_version == null) {
-            throw new Exception('현재 버전이 설정되지 않았습니다.');
-        }
-        if ($list == null) {
-            throw new Exception('업데이트 파일목록이 전달되지 않았습니다.');
-        }
-        
-        $this->downloadVersion($this->now_version);
-
-        $check = array();
-        $check['type'] = 'Y';
-
-        foreach ($list as $key => $var) {
-            $now_file_path = G5_PATH . '/' . $var;
-            $release_file_path = $this->dir_version . '/' . $this->now_version . '/' . $var;
-
-            if (!file_exists($now_file_path)) {
-                continue;
+        try {
+            if ($this->now_version == null) {
+                throw new Exception('현재 버전이 설정되지 않았습니다.');
             }
-            if (!file_exists($release_file_path)) {
-                continue;
+            if ($list == null) {
+                throw new Exception('업데이트 파일목록이 전달되지 않았습니다.');
             }
-
-            $now_content = preg_replace('/\r\n|\r|\n/', '', (string)file_get_contents($now_file_path, true));
-            $release_content = preg_replace('/\r\n|\r|\n/', '', (string)file_get_contents($release_file_path, true));
-
-            if ($now_content !== $release_content) {
-                $check['type'] = 'N';
-                $check['item'][] = $var;
+            
+            $this->downloadVersion($this->now_version);
+    
+            $check = array();
+            $check['type'] = 'Y';
+    
+            foreach ($list as $key => $var) {
+                $now_file_path = G5_PATH . '/' . $var;
+                $release_file_path = $this->dir_version . '/' . $this->now_version . '/' . $var;
+    
+                if (!file_exists($now_file_path)) {
+                    continue;
+                }
+                if (!file_exists($release_file_path)) {
+                    continue;
+                }
+    
+                $now_content = preg_replace('/\r\n|\r|\n/', '', (string)file_get_contents($now_file_path, true));
+                $release_content = preg_replace('/\r\n|\r|\n/', '', (string)file_get_contents($release_file_path, true));
+    
+                if ($now_content !== $release_content) {
+                    $check['type'] = 'N';
+                    $check['item'][] = $var;
+                }
             }
+    
+            return $check;
+
+        } catch (Exception $e) {
+            $this->setError($e);
         }
-
-        return $check;
     }
 
     /**
@@ -1215,31 +1231,6 @@ class G5Update
 
         return $check;
     }
-    
-    /**
-     * 최신버전 조회
-     * @brief 버전목록 중 첫번째 인덱스 값을 조회한다.
-     * @return string|bool 최신버전
-     */
-    public function getLatestVersion()
-    {
-        if ($this->latest_version == null) {
-            $result = $this->getVersionList();
-
-            if ($result == false) {
-                return false;
-            }
-
-            foreach ((array)$result as $key => $val) {
-                if ($key == 0) {
-                    $this->latest_version = $val;
-                    break;
-                }
-            }
-        }
-
-        return $this->latest_version;
-    }
 
     /**
      * 비교파일 목록 조회
@@ -1256,8 +1247,8 @@ class G5Update
             if ($this->now_version == $this->target_version) {
                 throw new Exception("동일버전으로는 업데이트가 불가능합니다.");
             }
-            $version_list = $this->getVersionList();
-            if ($version_list == false) {
+            $version_list = G5Version::getVersionListByFile();
+            if (empty($version_list)) {
                 throw new Exception("버전목록 조회가 실패했습니다.");
             }
 
@@ -1267,14 +1258,8 @@ class G5Update
 
             if ($now_version_num > $target_version_num) {
                 $result = G5GithubApi::getCompareData($this->now_version, $this->target_version);
-                // $result = $this->getApiCurlResult("compare", $this->now_version, $this->target_version);
             } else {
                 $result = G5GithubApi::getCompareData($this->target_version, $this->now_version);
-                // $result = $this->getApiCurlResult("compare", $this->target_version, $this->now_version);
-            }
-
-            if ($result == false) {
-                throw new Exception("비교리스트확인 통신에 실패했습니다.");
             }
             
             foreach ($result->files as $var) {

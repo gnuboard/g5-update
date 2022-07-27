@@ -2,161 +2,187 @@
 
 /**
  * 그누보드 버전 Class
- * @todo 
- * 1. VERSION_LIST_PATH 경로 설정 
- * 2. version.json 파일 권한으로 인해 덮어쓰기 불가
- * 3. github api를 별도 class로 분리해서 사용 => 버전 업데이트에도 쓰임.
- * 
+ *
+ * @todo
  */
-class G5MigrationVersion extends G5Migration
+class G5Version
 {
-    public $latestVersion;
+    public static $latestVersion = null;
     public static $versionList = array();
 
-    private const VERSION_LIST_PATH  = G5_DATA_PATH  . "/version.json"; // 임시경로
+    private const VERSION_LIST_PATH  = G5_DATA_PATH  . "/update/version.json";
 
     public function __construct()
     {
-        if (!$this->existFile() || $this->compareVersion() === 1) {
+        // Set $versionList, $latestVersion
+        $this->initLatestVersion();
+
+        if (!$this->existFile() || $this->compareVersion() !== 0) {
             $this->createFile();
-        } else {
-            self::$versionList = self::getVersionList();
         }
-    }
-    /**
-     * 현재버전과 파일 최신버전 비교
-     * @return int -1 or 0 or 1
-     */
-    public function compareVersion()
-    {
-        return version_compare(parent::CURRENT_VERSION, $this->getLastedVersionByFile());
     }
 
     /**
-     * 마지막버전 조회
-     * @return string
+     * 버전목록, 최신버전 조회 및 초기화
+     *
+     * @return void
      */
-    public function getLastedVersionByFile()
+    private function initLatestVersion()
     {
-        try {
-            $versionList = self::getVersionList();
-            if (!$versionList) {
-                throw new Exception("error");
+        $versionList = array();
+        $versionData = G5GithubApi::getVersionData();
+        foreach ($versionData as $data) {
+            if (!isset($data->tag_name)) {
+                continue;
             }
-            return end($versionList);
-        } catch (Exception $e) {
-            echo $e->getMessage();
+            $versionList[] = $data->tag_name;
+        }
+
+        $this->setVersionList($versionList);
+        if (isset($versionList[0])) {
+            $this->setLatestVersion($this->versionList[0]);
         }
     }
 
     /**
      * version file 유무 체크
+     *
      * @return bool
      */
     private function existFile()
     {
-        $filepath = self::VERSION_LIST_PATH;
-        if (empty($filepath) || !file_exists($filepath)) {
-            return false;
-        } else {
+        if (file_exists(self::VERSION_LIST_PATH)) {
             return true;
+        } else {
+            return false;
         }
     }
 
     /**
-     * version file 생성
+     * 현재버전과 파일 최신버전 비교
+     *
+     * @return int -1 or 0 or 1
+     */
+    private function compareVersion()
+    {
+        return version_compare(G5Migration::CURRENT_VERSION, $this->getLatestVersion());
+    }
+
+    /**
+     * version 파일 생성
+     *
      * @return void
      */
     private function createFile()
     {
         try {
+            if (empty($this->getVersionList())) {
+                throw new Exception('버전정보가 없습니다.');
+            }
             $filePoint = fopen(self::VERSION_LIST_PATH, 'w+');
             if ($filePoint == false) {
                 throw new Exception('버전파일 생성에 실패했습니다.');
             }
-
-            $versionList = $this->getLatestVersionList();
-
-            fwrite($filePoint, json_encode($versionList));
+            fwrite($filePoint, (string)json_encode($this->getVersionList()));
             fclose($filePoint);
-
-            self::$versionList = $versionList;
-
-        } catch(Exception $e) {
-            echo $e->getMessage();
-        }
-    }
-
-    /**
-     * 버전목록 조회
-     * @breif upgrade : 낮은버전 -> 높은버전으로 진행해야 Table 및 Column이 정상적인 흐름으로 변경이 됨.
-     * 
-     */
-    public function getLatestVersionList()
-    {
-        try {
-            $result = G5GithubApi::getVersionData();
-            
-            if ($result == false) {
-                return false;
-            }
-            foreach ($result as $var) {
-                if (!isset($var->tag_name)) {
-                    continue;
-                }
-    
-                $this->versionList[] = $var->tag_name;
-            }
-            if (isset($this->versionList[0])) {
-                $this->latestVersion = $this->versionList[0];
-            }
-            // 내림차순
-            return array_reverse($this->versionList);
         } catch (Exception $e) {
             echo $e->getMessage();
         }
     }
-    
+
     /**
      * json file => php array data
+     *
+     * @return mixed
      */
     public static function convertVersionFile()
     {
-        return json_decode(file_get_contents(self::VERSION_LIST_PATH), true);
+        return json_decode((string)file_get_contents(self::VERSION_LIST_PATH), true);
     }
 
     /**
      * 실행할 버전 목록 조회
+     *
+     * @return array<int, string>
      */
     public static function getExecuteVersionList()
     {
         $list = array();
-        $versionList = self::getVersionList();
+        $versionList = self::getVersionListByFile();
 
         if (!is_array($versionList)) {
             throw new Exception("전체 버전목록이 없습니다");
         }
 
-        foreach ($versionList as $version) {
-            if (version_compare($version, parent::CURRENT_VERSION) <= 0) {
+        foreach ((array)$versionList as $version) {
+            if (version_compare($version, G5Migration::CURRENT_VERSION) <= 0) {
                 $list[] = $version;
             }
         }
         return $list;
     }
 
+    /**
+     * Set versionList
+     *
+     * @param  array<int,string> $versionList
+     * @return void
+     */
     public function setVersionList($versionList)
     {
         self::$versionList = $versionList;
     }
-
+    /**
+     * Get versionList
+     *
+     * @return array<int,string> $versionList
+     */
     public static function getVersionList()
+    {
+        return self::$versionList;
+    }
+    /**
+     * VERSION_LIST_PATH 파일에서 최신버전목록 조회
+     *
+     * @return array<int,string>
+     */
+    public static function getVersionListByFile()
     {
         if (empty(self::$versionList)) {
             self::$versionList = self::convertVersionFile();
         }
         return self::$versionList;
     }
-
-    
+    /**
+     * Get latestVersion
+     *
+     * @return string
+     */
+    public static function getLatestVersion()
+    {
+        return self::$latestVersion;
+    }
+    /**
+     * Set latestVersion
+     *
+     * @param  string $version
+     * @return void
+     */
+    public function setLatestVersion($version)
+    {
+        $this->latestVersion = $version;
+    }
+    /**
+     * VERSION_LIST_PATH 파일에서 최신버전 조회
+     *
+     * @return string
+     */
+    public static function getLatestVersionByFile()
+    {
+        if (empty(self::$latestVersion)) {
+            $versionList = (array)self::convertVersionFile();
+            self::$latestVersion = $versionList[0];
+        }
+        return self::$latestVersion;
+    }
 }

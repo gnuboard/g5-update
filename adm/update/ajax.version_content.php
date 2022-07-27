@@ -11,9 +11,6 @@ try {
     }
 
     $result = $g5['update']->getVersionModifyContent($version);
-    if ($result == false) {
-        throw new Exception("정보를 찾을 수 없습니다.");
-    }
 
     preg_match_all('/(?:(?:https?|ftp):)?\/\/[a-z0-9+&@#\/%?=~_|!:,.;]*[a-z0-9+&@#\/%=~_|]/i', $result, $match);
 
