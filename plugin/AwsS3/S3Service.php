@@ -344,7 +344,7 @@ class S3Service
 
         // bbs/view_image.php 사용됨
         add_replace('exists_view_image', [$this, 'exists_view_image'], 1, 3);
-        add_replace('get_view_imagesize', [$this, 'get_external_storage_imagesize'], 2, 3);
+        add_replace('get_view_imagesize', [$this, 'set_external_storage_imagesize'], 2, 3);
 
         // 게시물 복사 또는 옮기기 bbs/move_update.php 에서 사용됨
         add_replace('bbs_move_update_file', [$this, 'bbs_move_update_file'], 1, 5);
@@ -1757,12 +1757,12 @@ class S3Service
      * @param $files
      * @param string $server_filepath 웹서버의 파일 경로
      * @param $editor_file
-     * @return array|false
+     * @return array
      */
-    public function get_external_storage_imagesize($files, $server_filepath, $editor_file)
+    public function set_external_storage_imagesize($files, $server_filepath, $editor_file)
     {
-        $file_key = G5_DATA_DIR . str_replace(G5_DATA_PATH, '', $server_filepath);
-        return getimagesize("s3://{$this->bucket_name}/$file_key");
+        //서버 랜더링이라 네트워크 과정에서 느려져서 임의로 크기설정
+        return array(1 => '800', 2 => '900');
     }
 
     /**
