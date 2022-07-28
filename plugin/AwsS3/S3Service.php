@@ -218,6 +218,16 @@ class S3Service
         return 'application/octet-stream';
     }
 
+    /**
+     * S3 등 외부저장소에 업로드할때 필요한 에디터 경로 설정
+     * 데이터폴더이름 + 에디터 + 날짜 + /
+     * @return string
+     */
+    private function get_editor_path(){
+        $ym = date('ym', G5_SERVER_TIME);
+        return  G5_DATA_DIR.'/'. G5_EDITOR_DIR .'/'.$ym.'/';
+    }
+
     public function s3_client()
     {
         if ($this->s3_client === null) {
@@ -1687,8 +1697,9 @@ class S3Service
             //썸네일 업로드
             $ori_file_path = G5_DATA_PATH . '/' . G5_EDITOR_DIR . explode($editor_dir, $ori_file_path)[1];
             //썸네일
-            $thumb_file_key = $this->create_thumbnail($file_path);
-            $thumb_file_path = dirname($ori_file_path). '/' . $thumb_file_key;
+            $thumb_file_name = $this->create_thumbnail($file_path);
+            $thumb_file_path = dirname($ori_file_path). '/' . $thumb_file_name;
+            $thumb_file_key = $this->get_editor_path() . $thumb_file_name;
 
             $result = $this->put_object([
                 'Bucket' => $this->bucket_name,
