@@ -80,7 +80,7 @@ if (isset($_POST['save']) && ($_POST['save'] === 'status') && !empty($_POST['tok
             $access_control_list = 'private';
         }
 
-        $is_use_s3 = empty($is_use_s3) ? 0 : (int)strip_tags(get_text(trim((($_POST['is_use_s3'])))));
+        $is_use_s3 = empty($_POST['is_use_s3']) ? 0 : (int)strip_tags(get_text(trim((($_POST['is_use_s3'])))));
         if ($is_use_s3 !== 1) {
             $is_use_s3 = 0;
         }
