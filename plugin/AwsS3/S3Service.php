@@ -423,12 +423,12 @@ class S3Service
 
     /**
      * s3로 업로드
-     * @param array $args 기본 copy_obejct와 acl 제외하고 동일 acl사용은 관리자에서 설정
+     * @param array AWS SDK의 put_object에 ACL 여부만 추가 ACL사용은 관리자에서 설정
      * @return \Aws\Result
      */
     public function put_object($args)
     {
-        if($this->is_use_acl === true) {
+        if($this->is_use_acl == true) {
             $args['ACL'] = $this->set_file_acl($args['Key']);
         }
         return $this->s3_client()->putObject($args);
@@ -450,7 +450,7 @@ class S3Service
 
     /**
      * S3 파일 복사
-     * @param array $args 기본 copy_obejct와 acl 제외하고 동일 acl사용은 관리자에서 설정
+     * @param array $args AWS SDK의 copy_obejct에  ACL 여부만 추가 ACL사용은 관리자에서 설정
      * @return \Aws\Result
      */
     public function copy_object($args)
@@ -500,7 +500,7 @@ class S3Service
     }
 
     /**
-     * 외부저장소가 아닌 웹 서버에서 파일 삭제
+     * S3 등 외부저장소가 아닌 웹 서버 내부 파일 삭제
      * @param string $filepath 파일이름포함 전체경로
      * @return bool
      */
@@ -1734,7 +1734,7 @@ class S3Service
     }
 
     /**
-     * 외부 저장소 파일에서 이미지 크기 리턴
+     * 보여줄 이미지 크기 리턴
      * @param $files
      * @param string $server_filepath 웹서버의 파일 경로
      * @param $editor_file
