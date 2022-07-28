@@ -321,8 +321,8 @@ class S3Service
         add_replace('download_file_exist_check', [$this, 'file_exist_check'], 1, 2);
 
         // bbs/view_image.php 파일에서 쓰임
-        add_replace('get_editor_content_url', [$this, 'replace_aws_url'], 1, 1);
-        add_replace('get_file_board_url', [$this, 'replace_aws_url'], 1, 1);
+        add_replace('get_editor_content_url', [$this, 'replace_url'], 1, 1);
+        add_replace('get_file_board_url', [$this, 'replace_url'], 1, 1);
 
         // 썸네일 생성시 파일 체크함수
         add_replace('get_file_thumbnail_tags', [$this, 'get_thumbnail_tags'], 1, 2);
@@ -765,9 +765,8 @@ class S3Service
         }
         $extra_infos = json_decode($it[$this->extra_item_field], true);
 
-        if ($it['it_img' . $index] && isset($extra_infos['img' . $index]) && $extra_infos['img' . $index] && $this->url_validate(
-                $extra_infos['img' . $index]
-            )) {
+        if ($it["it_img{$index}"] && isset($extra_infos["img{$index}"]) && $extra_infos["img{$index}"]
+        ) {
             return true;
         }
 
@@ -818,11 +817,10 @@ class S3Service
         if(empty($it[$this->extra_item_field])){
             return $infos; //TODO
         }
-        $extra_infos = json_decode($it[$this->extra_item_field], true);
-            $infos['imageurl'] = $this->replace_url($infos['imageurl']);
-            $infos['imagehtml'] = '<img src="' . $infos['imageurl'] . '" alt="' . get_text(
-                    $it['it_name']
-                ) . '" id="largeimage_' . $index . '" class="aws_s3_image">';
+
+        $infos['imageurl'] = $this->replace_url($infos['imageurl']);
+        $image_alt = get_text($it['it_name']);
+        $infos['imagehtml'] = "<img src={$infos['imageurl']} alt=$image_alt id=largeimage_{$index}  class='aws_s3_image'>";
         return $infos;
     }
 
@@ -916,7 +914,7 @@ class S3Service
                         '/(\.gif|\.bmp)$/i',
                         $extra_infos['img' . $index]
                     )) {
-                    $str = '<img src="' . $extra_infos['img' . $index] . '" width="' . $width . '" height="' . $height . '" >';
+                    $str = "<img src='{$extra_infos['img{$index}']}' width={$width} height={$height} alt=''>";
                 }
             }
         }
@@ -1149,27 +1147,6 @@ class S3Service
     }
 
     /**
-     * TODO
-     * @param $fileurl
-     * @return mixed|string
-     */
-    public function replace_aws_url($fileurl)
-    {
-        if (stripos($fileurl, G5_DATA_URL) === false) {
-            return $fileurl;
-        }
-
-        // https://docs.aws.amazon.com/ko_kr/AmazonS3/latest/API/RESTBucketGET.html
-        $aws_image_url = $this->storage_host_name . str_replace(
-                G5_URL,
-                '',
-                $fileurl
-            );
-
-        return $aws_image_url;
-    }
-
-    /**
      * 게시물 복사 또는 옮기기 bbs/move_update.php 에서 사용됨
      * @param $files
      * @param $file_name
@@ -1257,19 +1234,26 @@ class S3Service
     }
 
     /**
+     * AWS 및 CDN 으로 URL 변경
      * @param $matches
      * @return array|string|string[]
      */
     public function replace_url($matches)
     {
         $replace_url = $this->storage_host_name . '/' . G5_DATA_DIR;
+        $storage_url = "https://{$this->bucket_name}.s3.amazonaws.com" . '/' . G5_DATA_DIR;
 
-        if (is_array($matches)) {
-            $matches[2] = str_replace(G5_DATA_URL, $replace_url, $matches[2]);
+        if (is_array($matches)) {  //에디터 등
+            if(strpos($matches[0], $storage_url ) !== false){ //cdn 으로 주소가 변경되었을 경우 기존 s3 등 저장소 주소를 변경.
+                return str_replace($storage_url, $replace_url, $matches[0]);
+            }
 
-            return $matches[1] . $matches[2];
+            return str_replace(G5_DATA_URL, $replace_url, $matches[0]); //cdn 안쓸때.
         }
 
+        if(strpos($matches, $storage_url) !== false){ //cdn 으로 주소가 변경되었을 경우 기존 s3 등 저장소 주소를 변경.
+            return str_replace($storage_url, $replace_url, $matches);
+        }
         return str_replace(G5_DATA_URL, $replace_url, $matches);
     }
 
@@ -1634,12 +1618,9 @@ class S3Service
 
         if (!empty($extra_infos)) {
             foreach ($extra_infos as $info) {
-                if ($this->url_validate($info)) {
                     $filename = $this->get_url_filename('', @parse_url($info));
                     $file_key = G5_DATA_DIR . '/' . $this->shop_folder . '/' . $it_id . '/' . $filename;
-
                     $this->delete_object($file_key);
-                }
             }
         }
 
