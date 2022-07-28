@@ -9,6 +9,7 @@ $targetVersion  = isset($_POST['target_version']) ? clean_xss_tags($_POST['targe
 $username       = isset($_POST['username']) ? clean_xss_tags($_POST['username'], 1, 1) : null;
 $userPassword   = isset($_POST['password']) ? clean_xss_tags($_POST['password'], 1, 1) : null;
 $port           = isset($_POST['port']) ? clean_xss_tags($_POST['port'], 1, 1) : null;
+$is_db_update   = isset($_POST['is_db_update']) ? clean_xss_tags($_POST['is_db_update'], 1, 1) : 0;
 
 // 포트 연결
 $g5['update']->connect($_SERVER['HTTP_HOST'], $port, $username, $userPassword);
@@ -60,6 +61,16 @@ if ($result == "success") {
             $update_check['success'][] = $var;
         } else {
             $update_check['fail'][] = array('file' => $var, 'message' => $result);
+        }
+    }
+    //데이터베이스 업데이트
+    if ($is_db_update) {
+        if (version_compare($targetVersion, G5Version::$currentVersion, ">")) {
+            $migration = new G5Migration();
+            $migration->setTargetVersion($targetVersion);
+            $migration->update();
+        } else {
+            echo "현재버전에서 DB 다운그레이드는 지원하지 않습니다.";
         }
     }
 } else {

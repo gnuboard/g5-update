@@ -10,5 +10,4 @@ include_once G5_PLUGIN_PATH . '/version_update/github.api.lib.php';
 
 if (!isset($g5['update'])) {
     $g5['update'] = new G5Update(G5_PATH);
-    $g5['update']->setNowVersion("v" . G5_GNUBOARD_VER);
 }

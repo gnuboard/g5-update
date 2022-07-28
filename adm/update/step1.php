@@ -64,7 +64,7 @@ $viewUpdateList = $g5['update']->changeDepthListPrinting($updateList);
                     <tr>
                         <th scope="row">사용량 / 전체 용량</th>
                         <td><?php echo $useSize . " / " . $totalSize . " (" . $usePercent . "%)"; ?></td>
-                        <td rowspan="2" style="padding:0px;">
+                        <td rowspan="3" style="padding:0px;">
                             <div style="width:100%; height:300px; overflow:auto;">
                                 <table>
                                     <tr>
@@ -74,6 +74,13 @@ $viewUpdateList = $g5['update']->changeDepthListPrinting($updateList);
                                     </tr>
                                 </table>
                             </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">데이터베이스 업데이트</th>
+                        <td>
+                            <span class="frm_info">버전에 맞는 데이터베이스로 업데이트를 진행합니다.</span>
+                            <input type="checkbox" name="is_db_update" value="1" id="is_db_update"> 사용
                         </td>
                     </tr>
                     <tr>

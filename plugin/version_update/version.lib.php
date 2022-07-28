@@ -7,6 +7,7 @@
  */
 class G5Version
 {
+    public static $currentVersion = "v" . G5_GNUBOARD_VER;
     public static $latestVersion = null;
     public static $versionList = array();
 
@@ -39,9 +40,9 @@ class G5Version
         }
 
         $this->setVersionList($versionList);
-        if (isset($versionList[0])) {
-            $this->setLatestVersion($this->versionList[0]);
-        }
+
+        $lastestVersion = isset($versionList[0]) ? $versionList[0] : "";
+        $this->setLatestVersion($lastestVersion);
     }
 
     /**
@@ -65,7 +66,7 @@ class G5Version
      */
     private function compareVersion()
     {
-        return version_compare(G5Migration::CURRENT_VERSION, $this->getLatestVersion());
+        return version_compare(self::$currentVersion, $this->getLatestVersion());
     }
 
     /**
@@ -105,20 +106,38 @@ class G5Version
      *
      * @return array<int, string>
      */
-    public static function getExecuteVersionList()
+    public static function getExecuteVersionList($targetVersion = null)
     {
         $list = array();
         $versionList = self::getVersionListByFile();
-
         if (!is_array($versionList)) {
             throw new Exception("전체 버전목록이 없습니다");
         }
 
         foreach ((array)$versionList as $version) {
-            if (version_compare($version, G5Migration::CURRENT_VERSION) <= 0) {
-                $list[] = $version;
+            // 현재버전 ~ 목표버전
+            if ($targetVersion) {
+                if (version_compare($targetVersion, self::$currentVersion, ">")) {
+                    if (version_compare($version, self::$currentVersion, ">") && version_compare($version, $targetVersion, "<=")) {
+                        array_unshift($list, $version);
+                    }
+                } else {
+                    if (version_compare($version, self::$currentVersion, "<=") && version_compare($version, $targetVersion, ">")) {
+                        $list[] = $version;
+                    }
+                }
+            // 현재버전 이하
+            } else {
+                if (version_compare($version, self::$currentVersion) <= 0) {
+                    $list[] = $version;
+                }
             }
         }
+        
+        if (!$list) {
+            throw new Exception("버전목록을 조회할 수 없습니다.");
+        }
+
         return $list;
     }
 

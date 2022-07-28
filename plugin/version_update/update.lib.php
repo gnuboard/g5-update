@@ -5,13 +5,16 @@ if (!defined('_GNUBOARD_')) {
 
 /**
  * 그누보드5 버전 업데이트
+ * 
  * @todo
- * 1. disk_total_space, disk_free_space > 호스팅 환경에서는 용량표시가 제대로 안되는 듯..
- * 2. 업데이트에 필요한 최소용량 및 용량 초과시 발생하는 오류
- *
+ * 1. 로그파일에 관련된 Class 분리
+ * 2. 업데이트에 필요한 최소용량 및 용량 초과시 예외처리
+ * 3. disk_total_space, disk_free_space > 호스팅 환경에서는 용량표시가 제대로 안됨
  */
 class G5Update
 {
+    public $g5Version;
+    
     public $path = null;
     public $latest_version = null;
     public $target_version = null;
@@ -57,6 +60,9 @@ class G5Update
         $this->os = PHP_OS;
 
         $this->window_dir_update = str_replace('/', '\\', G5_DATA_PATH) . "\\update";
+
+        $this->g5Version = new G5Version();
+        $this->now_version = $this->g5Version::$currentVersion;
     }
 
     /**
@@ -401,8 +407,7 @@ class G5Update
     {
         try {
             if (empty($this->version_list)) {
-                $versionClass = new G5Version();
-                $this->version_list = $versionClass->getVersionListByFile();
+                $this->version_list = $this->g5Version->getVersionListByFile();
             }
 
             return $this->version_list;
@@ -420,8 +425,7 @@ class G5Update
     {
         try {
             if (empty($this->latest_version)) {
-                $versionClass = new G5Version();
-                $this->latest_version = $versionClass->getLatestVersionByFile();
+                $this->latest_version = $this->g5Version->getLatestVersionByFile();
             }
 
             return $this->latest_version;
