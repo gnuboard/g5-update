@@ -3,6 +3,7 @@ define('G5_IS_ADMIN', true);
 include_once '../../common.php';
 include_once G5_ADMIN_PATH . '/admin.lib.php';
 include_once G5_PLUGIN_PATH . '/version_update/update.lib.php';
+include_once G5_PLUGIN_PATH . '/version_update/update_log.lib.php';
 include_once G5_PLUGIN_PATH . '/version_update/database.update.lib.php';
 include_once G5_PLUGIN_PATH . '/version_update/setup.lib.php';
 include_once G5_PLUGIN_PATH . '/version_update/version.lib.php';

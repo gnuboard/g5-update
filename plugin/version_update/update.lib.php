@@ -17,11 +17,11 @@ class G5Update
     
     public $path = null;
     public $latest_version = null;
-    public $target_version = null;
+    public static $target_version = null;
     public $rollback_version = null;
     public $now_version = null;
 
-    public $dir_update     = null;
+    public static $dir_update     = null;
     public $dir_version    = null;
     public $dir_backup     = null;
     public $dir_log        = null;
@@ -39,13 +39,10 @@ class G5Update
     private $version_list = array();
     private $compare_list = array();
     private $backup_list = array();
-    private $log_list = array();
 
     private $conn;
     private $port;
     private $connPath;
-
-    private $log_page_list = 10;
 
     // 운영체제 (Linux,WINNT)
     public $os = null;
@@ -61,8 +58,7 @@ class G5Update
 
         $this->window_dir_update = str_replace('/', '\\', G5_DATA_PATH) . "\\update";
 
-        $this->g5Version = new G5Version();
-        $this->now_version = $this->g5Version::$currentVersion;
+        $this->setNowVersion(G5Version::$currentVersion);
     }
 
     /**
@@ -212,6 +208,11 @@ class G5Update
                 throw new Exception("연결된 프로토콜을 찾을 수 없습니다.");
             }
 
+            // 로그 디렉토리 생성
+            if (!is_dir($this->dir_log)) {
+                mkdir($this->dir_log, 0755);
+            }
+
             if ($this->port == 'ftp') {
                 if (!is_dir($this->dir_update)) {
                     if (!ftp_mkdir($this->conn, $this->ftp_dir_update)) {
@@ -235,16 +236,16 @@ class G5Update
                     }
                 }
 
-                if (!is_dir($this->dir_log)) {
-                    if (!ftp_mkdir($this->conn, $this->ftp_dir_log)) {
-                        throw new Exception("/update/log 디렉토리를 생성하는데 실패했습니다.");
-                    }
-                    if ($this->os != "WINNT") {
-                        if (!ftp_chmod($this->conn, 0755, $this->ftp_dir_log)) {
-                            throw new Exception("/update/log 디렉토리의 권한을 변경하는데 실패했습니다.");
-                        }
-                    }
-                }
+                // if (!is_dir($this->dir_log)) {
+                //     if (!ftp_mkdir($this->conn, $this->ftp_dir_log)) {
+                //         throw new Exception("/update/log 디렉토리를 생성하는데 실패했습니다.");
+                //     }
+                //     if ($this->os != "WINNT") {
+                //         if (!ftp_chmod($this->conn, 0755, $this->ftp_dir_log)) {
+                //             throw new Exception("/update/log 디렉토리의 권한을 변경하는데 실패했습니다.");
+                //         }
+                //     }
+                // }
 
                 if (!is_dir($this->dir_backup)) {
                     if (!ftp_mkdir($this->conn, $this->ftp_dir_backup)) {
@@ -275,14 +276,14 @@ class G5Update
                     }
                 }
 
-                if (!is_dir($this->dir_log)) {
-                    if (!ssh2_sftp_mkdir($this->connPath, $this->dir_log, 0755)) {
-                        throw new Exception("/update/log 디렉토리를 생성하는데 실패했습니다.");
-                    }
-                    if (!ssh2_sftp_chmod($this->connPath, $this->dir_log, 0755)) {
-                        throw new Exception("/update/log 디렉토리의 권한을 변경하는데 실패했습니다.");
-                    }
-                }
+                // if (!is_dir($this->dir_log)) {
+                //     if (!ssh2_sftp_mkdir($this->connPath, $this->dir_log, 0755)) {
+                //         throw new Exception("/update/log 디렉토리를 생성하는데 실패했습니다.");
+                //     }
+                //     if (!ssh2_sftp_chmod($this->connPath, $this->dir_log, 0755)) {
+                //         throw new Exception("/update/log 디렉토리의 권한을 변경하는데 실패했습니다.");
+                //     }
+                // }
 
                 if (!is_dir($this->dir_backup)) {
                     if (!ssh2_sftp_mkdir($this->connPath, $this->dir_backup, 0707)) {
@@ -407,7 +408,7 @@ class G5Update
     {
         try {
             if (empty($this->version_list)) {
-                $this->version_list = $this->g5Version->getVersionListByFile();
+                $this->version_list = $this->getG5Version()->getVersionListByFile();
             }
 
             return $this->version_list;
@@ -425,7 +426,7 @@ class G5Update
     {
         try {
             if (empty($this->latest_version)) {
-                $this->latest_version = $this->g5Version->getLatestVersionByFile();
+                $this->latest_version = $this->getG5Version()->getLatestVersionByFile();
             }
 
             return $this->latest_version;
@@ -479,156 +480,6 @@ class G5Update
         return $this->backup_list;
     }
 
-    /**
-     * 로그파일 목록 조회
-     * @param int   $page 현재 페이지
-     * @return array<mixed>|bool
-     */
-    public function getLogList($page = 1)
-    {
-        if (empty($this->log_list)) {
-            if (is_dir($this->dir_log)) {
-                if ($dir_resource = @opendir($this->dir_log)) {
-                    while (($file_name = readdir($dir_resource)) !== false) {
-                        if ($file_name == '.' || $file_name == '..') {
-                            continue;
-                        }
-                        if (preg_match('/.log/i', $file_name)) {
-                            list($date, $time, $status, $rand) = explode("_", $file_name);
-                            switch ($status) {
-                                case 'update':
-                                    $status_txt = '업데이트';
-                                    break;
-                                case 'rollback':
-                                    $status_txt = '롤백';
-                                    break;
-                                default:
-                                    $status_txt = "상태값이 올바르지 않은 파일입니다.";
-                                    break;
-                            }
-                            $time = $date . implode(':', str_split($time, 2));
-                            $this->log_list[] = array(
-                                'filename' => $file_name,
-                                'datetime' => date('Y-m-d H:i:s', (int)strtotime($time)),
-                                'status' => $status_txt
-                            );
-                        }
-                    }
-                    closedir($dir_resource);
-
-                    $logListTimestamp = array_map('strtotime', $this->arrayColumn($this->log_list, 'datetime'));
-                    array_multisort($logListTimestamp, SORT_DESC, $this->log_list);
-                    
-                    // 페이징 처리
-                    $start = $page ? ($page - 1) * $this->log_page_list : 0;
-                    $end = $start + $this->log_page_list;
-                    $log_list = array_slice($this->log_list, $start, $end, true);
-
-                    return $log_list;
-                }
-            }
-
-            return false;
-        } else {
-            return $this->log_list;
-        }
-    }
-
-    /**
-     * 전체 로그파일 갯수 조회
-     * @return int|bool
-     * @throws Exception
-     */
-    public function getLogTotalCount()
-    {
-        try {
-            $count = 0;
-            if (isset($this->log_list)) {
-                if (is_dir($this->dir_log)) {
-                    $dirs = scandir($this->dir_log);
-                    if ($dirs) {
-                        $result = array_values(array_diff($dirs, array('.', '..')));
-                        $count = count($result);
-                    }
-                }
-                return $count;
-            } else {
-                throw new Exception("페이지 전체정보를 확인할 수 없습니다.");
-            }
-        } catch (Exception $e) {
-            echo $e->getMessage() . '<br>';
-            return false;
-        }
-    }
-
-    /**
-     * 로그파일 목록 페이징 수 계산
-     * @return float
-     */
-    public function getLogListSize()
-    {
-        $count = $this->getLogTotalCount();
-
-        $max_list_size = ceil($count / $this->log_page_list);
-
-        return $max_list_size;
-    }
-
-    /**
-     * 로그파일 상세정보 조회
-     * @param string    $file_name  로그파일 이름
-     * @return array<mixed>|bool 로그파일 상세정보
-     * @throws Exception
-     */
-    public function getLogDetail($file_name = null)
-    {
-        try {
-            $file = $this->dir_log . '/' . $file_name;
-
-            if (!is_dir($this->dir_log)) {
-                throw new Exception("로그파일 경로가 존재하지 않습니다.");
-            }
-            if ($file_name == null) {
-                throw new Exception("로그파일이 전달되지 않았습니다.");
-            }
-
-            $file_size = filesize($file);
-            $file_pointer = fopen($file, 'r');
-
-            if ($file_size <= 0) {
-                throw new Exception("빈 로그 파일입니다.");
-            }
-            if (is_resource($file_pointer) === false) {
-                throw new Exception("파일을 열람할 권한이 없습니다.");
-            }
-
-            $file_content = fread($file_pointer, $file_size);
-
-            list($date, $time, $status, $rand) = explode("_", $file_name);
-
-            switch ($status) {
-                case 'update':
-                    $status_txt = '업데이트';
-                    break;
-                case 'rollback':
-                    $status_txt = '롤백';
-                    break;
-                default:
-                    throw new Exception("상태값이 올바르지 않은 파일입니다.");
-            }
-            $time = $date . implode(':', str_split($time, 2));
-            $log_detail = array(
-                'filename' => $file_name,
-                'datetime' => date('Y-m-d H:i:s', (int)strtotime($time)),
-                'status' => $status_txt,
-                'content' => $file_content,
-            );
-
-            return $log_detail;
-        } catch (Exception $e) {
-            return $this->setError($e);
-        }
-    }
     /**
      * 백업파일 생성
      * @return string
@@ -927,141 +778,6 @@ class G5Update
     }
 
     /**
-     * 로그파일 생성
-     * @param array<string> $success_list 업데이트/복원 성공목록
-     * @param array<array<string, string>> $fail_list 업데이트/복원 실패목록
-     * @param string $status 상태값
-     * @return bool
-     */
-    public function writeLogFile($success_list = null, $fail_list = null, $status = null)
-    {
-        try {
-            if ($this->conn == false) {
-                throw new Exception("통신이 연결되지 않았습니다.");
-            }
-            if (empty($success_list) && empty($fail_list)) {
-                throw new Exception("기록할 데이터가 존재하지 않습니다.");
-            }
-            if ($status != "update" && $status != "rollback") {
-                throw new Exception("올바르지 않은 명령입니다.");
-            }
-
-            if ($this->port == 'ftp') {
-                if (ftp_nlist($this->conn, dirname($this->ftp_dir_log)) == false) {
-                    $result = ftp_mkdir($this->conn, $this->ftp_dir_log);
-                    if ($result == false) {
-                        throw new Exception("디렉토리 생성에 실패했습니다.");
-                    }
-                }
-
-                $datetime = date('Y-m-d_His', time());
-                $rand = sprintf('%04d', rand(0000, 9999));
-                $logFileName = $datetime . '_' . $status . '_' . $rand . '.log';
-                $fp = fopen($this->dir_log . "/" . $logFileName, 'w+');
-                if ($fp == false) {
-                    throw new Exception('파일생성에 실패했습니다.');
-                }
-
-                switch ($status) {
-                    case 'update':
-                        $success_txt = "성공한 업데이트 내역\n";
-                        $fail_txt = "실패한 업데이트 내역\n";
-                        break;
-                    case 'rollback':
-                        $success_txt = "성공한 롤백 내역\n";
-                        $fail_txt = "롤백 시 제거된 파일 내역\n";
-                        break;
-                    default:
-                        ftp_delete($this->conn, $this->ftp_dir_log . "/" . $logFileName);
-                        throw new Exception("올바르지 않은 명령입니다.");
-                }
-                if (isset($success_list)) {
-                    if (count($success_list) > 0) {
-                        foreach ($success_list as $key => $var) {
-                            $success_txt .= $var . "\n";
-                        }
-                    } else {
-                        $success_txt = '';
-                    }
-                }
-
-                if (isset($fail_list)) {
-                    if (count($fail_list) > 0) {
-                        foreach ($fail_list as $key => $var) {
-                            $fail_txt .= $var['file']." : ".$var['message']."\n";
-                        }
-                    } else {
-                        $fail_txt = '';
-                    }
-                }
-
-                $result = fwrite($fp, $success_txt . "\n\n" . $fail_txt);
-                if ($result == false) {
-                    throw new Exception('파일쓰기에 실패했습니다.');
-                }
-            } elseif ($this->port == 'sftp') {
-                if (!is_dir($this->dir_log)) {
-                    $result = mkdir("ssh2.sftp://" . intval($this->connPath) . $this->dir_log);
-                    if ($result == false) {
-                        throw new Exception("디렉토리 생성에 실패했습니다.");
-                    }
-                }
-
-                $datetime = date('Y-m-d_His', time());
-                $rand = sprintf('%04d', rand(0000, 9999));
-                $logFileName = $datetime . '_' . $status . '_' . $rand . '.log';
-                $fp = fopen("ssh2.sftp://" . intval($this->connPath) . $this->dir_log . "/" . $logFileName, 'w+');
-                if ($fp == false) {
-                    throw new Exception('파일생성에 실패했습니다.');
-                }
-
-                switch ($status) {
-                    case 'update':
-                        $success_txt = "성공한 업데이트 내역\n";
-                        $fail_txt = "실패한 업데이트 내역\n";
-                        break;
-                    case 'rollback':
-                        $success_txt = "성공한 롤백 내역\n";
-                        $fail_txt = "실패한 롤백 내역\n";
-                        break;
-                    default:
-                        unlink("ssh2.sftp://" . intval($this->connPath) . $this->dir_log . "/" . $logFileName);
-                        throw new Exception("올바르지 않은 명령입니다.");
-                }
-                if (is_array($success_list)) {
-                    if (count($success_list) > 0) {
-                        foreach ($success_list as $key => $var) {
-                            $success_txt .= $var . "\n";
-                        }
-                    } else {
-                        $success_txt = '';
-                    }
-                }
-                if (is_array($fail_list)) {
-                    if (count($fail_list) > 0) {
-                        foreach ($fail_list as $key => $var) {
-                            $fail_txt .= $var['file'] . " : " . $var['message'] . "\n";
-                        }
-                    } else {
-                        $fail_txt = '';
-                    }
-                }
-
-                $result = fwrite($fp, $success_txt . "\n\n" . $fail_txt);
-                if ($result == false) {
-                    throw new Exception('파일쓰기에 실패했습니다.');
-                }
-            }
-
-            return true;
-        } catch (Exception $e) {
-            echo $e->getMessage() . "\n";
-
-            return false;
-        }
-    }
-
-    /**
      * 업데이트버전 파일 다운로드
      * @breif 해당 버전에 맞는 압축파일 다운로드 후, 디렉토리 생성
      * @param string $version 다운로드 버전
@@ -1245,10 +961,10 @@ class G5Update
     public function getVersionCompareList()
     {
         try {
-            if ($this->now_version == null || $this->target_version == null) {
+            if ($this->now_version == null || self::$target_version == null) {
                 throw new Exception("현재버전 또는 목표버전이 설정되지 않았습니다.");
             }
-            if ($this->now_version == $this->target_version) {
+            if ($this->now_version == self::$target_version) {
                 throw new Exception("동일버전으로는 업데이트가 불가능합니다.");
             }
             $version_list = G5Version::getVersionListByFile();
@@ -1258,12 +974,12 @@ class G5Update
 
             // 숫자가 작을수록 상위버전
             $now_version_num = array_search($this->now_version, (array)$version_list);
-            $target_version_num = array_search($this->target_version, (array)$version_list);
+            $target_version_num = array_search(self::$target_version, (array)$version_list);
 
             if ($now_version_num > $target_version_num) {
-                $result = G5GithubApi::getCompareData($this->now_version, $this->target_version);
+                $result = G5GithubApi::getCompareData($this->now_version, self::$target_version);
             } else {
-                $result = G5GithubApi::getCompareData($this->target_version, $this->now_version);
+                $result = G5GithubApi::getCompareData(self::$target_version, $this->now_version);
             }
             
             foreach ($result->files as $var) {
@@ -1458,20 +1174,44 @@ class G5Update
         $this->now_version = $now_version;
     }
     
-    public function getTargetVersion()
+    public static function getTargetVersion()
     {
-        return $this->target_version;
+        return self::$target_version;
     }
 
-    public function setTargetVersion($target_version = null)
+    public static function setTargetVersion($target_version = null)
     {
-        $this->target_version = $target_version;
+        self::$target_version = $target_version;
     }
 
     public function getRollbackVersion()
     {
         return $this->rollback_version;
     }
+
+    public function getG5Version()
+    {
+        if (empty($this->g5Version)) {
+            $this->setG5Version(new G5Version());
+        }
+        return $this->g5Version;
+    }
+    
+    public function setG5Version($instance)
+    {
+        $this->g5Version = $instance;
+    }
+
+    public static function getDirUpdate()
+    {
+        return self::$dir_update;
+    }
+
+    public static function setDirUpdate($dir)
+    {
+        self::$dir_update = $dir;
+    }
+    
 
     /**
      * 롤백버전 조회
