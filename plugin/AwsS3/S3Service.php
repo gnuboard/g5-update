@@ -332,7 +332,7 @@ class S3Service
         add_replace('get_file_thumbnail_tags', [$this, 'get_thumbnail_tags'], 1, 2);
 
         // 에디터 파일 url이 aws s3 url 이 맞는지 체크
-        add_replace('get_editor_filename', [$this, 'get_url_filename'], 1, 2);
+        add_replace('get_editor_filename', [$this, 'get_filename_url'], 1, 2);
 
         // 게시판 리스트에서 썸네일 출력
         add_replace('get_list_thumbnail_info', [$this, 'get_list_thumbnail_info'], 1, 2);
@@ -1139,7 +1139,7 @@ class S3Service
     public function bbs_move_update_file($files, $file_name, $bo_table, $move_bo_table, $insert_id = 0)
     {
         if ($files['bf_fileurl'] && $files['bf_storage'] === $this->storage()) {
-            $ori_filename = $this->get_url_filename('', @parse_url($files['bf_fileurl']));
+            $ori_filename = $this->get_filename_url('', @parse_url($files['bf_fileurl']));
             if ($ori_filename) {
                 $ori_key = G5_DATA_DIR . '/file/' . $bo_table . '/' . $ori_filename;
                 $copy_key = G5_DATA_DIR . '/file/' . $move_bo_table . '/' . $file_name;
@@ -1153,7 +1153,7 @@ class S3Service
                 if (isset($result['ObjectURL']) && $result['ObjectURL']) {
                     $files['bf_fileurl'] = $result['ObjectURL'];
 
-                    if ($files['bf_thumburl'] && $thumbname = $this->get_url_filename(
+                    if ($files['bf_thumburl'] && $thumbname = $this->get_filename_url(
                             '',
                             @parse_url($files['bf_thumburl'])
                         )) {
@@ -1609,9 +1609,9 @@ class S3Service
 
         if (!empty($extra_infos)) {
             foreach ($extra_infos as $info) {
-                    $filename = $this->get_url_filename('', @parse_url($info));
-                    $file_key = G5_DATA_DIR . '/' . $this->shop_folder . '/' . $it_id . '/' . $filename;
-                    $this->delete_object($file_key);
+                $filename = $this->get_filename_url('', @parse_url($info));
+                $file_key = G5_DATA_DIR . '/' . $this->shop_folder . '/' . $it_id . '/' . $filename;
+                $this->delete_object($file_key);
             }
         }
 
@@ -1626,21 +1626,23 @@ class S3Service
      */
     public function url_validate($url)
     {
-        return stripos($url, $this->storage_host_name) !== false;
+        $storage_url ="https://{$this->bucket_name}.s3.amazonaws.com";
+        return (stripos($url, $this->storage_host_name) !== false) || stripos($url, $storage_url) !== false;
     }
 
     /**
-     * file url 이 aws s3 url 이 맞는지 확인
+     * file url 이 aws s3 url 이 맞는지 확인후 파일 이름 리턴
+     * @param string $file_name
+     * @param array $url_parse
+     * @return string
      */
-    public function get_url_filename($filename, $parses)
+    public function get_filename_url($file_name, $url_parse)
     {
-        if (!$filename && isset($parses['host']) && 'https' === $parses['scheme'] && $this->url_validate(
-                'https://' . $parses['host']
-            )) {
-            $filename = basename($parses['path']);
+        $url = "{$url_parse['scheme']}://{$url_parse['host']}{$url_parse['path']}";
+        if($this->url_validate($url)){
+            $file_name = basename($url_parse['path']);
         }
-
-        return $filename;
+        return $file_name;
     }
 
     /**
