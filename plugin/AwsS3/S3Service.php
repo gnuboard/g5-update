@@ -16,6 +16,7 @@ if (file_exists(G5_DATA_PATH . '/' . S3CONFIG_FILE)) {
 
 require_once(G5_LIB_PATH . '/AwsSdk/aws-autoloader.php');
 
+use Aws\CommandPool;
 use Aws\Credentials\Credentials;
 use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
@@ -317,6 +318,9 @@ class S3Service
 
         // bbs/write_update.php 등에서 쓰일수가 있음
         add_replace('write_update_upload_array', [$this, 'upload_file'], 1, 5);
+
+        // bbs/write_update.php 훅스
+        add_event('write_update_after', [$this, 'upload_gallery_thumnail'], 2, 4);
 
         add_replace('download_file_exist_check', [$this, 'file_exist_check'], 1, 2);
 
@@ -1689,15 +1693,12 @@ class S3Service
                 'ContentType' => $upload_mime
             ]);
 
-            $this->file_delete($file_path);
-            $this->file_delete($thumb_file_path);
-            //외부 저장소로 업로드후 웹서버에서 원본삭제
+            //글 업로드시 write_update에서 원본과 썸네일을 삭제합니다.
             if (isset($result['ObjectURL'])) {
                 return $result['ObjectURL'];
             }
         }
 
-        $this->file_delete($file_path);
         if (isset($result['ObjectURL'])) {
             return $result['ObjectURL'];
         }
@@ -1710,13 +1711,11 @@ class S3Service
      * @param string $filepath 웹서버에 올라간 파일이름 포함 전체 경로
      * @return string $thumb_filepath
      */
-    private function create_thumbnail ($filepath)
+    private function create_thumbnail ($filepath, $thumb_width=800, $thumb_height = null)
     {
-        $temp_width = 800;
-        $thumb_width = $temp_width;
         $file_name = basename($filepath);
         $thumb_path = dirname($filepath);
-        return thumbnail($file_name, $thumb_path, $thumb_path, $thumb_width,null, false);
+        return thumbnail($file_name, $thumb_path, $thumb_path, $thumb_width, $thumb_height, false);
     }
 
     /**
@@ -1957,6 +1956,101 @@ EOD;
         $return_value['storage'] = $this->storage();
 
         return array_merge($upload_info, $return_value);
+    }
+
+    /**
+     * 업로드 마지막에 훅스를 통해 썸네일을 만들어 올립니다.
+     * @param $bo_table
+     * @param $wr_id
+     * @param $upload_file
+     * @param $w
+     * @return void
+     */
+    public function upload_gallery_thumnail($board, $wr_id, $upload_file, $w)
+    {
+        if (!empty($GLOBALS['wr_content'])) { //훅스가 실행중인 wirte_update.php 파일의 변수
+            $content = $GLOBALS['wr_content'];
+        } else {
+            $bo_table = $board['bo_table'];
+            $table_name = G5_TABLE_PREFIX . "write_{$bo_table}";
+            $get_content_query = "select wr_num, wr_content from {$table_name} where wr_id = ?";
+            /**
+             * @var $stmt mysqli_stmt
+             */
+            $stmt = $GLOBALS['g5']['connect_db']->prepare($get_content_query);
+            $stmt->bind_param('i', $wr_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $row = $result->fetch_assoc();
+            $content = $row['wr_content'];
+        }
+
+        $matches = '';
+
+        $content = str_replace("\\", '', $content);
+        preg_match('/src="(.*?)"/i', $content, $matches);
+        if (isset($matches[1]) && $matches[1]) {
+            $parse_result = parse_url($matches[1]);
+            $file_name = $parse_result['path'];
+
+
+            $ori_filename = basename($file_name);
+            $ori_file_path = G5_PATH . $parse_result['path'];
+            $pc_thumb_width = $board['bo_gallery_width'];
+            $pc_thumb_height = $board['bo_gallery_height'];
+            $mobile_thumb_width = $board['bo_mobile_gallery_width'];
+            $mobile_thumb_height = $board['bo_mobile_gallery_height'];
+
+            if (file_exists($ori_file_path)) {
+                $pc_thumb_file = $this->create_thumbnail($ori_file_path, $pc_thumb_width, $pc_thumb_height);
+                $mobile_thumb_file = $this->create_thumbnail($ori_file_path, $mobile_thumb_width, $mobile_thumb_height);
+
+                $pc_thumb_file_path = dirname($ori_file_path) . '/' . $pc_thumb_file;
+                $pc_thumb_file_key = $this->get_editor_path() . $pc_thumb_file;
+
+                $mobile_thumb_file_path = dirname($ori_file_path) . '/' . $mobile_thumb_file;
+                $mobile_thumb_file_key = $this->get_editor_path() . $mobile_thumb_file;
+
+                $upload_mime = $this->mime_content_type($ori_filename);
+                $pc_upload_object = [
+                    'Bucket' => $this->bucket_name,
+                    'Key' => $pc_thumb_file_key,
+                    'Body' => fopen($pc_thumb_file_path, 'rb'),
+                    'ContentType' => $upload_mime
+                ];
+                if ($this->is_use_acl == true) {
+                    $pc_upload_object['ACL'] = $this->set_file_acl($pc_upload_object['Key']);
+                }
+
+                $mobile_upload_object = [
+                    'Bucket' => $this->bucket_name,
+                    'Key' => $mobile_thumb_file_key,
+                    'Body' => fopen($mobile_thumb_file_path, 'rb'),
+                    'ContentType' => $upload_mime
+                ];
+                if ($this->is_use_acl == true) {
+                    $mobile_upload_object['ACL'] = $this->set_file_acl($mobile_upload_object['Key']);
+                }
+
+                $commands = [
+                    $this->s3_client->getCommand('PutObject', $pc_upload_object),
+                    $this->s3_client->getCommand('PutObject', $mobile_upload_object)
+                ];
+                $pool = new CommandPool($this->s3_client, $commands);
+                $promise = $pool->promise();
+                // Force the pool to complete synchronously
+                // 프로미스가 실행완료시까지 대기
+                $promise->wait();
+            } else {
+                $no_image_path = G5_PATH . '/img/no_img.png';
+                if (file_exists($no_image_path)) {
+                    // 노 이미지로 썸네일 파일을 만들어 두번 다시 s3.amazonaws.com 에서 파일을 찾지 않도록 합니다.
+                    @copy($no_image_path, $ori_file_path); //TODO
+                    @chmod($ori_file_path, G5_FILE_PERMISSION);
+                }
+                @unlink($ori_file_path);
+            }
+        }
     }
 
     /**
