@@ -29,9 +29,9 @@ class S3Service
     private $region = '';
     private $bucket_name = '';
     /**
-     * @var string 저장소 주소 외부연결시 사용
+     * @var string 외부 저장소 주소
      */
-    private $storage_host_name = '';
+    private $endpoint = '';
 
     /**
      * @var string
@@ -104,7 +104,7 @@ class S3Service
             $this->secret_key = G5_S3_SECRET_KEY;
             $this->is_use_acl = G5_S3_IS_USE_ACL;
         }
-        $this->storage_host_name = "https://{$this->bucket_name}.s3.amazonaws.com";
+        $this->endpoint = 'https://d2zftx48f8i38a.cloudfront.net';//"https://{$this->bucket_name}.s3.amazonaws.com";
 
         $table_name = G5_TABLE_PREFIX . $this->table_name;
         $sql = "SHOW TABLES LIKE '{$table_name}'";
@@ -1121,7 +1121,7 @@ class S3Service
             return $image_tag;
         }
 
-        $image_path = $this->storage_host_name . '/' . G5_DATA_DIR;
+        $image_path = $this->endpoint . '/' . G5_DATA_DIR;
 
         return '<img src="' . $image_path . '/' . $item_file . '" class="shop_item_preview_image aws_s3_image" >';
     }
@@ -1220,7 +1220,7 @@ class S3Service
      */
     public function replace_url($matches)
     {
-        $replace_url = $this->storage_host_name . '/' . G5_DATA_DIR;
+        $replace_url = $this->endpoint . '/' . G5_DATA_DIR;
         $storage_url = "https://{$this->bucket_name}.s3.amazonaws.com" . '/' . G5_DATA_DIR;
 
         if (is_array($matches)) {  //에디터 등
@@ -1357,7 +1357,7 @@ class S3Service
     private function get_curl_image($download_path, $file_key)
     {
         // https://docs.aws.amazon.com/ko_kr/AmazonS3/latest/API/RESTBucketGET.html
-        $image_url = $this->storage_host_name . '/' . $file_key;
+        $image_url = $this->endpoint . '/' . $file_key;
 
         if (stripos($image_url, "https") === false) {
             $image_url = '';
@@ -1617,7 +1617,7 @@ class S3Service
     public function url_validate($url)
     {
         $storage_url = "https://{$this->bucket_name}.s3.amazonaws.com";
-        return (stripos($url, $this->storage_host_name) !== false) || stripos($url, $storage_url) !== false;
+        return (stripos($url, $this->endpoint) !== false) || stripos($url, $storage_url) !== false;
     }
 
     /**
