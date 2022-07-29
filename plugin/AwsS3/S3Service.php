@@ -4,6 +4,7 @@
  * @version 1.0.0 2022.07.27
  * url: sir 플러그인 게시판
  */
+
 namespace Gnuboard\Plugin\AwsS3;
 
 if (!defined('_GNUBOARD_')) {
@@ -224,9 +225,10 @@ class S3Service
      * 데이터폴더이름 + 에디터 + 날짜 + /
      * @return string
      */
-    private function get_editor_path(){
+    private function get_editor_path()
+    {
         $ym = date('ym', G5_SERVER_TIME);
-        return  G5_DATA_DIR.'/'. G5_EDITOR_DIR .'/'.$ym.'/';
+        return G5_DATA_DIR . '/' . G5_EDITOR_DIR . '/' . $ym . '/';
     }
 
     public function s3_client()
@@ -432,7 +434,7 @@ class S3Service
      */
     public function put_object($args)
     {
-        if($this->is_use_acl == true) {
+        if ($this->is_use_acl == true) {
             $args['ACL'] = $this->set_file_acl($args['Key']);
         }
         return $this->s3_client()->putObject($args);
@@ -459,7 +461,7 @@ class S3Service
      */
     public function copy_object($args)
     {
-        if($this->is_use_acl === true) {
+        if ($this->is_use_acl === true) {
             $args['ACL'] = $this->set_file_acl($args['Key']);
         }
         return $this->s3_client()->copyObject($args);
@@ -563,7 +565,7 @@ class S3Service
 
     /**
      * S3 저장소 내부에서 파일 이동
-     * @param string $oldfile  이동할 파일의 이름포함 전체경로
+     * @param string $oldfile 이동할 파일의 이름포함 전체경로
      * @param string $newfile 새로운 파일이름
      * @return false|void
      */
@@ -745,9 +747,7 @@ class S3Service
      */
     public function get_item_image_url($url, $it, $index)
     {
-
         return $this->replace_url($url);
-
     }
 
     /**
@@ -764,7 +764,7 @@ class S3Service
         if (!$this->check_extra_item_field($it)) {
             return $is_exist_file;
         }
-        if(!isset($it[$this->extra_item_field])){
+        if (!isset($it[$this->extra_item_field])) {
             return false;
         }
         $extra_infos = json_decode($it[$this->extra_item_field], true);
@@ -818,7 +818,7 @@ class S3Service
         if (!$this->check_extra_item_field($it)) {
             return $infos;
         }
-        if(empty($it[$this->extra_item_field])){
+        if (empty($it[$this->extra_item_field])) {
             return $infos; //TODO
         }
 
@@ -844,13 +844,12 @@ class S3Service
         $img_alt = '',
         $is_crop = false
     ) {
-
         $it = get_shop_item($it_id, true);
 
         if (!$this->check_extra_item_field($it)) {
             return $img;
         }
-        if(empty($it[$this->extra_item_field])){
+        if (empty($it[$this->extra_item_field])) {
             return $img;
         }
         $extra_infos = json_decode($it[$this->extra_item_field], true);
@@ -872,7 +871,7 @@ class S3Service
                 if (isset($matches[1]) && $this->url_validate($matches[1])) {
                     preg_match('/< *img[^>]*src *= *["\']?([^"\']*)/i', $img, $tmps);
                     if (isset($tmps[1]) && stripos($tmps[1], G5_URL) !== false
-                        && preg_match('/(\.jpg|\.jpeg|\.gif|\.png|\.bmp)$/i', $tmps[1])) {
+                        && preg_match('/(\.jpg|\.jpeg|\.gif|\.png|\.bmp)$/i', $tmps[1])) { //TODO
                         $img = str_replace($tmps[1], $matches[1], $img);
                     }
                 }
@@ -900,7 +899,7 @@ class S3Service
 
         $extra_infos = array();
         if ($this->check_extra_item_field($it)) {
-            if([$it[$this->extra_item_field]] != '') {
+            if ([$it[$this->extra_item_field]] != '') {
                 $extra_infos = json_decode($it[$this->extra_item_field], true);
             }
         }
@@ -1024,7 +1023,7 @@ class S3Service
             if ($before_file_exists === false) {
                 $aws_key_exists = $this->object_exists($file_key);
 
-                if ($aws_key_exists){
+                if ($aws_key_exists) {
                     $thumb_str = '';
 
                     if ($image_info = $this->get_curl_image($download_path, $file_key)) {
@@ -1078,7 +1077,7 @@ class S3Service
                                 @unlink($thumb_path);
 
                                 $it = get_shop_item($it['it_id'], false);
-                                if(!empty([$it[$this->extra_item_field]])) {
+                                if (!empty([$it[$this->extra_item_field]])) {
                                     $extra_infos = json_decode($it[$this->extra_item_field], true);
                                 }
                                 $extra_infos['thumb' . $array_thumb_key] = $thumb_object_url;
@@ -1225,14 +1224,14 @@ class S3Service
         $storage_url = "https://{$this->bucket_name}.s3.amazonaws.com" . '/' . G5_DATA_DIR;
 
         if (is_array($matches)) {  //에디터 등
-            if(strpos($matches[0], $storage_url ) !== false){ //cdn 으로 주소가 변경되었을 경우 기존 s3 등 저장소 주소를 변경.
+            if (strpos($matches[0], $storage_url) !== false) { //cdn 으로 주소가 변경되었을 경우 기존 s3 등 저장소 주소를 변경.
                 return str_replace($storage_url, $replace_url, $matches[0]);
             }
 
             return str_replace(G5_DATA_URL, $replace_url, $matches[0]); //cdn 안쓸때.
         }
 
-        if(strpos($matches, $storage_url) !== false){ //cdn 으로 주소가 변경되었을 경우 기존 s3 등 저장소 주소를 변경.
+        if (strpos($matches, $storage_url) !== false) { //cdn 으로 주소가 변경되었을 경우 기존 s3 등 저장소 주소를 변경.
             return str_replace($storage_url, $replace_url, $matches);
         }
         return str_replace(G5_DATA_URL, $replace_url, $matches);
@@ -1399,14 +1398,7 @@ class S3Service
             if ($image_info === null) {
                 $image_info = array();
             }
-
-            //TODO
-            // $mime_type = isset($image_info["mime"]) ? $image_info["mime"] : '';
-            //if (!array_key_exists($mime_type, self::mime_content_type($mime_type))) {
-            //   return array();
-            //}
         }
-
         return $image_info;
     }
 
@@ -1544,7 +1536,6 @@ class S3Service
     public function fileurl_replace_key($url)
     {
         $queryString = @parse_url($url);
-
         $path = preg_replace('/^\/.*\/' . G5_DATA_DIR . '/', G5_DATA_DIR, $queryString['path']);
 
         return preg_replace('/^\/(\/)?/', '', $path);
@@ -1626,7 +1617,7 @@ class S3Service
      */
     public function url_validate($url)
     {
-        $storage_url ="https://{$this->bucket_name}.s3.amazonaws.com";
+        $storage_url = "https://{$this->bucket_name}.s3.amazonaws.com";
         return (stripos($url, $this->storage_host_name) !== false) || stripos($url, $storage_url) !== false;
     }
 
@@ -1639,7 +1630,7 @@ class S3Service
     public function get_filename_url($file_name, $url_parse)
     {
         $url = "{$url_parse['scheme']}://{$url_parse['host']}{$url_parse['path']}";
-        if($this->url_validate($url)){
+        if ($this->url_validate($url)) {
             $file_name = basename($url_parse['path']);
         }
         return $file_name;
@@ -1672,7 +1663,7 @@ class S3Service
             $ori_file_path = G5_DATA_PATH . '/' . G5_EDITOR_DIR . explode($editor_dir, $ori_file_path)[1];
             //썸네일
             $thumb_file_name = $this->create_thumbnail($file_path);
-            $thumb_file_path = dirname($ori_file_path). '/' . $thumb_file_name;
+            $thumb_file_path = dirname($ori_file_path) . '/' . $thumb_file_name;
             $thumb_file_key = $this->get_editor_path() . $thumb_file_name;
 
             $result = $this->put_object([
@@ -1700,7 +1691,7 @@ class S3Service
      * @param string $filepath 웹서버에 올라간 파일이름 포함 전체 경로
      * @return string $thumb_filepath
      */
-    private function create_thumbnail ($filepath, $thumb_width=800, $thumb_height = null)
+    private function create_thumbnail($filepath, $thumb_width = 800, $thumb_height = null)
     {
         $file_name = basename($filepath);
         $thumb_path = dirname($filepath);
@@ -1762,7 +1753,7 @@ class S3Service
         for ($i = 0; $i < $length; $i++) {
             // 이미지 path 구함
             $img_url = explode($editor_path, $matchs[1][$i]);
-            if(!isset($img_url[1])){
+            if (!isset($img_url[1])) {
                 return;
             }
             $imgname = $img_url[1];
@@ -1842,7 +1833,6 @@ EOD;
 
             exit;
         }
-
     }
 
     /**
