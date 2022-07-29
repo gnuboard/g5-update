@@ -854,12 +854,10 @@ class S3Service
             return $img;
         }
         $extra_infos = json_decode($it[$this->extra_item_field], true);
-        $find_tag = $find_img = '';
 
         for ($i = 1; $i <= 10; $i++) {
             if ($it['it_img' . $i]) {
                 $matches = array();
-
                 if ($find_img = $this->get_it_thumbnail_by_index('', $i, $it, $width, $height)) {
                     preg_match('/< *img[^>]*src *= *["\']?([^"\']*)/i', $find_img, $matches);
                 } else {
@@ -1011,8 +1009,6 @@ class S3Service
 
         $extra_infos = json_decode($it[$this->extra_item_field], true);
 
-        $before_file_exists = false;
-
         if (isset($extra_infos['thumb' . $array_thumb_key]) && $extra_infos['thumb' . $array_thumb_key]) {
             $image_tag = '<img src="' . $extra_infos['thumb' . $array_thumb_key] . '"';
             $image_tag .= ' alt="" class="aws_s3_thumb">';
@@ -1026,22 +1022,13 @@ class S3Service
             }
 
             if ($before_file_exists === false) {
-                if (!$this->s3_client()) {
-                    return '';
-                }
-
                 $aws_key_exists = $this->object_exists($file_key);
 
-                if ($aws_key_exists) {
+                if ($aws_key_exists){
                     $thumb_str = '';
 
-                    if ($before_file_exists) {
+                    if ($image_info = $this->get_curl_image($download_path, $file_key)) {
                         $thumb_str = $this->shop_create_thumbnail($it['it_img' . $index], $width, $height);
-                        // 이미지가 있고 이미지 정보를 읽어올수 있다면
-                    } else {
-                        if ($image_info = $this->get_curl_image($download_path, $file_key)) {
-                            $thumb_str = $this->shop_create_thumbnail($it['it_img' . $index], $width, $height);
-                        }
                     }
 
                     // 이미지가 있으나 이미지 정보가 없거나 이미지 깨진 경우 썸네일을 만들수 없으므로, 매번 aws s3 에서 호출해야 하는 낭비가 온다.
@@ -1087,14 +1074,8 @@ class S3Service
 
                             // 썸네일 파일을 aws s3에 성공적으로 업로드 했다면, 호스팅 공간에서 삭제합니다.
                             if ($thumb_object_url) {
-                                if (function_exists('gc_collect_cycles')) {
-                                    gc_collect_cycles();
-                                }
-
-                                // 원래부터 파일이 없었고, 다운받은 파일이 있으면 다시 삭제
-                                if (!$before_file_exists) {
-                                    @unlink($thumb_path);
-                                }
+                                //다운받은 파일 삭제
+                                @unlink($thumb_path);
 
                                 $it = get_shop_item($it['it_id'], false);
                                 if(!empty([$it[$this->extra_item_field]])) {
@@ -1110,21 +1091,17 @@ class S3Service
 
                                 sql_query($sql, false);
 
-                                $image_tag = '<img src="' . $thumb_object_url . '"';
-                                $image_tag .= ' alt="" class="aws_s3_thumb">';
+                                $image_tag = "<img src='{$thumb_object_url}' alt='' class='aws_s3_thumb'>";
                             }
                         }
                     }
 
-                    if (function_exists('gc_collect_cycles')) {
-                        gc_collect_cycles();
-                    }
-
-                    // 원래부터 파일이 없었고, 다운받은 파일이 있으면 다시 삭제
-                    if (!$before_file_exists && file_exists($download_path)) {
-                        @unlink($download_path);
-                    }
+                    // 다운받은 파일이 있으면 다시 삭제
+                    @unlink($download_path);
                 }
+            } else {
+                $thumb_str = $this->shop_create_thumbnail($it['it_img' . $index], $width, $height);
+                // 이미지가 있고 이미지 정보를 읽어올수 있다면
             }
         }
 
