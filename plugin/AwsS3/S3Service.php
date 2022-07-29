@@ -1354,21 +1354,20 @@ class S3Service
      * @param $file_key
      * @return array|false
      */
-    public function get_curl_image($download_path, $file_key)
+    private function get_curl_image($download_path, $file_key)
     {
         // https://docs.aws.amazon.com/ko_kr/AmazonS3/latest/API/RESTBucketGET.html
         $image_url = $this->storage_host_name . '/' . $file_key;
 
-        if (stripos($image_url, "https") != 0 || strlen($image_url) > 255) {
+        if (stripos($image_url, "https") === false) {
             $image_url = '';
         }
 
-        if (!$image_url) {
+        if (empty($image_url)) {
             return array();
         }
 
         $curlUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:101.0) Gecko/20100101 Firefox/101.0";
-
         $curl = curl_init();
         $err_status = '';
 
