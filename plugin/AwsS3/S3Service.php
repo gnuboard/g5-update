@@ -1433,7 +1433,14 @@ class S3Service
         return $image_info;
     }
 
-    public function get_list_thumbnail_info($thumbnail_info = array(), $arguments)
+    /**
+     * 그누보드 썸네일
+     * 네트워크로 인함 속도 문제로 인해 외부저장소에 업로드 안함.
+     * @param $thumbnail_info
+     * @param $arguments
+     * @return array|mixed|string[]
+     */
+    public function get_list_thumbnail_info($thumbnail_info, $arguments)
     {
         $bo_table = $arguments['bo_table'] ?? '';
         $wr_id = $arguments['wr_id'] ?? '';
@@ -1451,6 +1458,7 @@ class S3Service
 
         $tname = '';
 
+        $thumb = array('src' => '', 'ori' => '', 'alt' => '');
         if (!$source_path && stripos($data_path, '/' . G5_EDITOR_DIR . '/') !== false) {
             $edt = true;
             $source_path = $target_path = G5_PATH . preg_replace(
@@ -1472,60 +1480,62 @@ class S3Service
             return $thumbnail_info;
         }
 
-        $thumb_filename = preg_replace("/\.[^\.]+$/i", "", $filename); // 확장자제거
-        $thumb_file = "$target_path/thumb-{$thumb_filename}_{$thumb_width}x{$thumb_height}." . $extension;
+        $ori_filename = preg_replace("/\.[^\.]+$/i", "", $filename); // 확장자제거
+        if (!empty($bo_table)) {
+            $bo_gallery_width = $GLOBALS['theme_config']['bo_gallery_width'];
+            $bo_gallery_height = $GLOBALS['theme_config']['bo_gallery_height'];
+            $bo_mobile_gallery_width = $GLOBALS['theme_config']['bo_mobile_gallery_width'];
+            $bo_mobile_gallery_height = $GLOBALS['theme_config']['bo_mobile_gallery_height'];
 
-        // 썸네일 파일이 내 호스팅에 있다면 파일이름을 남김
-        if (file_exists($thumb_file)) {
-            $tname = basename($thumb_file);
-        } else {
-            if (is_Dir($source_path) && $this->s3_client()) {
-                $download_path = $source_path . '/' . $filename;
-                $file_key = G5_DATA_DIR . str_replace(G5_DATA_PATH, '', $download_path);
-
-                $image_info = $this->get_curl_image($download_path, $file_key);
-
-                if (!$image_info) {
-                    $no_image_path = G5_PATH . '/img/no_img.png';
-
-                    if (file_exists($no_image_path)) {
-                        // 노 이미지로 썸네일 파일을 만들어 두번 다시 s3.amazonaws.com 에서 파일을 찾지 않도록 합니다.
-                        @copy($no_image_path, $thumb_file);
-                        @chmod($thumb_file, G5_FILE_PERMISSION);
-                    }
-
-                    if (function_exists('gc_collect_cycles')) {
-                        gc_collect_cycles();
-                    }
-
-                    // 생성한 파일 삭제
-                    @unlink($download_path);
-
-                    return array();
+            if (!G5_IS_MOBILE) {
+                if ($thumb_width == $bo_gallery_width && $thumb_height == $bo_gallery_height) {
+                    $thumb['src'] = "thumb-{$ori_filename}_{$thumb_width}x{$thumb_height}." . $extension;
+                    return $thumb;
                 }
-
-                if (file_exists($download_path)) {
-                    $tname = thumbnail(
-                        $filename,
-                        $source_path,
-                        $target_path,
-                        $thumb_width,
-                        $thumb_height,
-                        $is_create,
-                        $is_crop,
-                        $crop_mode,
-                        $is_sharpen,
-                        $um_value
-                    );
-
-                    if (function_exists('gc_collect_cycles')) {
-                        gc_collect_cycles();
-                    }
-
-                    // 다운받은 파일은 다시 삭제
-                    @unlink($download_path);
+            } else { //PC
+                if ($thumb_width == $bo_mobile_gallery_width && $thumb_height == $bo_mobile_gallery_height) {
+                    $thumb['src'] = "thumb-{$ori_filename}_{$thumb_width}x{$thumb_height}." . $extension;
+                    return $thumb;
                 }
             }
+        }
+
+        $thumb_file_name = "thumb-{$ori_filename}_{$thumb_width}x{$thumb_height}." . $extension;
+        $thumb_file = "$target_path/$thumb_file_name";
+
+        $download_path = $source_path . '/' . $filename;
+        $file_key = G5_DATA_DIR . str_replace(G5_DATA_PATH, '', $download_path);
+        $image_info = $this->get_curl_image($download_path, $file_key);
+
+        if (!$image_info) {
+            $no_image_path = G5_PATH . '/img/no_img.png';
+            if (file_exists($no_image_path)) {
+                // 노 이미지로 썸네일 파일을 만들어 두번 다시 s3.amazonaws.com 에서 파일을 찾지 않도록 합니다.
+                @copy($no_image_path, $thumb_file);
+                @chmod($thumb_file, G5_FILE_PERMISSION);
+            }
+
+            // 생성한 파일 삭제
+            @unlink($download_path);
+            return array();
+        }
+
+        if (file_exists($download_path)) {
+            $tname = thumbnail(
+                $filename,
+                $source_path,
+                $target_path,
+                $thumb_width,
+                $thumb_height,
+                $is_create,
+                $is_crop,
+                $crop_mode,
+                $is_sharpen,
+                $um_value
+            );
+
+            // 다운받은 원본파일은 삭제
+            unlink($download_path);
         }
 
         if ($tname) {
