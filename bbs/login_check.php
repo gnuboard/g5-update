@@ -64,6 +64,8 @@ run_event('login_session_before', $mb, $is_social_login);
 set_session('ss_mb_id', $mb['mb_id']);
 // FLASH XSS 공격에 대응하기 위하여 회원의 고유키를 생성해 놓는다. 관리자에서 검사함 - 110106
 set_session('ss_mb_key', md5($mb['mb_datetime'] . get_real_client_ip() . $_SERVER['HTTP_USER_AGENT']));
+// 회원의 토큰키를 세션에 저장한다. /common.php 에서 해당 회원의 토큰값을 검사한다.
+if(function_exists('update_auth_session_token')) update_auth_session_token($mb['mb_datetime']);
 
 // 포인트 체크
 if($config['cf_use_point']) {
@@ -151,7 +153,7 @@ if( is_admin($mb['mb_id']) && is_dir(G5_DATA_PATH.'/tmp/') ){
             $tmp_data_check = false;
         }
     }
-    @fclose($tmp_data_check);
+    if (is_resource($tmp_data_check)) @fclose($tmp_data_check);
     @unlink($tmp_data_file);
 
     if(! $tmp_data_check){
