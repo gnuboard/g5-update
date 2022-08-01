@@ -1,7 +1,7 @@
 <?php
 if (!defined('_GNUBOARD_')) exit;
 
-// http://kr1.php.net/manual/en/function.curl-setopt-array.php 참고
+// https://www.php.net/manual/en/function.curl-setopt-array.php 참고
 if (!function_exists('curl_setopt_array')) {
    function curl_setopt_array(&$ch, $curl_options)
    {
@@ -20,10 +20,10 @@ function naver_syndi_ping($bo_table, $wr_id)
 {
     global $config;
 
-    $token = trim($config['cf_syndi_token']);
+    $token = isset($config['cf_syndi_token']) ? trim($config['cf_syndi_token']) : '';
 
     // 토큰값이 없다면 네이버 신디케이션 사용안함
-    if ($token == '') return 0;
+    if ($token === '') return 0;
 
     // 신디케이션 수집 제외게시판
     if (preg_match('#^('.$config['cf_syndi_except'].')$#', $bo_table)) return -2;
