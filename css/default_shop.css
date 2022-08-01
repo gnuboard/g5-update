@@ -583,7 +583,7 @@ box-shadow:0 1px 10px rgba(0,0,0,.1)}
 #smb_my_ov .btn_admin {display:inline-block;background:#d13f4a;color:#fff;text-decoration:none;vertical-align:middle;border-radius:3px}
 #smb_my_ov .op_area:after {display:block;visibility:hidden;clear:both;content:""}
 #smb_my_ov .op_area dt{float:left;width:10%;margin:3px 0;font-weight:bold}
-#smb_my_ov .op_area dd{float:left;width:40%;;margin:3px 0}
+#smb_my_ov .op_area dd{float:left;width:40%;margin:3px 0}
 .my_ov_btn{text-align:center;}
 .my_ov_btn button{background:#fff;border:1px solid #ccc;vertical-align:top;border-top:0;padding:0 20px;height:25px}
 .my_ov_btn button:hover{background:#f3f3f3}
@@ -1009,7 +1009,7 @@ box-shadow: 1px 2px 2px #eee;}
 #sod_fin_legend dt {clear:both;float:left;margin:0 0 5px;width:50px;font-weight:bold}
 #sod_fin_legend dd {float:left;margin:0}
 
-#sod_fin #sod_bsk_tot li{background:#fff;border-bottom:1px solid #e7ebf1;height: 40px;;padding:0 15px;line-height:40px;text-align:right}
+#sod_fin #sod_bsk_tot li{background:#fff;border-bottom:1px solid #e7ebf1;height: 40px;padding:0 15px;line-height:40px;text-align:right}
 #sod_fin #sod_bsk_tot li span{float:left;clear:both;color: #777;}
 #sod_fin #sod_bsk_tot li strong{}
 #sod_fin #sod_bsk_tot .sod_bsk_cnt strong{color:#ff006c;font-size:1.25em}

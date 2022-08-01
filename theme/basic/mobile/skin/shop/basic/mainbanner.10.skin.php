@@ -19,7 +19,7 @@ for ($i=0; $row=sql_fetch_array($result); $i++)
     if ($i==0) echo '<div id="main_bn"><div class="main_banner_owl owl-carousel">'.PHP_EOL;
     //print_r2($row);
     // 테두리 있는지
-    $bn_border  = ($row['bn_border']) ? ' class="sbn_border"' : '';;
+    $bn_border  = ($row['bn_border']) ? ' class="sbn_border"' : '';
     // 새창 띄우기인지
     $bn_new_win = ($row['bn_new_win']) ? ' target="_blank"' : '';
 

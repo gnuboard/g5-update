@@ -389,7 +389,7 @@ if($config['cf_sms_use'] == 'icode' && $qaconfig['qa_use_sms']) {
                     $strDest     = array();
                     $strDest[]   = $recv_number;
                     $strCallBack = $send_number;
-                    $strCaller   = iconv_euckr(trim($config['cf_title']));;
+                    $strCaller   = iconv_euckr(trim($config['cf_title']));
                     $strSubject  = '';
                     $strURL      = '';
                     $strData     = iconv_euckr($sms_content);

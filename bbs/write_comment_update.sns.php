@@ -35,7 +35,7 @@ if (! empty($_POST['facebook_checked'])) {
 
             set_cookie('ck_facebook_checked', true, 86400*31);
         } catch(FacebookApiException $e) {
-            ;;;
+
         }
     }
 

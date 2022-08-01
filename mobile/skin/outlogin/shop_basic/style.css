@@ -3,7 +3,7 @@
 #ol_before h2 {width:0;height:0;overflow:hidden}
 #ol_after h2 {width:0;height:0;overflow:hidden}
 
-#ol_before{background:#212020;;color:#fff;padding-left:10px;}
+#ol_before{background:#212020;color:#fff;padding-left:10px;}
 #ol_before .ol_before_link{display:inline-block;margin:10px 3px;}
 #ol_before .ol_before_link a{display:inline-block;padding:0 10px;line-height:33px;border-radius:3px}
 #ol_before .ol_before_link .login{color:#fff;background:#3a8afd;line-height:35px}

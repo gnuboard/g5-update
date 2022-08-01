@@ -816,7 +816,7 @@ $(function() {
             if(id == cp_id) {
                 cp_dup_idx = index;
                 cp_dup = true;
-                $cp_dup_el = $(this).closest("li");;
+                $cp_dup_el = $(this).closest("li");
 
                 return false;
             }
@@ -834,7 +834,7 @@ $(function() {
             }
         }
 
-        var $s_el = $cp_row_el.find(".total_price strong");;
+        var $s_el = $cp_row_el.find(".total_price strong");
         sell_price = parseInt($cp_row_el.find("input[name^=it_price]").val());
         sell_price = sell_price - parseInt(price);
         if(sell_price < 0) {

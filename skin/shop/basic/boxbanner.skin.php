@@ -13,7 +13,7 @@ for ($i=0; $row=sql_fetch_array($result); $i++)
     if ($i==0) echo '<aside id="sbn_side" class="sbn"><h2>쇼핑몰 배너</h2><ul class="sb_bn">'.PHP_EOL;
     //print_r2($row);
     // 테두리 있는지
-    $bn_border  = ($row['bn_border']) ? ' class="sbn_border"' : '';;
+    $bn_border  = ($row['bn_border']) ? ' class="sbn_border"' : '';
     // 새창 띄우기인지
     $bn_new_win = ($row['bn_new_win']) ? ' target="_blank"' : '';
 

@@ -1,6 +1,6 @@
 function get_editor_wr_content()
 {
-    return oEditors.getById['wr_content'].getIR();;
+    return oEditors.getById['wr_content'].getIR();
 }
 
 function put_editor_wr_content(content)
