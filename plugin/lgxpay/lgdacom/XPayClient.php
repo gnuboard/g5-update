@@ -929,11 +929,6 @@ class XPayClient
 	*/
 	function getMicrotime()
 	{
-		if (version_compare(PHP_VERSION, '5.0.0', '<'))
-		{
-			return array_sum(explode(' ', microtime()));
-		}
-
 		return microtime(true);
 	}
 
