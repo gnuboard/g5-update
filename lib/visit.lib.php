@@ -13,10 +13,10 @@ function visit($skin_dir='basic')
     // $visit[4] = 전체
     // 숫자가 들어감
     preg_match("/오늘:(.*),어제:(.*),최대:(.*),전체:(.*)/", $config['cf_visit'], $visit);
-    settype($visit[1], "integer");
-    settype($visit[2], "integer");
-    settype($visit[3], "integer");
-    settype($visit[4], "integer");
+    $visit[1] = (int)$visit[1];
+    $visit[2] = (int)$visit[2];
+    $visit[3] = (int)$visit[3];
+    $visit[4] = (int)$visit[4];
 
     if(preg_match('#^theme/(.+)$#', $skin_dir, $match)) {
         if (G5_IS_MOBILE) {
@@ -55,14 +55,14 @@ function get_brow($agent)
     //echo $agent; echo "<br/>";
 
     if (preg_match("/msie ([1-9][0-9]\.[0-9]+)/", $agent, $m)) { $s = 'MSIE '.$m[1]; }
-    else if(preg_match("/firefox/", $agent))            { $s = "FireFox"; }
     else if(preg_match("/chrome/", $agent))             { $s = "Chrome"; }
-    else if(preg_match("/x11/", $agent))                { $s = "Netscape"; }
-    else if(preg_match("/opera/", $agent))              { $s = "Opera"; }
+    else if(preg_match("/firefox/", $agent))            { $s = "FireFox"; }
+    else if(preg_match("/mozilla/", $agent))            { $s = "Mozilla"; }
     else if(preg_match("/gec/", $agent))                { $s = "Gecko"; }
     else if(preg_match("/bot|slurp/", $agent))          { $s = "Robot"; }
     else if(preg_match("/internet explorer/", $agent))  { $s = "IE"; }
-    else if(preg_match("/mozilla/", $agent))            { $s = "Mozilla"; }
+    else if(preg_match("/x11/", $agent))                { $s = "Netscape"; }
+    else if(preg_match("/opera/", $agent))              { $s = "Opera"; }
     else { $s = "기타"; }
 
     return $s;
@@ -74,20 +74,20 @@ function get_os($agent)
 
     //echo $agent; echo "<br/>";
 
-    if (preg_match("/windows 98/", $agent))                 { $s = "98"; }
-    else if(preg_match("/windows 95/", $agent))             { $s = "95"; }
-    else if(preg_match("/windows nt 4\.[0-9]*/", $agent))   { $s = "NT"; }
-    else if(preg_match("/windows nt 5\.0/", $agent))        { $s = "2000"; }
-    else if(preg_match("/windows nt 5\.1/", $agent))        { $s = "XP"; }
-    else if(preg_match("/windows nt 5\.2/", $agent))        { $s = "2003"; }
-    else if(preg_match("/windows nt 6\.0/", $agent))        { $s = "Vista"; }
-    else if(preg_match("/windows nt 6\.1/", $agent))        { $s = "Windows7"; }
+    if(preg_match("/windows nt 10\.\d/", $agent))        { $s = "Windows10"; }
+    else if(preg_match("/windows nt 6\.3/", $agent))        { $s = "Windows8.1"; }
     else if(preg_match("/windows nt 6\.2/", $agent))        { $s = "Windows8"; }
+    else if(preg_match("/windows nt 6\.1/", $agent))        { $s = "Windows7"; }
+    else if(preg_match("/windows nt 6\.0/", $agent))        { $s = "Vista"; }
+    else if(preg_match("/windows nt 5\.2/", $agent))        { $s = "2003"; }
+    else if(preg_match("/windows nt 5\.1/", $agent))        { $s = "XP"; }
+    else if(preg_match("/windows nt 5\.0/", $agent))        { $s = "2000"; }
     else if(preg_match("/windows 9x/", $agent))             { $s = "ME"; }
+    else if(preg_match("/windows nt 4\.\d/", $agent))       { $s = "NT"; }
     else if(preg_match("/windows ce/", $agent))             { $s = "CE"; }
     else if(preg_match("/mac/", $agent))                    { $s = "MAC"; }
     else if(preg_match("/linux/", $agent))                  { $s = "Linux"; }
-    else if(preg_match("/sunos/", $agent))                  { $s = "sunOS"; }
+    else if(preg_match("/sunos/", $agent))                  { $s = "Solaris "; }
     else if(preg_match("/irix/", $agent))                   { $s = "IRIX"; }
     else if(preg_match("/phone/", $agent))                  { $s = "Phone"; }
     else if(preg_match("/bot|slurp/", $agent))              { $s = "Robot"; }
