@@ -5,9 +5,7 @@ if (!defined('_GNUBOARD_')) {
 
 /**
  * 그누보드5 버전 업데이트
- * 
  * @todo
- * 1. 로그파일에 관련된 Class 분리
  * 2. 업데이트에 필요한 최소용량 및 용량 초과시 예외처리
  * 3. disk_total_space, disk_free_space > 호스팅 환경에서는 용량표시가 제대로 안됨
  */
@@ -207,11 +205,9 @@ class G5Update
             if ($this->conn == false) {
                 throw new Exception("연결된 프로토콜을 찾을 수 없습니다.");
             }
-
             // 로그 디렉토리 생성
-            if (!is_dir($this->dir_log)) {
-                mkdir($this->dir_log, 0755);
-            }
+            $g5UpdateLog = new G5UpdateLog();   
+            $g5UpdateLog->makeDirectory();
 
             if ($this->port == 'ftp') {
                 if (!is_dir($this->dir_update)) {
@@ -235,17 +231,6 @@ class G5Update
                         }
                     }
                 }
-
-                // if (!is_dir($this->dir_log)) {
-                //     if (!ftp_mkdir($this->conn, $this->ftp_dir_log)) {
-                //         throw new Exception("/update/log 디렉토리를 생성하는데 실패했습니다.");
-                //     }
-                //     if ($this->os != "WINNT") {
-                //         if (!ftp_chmod($this->conn, 0755, $this->ftp_dir_log)) {
-                //             throw new Exception("/update/log 디렉토리의 권한을 변경하는데 실패했습니다.");
-                //         }
-                //     }
-                // }
 
                 if (!is_dir($this->dir_backup)) {
                     if (!ftp_mkdir($this->conn, $this->ftp_dir_backup)) {
@@ -275,15 +260,6 @@ class G5Update
                         throw new Exception("/update/version 디렉토리의 권한을 변경하는데 실패했습니다.");
                     }
                 }
-
-                // if (!is_dir($this->dir_log)) {
-                //     if (!ssh2_sftp_mkdir($this->connPath, $this->dir_log, 0755)) {
-                //         throw new Exception("/update/log 디렉토리를 생성하는데 실패했습니다.");
-                //     }
-                //     if (!ssh2_sftp_chmod($this->connPath, $this->dir_log, 0755)) {
-                //         throw new Exception("/update/log 디렉토리의 권한을 변경하는데 실패했습니다.");
-                //     }
-                // }
 
                 if (!is_dir($this->dir_backup)) {
                     if (!ssh2_sftp_mkdir($this->connPath, $this->dir_backup, 0707)) {
@@ -465,9 +441,11 @@ class G5Update
                             $arrayFileName  = explode("_", (string)$fileName);
                             $backupTime     = current($arrayFileName);
                             $backupVersion  = end($arrayFileName);
+                            $fileSize       = filesize($this->dir_backup . "/"  . $dl);
                             $this->backup_list[$key]['realName']    = $dl;
                             $this->backup_list[$key]['version']     = $backupVersion;
                             $this->backup_list[$key]['time']        = date("Y-m-d H:i:s", (int)strtotime($backupTime));
+                            $this->backup_list[$key]['size']        = $this->getFormatFileSize((int)$fileSize);
                             $key++;
                         }
                     }

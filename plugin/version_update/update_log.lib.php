@@ -3,7 +3,7 @@
 /**
  * DB업데이트 로그 Class
  *
- * @see 권한문제로 인해 일반적인 php사용으로 경로/파일생성을 한다.
+ * @see 권한문제로 인해 일반적인 php함수를 사용해서 경로/파일생성을 한다.
  */
 class G5UpdateLog
 {
@@ -103,8 +103,7 @@ class G5UpdateLog
     /**
      * 로그파일 상세정보 조회
      *
-     * @param  string $fileName 로그파일
-     *                          이름
+     * @param  string $fileName 로그파일명
      * @return array<mixed> 로그파일 상세정보
      * @throws Exception
      */
@@ -197,7 +196,6 @@ class G5UpdateLog
             if (!file_exists($filePath)) {
                 throw new Exception("존재하지 않는 로그파일입니다. 경로 : " . $filePath);
             }
-
             if (!unlink($filePath)) {
                 throw new Exception("파일을 삭제하지 못했습니다. 파일 : " . $filePath);
             }

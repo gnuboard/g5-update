@@ -45,11 +45,25 @@ foreach ($content_url as $key => $var) {
     <form method="POST" name="update_box" class="update_box" action="./rollback_step1.php" onsubmit="return update_submit(this);">
         <input type="hidden" name="compare_check" value="0">
         <div class="tbl_frm01 tbl_wrap">
-            <table style="width:650px; text-align:left;">
+            <table style="text-align:left;">
+                <caption>버전 업데이트 설정</caption>
+                <colgroup>
+                    <col class="grid_4">
+                    <col class="grid_8">
+                    <col class="grid_18">
+                </colgroup>
                 <tbody>
                     <tr>
                         <th>현재 그누보드 버전</th>
                         <td><h3><?php echo $g5['update']->now_version; ?></h3></td>
+                        <th class="version_title_box">
+                            <div style="float:left; margin-top:8px;">
+                                백업파일 목록
+                            </div>
+                            <div style="float:right">
+                                <input type="button" name="act_button" value="선택삭제" onclick="delete_rollback_list(this.form)" class="btn btn_01">
+                            </div>
+                        </th>
                     </tr>
                     <tr>
                         <th>복원시점</th>
@@ -59,6 +73,42 @@ foreach ($content_url as $key => $var) {
                                     <option value="<?php echo $var['realName']; ?>"><?php echo $var['version'] . " [" . $var['time'] . "]"; ?></option>
                                 <?php } ?>
                             </select>
+                        </td>
+                        <td rowspan="4" style="padding:0px;">
+                            <div style="width:100%; height:300px; overflow:auto;">
+                                <div class="tbl_head01 tbl_wrap">
+                                    <table>
+                                        <caption>백업파일 목록</caption>
+                                        <thead>
+                                            <tr>
+                                                <th scope="col" style="width: 5%;">
+                                                    <label for="chkall" class="sound_only">로그파일 전체</label>
+                                                    <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
+                                                </th>
+                                                <th scope="col" style="width: 30%;">파일명</th>
+                                                <th scope="col" style="width: 20%;">버전</th>
+                                                <th scope="col" style="width: 15%;">용량</th>
+                                                <th scope="col" style="width: 25%;">날짜</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                                <?php foreach ($backup_list as $i => $var) { ?>
+                                                    <tr>
+                                                        <td class="td_chk">
+                                                            <label for="chk_<?php echo $i; ?>" class="sound_only"><?php echo get_text($var['realName']); ?></label>
+                                                            <input type="checkbox" name="chk[]" value="<?php echo get_text($var['realName']) ?>" id="chk_<?php echo $i; ?>">
+                                                        </td>
+                                                        <td><?php echo $var['realName']; ?></td>
+                                                        <td><?php echo $var['version']; ?></td>
+                                                        <td><?php echo $var['size'] ?></td>
+                                                        <td><?php echo $var['time']; ?></td>
+                                                    </tr>
+                                                <?php } ?>
+                                        </tbody>
+                                    </table>
+
+                                </div>
+                            </div>
                         </td>
                     </tr>
                     <tr>
@@ -187,6 +237,31 @@ foreach ($content_url as $key => $var) {
 
             return false;
         }
+    }
+
+    function delete_rollback_list(f) {
+        if (!is_checked("chk[]")) {
+            alert("삭제 하실 항목을 하나 이상 선택하세요.");
+            return false;
+        }
+
+        if (!confirm("선택한 자료를 정말 삭제하시겠습니까?")) {
+            return false;
+        }
+
+        var $f = $(f);
+        var token = get_ajax_token();
+        if (!token) {
+            alert("토큰 정보가 올바르지 않습니다.");
+            return false;
+        }
+        if (typeof f.token === "undefined") {
+            $f.prepend('<input type="hidden" name="token" value="">');
+        }
+        
+        $f.find("input[name=token]").val(token);
+        f.action = "./rollback_delete.php";
+        f.submit();
     }
 </script>
 

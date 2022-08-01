@@ -10,7 +10,7 @@ $g5UpdateLog = new G5UpdateLog();
 if ($action == "list") {
     $logFileList = (isset($_POST['chk']) && is_array($_POST['chk'])) ? $_POST['chk'] : array();
 
-    foreach ($_POST['chk'] as $key => $fileName) {
+    foreach ($logFileList as $key => $fileName) {
         $g5UpdateLog->deleteLogFile($fileName);
     }
 } elseif ($action == "form") {
