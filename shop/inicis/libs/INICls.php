@@ -137,7 +137,7 @@ class INILog {
         $this->handle = fopen($logfile, "a+");
         if (!$this->handle)
             return false;
-        $this->WriteLog(INFO, "START " . PROGRAM . " " . $this->type . " (" . VERSION . "-" . BUILDDATE . ")(OS:" . php_uname('s') . php_uname('r') . ",PHP:" . phpversion() . ")");
+        $this->WriteLog(INFO, "START " . PROGRAM . " " . $this->type . " (" . VERSION . "-" . BUILDDATE . ")(OS:" . php_uname('s') . php_uname('r') . ",PHP:" . PHP_VERSION . ")");
         return true;
     }
 
@@ -285,7 +285,7 @@ class INIData {
                 sprintf("%-10.10s", php_uname('s')) .
                 sprintf("%-3.3s", "PHP") . //modulescript
                 sprintf("%-10.10s", "chkfake") . //moduledesc
-                sprintf("%-30.30s", php_uname('r') . "PHP:" . phpversion()) //ETCINFO
+                sprintf("%-30.30s", php_uname('r') . "PHP:" . PHP_VERSION) //ETCINFO
         ;
     }
 

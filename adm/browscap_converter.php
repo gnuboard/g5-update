@@ -5,7 +5,7 @@ require_once './_common.php';
 // clean the output buffer
 ob_end_clean();
 
-if (!(version_compare(phpversion(), '5.3.0', '>=') && defined('G5_BROWSCAP_USE') && G5_BROWSCAP_USE)) {
+if (!(version_compare(PHP_VERSION, '5.3.0', '>=') && defined('G5_BROWSCAP_USE') && G5_BROWSCAP_USE)) {
     die('사용할 수 없는 기능입니다.');
 }
 

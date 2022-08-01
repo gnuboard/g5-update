@@ -29,7 +29,7 @@ $query_string = $qstr ? '?'.$qstr : '';
     <li><a href="./visit_domain.php<?php echo $query_string ?>">도메인</a></li>
     <li><a href="./visit_browser.php<?php echo $query_string ?>">브라우저</a></li>
     <li><a href="./visit_os.php<?php echo $query_string ?>">운영체제</a></li>
-    <?php if(version_compare(phpversion(), '5.3.0', '>=') && defined('G5_BROWSCAP_USE') && G5_BROWSCAP_USE) { ?>
+    <?php if(version_compare(PHP_VERSION, '5.3.0', '>=') && defined('G5_BROWSCAP_USE') && G5_BROWSCAP_USE) { ?>
     <li><a href="./visit_device.php<?php echo $query_string ?>">접속기기</a></li>
     <?php } ?>
     <li><a href="./visit_hour.php<?php echo $query_string ?>">시간</a></li>

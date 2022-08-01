@@ -19646,16 +19646,7 @@ class HTMLPurifier_Lexer_DirectLex extends HTMLPurifier_Lexer
      */
     protected function substrCount($haystack, $needle, $offset, $length)
     {
-        static $oldVersion;
-        if ($oldVersion === null) {
-            $oldVersion = version_compare(PHP_VERSION, '5.1', '<');
-        }
-        if ($oldVersion) {
-            $haystack = substr($haystack, $offset, $length);
-            return substr_count($haystack, $needle);
-        } else {
-            return substr_count($haystack, $needle, $offset, $length);
-        }
+       return substr_count($haystack, $needle, $offset, $length);
     }
 
     /**

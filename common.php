@@ -102,7 +102,7 @@ function sql_escape_string($str)
 // SQL Injection 등으로 부터 보호를 위해 sql_escape_string() 적용
 //------------------------------------------------------------------------------
 // magic_quotes_gpc 에 의한 backslashes 제거
-if (7.0 > (float)phpversion()) {
+if (7.0 > (float)PHP_VERSION) {
     if (function_exists('get_magic_quotes_gpc') && get_magic_quotes_gpc()) {
         $_POST    = array_map_deep('stripslashes',  $_POST);
         $_GET     = array_map_deep('stripslashes',  $_GET);
@@ -133,7 +133,7 @@ $member = array('mb_id'=>'', 'mb_level'=> 1, 'mb_name'=> '', 'mb_point'=> 0, 'mb
 $board  = array('bo_table'=>'', 'bo_skin'=>'', 'bo_mobile_skin'=>'', 'bo_upload_count' => 0, 'bo_use_dhtml_editor'=>'', 'bo_subject'=>'', 'bo_image_width'=>0);
 $group  = array('gr_device'=>'', 'gr_subject'=>'');
 $g5     = array();
-if( version_compare( phpversion(), '8.0.0', '>=' ) ) { $g5 = array('title'=>''); }
+if( version_compare( PHP_VERSION, '8.0.0', '>=' ) ) { $g5 = array('title'=>''); }
 $qaconfig = array();
 $g5_debug = array('php'=>array(),'sql'=>array());
 
