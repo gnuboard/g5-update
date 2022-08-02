@@ -4,55 +4,35 @@ include_once './_common.php';
 
 $g5['title'] = '데이터베이스 업데이트';
 include_once '../admin.head.php';
+
+/**
+ * @todo 현재 데이터베이스 버전이 최신버전인지 표시 추가
+ */
+$g5Migration = new G5Migration();
+$migrationVersion = $g5Migration->getMigrationVersion();
 ?>
-<style>
-    .a_style {
-        font-weight: 400;
-        padding: 0.2em 0.4em;
-        margin: 0;
-        font-size: 12px;
-        background-color: #ddf4ff;
-        border-radius: 6px;
-        border: 1px;
-        color: #0969da;
-    }
-
-    .version_title_box p {
-        font-size: 16px;
-        font-weight: bold;
-    }
-    .version_content_box {
-        border: none !important;
-    }
-    .version_content_box p {
-        white-space:pre-line; line-height:2;
-    }
-</style>
-
 <section>
     <h2 class="h2_frm">데이터베이스 업데이트 설정</h2>
-    <form method="POST" name="update_box" class="update_box" action="" onsubmit="return update_submit(this);">
+    <form method="POST" name="update_box" class="update_box" action="./database_step1.php" onsubmit="return update_submit(this);">
         <div class="tbl_frm01 tbl_wrap">
             <table>
                 <caption>데이터베이스 업데이트 설정</caption>
                 <colgroup>
                     <col class="grid_4">
-                    <col class="grid_8">
                     <col class="grid_18">
                 </colgroup>
                 <tbody>
                     <tr>
-                        <th scope="row"><label for="current_version">자동 업데이트 설정</label></th>
+                        <th scope="row"><label for="latest_version">현재 데이터베이스 버전</label></th>
                         <td>
-                            <span class="frm_info">버전 업데이트 시 자동으로 DB 업데이트가 진행되도록 설정합니다.</span>
-                            <input type="checkbox" name="cf_use_copy_log" value="1" id="cf_use_copy_log" checked=""> 사용
+                            <?php echo $migrationVersion; ?>
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="latest_version">수동 업데이트 진행</label></th>
                         <td>
+                            <span class="frm_info">그누보드 버전 업데이트 시 데이터베이스 업데이트를 진행하지 않았다면 최신버전 업데이트를 권장합니다.</span>
                             <button type="submit" class="btn_connect_check btn_frmline">업데이트</button>
-                            <span class="update_btn_area"></span>
                         </td>
                     </tr>
                 </tbody>

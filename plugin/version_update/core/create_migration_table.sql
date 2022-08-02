@@ -8,5 +8,6 @@ CREATE TABLE `g5_migrations` (
   `mi_execution_date` datetime DEFAULT NULL,
   `mi_execution_time` int(11) DEFAULT NULL,
   `mi_result` varchar(100) DEFAULT NULL,
+  `mi_reason` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`mi_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

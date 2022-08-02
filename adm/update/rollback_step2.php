@@ -59,6 +59,16 @@ if ($backupResult == "success") {
         }
     }
     $g5['update']->deleteBackupDir($backupPath);
+
+    
+    /**
+     * 데이터베이스 업데이트
+     * @todo 테스트 필요
+     */
+    if ($is_db_update) {
+        $migration = new G5Migration();
+        $migration->update($rollback_version);
+    }
 } else {
     $updateResult['fail'][] = array('file' => "", 'message' => $backupResult);
 }

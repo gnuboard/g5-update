@@ -2,8 +2,6 @@
 
 /**
  * 그누보드 버전 Class
- *
- * @todo
  */
 class G5Version
 {
@@ -104,7 +102,8 @@ class G5Version
     /**
      * 실행할 버전 목록 조회
      *
-     * @return array<int, string>
+     * @param   string $targetVersion 목표버전(null일 경우 현재버전까지 전체 업데이트)
+     * @return  array<int, string>
      */
     public static function getExecuteVersionList($targetVersion = null)
     {
@@ -113,7 +112,6 @@ class G5Version
         if (!is_array($versionList)) {
             throw new Exception("전체 버전목록이 없습니다");
         }
-
         foreach ((array)$versionList as $version) {
             // 현재버전 ~ 목표버전
             if ($targetVersion) {

@@ -65,13 +65,8 @@ if ($backupResult == "success") {
     }
     // 데이터베이스 업데이트
     if ($is_db_update) {
-        if (version_compare($targetVersion, G5Version::$currentVersion, ">")) {
-            $migration = new G5Migration();
-            $migration->setTargetVersion($targetVersion);
-            $migration->update();
-        } else {
-            echo "현재버전에서 DB 다운그레이드는 지원하지 않습니다.";
-        }
+        $migration = new G5Migration();
+        $migration->update($targetVersion);
     }
 } else {
     $updateResult['fail'][] = array('file' => "", 'message' => $backupResult);

@@ -6,7 +6,7 @@
  */
 class G5MigrationSetup extends G5Migration
 {
-    private const CREATE_TABLE_PATH  = parent::MIGRATION_PATH . "/core/create_migration_table.sql";
+    private const CREATE_TABLE_PATH  = parent::UPDATE_PATH . "/core/create_migration_table.sql";
 
     public function __construct()
     {
