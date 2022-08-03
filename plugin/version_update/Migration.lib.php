@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Class Migration
  */
@@ -6,19 +7,20 @@ abstract class Migration
 {
     /**
      * Table check query
+     *
      * @deprecated
      */
-    protected $tableCheckStmt;
+    protected mysqli_stmt $tableCheckStmt;
     /**
      * Coulmn check query
      */
-    protected $columnCheckStmt;
-      
+    protected mysqli_stmt $columnCheckStmt;
+
     /**
      * @var Mysqli
      */
     protected $mysqli;
-    
+
     public function __construct()
     {
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
@@ -27,57 +29,74 @@ abstract class Migration
         $this->mysqli = $g5Migration->getMysqli();
 
         // Table check query
-        $this->tableCheckStmt = $this->mysqli->prepare("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?");
+        $tableCheckQuery = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?";
+        $this->tableCheckStmt = $this->mysqli->prepare($tableCheckQuery);
         // Coulmn check query
-        $this->columnCheckStmt = $this->mysqli->prepare("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?");
+        $columnCheckQuery = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?";
+        $this->columnCheckStmt = $this->mysqli->prepare($columnCheckQuery);
     }
 
     /**
      * Perform a migration step.
+     *
+     * @return void
      */
     abstract public function up();
 
     /**
      * Revert a migration step.
+     *
+     * @return void
      */
     abstract public function down();
-    
+
     /**
      * 컬럼 존재여부 체크
+     *
+     * @param  string $table
+     * @param  string $column
+     * @return bool
      */
     public function existColumn($table, $column)
     {
         // 사용자 임의 테이블로 변경
         $table = $this->convertCustomSetting($table);
 
-        if ($this->columnCheckStmt) {
-            $this->columnCheckStmt->bind_param("ss", $table, $column);
+        $this->columnCheckStmt->bind_param("ss", $table, $column);
 
-            if (!$this->columnCheckStmt->execute()){
-                echo $this->mysqli->errno;
-            }
-
-            if ($this->columnCheckStmt->get_result()->num_rows > 0) {
+        if (!$this->columnCheckStmt->execute()) {
+            echo $this->mysqli->errno;
+            return false;
+        }
+        $result = $this->columnCheckStmt->get_result();
+        if ($result) {
+            if ($result->num_rows > 0) {
                 return true;
             } else {
                 return false;
             }
+        } else {
+            return false;
         }
     }
 
     /**
-     * @param string $sql
+     * Query 실행
+     *
+     * @param  string $sql
+     * @return void
      */
     public function executeQuery($sql)
     {
-        // 사용자 임의설정으로 Query 변경
         $sql = $this->convertCustomSetting($sql);
 
         $this->mysqli->query($sql);
     }
 
     /**
-     * @param string $string
+     * 사용자 임의설정으로 Query 변경
+     *
+     * @param  string $string
      * @return string
      */
     public function convertCustomSetting($string)

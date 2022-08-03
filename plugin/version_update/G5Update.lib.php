@@ -5,6 +5,7 @@ if (!defined('_GNUBOARD_')) {
 
 /**
  * 그누보드5 버전 업데이트
+ *
  * @todo
  * 2. 업데이트에 필요한 최소용량 및 용량 초과시 예외처리
  * 3. disk_total_space, disk_free_space > 호스팅 환경에서는 용량표시가 제대로 안됨
@@ -12,7 +13,7 @@ if (!defined('_GNUBOARD_')) {
 class G5Update
 {
     public $g5Version;
-    
+
     public $path = null;
     public $latest_version = null;
     public static $target_version = null;
@@ -65,6 +66,7 @@ class G5Update
      * @param string $port          접속 프로토콜 ("ftp", "sftp")
      * @param string $username      사용자 이름
      * @param string $userPassword  사용자 비밀번호
+     * @return void
      * @throws Exception
      */
     public function connect($hostname, $port, $username, $userPassword)
@@ -95,7 +97,7 @@ class G5Update
                     // ftp경로 설정
                     $this->setFtpDirectoryToG5();
                 } else {
-                    throw new Exception("ftp_connect 함수를 사용할 수 없습니다.");    
+                    throw new Exception("ftp_connect 함수를 사용할 수 없습니다.");
                 }
             } elseif ($port == "sftp") {
                 if (function_exists("ssh2_connect")) {
@@ -107,17 +109,17 @@ class G5Update
                         if (!ssh2_auth_password($this->conn, $username, $userPassword)) {
                             throw new Exception("SFTP 계정 로그인에 실패했습니다.");
                         }
-        
+
                         $this->connPath = @ssh2_sftp($this->conn);
-                        
+
                         if (!$this->connPath) {
                             $this->conn = false;
                             $this->connPath = false;
                             throw new Exception("SFTP 시스템초기화에 실패했습니다.");
-                        }    
+                        }
                     }
                 } else {
-                    throw new Exception("ssh2_connect 함수를 사용할 수 없습니다.");    
+                    throw new Exception("ssh2_connect 함수를 사용할 수 없습니다.");
                 }
             } else {
                 throw new Exception("올바르지 않은 프로토콜입니다.");
@@ -129,6 +131,7 @@ class G5Update
 
     /**
      * FTP/SSH 연결해제
+     *
      * @return bool
      */
     public function disconnect()
@@ -148,6 +151,7 @@ class G5Update
 
     /**
      * connect 조회
+     *
      * @return mixed
      */
     public function getConn()
@@ -157,7 +161,8 @@ class G5Update
 
     /**
      * ftp connect gnuboard5경로 설정
-     * @breif ftp 연결 시 홈 디렉토리가 서버 및 계정 설정에 따라 다 제각각이므로 초기경로를 잡아준다.
+     *
+     * @breif  ftp 연결 시 홈 디렉토리가 서버 및 계정 설정에 따라 다 제각각이므로 초기경로를 잡아준다.
      * @return void
      */
     public function setFtpDirectoryToG5()
@@ -194,6 +199,8 @@ class G5Update
 
     /**
      * 버전업데이트 경로 생성 및 권한처리
+     *
+     * @return void
      * @throws Exception
      */
     public function makeUpdateDir()
@@ -206,7 +213,7 @@ class G5Update
                 throw new Exception("연결된 프로토콜을 찾을 수 없습니다.");
             }
             // 로그 디렉토리 생성
-            $g5UpdateLog = new G5UpdateLog();   
+            $g5UpdateLog = new G5UpdateLog();
             $g5UpdateLog->makeDirectory();
 
             if ($this->port == 'ftp') {
@@ -296,7 +303,6 @@ class G5Update
                 $dirRemove = escapeshellarg($this->dir_version . '/*');
                 exec('rm -rf ' . $dirRemove);
             }
-
         } catch (Exception $e) {
             $this->setError($e);
         }
@@ -304,6 +310,8 @@ class G5Update
 
     /**
      * 가용용량 체크
+     *
+     * @return void
      * @throws Exception
      */
     public function checkInstallAvailable()
@@ -320,6 +328,7 @@ class G5Update
 
     /**
      * 전체 저장공간 출력
+     *
      * @return string 용량 + 데이터단위
      */
     public function getTotalStorageSize()
@@ -329,6 +338,7 @@ class G5Update
 
     /**
      * 전체 저장공간의 여유 공간 출력
+     *
      * @return string 용량 + 데이터단위
      */
     public function getUseableStorageSize()
@@ -338,6 +348,7 @@ class G5Update
 
     /**
      * 전체 저장공간 중 사용 중인 공간 출력
+     *
      * @return string 용량 + 데이터단위
      */
     public function getUseStorageSize()
@@ -348,6 +359,7 @@ class G5Update
     }
     /**
      * 전체 디스크의 사용률 조회
+     *
      * @return float 사용률(소수점 2자리)
      */
     public function getUseStoragePercenty()
@@ -362,9 +374,10 @@ class G5Update
 
     /**
      * 데이터 단위 추가
-     * @brief 입력되는 바이트에 따라 적절한 단위를 자동으로 추가한다.
-     * @param int   $bytes        데이터 크기 (byte)
-     * @param int   $decimals     표시할 소수점 자릿수
+     *
+     * @brief  입력되는 바이트에 따라 적절한 단위를 자동으로 추가한다.
+     * @param  int $bytes    데이터크기(byte)
+     * @param  int $decimals 소수점자릿수
      * @return string   용량 + 데이터단위
      */
     private function getFormatFileSize($bytes, $decimals = 2)
@@ -377,8 +390,9 @@ class G5Update
 
     /**
      * 버전목록 조회
-     * @brief github > releases정보 중에 tag_name만 배열로 만들어 리턴한다.
-     * @return array<mixed>
+     *
+     * @brief  github > releases정보 중에 tag_name만 배열로 만들어 리턴한다.
+     * @return array<mixed>|void
      */
     public function getVersionList()
     {
@@ -395,8 +409,9 @@ class G5Update
 
     /**
      * 최신버전 조회
-     * @brief 버전목록 중 첫번째 인덱스 값을 조회한다.
-     * @return string
+     *
+     * @brief  버전목록 중 첫번째 인덱스 값을 조회한다.
+     * @return string|void
      */
     public function getLatestVersion()
     {
@@ -413,7 +428,8 @@ class G5Update
 
     /**
      * 버전에서 수정된 내용 조회
-     * @brief 지정된 태그로 게시된 release를 가져온다.
+     *
+     * @brief  지정된 태그로 게시된 release를 가져온다.
      * @param  string $tag Github tag(version)
      * @return mixed release
      */
@@ -425,7 +441,8 @@ class G5Update
     }
     /**
      * 백업파일 목록 조회
-     * @breif zip파일만 조회
+     *
+     * @breif  zip파일만 조회
      * @return array<array<mixed>>
      */
     public function getBackupList()
@@ -460,6 +477,7 @@ class G5Update
 
     /**
      * 백업파일 생성
+     *
      * @return string
      */
     public function createBackupZipFile()
@@ -475,7 +493,7 @@ class G5Update
             }
             if (!file_exists($backupPath)) {
                 if ($this->os == "WINNT") {
-                    exec("tar -czf " . escapeshellarg($backupPath) ." -C " . G5_PATH . " --exclude data ./*", $output, $result_code);
+                    exec("tar -czf " . escapeshellarg($backupPath) . " -C " . G5_PATH . " --exclude data ./*", $output, $result_code);
                 } else {
                     exec("zip -r " . escapeshellarg($backupPath) . " ../../" . " -x '../../data/*'", $output, $result_code);
                 }
@@ -490,8 +508,9 @@ class G5Update
     }
     /**
      * 백업파일 압축해제
-     * @param string $backupFile
-     * @return bool
+     *
+     * @param  string $backupFile
+     * @return bool|void
      * @throws Exception
      */
     public function unzipBackupFile($backupFile = null)
@@ -499,9 +518,9 @@ class G5Update
         try {
             $exe        = $this->os == "WINNT" ? "tar" : "zip";
             $backupPath = $this->dir_backup . "/" . $backupFile;
-            $backupDir  = preg_replace('/.' . $exe . '/', '', $backupPath);
-            $backupDirName = preg_replace('/.' . $exe . '/', '', $backupFile);
-            
+            $backupDir  = (string)preg_replace('/.' . $exe . '/', '', $backupPath);
+            $backupDirName = (string)preg_replace('/.' . $exe . '/', '', (string)$backupFile);
+
             // 덮어쓰지 않음
             // if (is_dir((string)$backupDir)) {
             //     return true;
@@ -540,8 +559,9 @@ class G5Update
 
     /**
      * 롤백에 쓰인 파일 삭제
-     * @brief 백업 원본인 zip파일은 제외하고 삭제함
-     * @param string $backupDir
+     *
+     * @brief  백업 원본인 zip파일은 제외하고 삭제함
+     * @param  string $backupDir
      * @return void
      */
     public function deleteBackupDir($backupDir)
@@ -564,7 +584,8 @@ class G5Update
 
     /**
      * 롤백 파일 삭제
-     * @param string $originPath
+     *
+     * @param  string $originPath
      * @return string
      * @throws Exception
      */
@@ -594,7 +615,6 @@ class G5Update
             }
 
             return "success";
-
         } catch (Exception $e) {
             return $e->getMessage();
         }
@@ -602,7 +622,8 @@ class G5Update
 
     /**
      * 비어있는 경로 삭제
-     * @param string $originDir 경로
+     *
+     * @param  string $originDir 경로
      * @return string
      * @throws Exception
      */
@@ -644,7 +665,8 @@ class G5Update
 
     /**
      * 경로가 비었는지 체크
-     * @param string    $originDir 경로
+     *
+     * @param  string $originDir 경로
      * @return bool
      */
     public function checkDirIsEmpty($originDir = "")
@@ -663,9 +685,10 @@ class G5Update
 
     /**
      * 업데이트버전 파일 적용
-     * @breif downloadVersion에서 만들어놓은 임시경로(/update/version)에서 실제 경로로 적용시킨다
-     * @param string $originPath   원본 파일 경로
-     * @param string $changePath   업데이트 파일 경로
+     *
+     * @breif  downloadVersion에서 만들어놓은 임시경로(/update/version)에서 실제 경로로 적용시킨다
+     * @param  string $originPath 원본파일 경로
+     * @param  string $changePath 업데이트파일 경로
      * @return string|void
      * @throws Exception
      */
@@ -717,7 +740,7 @@ class G5Update
                 if (file_exists($originPath)) {
                     $restoreFile = @fopen($originPath, 'r+');
                     if ($restoreFile) {
-                        $restoreContent = @fread($restoreFile, filesize($originPath));
+                        $restoreContent = @fread($restoreFile, (int)filesize($originPath));
                     }
                 }
 
@@ -725,7 +748,7 @@ class G5Update
                 if ($originFile == false) {
                     throw new Exception("FTP를 통한 파일전송에 실패했습니다1.");
                 }
-                $result = ftp_fget($this->conn, $originFile, $ftpChangePath, FTP_BINARY);
+                $result = ftp_fget($this->conn, $originFile, (string)$ftpChangePath, FTP_BINARY);
                 if ($result == false) {
                     if ($restoreContent) {
                         @fwrite($originFile, (string)$restoreContent);
@@ -757,8 +780,9 @@ class G5Update
 
     /**
      * 업데이트버전 파일 다운로드
-     * @breif 해당 버전에 맞는 압축파일 다운로드 후, 디렉토리 생성
-     * @param string $version 다운로드 버전
+     *
+     * @breif  해당 버전에 맞는 압축파일 다운로드 후, 디렉토리 생성
+     * @param  string $version 다운로드 버전
      * @return void
      * @throws Exception
      */
@@ -771,30 +795,30 @@ class G5Update
             if ($this->conn == false) {
                 throw new Exception("통신이 연결되지 않았습니다.");
             }
-    
+
             umask(0002);
-    
+
             $exe            = $this->os == "WINNT" ? "tar" : "zip";
             $archiveFile    = $this->dir_version . "/gnuboard." . $exe;
-            
+
             $zip = fopen($archiveFile, 'w+');
             if ($zip == false) {
                 throw new Exception('압축파일 생성에 실패했습니다.');
             }
-    
+
             $result = G5GithubApi::getArchiveData($exe, $version);
-    
+
             $file_result = @fwrite($zip, (string)$result);
             if ($file_result == false) {
                 throw new Exception('압축파일 생성에 실패했습니다.');
             }
-    
+
             // 시스템명령어 구분
             if ($this->os == "WINNT") {
                 $window_dir_version = $this->window_dir_update . "\\version";
                 $versionDir         = $window_dir_version . '\\' . $version;
                 $escapeVersionDir   = escapeshellarg($versionDir);
-    
+
                 exec("rd /s /q " . $escapeVersionDir);
                 exec("tar -zxf " . escapeshellarg($window_dir_version . "\\gnuboard." . $exe) . " -C " . escapeshellarg($window_dir_version), $output, $result_code);
                 if ($result_code != 0) {
@@ -804,12 +828,11 @@ class G5Update
                 if ($result_code != 0) {
                     throw new Exception("압축파일 이동에 실패했습니다. code : " . $result_code);
                 }
-                exec('del /q ' .escapeshellarg($window_dir_version . "\\gnuboard." . $exe));
-    
+                exec('del /q ' . escapeshellarg($window_dir_version . "\\gnuboard." . $exe));
             } else {
                 $versionDir         = $this->dir_version . '/' . $version;
                 $escapeVersionDir   = escapeshellarg($versionDir);
-    
+
                 exec('rm -rf ' . $escapeVersionDir);
                 $result = exec('unzip ' . escapeshellarg($archiveFile) . ' -d ' . $escapeVersionDir);
                 if (!$result) {
@@ -821,10 +844,9 @@ class G5Update
                 }
                 exec('rm -rf ' . escapeshellarg($versionDir . '/gnuboard-') . '*/');
                 exec('rm -rf ' . escapeshellarg($archiveFile));
-            }   
-    
-            umask(0022);
+            }
 
+            umask(0022);
         } catch (Exception $e) {
             $this->setError($e);
         }
@@ -832,9 +854,10 @@ class G5Update
 
     /**
      * 변경된 파일목록 조회(release)
-     * @breif 현재 그누보드와 github의 같은 버전의 파일을 비교
-     * @param array<string> $list 동일버전 업데이트 파일목록
-     * @return array<mixed>|bool
+     *
+     * @breif  현재 그누보드와 github의 같은 버전의 파일을 비교
+     * @param  array<string> $list 동일버전 업데이트 파일목록
+     * @return array<mixed>|void
      * @throws Exception
      */
     public function checkSameVersionComparison($list = null)
@@ -846,34 +869,33 @@ class G5Update
             if ($list == null) {
                 throw new Exception('업데이트 파일목록이 전달되지 않았습니다.');
             }
-            
+
             $this->downloadVersion($this->now_version);
-    
+
             $check = array();
             $check['type'] = 'Y';
-    
+
             foreach ($list as $key => $var) {
                 $now_file_path = G5_PATH . '/' . $var;
                 $release_file_path = $this->dir_version . '/' . $this->now_version . '/' . $var;
-    
+
                 if (!file_exists($now_file_path)) {
                     continue;
                 }
                 if (!file_exists($release_file_path)) {
                     continue;
                 }
-    
+
                 $now_content = preg_replace('/\r\n|\r|\n/', '', (string)file_get_contents($now_file_path, true));
                 $release_content = preg_replace('/\r\n|\r|\n/', '', (string)file_get_contents($release_file_path, true));
-    
+
                 if ($now_content !== $release_content) {
                     $check['type'] = 'N';
                     $check['item'][] = $var;
                 }
             }
-    
-            return $check;
 
+            return $check;
         } catch (Exception $e) {
             $this->setError($e);
         }
@@ -881,9 +903,10 @@ class G5Update
 
     /**
      * 변경된 파일목록 조회(backup)
-     * @breif 현재 그누보드와 백업파일을 비교
-     * @param array<string> $list 동일버전 업데이트 파일목록
-     * @param string $backupFile
+     *
+     * @breif  현재 그누보드와 백업파일을 비교
+     * @param  array<string> $list       동일버전 업데이트 파일목록
+     * @param  string        $backupFile
      * @return array<mixed>|bool
      */
     public function checkRollbackVersionComparison($list, $backupFile)
@@ -932,8 +955,9 @@ class G5Update
 
     /**
      * 비교파일 목록 조회
-     * @breif 현재버전과 목표버전 사이에서 변경된 파일목록 조회
-     * @todo 동일버전업데이트 : 파일이 변경되어서 동일버전으로 복구하려고 하는 케이스도 있기때문에 허용해야함.
+     *
+     * @breif  현재버전과 목표버전 사이에서 변경된 파일목록 조회
+     * @todo   동일버전업데이트 : 파일이 변경되어서 동일버전으로 복구하려고 하는 케이스도 있기때문에 허용해야함.
      * @return array<string>|bool
      */
     public function getVersionCompareList()
@@ -959,7 +983,7 @@ class G5Update
             } else {
                 $result = G5GithubApi::getCompareData(self::$target_version, $this->now_version);
             }
-            
+
             foreach ($result->files as $var) {
                 $this->compare_list[] = $var->filename;
             }
@@ -973,8 +997,9 @@ class G5Update
 
     /**
      * 디렉토리 => 배열형태로 변경
-     * @param array<mixed> &$dirs
-     * @param array<mixed> $path_array
+     *
+     * @param  array<mixed> &$dirs
+     * @param  array<mixed> $path_array
      * @return void
      */
     public function buildFolderStructure(&$dirs, $path_array)
@@ -994,8 +1019,9 @@ class G5Update
 
     /**
      * 변경내역 html태그 추가
-     * @param array<mixed> $list
-     * @param int $depth 하위단계
+     *
+     * @param  array<mixed> $list
+     * @param  int          $depth 하위단계
      * @return string
      */
     public function changeDepthListPrinting($list, $depth = 0)
@@ -1031,10 +1057,11 @@ class G5Update
     }
     /**
      * 업데이트 파일목록 데이터 처리
-     * @param array $compare_list
-     * @param array $compare_cehck
+     *
+     * @param  array $compare_list
+     * @param  array $compare_cehck
      * @return array<mixed>|bool
-     * @todo 삭제되는 파일들을 어떻게 표시할 것인지?
+     * @todo   삭제되는 파일들을 어떻게 표시할 것인지?
      */
     public function getDepthVersionCompareList($compare_list, $compare_check)
     {
@@ -1063,7 +1090,8 @@ class G5Update
 
     /**
      * 에러 출력
-     * @param Exception $exc
+     *
+     * @param  Exception $exc
      * @return void
      */
     public function setError($exc)
@@ -1075,6 +1103,7 @@ class G5Update
 
     /**
      * 프로토콜 목록 조회
+     *
      * @return array<string> 프로토콜 목록
      */
     public function getProtocolList()
@@ -1091,8 +1120,9 @@ class G5Update
 
     /**
      * htmlspecialchars_decode의 flag를 버전별로 처리
-     * @breif ENT_HTML5 flag는 PHP5.4.0 부터 추가됨.
-     * @param string $content
+     *
+     * @breif  ENT_HTML5 flag는 PHP5.4.0 부터 추가됨.
+     * @param  string $content
      * @return string $html
      */
     public function setHtmlspecialcharsDecode($content)
@@ -1109,15 +1139,16 @@ class G5Update
 
     /**
      * PHP Array function array_column 구현
-     * @breif array_column은 PHP5.5.0부터 지원
-     * @param array<array<mixed>> $input
-     * @param int|string|null $columnKey
-     * @param int|string|null $indexKey
-     * @return array
+     *
+     * @breif  array_column은 PHP5.5.0부터 지원
+     * @param  array<array<mixed>> $input
+     * @param  int|string|null     $columnKey
+     * @param  int|string|null     $indexKey
+     * @return array<mixed>
      */
     public function arrayColumn($input, $columnKey = null, $indexKey = null)
     {
-        if (! function_exists('array_column')) {
+        if (!function_exists('array_column')) {
             $array = array();
             if (isset($columnKey)) {
                 foreach ($input as $value) {
@@ -1141,32 +1172,46 @@ class G5Update
             return array_column($input, $columnKey);
         }
     }
-
+    /**
+     * @return string
+     */
     public function getNowVersion()
     {
         return $this->now_version;
     }
-
+    /**
+     * @param string $now_version
+     * @return void
+     */
     public function setNowVersion($now_version = null)
     {
         $this->now_version = $now_version;
     }
-    
+    /**
+     * @return string
+     */
     public static function getTargetVersion()
     {
         return self::$target_version;
     }
-
+    /**
+     * @param string $target_version
+     * @return void
+     */
     public static function setTargetVersion($target_version = null)
     {
         self::$target_version = $target_version;
     }
-
+    /**
+     * @return string
+     */
     public function getRollbackVersion()
     {
         return $this->rollback_version;
     }
-
+    /**
+     * @return object
+     */
     public function getG5Version()
     {
         if (empty($this->g5Version)) {
@@ -1174,28 +1219,39 @@ class G5Update
         }
         return $this->g5Version;
     }
-    
+
+    /**
+     * @param object $instance
+     * @return void
+     */
     public function setG5Version($instance)
     {
         $this->g5Version = $instance;
     }
 
+    /**
+     * @return string
+     */
     public static function getDirUpdate()
     {
         return self::$dir_update;
     }
 
+    /**
+     * @param string $dir
+     * @return void
+     */
     public static function setDirUpdate($dir)
     {
         self::$dir_update = $dir;
     }
-    
 
     /**
      * 롤백버전 조회
-     * @breif 백업경로에서 version.php 파일 내의 버전 값만 추출
-     * @param string $backupFile 백업파일 경로
-     * @return string $rollback_version
+     *
+     * @breif  백업경로에서 version.php 파일 내의 버전 값만 추출
+     * @param  string       $backupFile 백업파일 경로
+     * @return string|void  $rollback_version
      * @throws Exception
      */
     public function setRollbackVersion($backupFile)
@@ -1205,14 +1261,13 @@ class G5Update
             $backupDir = preg_replace('/.' . $exe . '/', '', $this->dir_backup . "/" . $backupFile);
             $backupVersionFile = file_get_contents($backupDir . '/version.php');
             preg_match("/(?<=define\('G5_GNUBOARD_VER', ')(.*?)(?='\);)/", (string)$backupVersionFile, $rollback_version); // 백업버전 체크
-    
+
             if (!$rollback_version[0]) {
                 throw new Exception("롤백파일의 버전정보를 불러올 수 없습니다.");
-            } 
+            }
             $this->rollback_version = "v" . $rollback_version[0];
-    
+
             return $this->rollback_version;
-            
         } catch (Exception $e) {
             $this->setError($e);
         }

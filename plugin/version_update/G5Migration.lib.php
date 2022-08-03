@@ -1,11 +1,8 @@
 <?php
-if (!defined('_GNUBOARD_')) {
-    exit;
-}
 /**
  * 그누보드5 데이터베이스 업데이트 Class
  * - 파일명 규칙 : {버전명}__{설명}.sql
- * 
+ *
  * @todo
  * 0. class 함수 & 코드정리 (phpstan / phpcs)
  * 5. 보안관련 체크
@@ -58,16 +55,16 @@ class G5Migration
     /**
      * SQL 스크립트 파일 실행
      *
-     * @param  string $method   마이그레이션 실행함수 ("up" or "down")
-     * @param  string $scriptFilePath migration 파일명
+     * @param  string $method           마이그레이션 실행함수 ("up" or "down")
+     * @param  string $fileName         migration 파일명
      * @return array<string,string>
      * @throws Exception
      */
-    public function executeSqlScriptFile($method, $fileName = null)
+    public function executeSqlScriptFile($method = null, $fileName = null)
     {
         try {
             $ignoreMethod = array("up", "down");
-            $filePath = self::MIGRATION_PATH . "/" .$fileName;
+            $filePath = self::MIGRATION_PATH . "/" . $fileName;
 
             if (empty($fileName) || !file_exists($filePath)) {
                 throw new Exception("잘못된 migration 파일입니다.");
@@ -88,12 +85,13 @@ class G5Migration
     }
 
     /**
-     * @param string $fileName
-     * @return class
+     * Migration File의 Class 선언
+     * @param  string $fileName
+     * @return object
      */
     public function initMigrationClassWithFilename($fileName)
     {
-        require_once self::MIGRATION_PATH . "/" . $fileName;
+        include_once self::MIGRATION_PATH . "/" . $fileName;
 
         $replace_array = array("." . self::FILE_EXE, ".");
         $className = str_replace($replace_array, "", $fileName);
@@ -105,7 +103,7 @@ class G5Migration
     /**
      * .sql파일의 Query문을 사용자 설정으로 변환
      *
-     * @param  mixed $scriptFlieContent 
+     * @param  array<string> $scriptFlieContent
      * @return string
      */
     public static function setQueryFromScript($scriptFlieContent)
@@ -130,24 +128,26 @@ class G5Migration
 
     /**
      * 업데이트 실행
-     *
+     * @param  string $targetVersion
      * @return void
      */
     public function update($targetVersion = null)
     {
         try {
             $excuteList = array();
-            $this->setTargetVersion($targetVersion);
+            if (isset($targetVersion)) {
+                $this->setTargetVersion($targetVersion);
+            }
 
             // 버전 실행목록 (현재 버전까지 필터링)
             $versionClass = new G5Version();
             $versionList = $versionClass->getExecuteVersionList($targetVersion);
-            
+
             // 마이그레이션 파일 리스트 조회
             $migrationList = $this->getMigrationList();
 
             foreach ($migrationList as $script) {
-                $scriptInfo = $this->getMigrationInfoByScriptfileName($script);
+                $scriptInfo = $this->getMigrationInfoByScriptfileName((string)$script);
 
                 // 버전목록에 미포함 필터링
                 if (!in_array($scriptInfo['version'], $versionList)) {
@@ -180,14 +180,14 @@ class G5Migration
                     $beforeVersion = $script['version'];
                     $sort = 1;
                 }
-                $result = $this->executeSqlScriptFile($this->getMigrationMethod(), $script['fileName']);
+                $result = $this->executeSqlScriptFile($this->getMigrationMethod(), (string)$script['fileName']);
                 $result['sort'] = $sort;
-                
+
                 if ($this->getMigrationMethod() == "up") {
                     $this->insertMigrationLog($script, $result);
                 } else {
                     if ($result['result'] == "success") {
-                        $this->deleteMigrationLog($script, $result);
+                        $this->deleteMigrationLog($script);
                     }
                 }
             }
@@ -243,7 +243,9 @@ class G5Migration
     }
 
     /**
-     * 
+     * Migration 기록 삭제
+     * @param array<string> $migration
+     * @return void
      */
     public function deleteMigrationLog($migration)
     {
@@ -258,14 +260,13 @@ class G5Migration
         $deleteLog = self::$mysqli->prepare($sql);
         $deleteLog->bind_param("ss", $migration['version'], $migration['fileName']);
         $deleteLog->execute();
-
     }
 
     /**
      * 버전기준 정렬
      *
-     * @param  array<mixed> $a
-     * @param  array<mixed> $b
+     * @param  array<string> $a
+     * @param  array<string> $b
      * @return int|bool
      */
     public function sortByVersion($a, $b)
@@ -280,7 +281,7 @@ class G5Migration
     /**
      * sql 스크립트 파일 목록 조회
      *
-     * @return array<mixed>
+     * @return array<string>
      */
     public function getMigrationList()
     {
@@ -310,12 +311,12 @@ class G5Migration
      * 파일명 => 마이그레이션 정보 추출
      *
      * @param  string $fileName
-     * @return array<mixed>
+     * @return array<string>
      */
     public function getMigrationInfoByScriptfileName($fileName = null)
     {
         if (empty($fileName)) {
-            throw new Exception("not exist fileName " . $fileName );
+            throw new Exception("not exist fileName " . $fileName);
         }
         if (!$this->isMigrationFile($fileName)) {
             throw new Exception("유효한 파일 형식이 아닙니다.");
@@ -360,6 +361,10 @@ class G5Migration
         return self::$mysqli;
     }
 
+    /**
+     * 최근 migration 버전 1건 조회
+     * @return string
+     */
     public function getMigrationVersion()
     {
         $table = self::MIGRATION_TABLE;

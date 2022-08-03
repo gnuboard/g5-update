@@ -9,5 +9,5 @@ $autoloader = new G5UpdateAutoLoader();
 $autoloader->register();
 
 if (!isset($g5['update'])) {
-    $g5['update'] = new G5Update(G5_PATH);
+    $g5['update'] = new G5Update();
 }

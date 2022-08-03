@@ -2,7 +2,6 @@
 
 /**
  * DB업데이트 기본설정 Class
- * 
  */
 class G5MigrationSetup extends G5Migration
 {

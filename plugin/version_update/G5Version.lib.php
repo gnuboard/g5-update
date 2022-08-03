@@ -5,9 +5,9 @@
  */
 class G5Version
 {
-    public static $currentVersion = "v" . G5_GNUBOARD_VER;
-    public static $latestVersion = null;
-    public static $versionList = array();
+    public static string $currentVersion = "v" . G5_GNUBOARD_VER;
+    public static string $latestVersion;
+    public static array $versionList;
 
     private const VERSION_LIST_PATH  = G5_DATA_PATH  . "/update/version.json";
 
@@ -116,11 +116,13 @@ class G5Version
             // 현재버전 ~ 목표버전
             if ($targetVersion) {
                 if (version_compare($targetVersion, self::$currentVersion, ">")) {
-                    if (version_compare($version, self::$currentVersion, ">") && version_compare($version, $targetVersion, "<=")) {
+                    if (version_compare($version, self::$currentVersion, ">")
+                        && version_compare($version, $targetVersion, "<=")) {
                         array_unshift($list, $version);
                     }
                 } else {
-                    if (version_compare($version, self::$currentVersion, "<=") && version_compare($version, $targetVersion, ">")) {
+                    if (version_compare($version, self::$currentVersion, "<=")
+                        && version_compare($version, $targetVersion, ">")) {
                         $list[] = $version;
                     }
                 }
@@ -161,7 +163,7 @@ class G5Version
     /**
      * VERSION_LIST_PATH 파일에서 최신버전목록 조회
      *
-     * @return array<int,string>
+     * @return array<string>
      */
     public static function getVersionListByFile()
     {
@@ -187,7 +189,7 @@ class G5Version
      */
     public function setLatestVersion($version)
     {
-        $this->latestVersion = $version;
+        self::$latestVersion = $version;
     }
     /**
      * VERSION_LIST_PATH 파일에서 최신버전 조회
