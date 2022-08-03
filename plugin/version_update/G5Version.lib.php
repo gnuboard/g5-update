@@ -34,6 +34,10 @@ class G5Version
             if (!isset($data->tag_name)) {
                 continue;
             }
+            // 버전형식 체크 및 beta버전 제외
+            if (!preg_match('/^v[a-z0-9\.]+$/i', $data->tag_name)){
+                continue;
+            }
             $versionList[] = $data->tag_name;
         }
 
