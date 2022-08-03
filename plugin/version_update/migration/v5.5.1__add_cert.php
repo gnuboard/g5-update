@@ -3,7 +3,7 @@
  * 테이블 추가/변경/삭제 시 IF NOT EXIST 사용
  * 컬럼 추가/변경 시 parent::existColumn 사용
  */
-class V551AddIcodeToken extends Migration
+class V551AddCert extends Migration
 {
     public function up()
     {

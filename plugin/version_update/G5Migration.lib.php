@@ -181,14 +181,17 @@ class G5Migration
                     $sort = 1;
                 }
                 $result = $this->executeSqlScriptFile($this->getMigrationMethod(), (string)$script['fileName']);
+
+                if ($result['result'] == "fail") {
+                    throw new Exception("마이그레이션이 실패했습니다. " . $result['message']);
+                }
+
                 $result['sort'] = $sort;
 
                 if ($this->getMigrationMethod() == "up") {
                     $this->insertMigrationLog($script, $result);
                 } else {
-                    if ($result['result'] == "success") {
-                        $this->deleteMigrationLog($script);
-                    }
+                    $this->deleteMigrationLog($script);
                 }
             }
         } catch (Exception $e) {
@@ -368,7 +371,14 @@ class G5Migration
     public function getMigrationVersion()
     {
         $table = self::MIGRATION_TABLE;
-        $result = self::$mysqli->query("SELECT mi_version FROM {$table} ORDER BY mi_id DESC LIMIT 1");
+        $query = "SELECT
+                    mi_version
+                FROM {$table}
+                WHERE mi_result = 'success'
+                GROUP BY mi_version
+                ORDER BY mi_version DESC
+                LIMIT 1";
+        $result = self::$mysqli->query($query);
         $row = $result->fetch_array(MYSQLI_ASSOC);
 
         return (string)$row['mi_version'];
