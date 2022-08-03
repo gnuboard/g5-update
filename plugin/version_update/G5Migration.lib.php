@@ -93,7 +93,7 @@ class G5Migration
     {
         include_once self::MIGRATION_PATH . "/" . $fileName;
 
-        $replace_array = array("." . self::FILE_EXE, ".");
+        $replace_array = array("." . self::FILE_EXE, ".", "-");
         $className = str_replace($replace_array, "", $fileName);
         $className = str_replace(' ', '', ucwords(str_replace('_', ' ', $className)));
 
