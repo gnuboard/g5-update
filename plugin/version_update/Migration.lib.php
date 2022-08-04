@@ -68,13 +68,10 @@ abstract class Migration
             echo $this->mysqli->errno;
             return false;
         }
-        $result = $this->columnCheckStmt->get_result();
-        if ($result) {
-            if ($result->num_rows > 0) {
-                return true;
-            } else {
-                return false;
-            }
+        $this->columnCheckStmt->store_result();
+
+        if ($this->columnCheckStmt->num_rows > 0) {
+            return true;
         } else {
             return false;
         }
@@ -89,8 +86,12 @@ abstract class Migration
     public function executeQuery($sql)
     {
         $sql = $this->convertCustomSetting($sql);
-
-        $this->mysqli->query($sql);
+        try {
+            $this->mysqli->query($sql);
+        } catch (mysqli_sql_exception $e) {
+            echo $e->getMessage();
+            exit;
+        }
     }
 
     /**

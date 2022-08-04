@@ -42,7 +42,7 @@ $migrationVersion = $g5Migration->getMigrationVersion();
 </section>
 <script>
 function update_submit(f) {
-
+    var inAjax = false;
     var admin_password = prompt("관리자 비밀번호를 입력해주세요");
 
     if (admin_password == "") {
@@ -57,11 +57,11 @@ function update_submit(f) {
                 'admin_password': admin_password
             },
             beforeSend: function(xhr) {
-                if (inAjax == false) {
-                    inAjax = true;
-                } else {
+                if (inAjax) {
                     alert("현재 통신중입니다.");
                     return false;
+                } else {
+                    inAjax = true;
                 }
             },
             success: function(data) {
