@@ -1,7 +1,6 @@
 <?php
 /**
- * 테이블 추가/변경/삭제 시 IF NOT EXIST 사용
- * 컬럼 추가/변경 시 parent::existColumn 사용
+ * v5.5.1 데이터베이스 마이그레이션
  */
 class V551AddCert extends Migration
 {
@@ -38,6 +37,7 @@ class V551AddCert extends Migration
 
     public function down()
     {
+        /*
         global $g5;
         
         if (parent::existColumn($g5['config_table'], "cf_cert_find")) {
@@ -55,6 +55,6 @@ class V551AddCert extends Migration
 
         $dropTableQuery = "DROP TABLE IF EXISTS `g5_member_cert_history`";
         parent::executeQuery($dropTableQuery);
-        
+        */
     }
 }

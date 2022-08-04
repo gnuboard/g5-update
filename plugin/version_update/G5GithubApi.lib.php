@@ -3,12 +3,19 @@
 /**
  * GitHub API Class
  *
- * @todo 사용자의 API요청횟수를 늘리기 위한 PAT(personal access token)를 관리자페이지에서 등록하는 방안
+ * @todo PAT(personal access token)를 관리자페이지에서 등록하는 방안
  */
 class G5GithubApi
 {
+    /**
+     * @var string Github API를 제한없이 사용하기 위한 Token(PAT)
+     * @see https://docs.github.com/en/rest/guides/getting-started-with-the-rest-api
+     */
     private const API_TOKEN = "";
 
+    /**
+     * @var string 그누보드5 Github API URL
+     */
     private const API_URL = "https://api.github.com/repos/gnuboard/gnuboard5";
     private const API_VERSION_URL = self::API_URL . "/releases?per_page=";
     private const API_COMPARE_URL = self::API_URL . "/compare/";

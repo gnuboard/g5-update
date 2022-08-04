@@ -1,7 +1,6 @@
 <?php
 /**
- * 테이블 추가/변경/삭제 시 IF NOT EXIST 사용
- * 컬럼 추가/변경 시 parent::existColumn 사용
+ * v5.5.3 데이터베이스 마이그레이션
  */
 class V553AddMissingField extends Migration
 {
@@ -19,6 +18,7 @@ class V553AddMissingField extends Migration
 
     public function down()
     {
+        /*
         global $g5;
 
         if (parent::existColumn($g5['config_table'], "cf_icode_token_key")) {
@@ -27,5 +27,6 @@ class V553AddMissingField extends Migration
         if (parent::existColumn($g5['g5_shop_default_table'], "de_easy_pay_services")) {
             parent::executeQuery("ALTER TABLE `{$g5['g5_shop_default_table']}` DROP COLUMN `de_easy_pay_services`");
         }
+        */
     }
 }

@@ -2,11 +2,12 @@
 /**
  * 그누보드5 데이터베이스 업데이트 Class
  * - 파일명 규칙 : {버전명}__{설명}.sql
- *
+ * - 버전 다운그레이드에 따른 데이터베이스 마이그레이션 미적용 (down)
+ * 
  * @todo
  * 0. class 함수 & 코드정리 (phpstan / phpcs)
- * 5. 보안관련 체크
- * 6. 예외처리
+ * 1. 보안관련 체크
+ * 2. 예외처리
  */
 class G5Migration
 {
@@ -86,6 +87,7 @@ class G5Migration
 
     /**
      * Migration File의 Class 선언
+     *
      * @param  string $fileName
      * @return object
      */
@@ -101,33 +103,8 @@ class G5Migration
     }
 
     /**
-     * .sql파일의 Query문을 사용자 설정으로 변환
-     *
-     * @param  array<string> $scriptFlieContent
-     * @return string
-     */
-    public static function setQueryFromScript($scriptFlieContent)
-    {
-        $query = "";
-
-        $query = implode("\n", $scriptFlieContent);
-        $query = preg_replace('/^--.*$/m', "", $query);
-        $query = preg_replace('/`g5_([^`]+`)/', '`' . G5_TABLE_PREFIX . '$1', (string)$query);
-
-        if (in_array(strtolower(G5_DB_ENGINE), array('innodb', 'myisam'))) {
-            $query = preg_replace('/ENGINE=MyISAM/', 'ENGINE=' . G5_DB_ENGINE, (string)$query);
-        } else {
-            $query = preg_replace('/ENGINE=MyISAM/', '', (string)$query);
-        }
-        if (G5_DB_CHARSET !== 'utf8') {
-            $query = preg_replace('/CHARSET=utf8/', 'CHARACTER SET ' . get_db_charset(G5_DB_CHARSET), (string)$query);
-        }
-
-        return (string)$query;
-    }
-
-    /**
      * 업데이트 실행
+     *
      * @param  string $targetVersion
      * @return void
      */
@@ -191,7 +168,10 @@ class G5Migration
                 if ($this->getMigrationMethod() == "up") {
                     $this->insertMigrationLog($script, $result);
                 } else {
-                    $this->deleteMigrationLog($script);
+                    /**
+                     * downgrade 적용하지 않음.
+                     */
+                    // $this->deleteMigrationLog($script);
                 }
             }
         } catch (Exception $e) {
@@ -200,6 +180,8 @@ class G5Migration
     }
 
     /**
+     * get Migration Method
+     *
      * @return string
      */
     public function getMigrationMethod()
@@ -210,6 +192,8 @@ class G5Migration
         return $this->migrationMethod;
     }
     /**
+     * set Migration Method
+     *
      * @return void
      */
     public function setMigrationMethod()
@@ -247,6 +231,7 @@ class G5Migration
 
     /**
      * Migration 기록 삭제
+     *
      * @param array<string> $migration
      * @return void
      */
@@ -366,6 +351,7 @@ class G5Migration
 
     /**
      * 최근 migration 버전 1건 조회
+     *
      * @return string
      */
     public function getMigrationVersion()

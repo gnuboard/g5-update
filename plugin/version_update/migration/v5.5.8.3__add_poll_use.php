@@ -1,7 +1,6 @@
 <?php
 /**
- * 테이블 추가/변경/삭제 시 IF NOT EXIST 사용
- * 컬럼 추가/변경 시 parent::existColumn 사용
+ * v5.5.8.3 데이터베이스 마이그레이션 (예정)
  */
 class V5583AddPollUse extends Migration
 {
@@ -16,10 +15,12 @@ class V5583AddPollUse extends Migration
 
     public function down()
     {
+        /*
         global $g5;
 
         if (parent::existColumn($g5['poll_table'], "po_use")) {
             parent::executeQuery("ALTER TABLE `{$g5['poll_table']}` DROP COLUMN `po_use`");
         }
+        */
     }
 }

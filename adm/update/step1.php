@@ -31,6 +31,10 @@ $checkCustomFile = $g5['update']->checkSameVersionComparison($updateFileList);
 $updateList = $g5['update']->getDepthVersionCompareList($updateFileList, $checkCustomFile);
 // html 태그 추가
 $viewUpdateList = $g5['update']->changeDepthListPrinting($updateList);
+
+// 데이터베이스 마이그레이션
+$g5Migration = new G5Migration();
+$g5Migration->setTargetVersion($targetVersion);
 ?>
 <section>
     <h2 class="h2_frm">버전 업데이트 진행</h2>
@@ -79,8 +83,12 @@ $viewUpdateList = $g5['update']->changeDepthListPrinting($updateList);
                     <tr>
                         <th scope="row">데이터베이스 업데이트</th>
                         <td>
+                        <?php if ($g5Migration->getMigrationMethod() == "up") { ?>
                             <span class="frm_info">버전에 맞는 데이터베이스로 업데이트를 진행합니다.</span>
                             <input type="checkbox" name="is_db_update" value="1" id="is_db_update"> 사용
+                        <?php } else { ?>
+                            다운그레이드 진행 시 지원하지 않습니다.
+                        <?php } ?>
                         </td>
                     </tr>
                     <tr>

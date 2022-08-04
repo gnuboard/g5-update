@@ -8,7 +8,7 @@ abstract class Migration
     /**
      * Table check query
      *
-     * @deprecated
+     * @deprecated Symbol '$tableCheckStmt' is declared but not used.
      */
     protected mysqli_stmt $tableCheckStmt;
     /**
