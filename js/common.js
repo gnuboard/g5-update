@@ -257,14 +257,6 @@ function get_top_pos(obj)
     return top;
 }
 
-function flash_movie(src, ids, width, height, wmode)
-{
-    var wh = "";
-    if (parseInt(width) && parseInt(height))
-        wh = " width='"+width+"' height='"+height+"' ";
-    return "<object classid='clsid:d27cdb6e-ae6d-11cf-96b8-444553540000' codebase='http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=6,0,0,0' "+wh+" id="+ids+"><param name=wmode value="+wmode+"><param name=movie value="+src+"><param name=quality value=high><embed src="+src+" quality=high wmode="+wmode+" type='application/x-shockwave-flash' pluginspage='http://www.macromedia.com/shockwave/download/index.cgi?p1_prod_version=shockwaveflash' "+wh+"></embed></object>";
-}
-
 function obj_movie(src, ids, width, height, autostart)
 {
     var wh = "";
