@@ -89,7 +89,7 @@ class G5Update
                     if ($this->conn == false) {
                         throw new Exception("FTP 연결에 실패했습니다.");
                     }
-                    if (ftp_login($this->conn, $username, $userPassword)) {
+                    if (!ftp_login($this->conn, $username, $userPassword)) {
                         throw new Exception("FTP 계정 로그인에 실패했습니다.");
                     }
                     // 패시브모드 설정

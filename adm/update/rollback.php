@@ -187,7 +187,7 @@ foreach ($content_url as $key => $var) {
                     $(".update_btn_area").html("<button type=\"submit\" class=\"btn btn_submit\" style=\"height:35px\">선택한 시점으로 롤백</button>");
                 },
                 error: function(request, status, error) {
-                    alert("code : " + request.status + "\n" + "message : " + request.responseText + "\n" + "error : " + error);
+                    alert("Code : " + request.status + "\n" + request.responseText);
                     $(".update_btn_area").html("");
                 },
                 complete: function() {
@@ -228,7 +228,7 @@ foreach ($content_url as $key => $var) {
                     f.submit();
                 },
                 error: function(request, status, error) {
-                    alert("code : " + request.status + "\n" + "message : " + request.responseText + "\n" + "error : " + error);
+                    alert("Code : " + request.status + "\n" + request.responseText);
                 },
                 complete: function() {
                     inAjax = false;
