@@ -9,7 +9,7 @@ class G5Version
     public static string $latestVersion;
     public static array $versionList;
 
-    private const VERSION_LIST_PATH  = G5_DATA_PATH  . "/update/version.json";
+    private const VERSION_LIST_PATH  = G5_DATA_PATH  . "/version.json";
 
     public function __construct()
     {

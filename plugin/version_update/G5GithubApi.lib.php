@@ -46,7 +46,6 @@ class G5GithubApi
             return $response;
         } catch (Exception $e) {
             echo $e->getMessage();
-            exit;
         }
     }
 
@@ -76,7 +75,6 @@ class G5GithubApi
             return $response;
         } catch (Exception $e) {
             echo $e->getMessage();
-            exit;
         }
     }
 
@@ -106,7 +104,6 @@ class G5GithubApi
             return $response;
         } catch (Exception $e) {
             echo $e->getMessage();
-            exit;
         }
     }
 
@@ -135,7 +132,6 @@ class G5GithubApi
             return $response;
         } catch (Exception $e) {
             echo $e->getMessage();
-            exit;
         }
     }
 

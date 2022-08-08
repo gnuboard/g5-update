@@ -10,13 +10,19 @@ class G5UpdateAutoLoader
      *
      * @var string
      */
-    private string $directory = G5_PLUGIN_PATH . '/version_update/';
+    private $directory;
     /**
      * class filename extension
      *
      * @var string
      */
-    private string $extension = ".lib.php";
+    private $extension;
+    
+    public function __construct()
+    {
+        $this->directory = G5_PLUGIN_PATH . '/version_update/';
+        $this->extension = '.lib.php';
+    }
     
     /**
      * regist autoload
@@ -26,9 +32,9 @@ class G5UpdateAutoLoader
     public function register()
     {
         if (version_compare(PHP_VERSION, '5.3.0') >= 0) {
-            return spl_autoload_register([$this, 'load'], true, true);
+            return spl_autoload_register(array($this, 'load'), true, true);
         } else {
-            return spl_autoload_register([$this, 'load']);
+            return spl_autoload_register(array($this, 'load'));
         }
     }
 

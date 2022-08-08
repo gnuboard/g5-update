@@ -5,7 +5,6 @@
  * - 버전 다운그레이드에 따른 데이터베이스 마이그레이션 미적용 (down)
  * 
  * @todo
- * 0. class 함수 & 코드정리 (phpstan / phpcs)
  * 1. 보안관련 체크
  * 2. 예외처리
  */
@@ -176,6 +175,7 @@ class G5Migration
             }
         } catch (Exception $e) {
             echo $e->getMessage();
+            exit;
         }
     }
 

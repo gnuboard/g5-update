@@ -212,9 +212,6 @@ class G5Update
             if ($this->conn == false) {
                 throw new Exception("연결된 프로토콜을 찾을 수 없습니다.");
             }
-            // 로그 디렉토리 생성
-            $g5UpdateLog = new G5UpdateLog();
-            $g5UpdateLog->makeDirectory();
 
             if ($this->port == 'ftp') {
                 if (!is_dir($this->dir_update)) {
@@ -279,6 +276,10 @@ class G5Update
             } else {
                 throw new Exception("ftp/sftp가 아닌 프로토콜로 업데이트가 불가능합니다.");
             }
+
+            // 로그 디렉토리 생성
+            $g5UpdateLog = new G5UpdateLog();
+            $g5UpdateLog->makeDirectory();
 
             //.htaccess 파일 생성
             $content = "Deny from all";
