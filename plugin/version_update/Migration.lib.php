@@ -7,14 +7,15 @@ abstract class Migration
 {
     /**
      * Table check query
-     *
+     * @var mysqli_stmt
      * @deprecated Symbol '$tableCheckStmt' is declared but not used.
      */
-    protected mysqli_stmt $tableCheckStmt;
+    protected $tableCheckStmt;
     /**
      * Coulmn check query
+     * @var mysqli_stmt
      */
-    protected mysqli_stmt $columnCheckStmt;
+    protected $columnCheckStmt;
 
     /**
      * @var Mysqli

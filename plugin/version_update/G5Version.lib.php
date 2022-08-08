@@ -5,9 +5,9 @@
  */
 class G5Version
 {
-    public static string $currentVersion = "v" . G5_GNUBOARD_VER;
-    public static string $latestVersion;
-    public static array $versionList;
+    public static $currentVersion = "v" . G5_GNUBOARD_VER;
+    public static $latestVersion;
+    public static $versionList;
 
     private const VERSION_LIST_PATH  = G5_DATA_PATH  . "/version.json";
 
