@@ -452,9 +452,14 @@ class G5Update
      */
     public function getVersionModifyContent($tag = null)
     {
-        $result = G5GithubApi::getModifyData($tag);
+        try {
+            $result = G5GithubApi::getModifyData($tag);
+            
+            return $result->body;
+        } catch (Exception $e) {
+            $this->setError($e);
+        }
 
-        return $result->body;
     }
     /**
      * 백업파일 목록 조회

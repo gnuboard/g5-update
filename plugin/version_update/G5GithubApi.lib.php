@@ -30,23 +30,20 @@ class G5GithubApi
      *
      * @param  int $limit
      * @return Mixed
+     * @throws Exception
      */
     public static function getVersionData($limit = 100)
     {
-        try {
-            $url = self::API_VERSION_URL . $limit;
+        $url = self::API_VERSION_URL . $limit;
 
-            $response = self::requestCurl($url);
-            $response = json_decode((string)$response);
+        $response = self::requestCurl($url);
+        $response = json_decode((string)$response);
 
-            if ($response == null) {
-                throw new Exception("API결과를 변환하는데 실패했습니다.");
-            }
-
-            return $response;
-        } catch (Exception $e) {
-            echo $e->getMessage();
+        if ($response == null) {
+            throw new Exception("API결과를 변환하는데 실패했습니다.");
         }
+
+        return $response;
     }
 
     /**
@@ -55,27 +52,24 @@ class G5GithubApi
      * @param  string $param1 처음 버전
      * @param  string $param2 마지막 버전
      * @return Mixed
+     * @throws Exception
      */
     public static function getCompareData($param1 = null, $param2 = null)
     {
-        try {
-            if ($param1 == null || $param2 == null) {
-                throw new Exception("parameter 값이 없습니다.");
-            }
-
-            $url = self::API_COMPARE_URL . $param1 . "..." . $param2;
-
-            $response = self::requestCurl($url);
-            $response = json_decode((string)$response);
-
-            if ($response == null) {
-                throw new Exception("API결과를 변환하는데 실패했습니다.");
-            }
-
-            return $response;
-        } catch (Exception $e) {
-            echo $e->getMessage();
+        if ($param1 == null || $param2 == null) {
+            throw new Exception("parameter 값이 없습니다.");
         }
+
+        $url = self::API_COMPARE_URL . $param1 . "..." . $param2;
+
+        $response = self::requestCurl($url);
+        $response = json_decode((string)$response);
+
+        if ($response == null) {
+            throw new Exception("API결과를 변환하는데 실패했습니다.");
+        }
+
+        return $response;
     }
 
     /**
@@ -84,27 +78,24 @@ class G5GithubApi
      * @param  string $type    확장자 ('zip' or 'tar')
      * @param  string $version 다운로드 버전
      * @return Mixed
+     * @throws Exception
      */
     public static function getArchiveData($type = null, $version = null)
     {
-        try {
-            $validType = array("zip", "tar");
+        $validType = array("zip", "tar");
 
-            if (!in_array($type, $validType)) {
-                throw new Exception("유효하지 않은 확장자 입니다.");
-            }
-            if ($version == null) {
-                throw new Exception("Version값이 없습니다.");
-            }
-
-            $url = self::API_URL . "/" . $type . "ball/" . $version;
-
-            $response = self::requestCurl($url);
-
-            return $response;
-        } catch (Exception $e) {
-            echo $e->getMessage();
+        if (!in_array($type, $validType)) {
+            throw new Exception("유효하지 않은 확장자 입니다.");
         }
+        if ($version == null) {
+            throw new Exception("Version값이 없습니다.");
+        }
+
+        $url = self::API_URL . "/" . $type . "ball/" . $version;
+
+        $response = self::requestCurl($url);
+
+        return $response;
     }
 
     /**
@@ -112,27 +103,24 @@ class G5GithubApi
      *
      * @param  string $tag Github repository tag (release)
      * @return Mixed
+     * @throws Exception
      */
     public static function getModifyData($tag = null)
     {
-        try {
-            if ($tag == null) {
-                throw new Exception("tag 값이 없습니다.");
-            }
-
-            $url = self::API_MODIFY_URL . $tag;
-
-            $response = self::requestCurl($url);
-            $response = json_decode((string)$response);
-
-            if ($response == null) {
-                throw new Exception("API결과를 변환하는데 실패했습니다.");
-            }
-
-            return $response;
-        } catch (Exception $e) {
-            echo $e->getMessage();
+        if ($tag == null) {
+            throw new Exception("tag 값이 없습니다.");
         }
+
+        $url = self::API_MODIFY_URL . $tag;
+
+        $response = self::requestCurl($url);
+        $response = json_decode((string)$response);
+
+        if ($response == null) {
+            throw new Exception("API결과를 변환하는데 실패했습니다.");
+        }
+
+        return $response;
     }
 
     /**
@@ -140,6 +128,7 @@ class G5GithubApi
      *
      * @param  string $url 요청 url
      * @return string|bool
+     * @throws Exception
      */
     private static function requestCurl($url)
     {

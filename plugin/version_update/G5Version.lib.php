@@ -28,23 +28,27 @@ class G5Version
      */
     private function initLatestVersion()
     {
-        $versionList = array();
-        $versionData = G5GithubApi::getVersionData();
-        foreach ($versionData as $data) {
-            if (!isset($data->tag_name)) {
-                continue;
+        try {
+            $versionList = array();
+            $versionData = G5GithubApi::getVersionData();
+            foreach ($versionData as $data) {
+                if (!isset($data->tag_name)) {
+                    continue;
+                }
+                // 버전형식 체크 및 beta버전 제외
+                if (!preg_match('/^v[a-z0-9\.]+$/i', $data->tag_name)){
+                    continue;
+                }
+                $versionList[] = $data->tag_name;
             }
-            // 버전형식 체크 및 beta버전 제외
-            if (!preg_match('/^v[a-z0-9\.]+$/i', $data->tag_name)){
-                continue;
-            }
-            $versionList[] = $data->tag_name;
+
+            $this->setVersionList($versionList);
+
+            $lastestVersion = isset($versionList[0]) ? $versionList[0] : "";
+            $this->setLatestVersion($lastestVersion);
+        } catch (Exception $e) {
+            echo $e->getMessage();
         }
-
-        $this->setVersionList($versionList);
-
-        $lastestVersion = isset($versionList[0]) ? $versionList[0] : "";
-        $this->setLatestVersion($lastestVersion);
     }
 
     /**
