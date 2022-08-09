@@ -281,18 +281,16 @@ class G5Update
             $g5UpdateLog = new G5UpdateLog();
             $g5UpdateLog->makeDirectory();
 
-            //.htaccess 파일 생성
+            // .htaccess 파일 체크 및 생성
             $content = "Deny from all";
             $dir_htacc = $this->dir_update . "/.htaccess";
-            $fileContent = file_get_contents($dir_htacc);
-
-            if (!file_exists($dir_htacc) || $content != (string)$fileContent) {
-                $fp = fopen($dir_htacc, 'w+');
-                if ($fp) {
-                    fwrite($fp, $content);
-                    fclose($fp);
-                } else {
-                    throw new Exception(".htaccess 파일생성에 실패했습니다.");
+            
+            if (!file_exists($dir_htacc)) {
+                $this->createHtaccess($dir_htacc, $content);
+            } else {
+                $fileContent = file_get_contents($dir_htacc);
+                if ($content != (string)$fileContent) {
+                    $this->createHtaccess($dir_htacc, $content);
                 }
             }
 
@@ -306,6 +304,24 @@ class G5Update
             }
         } catch (Exception $e) {
             $this->setError($e);
+        }
+    }
+
+    /**
+     * .htaccess 파일 생성
+     *
+     * @param string $dir       파일경로
+     * @param string $content   파일내용
+     * @return void
+     */
+    function createHtaccess($dir, $content)
+    {
+        $fp = fopen($dir, 'w+');
+        if ($fp) {
+            fwrite($fp, $content);
+            fclose($fp);
+        } else {
+            throw new Exception(".htaccess 파일생성에 실패했습니다.");
         }
     }
 
