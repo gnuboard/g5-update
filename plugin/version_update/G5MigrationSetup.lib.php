@@ -5,10 +5,11 @@
  */
 class G5MigrationSetup extends G5Migration
 {
-    private const CREATE_TABLE_PATH  = parent::UPDATE_PATH . "/core/create_migration_table.sql";
+    private $createTablePath;
 
     public function __construct()
     {
+        $this->createTablePath = parent::$updatePath . "/core/create_migration_table.sql"; 
     }
 
     /**
@@ -18,7 +19,7 @@ class G5MigrationSetup extends G5Migration
      */
     public function checkExistMigrationTable()
     {
-        $table = parent::MIGRATION_TABLE;
+        $table = parent::$migrationTable;
         $statement = parent::$mysqli->prepare("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?");
         $statement->bind_param("s", $table);
         $statement->execute();
@@ -38,10 +39,10 @@ class G5MigrationSetup extends G5Migration
      */
     public function createMigrationTable()
     {
-        $createFile = file(self::CREATE_TABLE_PATH);
+        $createFile = file($this->createTablePath);
 
         if (!$createFile) {
-            throw new Exception("스크립트 파일을 읽을 수 없습니다.\n경로 : " . self::CREATE_TABLE_PATH);
+            throw new Exception("스크립트 파일을 읽을 수 없습니다.\n경로 : " . $this->createTablePath);
         }
 
         $createQuery = $this->setQueryFromScript($createFile);

@@ -14,7 +14,7 @@ class G5UpdateLog
     public $logList = array();
     public $totalCount = 0;
 
-    private const PAGE_LIMIT = 10;
+    const PAGE_LIMIT = 10;
 
     public function __construct()
     {

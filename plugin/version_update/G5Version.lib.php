@@ -5,14 +5,39 @@
  */
 class G5Version
 {
-    public static $currentVersion = "v" . G5_GNUBOARD_VER;
+    /**
+     * github release tag name ("v" + G5_GNUBOARD_VER)
+     * 
+     * @var string 
+     */
+    public static $currentVersion = G5_GNUBOARD_RELEASE;
+
+    /**
+     * github latest tag name
+     * 
+     * @var string
+     */
     public static $latestVersion;
+
+    /**
+     * github tag name list
+     * 
+     * @see https://github.com/gnuboard/gnuboard5/releases
+     * @var string
+     */
     public static $versionList;
 
-    private const VERSION_LIST_PATH  = G5_DATA_PATH  . "/version.json";
+    /**
+     * version.json path
+     *
+     * @var string
+     */
+    private static $version_file_path;
 
     public function __construct()
     {
+        self::$version_file_path = G5_DATA_PATH  . "/version.json"; 
+
         // Set $versionList, $latestVersion
         $this->initLatestVersion();
 
@@ -30,7 +55,8 @@ class G5Version
     {
         try {
             $versionList = array();
-            $versionData = G5GithubApi::getVersionData();
+            $g5GithubApi = new G5GithubApi();
+            $versionData = $g5GithubApi->getVersionData();
             foreach ($versionData as $data) {
                 if (!isset($data->tag_name)) {
                     continue;
@@ -58,7 +84,7 @@ class G5Version
      */
     private function existFile()
     {
-        if (file_exists(self::VERSION_LIST_PATH)) {
+        if (file_exists(self::$version_file_path)) {
             return true;
         } else {
             return false;
@@ -83,14 +109,15 @@ class G5Version
     private function createFile()
     {
         try {
-            if (empty($this->getVersionList())) {
+            $versionList = $this->getVersionList();
+            if (empty($versionList)) {
                 throw new Exception('버전정보가 없습니다.');
             }
-            $filePoint = fopen(self::VERSION_LIST_PATH, 'w+');
+            $filePoint = fopen(self::$version_file_path, 'w+');
             if ($filePoint == false) {
                 throw new Exception('버전파일 생성에 실패했습니다.');
             }
-            fwrite($filePoint, (string)json_encode($this->getVersionList()));
+            fwrite($filePoint, (string)json_encode($versionList));
             fclose($filePoint);
         } catch (Exception $e) {
             echo $e->getMessage();
@@ -104,7 +131,7 @@ class G5Version
      */
     public static function convertVersionFile()
     {
-        return json_decode((string)file_get_contents(self::VERSION_LIST_PATH), true);
+        return json_decode((string)file_get_contents(self::$version_file_path), true);
     }
 
     /**
@@ -169,7 +196,7 @@ class G5Version
         return self::$versionList;
     }
     /**
-     * VERSION_LIST_PATH 파일에서 최신버전목록 조회
+     * $version_file_path 파일에서 최신버전목록 조회
      *
      * @return array<string>
      */
@@ -200,7 +227,7 @@ class G5Version
         self::$latestVersion = $version;
     }
     /**
-     * VERSION_LIST_PATH 파일에서 최신버전 조회
+     * $version_file_path 파일에서 최신버전 조회
      *
      * @return string
      */

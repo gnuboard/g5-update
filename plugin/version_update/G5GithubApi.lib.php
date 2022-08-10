@@ -11,18 +11,21 @@ class G5GithubApi
      * @var string Github API를 제한없이 사용하기 위한 Token(PAT)
      * @see https://docs.github.com/en/rest/guides/getting-started-with-the-rest-api
      */
-    private const API_TOKEN = "";
+    const API_TOKEN = "";
 
     /**
      * @var string 그누보드5 Github API URL
      */
-    private const API_URL = "https://api.github.com/repos/gnuboard/gnuboard5";
-    private const API_VERSION_URL = self::API_URL . "/releases?per_page=";
-    private const API_COMPARE_URL = self::API_URL . "/compare/";
-    private const API_MODIFY_URL = self::API_URL . "/releases/tags/";
+    const API_URL = "https://api.github.com/repos/gnuboard/gnuboard5";
+    public static $apiVersionUrl;
+    public static $apiCompareUrl;
+    public static $apiModifyUrl;
 
     public function __construct()
     {
+        self::$apiVersionUrl = self::API_URL . "/releases?per_page=";
+        self::$apiCompareUrl = self::API_URL . "/compare/";
+        self::$apiModifyUrl = self::API_URL . "/releases/tags/";
     }
 
     /**
@@ -34,7 +37,7 @@ class G5GithubApi
      */
     public static function getVersionData($limit = 100)
     {
-        $url = self::API_VERSION_URL . $limit;
+        $url = self::$apiVersionUrl . $limit;
 
         $response = self::requestCurl($url);
         $response = json_decode((string)$response);
@@ -60,7 +63,7 @@ class G5GithubApi
             throw new Exception("parameter 값이 없습니다.");
         }
 
-        $url = self::API_COMPARE_URL . $param1 . "..." . $param2;
+        $url = self::$apiCompareUrl . $param1 . "..." . $param2;
 
         $response = self::requestCurl($url);
         $response = json_decode((string)$response);
@@ -111,7 +114,7 @@ class G5GithubApi
             throw new Exception("tag 값이 없습니다.");
         }
 
-        $url = self::API_MODIFY_URL . $tag;
+        $url = self::$apiModifyUrl . $tag;
 
         $response = self::requestCurl($url);
         $response = json_decode((string)$response);

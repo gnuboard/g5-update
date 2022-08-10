@@ -15,11 +15,12 @@ class G5Migration
     protected $migrationList = array();
     protected $migrationMethod;
 
-    const AUTO_UPDATE               = true;
-    public const MIGRATION_TABLE    = G5_TABLE_PREFIX . "migrations";
-    public const UPDATE_PATH        = G5_PLUGIN_PATH . "/version_update";
-    public const MIGRATION_PATH     = self::UPDATE_PATH . "/migration";
-    private const FILE_EXE          = "php";
+    const AUTO_UPDATE   = true;
+    const FILE_EXE      = "php";
+
+    protected static $migrationTable;
+    protected static $updatePath;
+    protected static $migrationPath;
 
     public function __construct()
     {
@@ -30,6 +31,11 @@ class G5Migration
                 throw new Exception('데이터베이스 연결에 실패했습니다. Error Message : ' . self::$mysqli->connect_error);
             }
             self::$mysqli->set_charset("utf8");
+
+            // set Path
+            self::$migrationTable = G5_TABLE_PREFIX . "migrations";
+            self::$updatePath = G5_PLUGIN_PATH . "/version_update";
+            self::$migrationPath = self::$updatePath . "/migration";
 
             // create migration table
             $this->initialSetup();
@@ -64,7 +70,7 @@ class G5Migration
     {
         try {
             $ignoreMethod = array("up", "down");
-            $filePath = self::MIGRATION_PATH . "/" . $fileName;
+            $filePath = self::$migrationPath . "/" . $fileName;
 
             if (empty($fileName) || !file_exists($filePath)) {
                 throw new Exception("잘못된 migration 파일입니다.");
@@ -92,7 +98,7 @@ class G5Migration
      */
     public function initMigrationClassWithFilename($fileName)
     {
-        include_once self::MIGRATION_PATH . "/" . $fileName;
+        include_once self::$migrationPath . "/" . $fileName;
 
         $replace_array = array("." . self::FILE_EXE, ".", "-");
         $className = str_replace($replace_array, "", $fileName);
@@ -214,7 +220,7 @@ class G5Migration
      */
     public function insertMigrationLog($migration, $result)
     {
-        $table = self::MIGRATION_TABLE;
+        $table = self::$migrationTable;
         $sql = "INSERT INTO
                     {$table}
                 SET
@@ -237,7 +243,7 @@ class G5Migration
      */
     public function deleteMigrationLog($migration)
     {
-        $table = self::MIGRATION_TABLE;
+        $table = self::$migrationTable;
         $sql = "DELETE FROM
                     {$table}
                 WHERE
@@ -274,8 +280,8 @@ class G5Migration
     public function getMigrationList()
     {
         if (empty($this->migrationList)) {
-            if (is_dir(self::MIGRATION_PATH)) {
-                if ($dirResource = @opendir(self::MIGRATION_PATH)) {
+            if (is_dir(self::$migrationPath)) {
+                if ($dirResource = @opendir(self::$migrationPath)) {
                     while (($fileName = readdir($dirResource)) !== false) {
                         if ($fileName == '.' || $fileName == '..') {
                             continue;
@@ -356,7 +362,7 @@ class G5Migration
      */
     public function getMigrationVersion()
     {
-        $table = self::MIGRATION_TABLE;
+        $table = self::$migrationTable;
         $query = "SELECT
                     mi_version
                 FROM {$table}

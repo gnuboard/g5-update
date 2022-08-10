@@ -12,7 +12,8 @@ if (!defined('_GNUBOARD_')) {
  */
 class G5Update
 {
-    public $g5Version;
+    public static $g5Version;
+    public static $g5GithubApi;
 
     public $path = null;
     public $latest_version = null;
@@ -48,7 +49,7 @@ class G5Update
 
     public function __construct()
     {
-        $this->dir_update   = G5_DATA_PATH . "/update";
+        self::$dir_update   = G5_DATA_PATH . "/update";
         $this->dir_version  = G5_DATA_PATH . "/update/version";
         $this->dir_backup   = G5_DATA_PATH . "/update/backup";
         $this->dir_log      = G5_DATA_PATH . "/update/log";
@@ -58,6 +59,8 @@ class G5Update
         $this->window_dir_update = str_replace('/', '\\', G5_DATA_PATH) . "\\update";
 
         $this->setNowVersion(G5Version::$currentVersion);
+        self::$g5Version = new G5Version();
+        self::$g5GithubApi = new G5GithubApi();
     }
 
     /**
@@ -189,7 +192,7 @@ class G5Update
 
         if (ftp_pwd($this->conn)) {
             $pwd = (ftp_pwd($this->conn) != "/") ? ftp_pwd($this->conn) : "";
-
+            
             $this->ftp_dir_update   = $pwd . "/data/update";
             $this->ftp_dir_version  = $this->ftp_dir_update . "/version";
             $this->ftp_dir_log      = $this->ftp_dir_update . "/log";
@@ -214,9 +217,9 @@ class G5Update
             }
 
             if ($this->port == 'ftp') {
-                if (!is_dir($this->dir_update)) {
-                    if (!ftp_mkdir($this->conn, $this->ftp_dir_update)) {
-                        throw new Exception("/update 디렉토리를 생성하는데 실패했습니다.");
+                if (!ftp_nlist($this->conn, $this->ftp_dir_update)) {
+                    if (!ftp_nlist($this->conn, $this->ftp_dir_update)) {
+                        throw new Exception("/update 디렉토리를 생성하는데 실패했습니다. 경로 : " . $this->ftp_dir_update);
                     }
                     if ($this->os != "WINNT") {
                         if (!ftp_chmod($this->conn, 0707, $this->ftp_dir_update)) {
@@ -225,9 +228,9 @@ class G5Update
                     }
                 }
 
-                if (!is_dir($this->dir_version)) {
-                    if (!ftp_mkdir($this->conn, $this->ftp_dir_version)) {
-                        throw new Exception("/update/version 디렉토리를 생성하는데 실패했습니다.");
+                if (!ftp_nlist($this->conn, $this->ftp_dir_version)) {
+                    if (!ftp_nlist($this->conn, $this->ftp_dir_version)) {
+                        throw new Exception("/update/version 디렉토리를 생성하는데 실패했습니다. 경로 : " . $this->ftp_dir_version);
                     }
                     if ($this->os != "WINNT") {
                         if (!ftp_chmod($this->conn, 0707, $this->ftp_dir_version)) {
@@ -236,9 +239,9 @@ class G5Update
                     }
                 }
 
-                if (!is_dir($this->dir_backup)) {
-                    if (!ftp_mkdir($this->conn, $this->ftp_dir_backup)) {
-                        throw new Exception("/update/backup 디렉토리를 생성하는데 실패했습니다.");
+                if (!ftp_nlist($this->conn, $this->ftp_dir_backup)) {
+                    if (!ftp_nlist($this->conn, $this->ftp_dir_backup)) {
+                        throw new Exception("/update/backup 디렉토리를 생성하는데 실패했습니다. 경로 : " . $this->ftp_dir_backup);
                     }
                     if ($this->os != "WINNT") {
                         if (!ftp_chmod($this->conn, 0707, $this->ftp_dir_backup)) {
@@ -247,11 +250,11 @@ class G5Update
                     }
                 }
             } elseif ($this->port == 'sftp') {
-                if (!is_dir($this->dir_update)) {
-                    if (!ssh2_sftp_mkdir($this->connPath, $this->dir_update, 0707)) {
+                if (!is_dir(self::$dir_update)) {
+                    if (!ssh2_sftp_mkdir($this->connPath, self::$dir_update, 0707)) {
                         throw new Exception("/update 디렉토리를 생성하는데 실패했습니다.");
                     }
-                    if (!ssh2_sftp_chmod($this->connPath, $this->dir_update, 0707)) {
+                    if (!ssh2_sftp_chmod($this->connPath, self::$dir_update, 0707)) {
                         throw new Exception("/update 디렉토리의 권한을 변경하는데 실패했습니다.");
                     }
                 }
@@ -283,7 +286,7 @@ class G5Update
 
             // .htaccess 파일 체크 및 생성
             $content = "Deny from all";
-            $dir_htacc = $this->dir_update . "/.htaccess";
+            $dir_htacc = self::$dir_update . "/.htaccess";
             
             if (!file_exists($dir_htacc)) {
                 $this->createHtaccess($dir_htacc, $content);
@@ -415,7 +418,7 @@ class G5Update
     {
         try {
             if (empty($this->version_list)) {
-                $this->version_list = $this->getG5Version()->getVersionListByFile();
+                $this->version_list = self::$g5Version->getVersionListByFile();
             }
 
             return $this->version_list;
@@ -434,7 +437,7 @@ class G5Update
     {
         try {
             if (empty($this->latest_version)) {
-                $this->latest_version = $this->getG5Version()->getLatestVersionByFile();
+                $this->latest_version = self::$g5Version->getLatestVersionByFile();
             }
 
             return $this->latest_version;
@@ -453,7 +456,7 @@ class G5Update
     public function getVersionModifyContent($tag = null)
     {
         try {
-            $result = G5GithubApi::getModifyData($tag);
+            $result = self::$g5GithubApi->getModifyData($tag);
             
             return $result->body;
         } catch (Exception $e) {
@@ -828,7 +831,7 @@ class G5Update
                 throw new Exception('압축파일 생성에 실패했습니다.');
             }
 
-            $result = G5GithubApi::getArchiveData($exe, $version);
+            $result = self::$g5GithubApi->getArchiveData($exe, $version);
 
             $file_result = @fwrite($zip, (string)$result);
             if ($file_result == false) {
@@ -991,7 +994,7 @@ class G5Update
             if ($this->now_version == self::$target_version) {
                 throw new Exception("동일버전으로는 업데이트가 불가능합니다.");
             }
-            $version_list = G5Version::getVersionListByFile();
+            $version_list = self::$g5Version->getVersionListByFile();
             if (empty($version_list)) {
                 throw new Exception("버전목록 조회가 실패했습니다.");
             }
@@ -1001,9 +1004,9 @@ class G5Update
             $target_version_num = array_search(self::$target_version, (array)$version_list);
 
             if ($now_version_num > $target_version_num) {
-                $result = G5GithubApi::getCompareData($this->now_version, self::$target_version);
+                $result = self::$g5GithubApi->getCompareData($this->now_version, self::$target_version);
             } else {
-                $result = G5GithubApi::getCompareData(self::$target_version, $this->now_version);
+                $result = self::$g5GithubApi->getCompareData(self::$target_version, $this->now_version);
             }
 
             foreach ($result->files as $var) {
@@ -1231,26 +1234,6 @@ class G5Update
     {
         return $this->rollback_version;
     }
-    /**
-     * @return object
-     */
-    public function getG5Version()
-    {
-        if (empty($this->g5Version)) {
-            $this->setG5Version(new G5Version());
-        }
-        return $this->g5Version;
-    }
-
-    /**
-     * @param object $instance
-     * @return void
-     */
-    public function setG5Version($instance)
-    {
-        $this->g5Version = $instance;
-    }
-
     /**
      * @return string
      */
