@@ -218,7 +218,7 @@ class G5Update
 
             if ($this->port == 'ftp') {
                 if (!ftp_nlist($this->conn, $this->ftp_dir_update)) {
-                    if (!ftp_nlist($this->conn, $this->ftp_dir_update)) {
+                    if (!ftp_mkdir($this->conn, $this->ftp_dir_update)) {
                         throw new Exception("/update 디렉토리를 생성하는데 실패했습니다. 경로 : " . $this->ftp_dir_update);
                     }
                     if ($this->os != "WINNT") {
@@ -229,7 +229,7 @@ class G5Update
                 }
 
                 if (!ftp_nlist($this->conn, $this->ftp_dir_version)) {
-                    if (!ftp_nlist($this->conn, $this->ftp_dir_version)) {
+                    if (!ftp_mkdir($this->conn, $this->ftp_dir_version)) {
                         throw new Exception("/update/version 디렉토리를 생성하는데 실패했습니다. 경로 : " . $this->ftp_dir_version);
                     }
                     if ($this->os != "WINNT") {
@@ -240,7 +240,7 @@ class G5Update
                 }
 
                 if (!ftp_nlist($this->conn, $this->ftp_dir_backup)) {
-                    if (!ftp_nlist($this->conn, $this->ftp_dir_backup)) {
+                    if (!ftp_mkdir($this->conn, $this->ftp_dir_backup)) {
                         throw new Exception("/update/backup 디렉토리를 생성하는데 실패했습니다. 경로 : " . $this->ftp_dir_backup);
                     }
                     if ($this->os != "WINNT") {
