@@ -195,6 +195,20 @@ if ($w == 'c') // 댓글 입력
 
     $comment_id = sql_insert_id();
 
+    //첨부파일 있으면 기록 댓글 번호, 게시판 기록
+    $comment_file_info = array();
+
+    preg_match_all('/\[(.*?.)]/', $wr_content, $comment_file_info);
+    if (count($comment_file_info[1]) > 0) {
+        foreach ($comment_file_info[1] as $value) {
+            print_r2($comment_file_info[1]);
+            if (strpos($value, G5_DATA_DIR . '/file/comment') === false) {
+                $file_name = basename($value);
+                update_fileinfo($bo_table, $wr_content, $comment_id, $file_name);
+            }
+        }
+    }
+
     // 원글에 댓글수 증가 & 마지막 시간 반영
     sql_query(" update $write_table set wr_comment = wr_comment + 1, wr_last = '".G5_TIME_YMDHIS."' where wr_id = '$wr_id' ");
 
@@ -357,3 +371,29 @@ $redirect_url = short_url_clean(G5_HTTP_BBS_URL.'/board.php?bo_table='.$bo_table
 run_event('comment_update_after', $board, $wr_id, $w, $qstr, $redirect_url, $comment_id, $reply_array);
 
 goto_url($redirect_url);
+
+/**
+ * @param $bo_table
+ * @param $comment
+ * @param $comment_id
+ * @param $file_name
+ * @return void
+ */
+function update_fileinfo($bo_table, $comment, $comment_id, $file_name)
+{
+    if (function_exists('mysqli_connect')) {
+        $write_file_info_sql = 'UPDATE ' . G5_TABLE_PREFIX . 'comment_file SET comment_id = ?, bo_table = ? WHERE comment_id != null AND file_name = ? ';
+        /**
+         * @var $stmt mysqli_stmt
+         */
+        $stmt = $GLOBALS['connect_db']->prepare($write_file_info_sql);
+        $stmt->bind_param('iss', $comment_id, $bo_table, $file_name);
+        $stmt->execute();
+    } else {
+        $write_file_info_sql = "UPDATE " . G5_TABLE_PREFIX . "comment_file SET 
+        comment_id = " . sql_real_escape_string($comment_id) . ", 
+        bo_table = " . sql_real_escape_string($bo_table) .
+        " WHERE comment_id != null AND file_name = " . sql_real_escape_string($file_name);
+        sql_query($write_file_info_sql);
+    }
+}
