@@ -32,6 +32,7 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_SHOP_SKIN_URL.'/style.css">', 
         $is_name    = get_text($row['is_name']);
         $is_subject = conv_subject($row['is_subject'],50,"…");
         $is_content = get_view_thumbnail(conv_content($row['is_content'], 1), $thumbnail_width);
+        $is_content_summary = utf8_strcut(strip_tags($row['is_content']), 60);
         $is_reply_name = !empty($row['is_reply_name']) ? get_text($row['is_reply_name']) : '';
         $is_reply_subject = !empty($row['is_reply_subject']) ? conv_subject($row['is_reply_subject'],50,"…") : '';
         $is_reply_content = !empty($row['is_reply_content']) ? get_view_thumbnail(conv_content($row['is_reply_content'], 1), $thumbnail_width) : '';
@@ -49,6 +50,8 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_SHOP_SKIN_URL.'/style.css">', 
                 <dd class="sit_use_star"><img src="<?php echo G5_SHOP_URL; ?>/img/s_star<?php echo $is_star; ?>.png" alt="별<?php echo $is_star; ?>개" width="85"></dd>
                 <dt></dt>
                 <dd class="sit_use_tit"><?php echo $is_subject; ?></dd>
+                <dt>내용요약</dt>
+                <dd><?php echo $is_content_summary; ?></dd>
                 <dt>작성자/작성일</dt>
                 <dd><?php echo $is_name; ?><span class="st_bg"></span><i class="fa fa-clock-o" aria-hidden="true"></i> <?php echo $is_time; ?></dd>
             </dl>
