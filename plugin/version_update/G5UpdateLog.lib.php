@@ -19,7 +19,7 @@ class G5UpdateLog
     public function __construct()
     {
         $this->g5Update = new G5Update();
-        self::$logPath = $this->g5Update->dir_update . "/log";
+        self::$logPath = $this->g5Update::$dir_update . "/log";
     }
 
     /**
