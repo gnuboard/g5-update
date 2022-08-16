@@ -12,7 +12,6 @@ if (!defined('_GNUBOARD_')) {
  */
 class G5Update
 {
-    public static $g5Version;
     public static $g5GithubApi;
 
     public $path = null;
@@ -59,7 +58,6 @@ class G5Update
         $this->window_dir_update = str_replace('/', '\\', G5_DATA_PATH) . "\\update";
 
         $this->setNowVersion(G5Version::$currentVersion);
-        self::$g5Version = new G5Version();
         self::$g5GithubApi = new G5GithubApi();
     }
 
@@ -418,7 +416,8 @@ class G5Update
     {
         try {
             if (empty($this->version_list)) {
-                $this->version_list = self::$g5Version->getVersionListByFile();
+                $g5Version = new G5Version();
+                $this->version_list = $g5Version->getVersionListByFile();
             }
 
             return $this->version_list;
@@ -437,7 +436,8 @@ class G5Update
     {
         try {
             if (empty($this->latest_version)) {
-                $this->latest_version = self::$g5Version->getLatestVersionByFile();
+                $g5Version = new G5Version();
+                $this->latest_version = $g5Version->getLatestVersionByFile();
             }
 
             return $this->latest_version;
@@ -994,7 +994,8 @@ class G5Update
             if ($this->now_version == self::$target_version) {
                 throw new Exception("동일버전으로는 업데이트가 불가능합니다.");
             }
-            $version_list = self::$g5Version->getVersionListByFile();
+            $g5Version = new G5Version();
+            $version_list = $g5Version->getVersionListByFile();
             if (empty($version_list)) {
                 throw new Exception("버전목록 조회가 실패했습니다.");
             }
