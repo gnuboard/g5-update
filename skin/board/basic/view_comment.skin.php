@@ -31,9 +31,7 @@ var char_max = parseInt(<?php echo $comment_max ?>); // 최대
 
 	<article id="c_<?php echo $comment_id ?>" <?php if ($cmt_depth) { ?>style="margin-left:<?php echo $cmt_depth ?>px;border-top-color:#e0e0e0"<?php } ?>>
         <div class="pf_img"><?php echo get_member_profile_img($list[$i]['mb_id']); ?></div>
-        
         <div class="cm_wrap">
-
             <header style="z-index:<?php echo $cmt_sv; ?>">
 	            <h2><?php echo get_text($list[$i]['wr_name']); ?>님의 <?php if ($cmt_depth) { ?><span class="sound_only">댓글의</span><?php } ?> 댓글</h2>
 	            <?php echo $list[$i]['name'] ?>
@@ -47,12 +45,12 @@ var char_max = parseInt(<?php echo $comment_max ?>); // 최대
 	            include(G5_SNS_PATH.'/view_comment_list.sns.skin.php');
 	            ?>
 	        </header>
-	
 	        <!-- 댓글 출력 -->
 	        <div class="cmt_contents">
 	            <p>
-	                <?php if (strstr($list[$i]['wr_option'], "secret")) { ?><img src="<?php echo $board_skin_url; ?>/img/icon_secret.gif" alt="비밀글"><?php } ?>
-	                <?php echo $comment ?>
+	                <?php if (strpos($list[$i]['wr_option'], "secret") !== false) { ?><img src="<?php echo $board_skin_url; ?>/img/icon_secret.gif"alt="비밀글"><?php } ?>
+	                <?php echo html_entities_decode_tag(comment_image_url_parser($comment));
+                    ?>
 	            </p>
 	            <?php if($is_comment_reply_edit) {
 	                if($w == 'cu') {
@@ -70,7 +68,7 @@ var char_max = parseInt(<?php echo $comment_max ?>); // 최대
 	        </div>
 	        <span id="edit_<?php echo $comment_id ?>" class="bo_vc_w"></span><!-- 수정 -->
 	        <span id="reply_<?php echo $comment_id ?>" class="bo_vc_w"></span><!-- 답변 -->
-	
+
 	        <input type="hidden" value="<?php echo strstr($list[$i]['wr_option'],"secret") ?>" id="secret_comment_<?php echo $comment_id ?>">
 	        <textarea id="save_comment_<?php echo $comment_id ?>" style="display:none"><?php echo get_text($list[$i]['content1'], 0) ?></textarea>
 		</div>
@@ -85,12 +83,12 @@ var char_max = parseInt(<?php echo $comment_max ?>); // 최대
         </div>
         <?php } ?>
         <script>
-			$(function() {			    
+			$(function() {
 		    // 댓글 옵션창 열기
 		    $(".btn_cm_opt").on("click", function(){
 		        $(this).parent("div").children(".bo_vc_act").show();
 		    });
-				
+
 		    // 댓글 옵션창 닫기
 		    $(document).mouseup(function (e){
 		        var container = $(".bo_vc_act");
@@ -344,7 +342,7 @@ $(function() {
 <?php } ?>
 <!-- } 댓글 쓰기 끝 -->
 <script>
-jQuery(function($) {            
+jQuery(function($) {
     //댓글열기
     $(".cmt_btn").click(function(e){
         e.preventDefault();
