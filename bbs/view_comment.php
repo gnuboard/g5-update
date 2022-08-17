@@ -40,7 +40,7 @@ for ($i=0; $row=sql_fetch_array($result); $i++)
     //$list[$i]['content'] = eregi_replace("[^ \n<>]{130}", "\\0\n", $row['wr_content']);
 
     $list[$i]['content'] = $list[$i]['content1']= '비밀글 입니다.';
-    if (!strstr($row['wr_option'], 'secret') ||
+    if (strpos($row['wr_option'], 'secret') === false ||
         $is_admin ||
         ($write['mb_id']===$member['mb_id'] && $member['mb_id']) ||
         ($row['mb_id']===$member['mb_id'] && $member['mb_id'])) {
@@ -122,11 +122,56 @@ else
 }
 
 $comment_action_url = https_url(G5_BBS_DIR)."/write_comment_update.php";
+$comment_file_input_url = https_url(G5_BBS_DIR)."/comment_file.php";
 $comment_common_url = short_url_clean(G5_BBS_URL.'/board.php?'.clean_query_string($_SERVER['QUERY_STRING']));
 
 include_once($board_skin_path.'/view_comment.skin.php');
 
 if (!$member['mb_id']) // 비회원일 경우에만
     echo '<script src="'.G5_JS_URL.'/md5.js"></script>'."\n";
+
+function html_entities_decode_tag($content)
+{
+    $tags = array(
+        "&lt;br&gt;" => '<br>',
+        "&lt;div&gt;" => '<div>',
+        "&lt;/div&gt;" => '</div>',
+        "&lt;p&gt;" => '<p>',
+        "&lt;/p&gt;" => '</p>',
+        "&lt;span" => '<span',
+        "&lt;span&gt;" => '<span>',
+        "&lt;/span&gt;" => '</span>',
+        "&nbsp;" => ' ',
+        "&quot;" => '"'
+    );
+
+    foreach ($tags as $tag => $value) {
+        $content = str_replace($tag, $value, $content);
+    }
+
+    return $content;
+}
+
+/**
+ * 댓글에 [첨부파일 url] 의 [ <a href='이미지주소'></a> ] -> img 태그로 치환
+ * @param $contents
+ * @return array|string|string[]|null
+ */
+function comment_image_url_parser($content)
+{
+    return preg_replace_callback(
+        '/\[\<a\s+href\=\"(https?\:\/\/[^\s]+\.(gif|jpe?g|png|webp))\"[^\>]*\>[^\s]*\<\/a\>\]/iS',
+        'generator_image_tag',
+        $content
+    );
+}
+
+function generator_image_tag($content)
+{
+    if (isset($content[1]) && !empty($content[1])) {
+        return "<img src=$content[1]  alt=''>";
+    }
+}
+
 
 @include_once($board_skin_path.'/view_comment.tail.skin.php');
