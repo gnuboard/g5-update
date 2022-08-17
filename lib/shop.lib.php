@@ -2009,6 +2009,52 @@ function check_itemuse_write($it_id, $mb_id, $close=true)
     }
 }
 
+// 상품후기 작성가능한지 체크 (주문상태와 무관)
+function check_itemuse_write_item($it_id, $close = true)
+{
+    global $is_admin;
+    
+    try {
+        if (!$is_admin) {
+            $item = get_shop_item($it_id, true);
+            if (!(isset($item['it_id']) && $item['it_id'])) {
+                throw new Exception("상품정보가 존재하지 않습니다.");
+            }
+        }
+    } catch (Exception $e) {
+        if ($close) {
+            alert_close($e->getMessage());
+        } else {
+            alert($e->getMessage());
+        }
+    }
+}
+
+// 상품후기 작성가능한지 체크 (주문상태가 완료일때만)
+function check_itemuse_write_cart($ct_id, $mb_id, $close = true)
+{
+    global $g5, $is_admin;
+
+    try {
+        if (!$is_admin) {
+            // 장바구니id 체크
+            $cart = sql_fetch("SELECT ct_status FROM {$g5['g5_shop_cart_table']} WHERE ct_id = '{$ct_id}' AND mb_id = '{$mb_id}'");
+            if (!isset($cart['ct_status'])) {
+                throw new Exception("주문정보를 확인할 수 없습니다.");
+            }
+            if ($cart['ct_status'] != '완료') {
+                throw new Exception("사용후기는 주문하신 상품의 상태가 완료인 경우에만 작성하실 수 있습니다.");
+            }
+        }
+    } catch (Exception $e) {
+        if ($close) {
+            alert_close($e->getMessage());
+        } else {
+            alert($e->getMessage());
+        }
+    }
+}
+
 
 // 구매 본인인증 체크
 function shop_member_cert_check($id, $type)

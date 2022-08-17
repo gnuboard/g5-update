@@ -17,7 +17,9 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_SHOP_SKIN_URL.'/style.css">', 
         <img src="<?php echo G5_SHOP_URL; ?>/img/s_star<?php echo $star_score?>.png" alt="" class="sit_star">
         <?php } ?>
         <div id="sit_use_wbtn">
+        <?php if ($default['de_item_use_write'] == 0) { ?>
             <a href="<?php echo $itemuse_form; ?>" class="btn02 itemuse_form">사용후기 쓰기<span class="sound_only"> 새 창</span></a>
+        <?php } ?>
             <a href="<?php echo $itemuse_list; ?>" class="btn01 itemuse_list">더보기</a>
         </div>
     </div>

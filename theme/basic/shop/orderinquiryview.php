@@ -24,7 +24,7 @@ if($od['od_pg'] == 'lg') {
         $st_count1 = $st_count2 = 0;
         $custom_cancel = false;
 
-        $sql = " select it_id, it_name, ct_send_cost, it_sc_type
+        $sql = " select ct_id, od_id, it_id, it_name, ct_send_cost, ct_status, it_sc_type
                     from {$g5['g5_shop_cart_table']}
                     where od_id = '$od_id'
                     group by it_id
@@ -42,14 +42,14 @@ if($od['od_pg'] == 'lg') {
 	                <th scope="col" id="th_itpt">포인트</th>
 	                <th scope="col" id="th_itsd">배송비</th>
 	                <th scope="col" id="th_itsum">소계</th>
-	                <th scope="col" id="th_itst">상태</th>
+	                <th scope="col" id="th_itst" colspan="2">상태</th>
 	            </tr>
 	            </thead>
 	            <tbody>
 	            <?php
 	            for($i=0; $row=sql_fetch_array($result); $i++) {
 	                $image = get_it_image($row['it_id'], 55, 55);
-	
+
 	                $sql = " select ct_id, it_name, ct_option, ct_qty, ct_price, ct_point, ct_status, io_type, io_price
 	                            from {$g5['g5_shop_cart_table']}
 	                            where od_id = '$od_id'
@@ -89,6 +89,9 @@ if($od['od_pg'] == 'lg') {
 	                }
 	
 	                for($k=0; $opt=sql_fetch_array($res); $k++) {
+                        // 사용후기 URL
+                        $itemuse_form_url = G5_SHOP_URL."/itemuseform.php?ct_id=" . $opt['ct_id'] . "&od_id=" . $row['od_id'];
+
 	                    if($opt['io_type'])
 	                        $opt_price = $opt['io_price'];
 	                    else
@@ -114,6 +117,14 @@ if($od['od_pg'] == 'lg') {
 	                <td headers="th_itsd" class="td_dvr"><?php echo $ct_send_cost; ?></td>
 	                <td headers="th_itsum" class="td_numbig text_right"><?php echo number_format($sell_price); ?></td>
 	                <td headers="th_itst" class="td_mngsmall"><?php echo $opt['ct_status']; ?></td>
+                    <td headers="th_itst" class="td_mngsmall">
+                    <?php if ($row['ct_status'] == "완료") { ?>
+                        <a href="<?php echo $itemuse_form_url ?>" class="btn02 itemuse_form">
+                            후기작성
+                            <span class="sound_only">새 창</span>
+                        </a>
+                    <?php } ?>
+                    </td>
 	            </tr>
 	            <?php
 	                    $tot_point       += $point;
@@ -663,6 +674,11 @@ if($od['od_pg'] == 'lg') {
 
 <script>
 $(function() {
+    $(".itemuse_form").click(function(){
+        window.open(this.href, "itemuse_form", "width=810,height=680,scrollbars=1");
+        return false;
+    });
+
     $("#sod_sts_explan_open").on("click", function() {
         var $explan = $("#sod_sts_explan");
         if($explan.is(":animated"))

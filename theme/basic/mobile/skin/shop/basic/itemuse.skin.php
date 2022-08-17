@@ -8,7 +8,9 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_MSHOP_SKIN_URL.'/style.css">',
 <script src="<?php echo G5_JS_URL; ?>/viewimageresize.js"></script>
 
 <div id="sit_use_wbtn">
+<?php if ($default['de_item_use_write'] == 0) { ?>
     <a href="<?php echo $itemuse_form; ?>" class="qa_wr itemuse_form " onclick="return false;">사용후기 쓰기<span class="sound_only"> 새 창</span></a>
+<?php } ?>
     <a href="<?php echo $itemuse_list; ?>" id="itemuse_list" class="btn01">더보기</a>
 </div>
 

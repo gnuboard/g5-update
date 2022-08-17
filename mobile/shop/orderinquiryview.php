@@ -35,7 +35,7 @@ if($od['od_pg'] == 'lg') {
         $st_count1 = $st_count2 = 0;
         $custom_cancel = false;
 
-        $sql = " select it_id, it_name, cp_price, ct_send_cost, it_sc_type
+        $sql = " select ct_id, od_id, it_id, it_name, ct_send_cost, ct_status, it_sc_type
                     from {$g5['g5_shop_cart_table']}
                     where od_id = '$od_id'
                     group by it_id

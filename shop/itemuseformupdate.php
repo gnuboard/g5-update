@@ -6,6 +6,7 @@ if (!$is_member) {
 }
 
 $it_id       = isset($_REQUEST['it_id']) ? safe_replace_regex($_REQUEST['it_id'], 'it_id') : '';
+$ct_id       = isset($_REQUEST['ct_id']) ? safe_replace_regex($_REQUEST['ct_id'], 'ct_id') : '';
 $is_subject  = isset($_POST['is_subject']) ? trim($_POST['is_subject']) : '';
 $is_content  = isset($_POST['is_content']) ? trim($_POST['is_content']) : '';
 $is_content = preg_replace('#<script(.*?)>(.*?)</script>#is', '', $is_content);
@@ -17,8 +18,14 @@ $get_editor_img_mode = $config['cf_editor'] ? false : true;
 $is_id       = isset($_REQUEST['is_id']) ? (int) $_REQUEST['is_id'] : 0;
 $is_mobile_shop = isset($_REQUEST['is_mobile_shop']) ? (int) $_REQUEST['is_mobile_shop'] : 0;
 
-// 사용후기 작성 설정에 따른 체크
-check_itemuse_write($it_id, $member['mb_id']);
+if ($w == "")
+{
+    check_itemuse_write_item($it_id);
+    // 사용후기 작성 설정에 따른 체크
+    if ($default['de_item_use_write']) {
+        check_itemuse_write_cart($ct_id, $member['mb_id']);
+    }
+}
 
 if ($w == "" || $w == "u") {
     $is_name     = addslashes(strip_tags($member['mb_name']));
@@ -56,8 +63,12 @@ if ($w == "")
                    is_content = '$is_content',
                    is_time = '".G5_TIME_YMDHIS."',
                    is_ip = '{$_SERVER['REMOTE_ADDR']}' ";
-    if (!$default['de_item_use_use'])
+    if (!$default['de_item_use_use']) {
         $sql .= ", is_confirm = '1' ";
+    }
+    if (isset($ct_id) && $ct_id != "") {
+        $sql .= ", ct_id = '{$ct_id}' ";
+    }
     sql_query($sql);
 
     if ($default['de_item_use_use']) {
