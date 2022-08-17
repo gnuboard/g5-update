@@ -24,9 +24,8 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_MSHOP_SKIN_URL.'/style.css">',
         $is_star    = get_star($row['is_score']);
         $is_name    = get_text($row['is_name']);
         $is_subject = conv_subject($row['is_subject'],50,"…");
-        //$is_content = ($row['wr_content']);
         $is_content = get_view_thumbnail(conv_content($row['is_content'], 1), $thumbnail_width);
-        $is_content_summary = utf8_strcut(strip_tags($row['is_content']), 50);
+        $is_content_summary = utf8_strcut(strip_tags($row['is_content']), 100);
         $is_reply_name = !empty($row['is_reply_name']) ? get_text($row['is_reply_name']) : '';
         $is_reply_subject = !empty($row['is_reply_subject']) ? conv_subject($row['is_reply_subject'],50,"…") : '';
         $is_reply_content = !empty($row['is_reply_content']) ? get_view_thumbnail(conv_content($row['is_reply_content'], 1), $thumbnail_width) : '';
