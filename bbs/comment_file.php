@@ -4,7 +4,6 @@
  * 댓글 파일 입출력
  */
 include_once('./_common.php');
-include_once(G5_PLUGIN_PATH . '/editor/smarteditor2/photo_uploader/popup/php/UploadHandler.php');
 
 define('COMMENT_FIlE_DIR', 'comment');
 define('COMMENT_FILE_PATH', G5_DATA_PATH . '/' . 'comment');
@@ -38,6 +37,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         run_event('upload_file', $upload_result);
 
         echo json_encode($upload_result);
+        exit;
+    }
+
+    if ($w === 'd') { //삭제
+        if (isset($file_url, $comment_id)) {
+            $select_sql = "select * from " . G5_TABLE_PREFIX . 'comment_file where comment_id=' . $comment_id;
+            $row = sql_fetch($select_sql);
+            if (isset($row['file_name']) && strpos(basename($file_url), $row['file_name']) !== false) {
+                str_replace(G5_DATA_URL, G5_DATA_PATH, $file_url);
+                $result = unlink($file_url);
+            }
+        }
+        $response = array();
+        if (isset($result) && $result) {
+            $response['is_success'] = true;
+        } else {
+            $response['is_success'] = false;
+        }
+        echo json_encode($response);
         exit;
     }
 }
@@ -114,7 +132,15 @@ function comment_uploader($file)
 
         if ($is_success) {
             write_file_name_comment_db($file['name'][$i], $result_save_file);
-            $save_fileinfo = array('original_name' => $file['name'][$i], 'save_name' => $result_save_file);
+            $pathinfo = pathinfo($result_save_file);
+            $comment_file_url = G5_DATA_URL . '/' . 'comment' . '/' . $ym;
+            $end_point_url = run_replace('replace_url', $comment_file_url);
+            $save_fileinfo = array(
+                'original_name' => $file['name'][$i],
+                'save_name' => $result_save_file,
+                'file_type' => $pathinfo['extension'],
+                'end_point' => $end_point_url
+            );
             $response['files'][] = $save_fileinfo;
         }
     }
