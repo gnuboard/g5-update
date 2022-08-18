@@ -8,10 +8,31 @@ $itemuse_list = G5_SHOP_URL."/itemuselist.php";
 $itemuse_form = G5_SHOP_URL."/itemuseform.php?it_id=".$it_id;
 $itemuse_formupdate = G5_SHOP_URL."/itemuseformupdate.php?it_id=".$it_id;
 
-$sql_common = " from `{$g5['g5_shop_item_use_table']}` where it_id = '{$it_id}' and is_confirm = '1' ";
+$sql_common = " FROM `{$g5['g5_shop_item_use_table']}`";
+$sql_where = " WHERE it_id = '{$it_id}' AND is_confirm = '1'";
+$sql_order = "";
+
+// 검색조건
+if ($_REQUEST['only_photo'] == "1") {
+    $sql_where .= " AND is_content LIKE '%<img %'"; // 더 나은 검색조건?
+}
+
+//정렬 조건
+$sort = isset($_REQUEST['item_use_sort']) ? $_REQUEST['item_use_sort'] : "new";
+switch ($sort) {
+    case "is_score_asc":
+        $sql_order = "ORDER BY is_score ASC, is_id DESC";
+        break;
+    case "is_score_desc":
+        $sql_order = "ORDER BY is_score DESC, is_id DESC";
+        break;
+    default :
+        $sql_order = "ORDER BY is_id DESC";
+        break;
+}
 
 // 테이블의 전체 레코드수만 얻음
-$sql = " select COUNT(*) as cnt " . $sql_common;
+$sql = "SELECT COUNT(*) AS cnt " . $sql_common . $sql_where;
 $row = sql_fetch($sql);
 $total_count = $row['cnt'];
 
@@ -24,7 +45,8 @@ $sql = "SELECT
             *,
             (SELECT ct_option FROM g5_shop_cart WHERE ct_id = {$g5['g5_shop_item_use_table']}.ct_id) AS ct_option
         $sql_common
-        ORDER BY is_id DESC
+        $sql_where
+        $sql_order
         LIMIT $from_record, $rows";
 $result = sql_query($sql);
 

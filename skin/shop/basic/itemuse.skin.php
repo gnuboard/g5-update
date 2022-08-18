@@ -3,6 +3,8 @@ if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 
 // add_stylesheet('css 구문', 출력순서); 숫자가 작을 수록 먼저 출력됨
 add_stylesheet('<link rel="stylesheet" href="'.G5_SHOP_SKIN_URL.'/style.css">', 0);
+
+$itemuse_url = G5_SHOP_URL."/itemuse.php?it_id=" . $it_id;
 ?>
 
 <script src="<?php echo G5_JS_URL; ?>/viewimageresize.js"></script>
@@ -13,7 +15,7 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_SHOP_SKIN_URL.'/style.css">', 
 
     <div class="sit_use_top">
         <?php if ($star_score) { ?>
-        <h4>구매고객 총평점 <span>(총 <strong><?php echo $total_count; ?></strong> 건 상품평 기준)</span></h4>
+        <h4>구매고객 총평점 <span>(총 <strong><?php echo $item_use_count; ?></strong> 건 상품평 기준)</span></h4>
         <strong><?php echo $it['it_use_avg']; ?></strong>
         <img src="<?php echo G5_SHOP_URL; ?>/img/s_star<?php echo $star_score?>.png" alt="" class="sit_star">
         <?php } ?>
@@ -23,6 +25,15 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_SHOP_SKIN_URL.'/style.css">', 
         <?php } ?>
             <a href="<?php echo $itemuse_list; ?>" class="btn01 itemuse_list">더보기</a>
         </div>
+    </div>
+    <div>
+        <select id="item_use_sort" name="item_use_sort">
+            <option value="new" <?php echo ($_REQUEST['item_use_sort'] == "new" ? "selected" : ""); ?>>최신순</option>
+            <option value="is_score_asc" <?php echo ($_REQUEST['item_use_sort'] == "is_score_asc" ? "selected" : ""); ?>>평점 낮은순</option>
+            <option value="is_score_desc" <?php echo ($_REQUEST['item_use_sort'] == "is_score_desc" ? "selected" : ""); ?>>평점 높은순</option>
+        </select>
+        <input type="checkbox" id="only_photo" name="only_photo" value="1" <?php echo ($_REQUEST['only_photo'] == "1" ? "checked" : "")?>>
+        <label for="r">사진리뷰만 표시</label>
     </div>
     
     <?php
@@ -101,7 +112,8 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_SHOP_SKIN_URL.'/style.css">', 
 </section>
 
 <?php
-echo itemuse_page($config['cf_write_pages'], $page, $total_page, G5_SHOP_URL."/itemuse.php?it_id=$it_id&amp;page=", "");
+$qstr = "&amp;only_photo=" . $_REQUEST['only_photo'] . "&amp;item_use_sort=" . $_REQUEST['item_use_sort'];
+echo itemuse_page($config['cf_write_pages'], $page, $total_page, G5_SHOP_URL."/itemuse.php?it_id=$it_id&amp;page=", $qstr);
 ?>
 
 <script>
@@ -136,6 +148,15 @@ $(function(){
 
     $(".pg_page").click(function(){
         $("#itemuse").load($(this).attr("href"));
+        return false;
+    });
+    $("#item_use_sort").on("change", function(){
+        $('#itemuse').load('<?php echo $itemuse_url . "&only_photo=" . $_REQUEST['only_photo'] . "&item_use_sort="?>' + $(this).val());
+        return false;
+    });
+    $("#only_photo").on("click", function(){
+        var chceck = $(this).is(":checked") ? $(this).val() : "";
+        $('#itemuse').load('<?php echo $itemuse_url . "&item_use_sort=" . $_REQUEST['item_use_sort'] . "&only_photo="?>' + chceck);
         return false;
     });
 });
