@@ -6,8 +6,9 @@ include_once(G5_CAPTCHA_PATH.'/captcha.lib.php');
 // 토큰체크
 $comment_token = trim(get_session('ss_comment_token'));
 set_session('ss_comment_token', '');
-if(empty($_POST['token']) || !$comment_token || $comment_token != $_POST['token'])
+if(empty($_POST['token']) || !$comment_token || $comment_token != $_POST['token']) {
     alert('올바른 방법으로 이용해 주십시오.');
+}
 
 // 090710
 if (substr_count($wr_content, "&#") > 50) {
@@ -201,7 +202,6 @@ if ($w == 'c') // 댓글 입력
     preg_match_all('/\[(.*?.)]/', $wr_content, $comment_file_info);
     if (count($comment_file_info[1]) > 0) {
         foreach ($comment_file_info[1] as $value) {
-            print_r2($comment_file_info[1]);
             if (strpos($value, G5_DATA_DIR . '/file/comment') === false) {
                 $file_name = basename($value);
                 update_fileinfo($bo_table, $wr_content, $comment_id, $file_name);
@@ -395,5 +395,30 @@ function update_fileinfo($bo_table, $comment, $comment_id, $file_name)
         bo_table = " . sql_real_escape_string($bo_table) .
         " WHERE comment_id != null AND file_name = " . sql_real_escape_string($file_name);
         sql_query($write_file_info_sql);
+    }
+}
+
+/**
+ * 이미지 태그를 첨부파일 형식으로 변경
+ * <img src='url'> -> [url]
+ * @param string $content
+ * @return array|string|string[]|null
+ */
+function change_img_tag_comment_file($content)
+{
+    return preg_replace_callback(
+        '/<img[^>]* src=\"([^\"]*)\"[^>]*>/iS',
+        'generator_comment_save_tag',
+        $content
+    );
+}
+
+function generator_comment_save_tag($content)
+{
+    if (isset($content[1]) && !empty($content[1])) {
+        $url = clean_xss_attributes($content[1]);
+        if (strpos($url, G5_DATA_DIR . '/' . 'comment')) {
+            return "[$url]";
+        }
     }
 }
