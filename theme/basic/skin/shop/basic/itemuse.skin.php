@@ -14,6 +14,7 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_SHOP_SKIN_URL.'/style.css">', 
     <div class="sit_use_top">
         <?php if ($star_score) { ?>
         <h4>구매고객 총평점 <span>(총 <strong><?php echo $total_count; ?></strong> 건 상품평 기준)</span></h4>
+        <strong><?php echo $it['it_use_avg']; ?></strong>
         <img src="<?php echo G5_SHOP_URL; ?>/img/s_star<?php echo $star_score?>.png" alt="" class="sit_star">
         <?php } ?>
         <div id="sit_use_wbtn">
@@ -48,7 +49,10 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_SHOP_SKIN_URL.'/style.css">', 
 			<span class="sit_thum"><?php echo get_itemuselist_thumbnail($row['it_id'], $row['is_content'], 100, 100); ?></span> 
             <dl class="sit_use_dl">
                 <dt>평점<dt>
-                <dd class="sit_use_star"><img src="<?php echo G5_SHOP_URL; ?>/img/s_star<?php echo $is_star; ?>.png" alt="별<?php echo $is_star; ?>개" width="85"></dd>
+                <dd class="sit_use_star">
+                    <img src="<?php echo G5_SHOP_URL; ?>/img/s_star<?php echo $is_star; ?>.png" alt="별<?php echo $is_star; ?>개" width="85">
+                    <?php echo (isset($row['ct_option'])) ? $row['ct_option'] : ""; ?>
+                </dd>
                 <dt></dt>
                 <dd class="sit_use_tit"><?php echo $is_subject; ?></dd>
                 <dt>작성자/작성일</dt>

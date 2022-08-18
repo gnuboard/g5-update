@@ -118,7 +118,7 @@ if($od['od_pg'] == 'lg') {
 	                <td headers="th_itsum" class="td_numbig text_right"><?php echo number_format($sell_price); ?></td>
 	                <td headers="th_itst" class="td_mngsmall"><?php echo $opt['ct_status']; ?></td>
                     <td headers="th_itst" class="td_mngsmall">
-                    <?php if ($row['ct_status'] == "완료") { ?>
+                    <?php if ($opt['ct_status'] == "완료") { ?>
                         <a href="<?php echo $itemuse_form_url ?>" class="btn02 itemuse_form">
                             후기작성
                             <span class="sound_only">새 창</span>

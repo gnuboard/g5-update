@@ -49,7 +49,10 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_MSHOP_SKIN_URL.'/style.css">',
                 <dt>작성일</dt>
                 <dd><i class="fa fa-clock-o" aria-hidden="true"></i> <?php echo $is_time; ?></dd>
                 <dt>선호도<dt>
-                <dd class="sit_use_star"><img src="<?php echo G5_SHOP_URL; ?>/img/s_star<?php echo $is_star; ?>.png" alt="별<?php echo $is_star; ?>개"></dd>
+                <dd class="sit_use_star">
+                    <?php echo (isset($row['ct_option'])) ? $row['ct_option'] : ""; ?>
+                    <img src="<?php echo G5_SHOP_URL; ?>/img/s_star<?php echo $is_star; ?>.png" alt="별<?php echo $is_star; ?>개">
+                </dd>
             </dl>
 
             <div id="sit_use_con_<?php echo $i; ?>" class="sit_use_con">
