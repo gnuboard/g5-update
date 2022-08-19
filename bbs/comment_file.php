@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode('설정 파라미터 w 값이 없습니다');
         exit;
     }
-    if ($w === 'upload') {
+    if ($w === 'u') { //upload
         $file_count = count($_FILES['comment_file']['name']);
         for ($i = 0; $i < $file_count; $i++) {
             if ($_FILES['comment_file']['size'][$i] > COMMENT_FILE_SiZE) {
@@ -109,7 +109,11 @@ function comment_uploader($file)
                 $new_file_name,
                 $thumbnail_file_name
             );
-            if ($thumbnail_file_name === $temp_file_name_pathinfo['filename']) { //원본
+            if ($thumbnail_file_name === $temp_file_name_pathinfo['basename']) { //원본
+                //thumbnail 함수는 webp와 gif 를 지원하지 않는다.
+                if ($file_name_pathinfo['extension'] === 'webp' || $file_name_pathinfo['extension'] === 'gif') {
+                    move_uploaded_file($file['tmp_name'][$i], "$comment_file_path/$thumbnail_file_name");
+                }
                 $is_success = rename(
                     "{$comment_file_path}/{$thumbnail_file_name}",
                     "{$comment_file_path}/{$save_file_name}"
