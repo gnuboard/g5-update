@@ -20,10 +20,14 @@ $is_mobile_shop = isset($_REQUEST['is_mobile_shop']) ? (int) $_REQUEST['is_mobil
 
 if ($w == "")
 {
-    check_itemuse_write_item($it_id);
+    // 상품체크
+    $item = get_shop_item($it_id, true);
+    if (!(isset($item['it_id']) && $item['it_id'])) {
+        alert_close("상품정보가 존재하지 않습니다.");
+    }
     // 사용후기 작성 설정에 따른 체크
-    if ($default['de_item_use_write']) {
-        check_itemuse_write_cart($ct_id, $member['mb_id']);
+    if ($default['de_item_use_write'] && !$is_admin) {
+        possible_itemuse_write($ct_id, $member['mb_id']);
     }
 }
 

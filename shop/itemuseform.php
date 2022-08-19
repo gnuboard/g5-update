@@ -24,10 +24,14 @@ if ($ct_id) {
 }
 
 if ($w == "") {
-    check_itemuse_write_item($it_id);
-    // 사용후기 작성 설정에 따른 체크
-    if ($default['de_item_use_write']) {
-        check_itemuse_write_cart($ct_id, $member['mb_id']);
+    // 상품체크
+    $item = get_shop_item($it_id, true);
+    if (!(isset($item['it_id']) && $item['it_id'])) {
+        alert_close("상품정보가 존재하지 않습니다.");
+    }
+    // 사용후기 체크
+    if ($default['de_item_use_write'] && !$is_admin) {
+        possible_itemuse_write($ct_id, $member['mb_id']);
     }
 } elseif ($w == "u") {
     $use = sql_fetch("SELECT * FROM {$g5['g5_shop_item_use_table']} WHERE is_id = '$is_id' ");

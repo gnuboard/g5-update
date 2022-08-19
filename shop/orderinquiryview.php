@@ -163,11 +163,8 @@ if($od['od_pg'] == 'lg') {
                 <td headers="th_itsd" class="td_dvr"><?php echo $ct_send_cost; ?></td>
                 <td headers="th_itst" class="td_mngsmall"><?php echo $opt['ct_status']; ?></td>
                 <td headers="th_itst" class="td_mngsmall">
-                <?php if ($opt['ct_status'] == "완료") { ?>
-                    <a href="<?php echo $itemuse_form_url ?>" class="btn02 itemuse_form">
-                        후기작성
-                        <span class="sound_only">새 창</span>
-                    </a>
+                <?php if ($opt['ct_status'] == "완료" && exist_itemuse_write($opt['ct_id']) === false) { ?>
+                    <a href="<?php echo $itemuse_form_url ?>" class="btn02 itemuse_form">후기작성<span class="sound_only">새 창</span></a>
                 <?php } ?>
                 </td>
             </tr>
