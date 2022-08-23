@@ -3,6 +3,8 @@ include_once('./_common.php');
 include_once(G5_LIB_PATH.'/thumbnail.lib.php');
 
 $it_id = isset($_REQUEST['it_id']) ? safe_replace_regex($_REQUEST['it_id'], 'it_id') : '';
+$only_photo = isset($_REQUEST['only_photo']) ? clean_xss_tags($_REQUEST['only_photo']) : '';
+$item_use_sort = isset($_REQUEST['item_use_sort']) ? clean_xss_tags($_REQUEST['item_use_sort']) : "new";
 
 $itemuse_list = G5_SHOP_URL."/itemuselist.php";
 $itemuse_form = G5_SHOP_URL."/itemuseform.php?it_id=".$it_id;
@@ -19,14 +21,13 @@ if (!$row) {
     sql_query("ALTER TABLE `{$g5['g5_shop_item_use_table']}` ADD COLUMN `ct_id` int(11) NOT NULL DEFAULT 0", true);
 }
 
-// 검색조건
-if ($_REQUEST['only_photo'] == "1") {
+// 검색조건 (사진 후기만 표시)
+if ($only_photo == "1") {
     $sql_where .= " AND is_content LIKE '%<img %'";
 }
 
 //정렬 조건
-$sort = isset($_REQUEST['item_use_sort']) ? $_REQUEST['item_use_sort'] : "new";
-switch ($sort) {
+switch ($item_use_sort) {
     case "is_score_asc":
         $sql_order = "ORDER BY is_score ASC, is_id DESC";
         break;

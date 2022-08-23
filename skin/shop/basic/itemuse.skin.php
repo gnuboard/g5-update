@@ -26,12 +26,12 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_SHOP_SKIN_URL.'/style.css">', 
     </div>
     <div>
         <select id="item_use_sort" name="item_use_sort">
-            <option value="new" <?php echo ($_REQUEST['item_use_sort'] == "new" ? "selected" : ""); ?>>최신순</option>
-            <option value="is_score_asc" <?php echo ($_REQUEST['item_use_sort'] == "is_score_asc" ? "selected" : ""); ?>>평점 낮은순</option>
-            <option value="is_score_desc" <?php echo ($_REQUEST['item_use_sort'] == "is_score_desc" ? "selected" : ""); ?>>평점 높은순</option>
+            <option value="new" <?php echo ($item_use_sort == "new" ? "selected" : ""); ?>>최신순</option>
+            <option value="is_score_asc" <?php echo ($item_use_sort == "is_score_asc" ? "selected" : ""); ?>>평점 낮은순</option>
+            <option value="is_score_desc" <?php echo ($item_use_sort == "is_score_desc" ? "selected" : ""); ?>>평점 높은순</option>
         </select>
-        <input type="checkbox" id="only_photo" name="only_photo" value="1" <?php echo ($_REQUEST['only_photo'] == "1" ? "checked" : "")?>>
-        <label for="r">사진리뷰만 표시</label>
+        <input type="checkbox" id="only_photo" name="only_photo" value="1" <?php echo ($only_photo == "1" ? "checked" : "")?>>
+        <label for="r">사진 후기만 표시</label>
     </div>
     
     <?php
@@ -110,7 +110,7 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_SHOP_SKIN_URL.'/style.css">', 
 </section>
 
 <?php
-$qstr = "&amp;only_photo=" . $_REQUEST['only_photo'] . "&amp;item_use_sort=" . $_REQUEST['item_use_sort'];
+$qstr = "&amp;only_photo=" . $only_photo . "&amp;item_use_sort=" . $item_use_sort;
 echo itemuse_page($config['cf_write_pages'], $page, $total_page, G5_SHOP_URL."/itemuse.php?it_id=$it_id&amp;page=", $qstr);
 ?>
 
@@ -149,12 +149,12 @@ $(function(){
         return false;
     });
     $("#item_use_sort").on("change", function(){
-        $('#itemuse').load('<?php echo $itemuse_url . "&only_photo=" . $_REQUEST['only_photo'] . "&item_use_sort="?>' + $(this).val());
+        $('#itemuse').load('<?php echo $itemuse_url . "&only_photo=" . $only_photo . "&item_use_sort="?>' + $(this).val());
         return false;
     });
     $("#only_photo").on("click", function(){
-        var chceck = $(this).is(":checked") ? $(this).val() : "";
-        $('#itemuse').load('<?php echo $itemuse_url . "&item_use_sort=" . $_REQUEST['item_use_sort'] . "&only_photo="?>' + chceck);
+        var check = $(this).is(":checked") ? $(this).val() : "";
+        $('#itemuse').load('<?php echo $itemuse_url . "&item_use_sort=" . $item_use_sort . "&only_photo="?>' + check);
         return false;
     });
 });

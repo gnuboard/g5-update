@@ -2,6 +2,8 @@
 include_once('./_common.php');
 
 $it_id = isset($_REQUEST['it_id']) ? safe_replace_regex($_REQUEST['it_id'], 'it_id') : '';
+$only_photo = isset($_REQUEST['only_photo']) ? clean_xss_tags($_REQUEST['only_photo']) : '';
+$item_use_sort = isset($_REQUEST['item_use_sort']) ? clean_xss_tags($_REQUEST['item_use_sort']) : "new";
 
 if( !isset($it) && !get_session("ss_tv_idx") ){
     if( !headers_sent() ){  //헤더를 보내기 전이면 검색엔진에서 제외합니다.
@@ -41,14 +43,13 @@ $it_use = sql_fetch("SELECT it_use_cnt, it_use_avg from {$g5['g5_shop_item_table
 $it_use_avg = $it_use['it_use_avg'];
 $star_score = get_star($it_use_avg);
 
-// 검색조건
-if ($_REQUEST['only_photo'] == "1") {
+// 검색조건 (사진 후기만 표시)
+if ($only_photo == "1") {
     $sql_where .= " AND is_content LIKE '%<img %'";
 }
 
 //정렬 조건
-$sort = isset($_REQUEST['item_use_sort']) ? $_REQUEST['item_use_sort'] : "new";
-switch ($sort) {
+switch ($item_use_sort) {
     case "is_score_asc":
         $sql_order = "ORDER BY is_score ASC, is_id DESC";
         break;

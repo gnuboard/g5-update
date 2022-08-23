@@ -8,10 +8,24 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_MSHOP_SKIN_URL.'/style.css">',
 <script src="<?php echo G5_JS_URL; ?>/viewimageresize.js"></script>
 
 <div id="sit_use_wbtn">
-<?php if ($default['de_item_use_write'] == 0) { ?>
+    <?php if ($default['de_item_use_write'] == 0) { ?>
     <a href="<?php echo $itemuse_form; ?>" class="qa_wr itemuse_form " onclick="return false;">사용후기 쓰기<span class="sound_only"> 새 창</span></a>
-<?php } ?>
+    <?php } ?>
     <a href="<?php echo $itemuse_list; ?>" id="itemuse_list" class="btn01">더보기</a>
+</div>
+<div id="sit_use_search">
+    <div class="chk_box">
+        <input type="checkbox" id="only_photo" name="only_photo" value="1" <?php echo ($only_photo == "1" ? "checked" : "")?>>
+        <label for="only_photo">
+        	<span></span>
+        	<b class="sound_only">사진 후기</b>사진 후기만 표시
+        </label>
+    </div>
+    <select class="sel_box" id="item_use_sort" name="item_use_sort" value="1">
+        <option value="new" <?php echo ($item_use_sort == "new" ? "selected" : ""); ?>>최신순</option>
+        <option value="is_score_asc" <?php echo ($item_use_sort == "is_score_asc" ? "selected" : ""); ?>>평점 낮은순</option>
+        <option value="is_score_desc" <?php echo ($item_use_sort == "is_score_desc" ? "selected" : ""); ?>>평점 높은순</option>
+    </select>
 </div>
 
 <!-- 상품 사용후기 시작 { -->
@@ -25,9 +39,8 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_MSHOP_SKIN_URL.'/style.css">',
         $is_num     = $total_count - ($page - 1) * $rows - $i;
         $is_star    = get_star($row['is_score']);
         $is_name    = get_text($row['is_name']);
-        $is_subject = conv_subject($row['is_subject'],50,"…");
+        $is_subject = conv_subject($row['is_subject'],100,"…");
         $is_content = get_view_thumbnail(conv_content($row['is_content'], 1), $thumbnail_width);
-        $is_content_summary = utf8_strcut(strip_tags($row['is_content']), 100);
         $is_reply_name = !empty($row['is_reply_name']) ? get_text($row['is_reply_name']) : '';
         $is_reply_subject = !empty($row['is_reply_subject']) ? conv_subject($row['is_reply_subject'],50,"…") : '';
         $is_reply_content = !empty($row['is_reply_content']) ? get_view_thumbnail(conv_content($row['is_reply_content'], 1), $thumbnail_width) : '';
@@ -37,12 +50,7 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_MSHOP_SKIN_URL.'/style.css">',
 
         if ($i == 0) echo '<ol id="sit_use_ol">';
     ?>
-
         <li class="sit_use_li">
-            <button type="button" class="sit_use_li_title"><?php echo $is_subject; ?></button>
-            <dl class="sit_use_dl">
-                <?php echo $is_content_summary; ?>
-            </dl>
             <dl class="sit_use_dl">
                 <dt>작성자</dt>
                 <dd><?php echo $is_name; ?></dd>
@@ -50,11 +58,20 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_MSHOP_SKIN_URL.'/style.css">',
                 <dd><i class="fa fa-clock-o" aria-hidden="true"></i> <?php echo $is_time; ?></dd>
                 <dt>선호도<dt>
                 <dd class="sit_use_star">
-                    <?php echo (isset($row['ct_option'])) ? $row['ct_option'] : ""; ?>
                     <img src="<?php echo G5_SHOP_URL; ?>/img/s_star<?php echo $is_star; ?>.png" alt="별<?php echo $is_star; ?>개">
                 </dd>
             </dl>
-
+            <dl class="sit_use_dl sit_use_info" data-value="<?php echo $i ?>">
+                <dt>옵션</dt>
+                <dd class="sit_use_thumbnail">
+                    <?php echo get_itemuselist_thumbnail($row['it_id'], $row['is_content'], 60, 60); ?>
+                </dd>
+                <dd class="sit_use_option">
+                    <div><?php echo (isset($row['ct_option'])) ? "옵션 - " . $row['ct_option'] : ""; ?></div>
+                    <div class="sit_use_li_title"><?php echo $is_subject; ?></div>
+                </dd>
+            </dl>
+            
             <div id="sit_use_con_<?php echo $i; ?>" class="sit_use_con">
                 <div class="sit_use_p">
                     <?php echo $is_content; // 사용후기 내용 ?>
@@ -93,7 +110,8 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_MSHOP_SKIN_URL.'/style.css">',
 </div>
 
 <?php
-echo itemuse_page($config['cf_mobile_pages'], $page, $total_page, G5_SHOP_URL."/itemuse.php?it_id=$it_id&amp;page=", "");
+$qstr = "&amp;only_photo=" . $only_photo . "&amp;item_use_sort=" . $item_use_sort;
+echo itemuse_page($config['cf_mobile_pages'], $page, $total_page, G5_SHOP_URL."/itemuse.php?it_id=$it_id&amp;page=", $qstr);
 ?>
 
 <script>
@@ -111,8 +129,8 @@ $(function(){
         }
     });
 
-    $(".sit_use_li_title").click(function(){
-        var $con = $(this).siblings(".sit_use_con");
+    $(".sit_use_info").click(function(){
+        var $con = $("#sit_use_con_" + $(this).data("value"));
         if($con.is(":visible")) {
             $con.slideUp();
         } else {
@@ -135,6 +153,16 @@ $(function(){
         window.opener.location.href = this.href;
         self.close();
         return false;
+    });
+
+    $("#item_use_sort").on("change", function(){
+        $('#itemuse').load('<?php echo $itemuse_url . "&only_photo=" . $only_photo . "&item_use_sort="?>' + $(this).val());
+        return false;
+    });
+    $("#only_photo").on("click", function(){
+        var check = $(this).is(":checked") ? $(this).val() : "";
+        $('#itemuse').load('<?php echo $itemuse_url . "&item_use_sort=" . $item_use_sort . "&only_photo="?>' + check);
+        // return false;
     });
 });
 </script>
