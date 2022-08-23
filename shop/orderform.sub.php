@@ -26,6 +26,9 @@ if(function_exists('is_use_easypay') && is_use_easypay('global_nhnkcp')){  // íƒ
 if($is_kakaopay_use) {
     require_once(G5_SHOP_PATH.'/kakaopay/orderform.1.php');
 }
+
+// test 
+require_once(G5_SHOP_PATH.'/toss/orderform.1.php');
 ?>
 
 <form name="forderform" id="forderform" method="post" action="<?php echo $order_action_url; ?>" autocomplete="off">
