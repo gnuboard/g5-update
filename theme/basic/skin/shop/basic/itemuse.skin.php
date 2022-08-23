@@ -14,8 +14,8 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_SHOP_SKIN_URL.'/style.css">', 
     <div class="sit_use_top">
         <?php if ($star_score) { ?>
         <h4>구매고객 총평점 <span>(총 <strong><?php echo $it_use_cnt; ?></strong> 건 상품평 기준)</span></h4>
-        <strong><?php echo $it_use_avg; ?></strong>
-        <img src="<?php echo G5_SHOP_URL; ?>/img/s_star<?php echo $star_score?>.png" alt="" class="sit_star">
+        <strong style="font-size:2.0em;"><?php echo $it_use_avg; ?></strong>
+        <img src="<?php echo G5_SHOP_URL; ?>/img/s_star<?php echo $star_score?>.png" alt="" class="sit_star" style="vertical-align:unset;">
         <?php } ?>
         <div id="sit_use_wbtn">
         <?php if ($default['de_item_use_write'] == 0) { ?>
