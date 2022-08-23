@@ -7,6 +7,7 @@ $it_id = isset($_REQUEST['it_id']) ? safe_replace_regex($_REQUEST['it_id'], 'it_
 $itemuse_list = G5_SHOP_URL."/itemuselist.php";
 $itemuse_form = G5_SHOP_URL."/itemuseform.php?it_id=".$it_id;
 $itemuse_formupdate = G5_SHOP_URL."/itemuseformupdate.php?it_id=".$it_id;
+$itemuse_url = G5_SHOP_URL."/itemuse.php?it_id=" . $it_id;
 
 $sql_common = " FROM `{$g5['g5_shop_item_use_table']}`";
 $sql_where = " WHERE it_id = '{$it_id}' AND is_confirm = '1'";
@@ -52,7 +53,7 @@ $result = sql_query($sql);
 
 $itemuse_skin = G5_MSHOP_SKIN_PATH.'/itemuse.skin.php';
 
-if(!file_exists($itemuse_skin)) {
+if (!file_exists($itemuse_skin)) {
     echo str_replace(G5_PATH.'/', '', $itemuse_skin).' 스킨 파일이 존재하지 않습니다.';
 } else {
     include_once($itemuse_skin);

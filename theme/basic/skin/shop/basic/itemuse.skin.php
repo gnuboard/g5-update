@@ -3,8 +3,6 @@ if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 
 // add_stylesheet('css 구문', 출력순서); 숫자가 작을 수록 먼저 출력됨
 add_stylesheet('<link rel="stylesheet" href="'.G5_SHOP_SKIN_URL.'/style.css">', 0);
-
-$itemuse_url = G5_SHOP_URL."/itemuse.php?it_id=" . $it_id;
 ?>
 
 <script src="<?php echo G5_JS_URL; ?>/viewimageresize.js"></script>
@@ -15,8 +13,8 @@ $itemuse_url = G5_SHOP_URL."/itemuse.php?it_id=" . $it_id;
 
     <div class="sit_use_top">
         <?php if ($star_score) { ?>
-        <h4>구매고객 총평점 <span>(총 <strong><?php echo $item_use_count; ?></strong> 건 상품평 기준)</span></h4>
-        <strong><?php echo $it['it_use_avg']; ?></strong>
+        <h4>구매고객 총평점 <span>(총 <strong><?php echo $total_count; ?></strong> 건 상품평 기준)</span></h4>
+        <strong><?php echo $it_use_avg; ?></strong>
         <img src="<?php echo G5_SHOP_URL; ?>/img/s_star<?php echo $star_score?>.png" alt="" class="sit_star">
         <?php } ?>
         <div id="sit_use_wbtn">
@@ -44,8 +42,9 @@ $itemuse_url = G5_SHOP_URL."/itemuse.php?it_id=" . $it_id;
         $is_num     = $total_count - ($page - 1) * $rows - $i;
         $is_star    = get_star($row['is_score']);
         $is_name    = get_text($row['is_name']);
-        $is_subject = conv_subject($row['is_subject'],50,"…");
+        $is_subject = conv_subject($row['is_subject'], 100, "…");
         $is_content = get_view_thumbnail(conv_content($row['is_content'], 1), $thumbnail_width);
+        $is_content_summary = utf8_strcut(strip_tags($row['is_content']), 100);
         $is_reply_name = !empty($row['is_reply_name']) ? get_text($row['is_reply_name']) : '';
         $is_reply_subject = !empty($row['is_reply_subject']) ? conv_subject($row['is_reply_subject'],50,"…") : '';
         $is_reply_content = !empty($row['is_reply_content']) ? get_view_thumbnail(conv_content($row['is_reply_content'], 1), $thumbnail_width) : '';
@@ -59,13 +58,15 @@ $itemuse_url = G5_SHOP_URL."/itemuse.php?it_id=" . $it_id;
         <li class="sit_use_li">
 			<span class="sit_thum"><?php echo get_itemuselist_thumbnail($row['it_id'], $row['is_content'], 100, 100); ?></span> 
             <dl class="sit_use_dl">
-                <dt>평점<dt>
+                <dt>평점</dt>
                 <dd class="sit_use_star">
                     <img src="<?php echo G5_SHOP_URL; ?>/img/s_star<?php echo $is_star; ?>.png" alt="별<?php echo $is_star; ?>개" width="85">
                     <?php echo (isset($row['ct_option'])) ? $row['ct_option'] : ""; ?>
                 </dd>
-                <dt></dt>
-                <dd class="sit_use_tit"><?php echo $is_subject; ?></dd>
+                <dt>제목</dt>
+                <dd class="sit_use_tit" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis; width: 80%;"><?php echo $is_subject; ?></dd>
+                <dt>내용요약</dt>
+                <dd style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis; width: 80%;"><?php echo $is_content_summary; ?></dd>
                 <dt>작성자/작성일</dt>
                 <dd><?php echo $is_name; ?><span class="st_bg"></span><i class="fa fa-clock-o" aria-hidden="true"></i> <?php echo $is_time; ?></dd>
             </dl>
@@ -121,7 +122,7 @@ $(function(){
     });
 
     $(".itemuse_delete").click(function(){
-        if (confirm("정말 삭제 하시겠습니까?\n\n삭제후에는 되돌릴수 없습니다.")) {
+        if (confirm("정말 삭제 하시겠습니까?\n\n삭제 후에는 되돌릴수 없습니다.")) {
             return true;
         } else {
             return false;

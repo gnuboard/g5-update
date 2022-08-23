@@ -104,7 +104,7 @@ $(function(){
     });
 
     $(".itemuse_delete").click(function(){
-        if (confirm("정말 삭제 하시겠습니까?\n\n삭제후에는 되돌릴수 없습니다.")) {
+        if (confirm("정말 삭제 하시겠습니까?\n\n삭제 후에는 되돌릴수 없습니다.")) {
             return true;
         } else {
             return false;

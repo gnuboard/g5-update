@@ -63,14 +63,20 @@ function itemuse_page($write_pages, $cur_page, $total_page, $url, $add="")
 $itemuse_list = G5_SHOP_URL."/itemuselist.php";
 $itemuse_form = G5_SHOP_URL."/itemuseform.php?it_id=".$it_id;
 $itemuse_formupdate = G5_SHOP_URL."/itemuseformupdate.php?it_id=".$it_id;
+$itemuse_url = G5_SHOP_URL."/itemuse.php?it_id=" . $it_id;
 
 $sql_common = " FROM `{$g5['g5_shop_item_use_table']}`";
 $sql_where = " WHERE it_id = '{$it_id}' AND is_confirm = '1'";
 $sql_order = "";
 
+// 평점
+$it_use = sql_fetch("SELECT it_use_cnt, it_use_avg from {$g5['g5_shop_item_table']} WHERE it_id = '{$it_id}'");
+$it_use_avg = $it_use['it_use_avg'];
+$star_score = get_star($it_use_avg);
+
 // 검색조건
 if ($_REQUEST['only_photo'] == "1") {
-    $sql_where .= " AND is_content LIKE '%<img %'"; // 더 나은 검색조건?
+    $sql_where .= " AND is_content LIKE '%<img %'"; // 더 확실한 이미지검색조건이 있는지 확인 필요함.
 }
 
 //정렬 조건
@@ -108,7 +114,7 @@ $result = sql_query($sql);
 
 $itemuse_skin = G5_SHOP_SKIN_PATH.'/itemuse.skin.php';
 
-if(!file_exists($itemuse_skin)) {
+if (!file_exists($itemuse_skin)) {
     echo str_replace(G5_PATH.'/', '', $itemuse_skin).' 스킨 파일이 존재하지 않습니다.';
 } else {
     include_once($itemuse_skin);
