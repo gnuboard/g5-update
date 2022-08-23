@@ -702,6 +702,9 @@ background:url('img/select_arrow.png') no-repeat 96% 50%/* 화살표 아이콘 �
 .sit_use_top .sit_star {height:20px}
 .sit_use_top .st_bg {background:#666}
 
+.sit_use_search {margin:5px 0px; display:flex; justify-content: space-between;}
+.sit_use_search .item_use_sort {width: 150px; height: 30px; border: 1px solid #d0d3db; border-radius: 2px;}
+
 #sit_use_wbtn {position:absolute;top:20px;right:30px}
 #sit_use_wbtn a {padding:0 20px;line-height:45px;font-weight:bold;font-size:1.167em}
 

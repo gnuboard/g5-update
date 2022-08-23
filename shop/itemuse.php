@@ -41,6 +41,7 @@ if (!$row) {
 // 평점
 $it_use = sql_fetch("SELECT it_use_cnt, it_use_avg from {$g5['g5_shop_item_table']} WHERE it_id = '{$it_id}'");
 $it_use_avg = $it_use['it_use_avg'];
+$it_use_cnt = $it_use['it_use_cnt'];
 $star_score = get_star($it_use_avg);
 
 // 검색조건 (사진 후기만 표시)

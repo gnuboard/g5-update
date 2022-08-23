@@ -13,7 +13,7 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_SHOP_SKIN_URL.'/style.css">', 
 
     <div class="sit_use_top">
         <?php if ($star_score) { ?>
-        <h4>구매고객 총평점 <span>(총 <strong><?php echo $total_count; ?></strong> 건 상품평 기준)</span></h4>
+        <h4>구매고객 총평점 <span>(총 <strong><?php echo $it_use_cnt; ?></strong> 건 상품평 기준)</span></h4>
         <strong><?php echo $it_use_avg; ?></strong>
         <img src="<?php echo G5_SHOP_URL; ?>/img/s_star<?php echo $star_score?>.png" alt="" class="sit_star">
         <?php } ?>
@@ -24,14 +24,21 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_SHOP_SKIN_URL.'/style.css">', 
             <a href="<?php echo $itemuse_list; ?>" class="btn01 itemuse_list">더보기</a>
         </div>
     </div>
-    <div>
-        <select id="item_use_sort" name="item_use_sort">
-            <option value="new" <?php echo ($item_use_sort == "new" ? "selected" : ""); ?>>최신순</option>
-            <option value="is_score_asc" <?php echo ($item_use_sort == "is_score_asc" ? "selected" : ""); ?>>평점 낮은순</option>
-            <option value="is_score_desc" <?php echo ($item_use_sort == "is_score_desc" ? "selected" : ""); ?>>평점 높은순</option>
-        </select>
-        <input type="checkbox" id="only_photo" name="only_photo" value="1" <?php echo ($only_photo == "1" ? "checked" : "")?>>
-        <label for="r">사진 후기만 표시</label>
+    <div class="sit_use_search">
+        <div class="chk_box">
+            <input type="checkbox" class="item_use_photo" id="only_photo" value="1" <?php echo ($only_photo == "1" ? "checked" : "")?>>
+            <label for="only_photo">
+                <span></span>
+                사진 후기만 표시
+            </label>
+        </div>
+        <div>
+            <select class="item_use_sort" id="item_use_sort">
+                <option value="new" <?php echo ($item_use_sort == "new" ? "selected" : ""); ?>>최신순</option>
+                <option value="is_score_asc" <?php echo ($item_use_sort == "is_score_asc" ? "selected" : ""); ?>>평점 낮은순</option>
+                <option value="is_score_desc" <?php echo ($item_use_sort == "is_score_desc" ? "selected" : ""); ?>>평점 높은순</option>
+            </select>
+        </div>
     </div>
     
     <?php
