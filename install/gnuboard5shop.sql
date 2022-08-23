@@ -574,6 +574,10 @@ CREATE TABLE IF NOT EXISTS `g5_shop_item_use` (
   `is_time` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `is_ip` varchar(25) NOT NULL DEFAULT '',
   `is_confirm` tinyint(4) NOT NULL DEFAULT '0',
+  `is_reply_subject` varchar(255) NOT NULL DEFAULT '',
+  `is_reply_content` text NOT NULL,
+  `is_reply_name` varchar(25) NOT NULL DEFAULT '',
+  `ct_id` int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (`is_id`),
   KEY `index1` (`it_id`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8;

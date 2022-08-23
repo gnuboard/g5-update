@@ -205,6 +205,29 @@ if (defined('G5_USE_SHOP') && G5_USE_SHOP) {
             break;
         }
     }
+
+
+    $sql = "SHOW COLUMNS FROM `{$g5['g5_shop_item_use_table']}` LIKE 'is_reply_subject'";
+    $row = sql_fetch($sql);
+    if (!$row) {
+        sql_query(" ALTER TABLE `{$g5['g5_shop_item_use_table']}`
+                ADD COLUMN `is_reply_subject` VARCHAR(255) NOT NULL DEFAULT '' AFTER `is_confirm`,
+                ADD COLUMN `is_reply_content` TEXT NOT NULL AFTER `is_reply_subject`,
+                ADD COLUMN `is_reply_name` VARCHAR(25) NOT NULL DEFAULT '' AFTER `is_reply_content`
+                ", true);
+
+        $is_check = true;
+    }
+
+    $sql = "SHOW COLUMNS FROM `{$g5['g5_shop_item_use_table']}` LIKE 'ct_id'";
+    $row = sql_fetch($sql);
+    if (!$row) {
+        sql_query(" ALTER TABLE `{$g5['g5_shop_item_use_table']}`
+                ADD COLUMN `ct_id` int(11) NOT NULL DEFAULT 0
+                ", true);
+
+        $is_check = true;
+    }
 }
 
 $is_check = run_replace('admin_dbupgrade', $is_check);

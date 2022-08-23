@@ -30,6 +30,12 @@ $sql_common = " FROM `{$g5['g5_shop_item_use_table']}`";
 $sql_where = " WHERE it_id = '{$it_id}' AND is_confirm = '1'";
 $sql_order = "";
 
+// 컬럼체크
+$row = sql_fetch("SHOW COLUMNS FROM `{$g5['g5_shop_item_use_table']}` LIKE 'ct_id'");
+if (!$row) {
+    sql_query("ALTER TABLE `{$g5['g5_shop_item_use_table']}` ADD COLUMN `ct_id` int(11) NOT NULL DEFAULT 0", true);
+}
+
 // 평점
 $it_use = sql_fetch("SELECT it_use_cnt, it_use_avg from {$g5['g5_shop_item_table']} WHERE it_id = '{$it_id}'");
 $it_use_avg = $it_use['it_use_avg'];
@@ -37,7 +43,7 @@ $star_score = get_star($it_use_avg);
 
 // 검색조건
 if ($_REQUEST['only_photo'] == "1") {
-    $sql_where .= " AND is_content LIKE '%<img %'"; // 더 확실한 이미지검색조건이 있는지 확인 필요함.
+    $sql_where .= " AND is_content LIKE '%<img %'";
 }
 
 //정렬 조건

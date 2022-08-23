@@ -26,6 +26,12 @@ if (!isset($is['is_reply_subject'])) {
                 ", true);
 }
 
+// 사용후기 의 답변 필드 추가
+if (!isset($is['ct_id'])) {
+    sql_query("ALTER TABLE `{$g5['g5_shop_item_use_table']}` ADD COLUMN `ct_id` int(11) NOT NULL DEFAULT 0", true);
+}
+
+
 $name = get_sideview($is['mb_id'], get_text($is['is_name']), $is['mb_email'], $is['mb_homepage']);
 
 // 확인
