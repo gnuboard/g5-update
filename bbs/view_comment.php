@@ -44,7 +44,6 @@ for ($i=0; $row=sql_fetch_array($result); $i++)
         $is_admin ||
         ($write['mb_id']===$member['mb_id'] && $member['mb_id']) ||
         ($row['mb_id']===$member['mb_id'] && $member['mb_id'])) {
-        $list[$i]['content1'] = $row['wr_content'];
         $list[$i]['content'] = conv_content($row['wr_content'], 0, 'wr_content');
         $list[$i]['content'] = search_font($stx, $list[$i]['content']);
     } else {
@@ -130,6 +129,12 @@ include_once($board_skin_path.'/view_comment.skin.php');
 if (!$member['mb_id']) // 비회원일 경우에만
     echo '<script src="'.G5_JS_URL.'/md5.js"></script>'."\n";
 
+function convert_ampsend($content)
+{
+    return str_replace(array('&amp;lt;','&amp;gt'),array('&lt;','&gt;'), $content);
+    //return str_replace(array('<script>', '</script>'), array('', ''), $content);
+}
+
 function html_entities_decode_tag($content)
 {
     $tags = array(
@@ -142,6 +147,7 @@ function html_entities_decode_tag($content)
         "&lt;span&gt;" => '<span>',
         "&lt;/span&gt;" => '</span>',
         "&nbsp;" => ' ',
+        "amp;amp;" => '&',
         "&quot;" => '"'
     );
 
@@ -166,12 +172,17 @@ function comment_image_url_parser($content)
     );
 }
 
+/**
+ * 이미지 태그 생성
+ * @param array $content
+ * @return string|void
+ */
 function generator_image_tag($content)
 {
     if (isset($content[1]) && !empty($content[1])) {
-        return "<img src=$content[1]  alt=''>";
+        $url = run_replace('replace_url', $content[1]);
+        return "<img src=$url  alt=''>";
     }
 }
-
 
 @include_once($board_skin_path.'/view_comment.tail.skin.php');

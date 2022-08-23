@@ -21,7 +21,7 @@ $wr_name  = isset($_POST['wr_name']) ? clean_xss_tags(trim($_POST['wr_name'])) :
 $wr_secret = isset($_POST['wr_secret']) ? clean_xss_tags($_POST['wr_secret']) : '';
 $wr_email = $wr_subject = '';
 $reply_array = array();
-
+$wr_content = isset($_POST['wr_content']) ? change_img_tag_comment_file(stripcslashes($wr_content)) : '';
 $wr_1 = isset($_POST['wr_1']) ? $_POST['wr_1'] : '';
 $wr_2 = isset($_POST['wr_2']) ? $_POST['wr_2'] : '';
 $wr_3 = isset($_POST['wr_3']) ? $_POST['wr_3'] : '';
@@ -202,7 +202,7 @@ if ($w == 'c') // 댓글 입력
     preg_match_all('/\[(.*?.)]/', $wr_content, $comment_file_info);
     if (count($comment_file_info[1]) > 0) {
         foreach ($comment_file_info[1] as $value) {
-            if (strpos($value, G5_DATA_DIR . '/file/comment') === false) {
+            if (strpos($value, G5_DATA_DIR . '/comment') !== false) {
                 $file_name = basename($value);
                 update_fileinfo($bo_table, $wr_content, $comment_id, $file_name);
             }
@@ -382,7 +382,7 @@ goto_url($redirect_url);
 function update_fileinfo($bo_table, $comment, $comment_id, $file_name)
 {
     if (function_exists('mysqli_connect')) {
-        $write_file_info_sql = 'UPDATE ' . G5_TABLE_PREFIX . 'comment_file SET comment_id = ?, bo_table = ? WHERE comment_id != null AND file_name = ? ';
+        $write_file_info_sql = 'UPDATE ' . G5_TABLE_PREFIX . 'comment_file SET comment_id = ?, bo_table = ? WHERE comment_id IS null AND file_name = ? ';
         /**
          * @var $stmt mysqli_stmt
          */

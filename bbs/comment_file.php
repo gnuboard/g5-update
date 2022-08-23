@@ -11,6 +11,7 @@ define('COMMENT_FILE_SiZE', 1000000);
 
 // 인증 토큰체크
 $comment_token = trim(get_session('ss_comment_token'));
+$mb_id = get_session('ss_mb_id');
 if (empty($_POST['token']) || empty($comment_token) || $comment_token != $_POST['token']) {
     echo json_encode('올바른 방법으로 이용해 주십시오.');
     exit;
@@ -42,7 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($w === 'd') { //삭제
         if (isset($file_url, $comment_id)) {
-            $select_sql = "select * from " . G5_TABLE_PREFIX . 'comment_file where comment_id=' . $comment_id;
+            $select_sql = "select * from " . G5_TABLE_PREFIX . 'comment_file where comment_id=' . sql_real_escape_string(
+                    $comment_id
+                );
             $row = sql_fetch($select_sql);
             if (isset($row['file_name']) && strpos(basename($file_url), $row['file_name']) !== false) {
                 str_replace(G5_DATA_URL, G5_DATA_PATH, $file_url);
@@ -57,6 +60,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         echo json_encode($response);
         exit;
+    }
+
+    if ($w === 'r') { //파일 목록
+        if (!isset($comment_id) && empty($comment_id)) {
+            $msg = '댓글 id가 없습니다.';
+            echo json_encode($msg);
+        }
+
+        if (function_exists('mysqli_num_rows') && version_compare(PHP_VERSION, '5.3.0') >= 0) { //바인딩 쿼리
+            $link = $GLOBALS['g5']['connect_db'];
+
+            $select_sql = "select file_name, file_source_name, file_dir, comment_id, mb_id, save_time, wr_option
+            from " . G5_TABLE_PREFIX . "comment_file as comment_file inner join " . G5_TABLE_PREFIX . 'write_free as board  on comment_file.comment_id = board.wr_id 
+            where comment_id = ?';
+
+            /**
+             * @var $stmt mysqli_stmt
+             */
+            $stmt = $link->prepare($select_sql);
+
+            $stmt->bind_param('i', $comment_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+        } else {
+            $select_sql = "select file_name, file_source_name, file_dir, comment_id, mb_id, save_time, wr_option
+            from " . G5_TABLE_PREFIX . "comment_file as comment_file inner join " . G5_TABLE_PREFIX . 'write_free as board  on comment_file.comment_id = board.wr_id 
+            where comment_id =' . sql_real_escape_string($comment_id);
+            $result = sql_query($select_sql);
+        }
+
+        if (sql_num_rows($result) < 1) {
+            echo json_encode($response['files'][0]);
+            exit;
+        }
+
+        $response = array();
+
+        while ($row = sql_fetch_array($result)) {
+            $comment_file_url = G5_DATA_URL . '/' . 'comment' . '/' . $row['file_dir'];
+            $end_point_url = run_replace('replace_url', $comment_file_url);
+            $pathinfo = pathinfo($row['file_name']);
+
+            if ($row['wr_option'] === 'secret') {
+                $ss_name = 'ss_secret_comment_' . $bo_table;
+                if (!get_session($ss_name)) {
+                    $response['files'] = array();
+                    echo json_encode($response['files']);
+                    exit;
+                }
+            }
+
+            $save_fileinfo = array(
+                'original_name' => $row['file_source_name'],
+                'save_name' => $row['file_name'],
+                'file_type' => $pathinfo['extension'],
+                'end_point' => $end_point_url
+            );
+            $response['files'][] = $save_fileinfo;
+
+        }
+        echo json_encode($response, true);
     }
 }
 
