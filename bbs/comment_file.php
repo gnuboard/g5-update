@@ -37,46 +37,7 @@ if (!is_dir(COMMENT_FILE_PATH)) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!isset($w)) {
-        echo json_encode('설정 파라미터 w 값이 없습니다');
-        exit;
-    }
-    if ($w === 'u') { //upload
-        $file_count = count($_FILES['comment_file']['name']);
-        for ($i = 0; $i < $file_count; $i++) {
-            if ($_FILES['comment_file']['size'][$i] > COMMENT_FILE_SiZE) {
-                continue;
-            }
-        }
-        $upload_result = comment_uploader($_FILES['comment_file']);
-        run_event('upload_file', $upload_result);
-
-        echo json_encode($upload_result);
-        exit;
-    }
-
-    if ($w === 'd') { //삭제
-        if (isset($file_url, $comment_id)) {
-            $select_sql = "select * from " . G5_TABLE_PREFIX . 'comment_file where comment_id=' . sql_real_escape_string(
-                    $comment_id
-                );
-            $row = sql_fetch($select_sql);
-            if (isset($row['file_name']) && strpos(basename($file_url), $row['file_name']) !== false) {
-                str_replace(G5_DATA_URL, G5_DATA_PATH, $file_url);
-                $result = unlink($file_url);
-            }
-        }
-        $response = array();
-        if (isset($result) && $result) {
-            $response['is_success'] = true;
-        } else {
-            $response['is_success'] = false;
-        }
-        echo json_encode($response);
-        exit;
-    }
-
-    if ($w === 'r') { //파일 목록
+    if ($w === 'r') {
         if (!isset($comment_id) && empty($comment_id)) {
             $msg = '댓글 id가 없습니다.';
             echo json_encode($msg);
@@ -129,13 +90,102 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'original_name' => $row['file_source_name'],
                 'save_name' => $row['file_name'],
                 'file_type' => $pathinfo['extension'],
+                'comment_id' => $row['comment_id'],
                 'end_point' => $end_point_url
             );
             $response['files'][] = $save_fileinfo;
 
         }
         echo json_encode($response, true);
+        exit;
     }
+
+    if ($w === 'u') {//upload
+
+        $delay_seconds = 2;
+        if (isset($_SESSION['ss_datetime'])) {
+            if (($_SESSION['ss_datetime'] >= (G5_SERVER_TIME - $delay_seconds))) {
+                $response = array(
+                    'is_error' => true,
+                    'msg' => '너무 빠른 시간내에 연속해서 올릴 수 없습니다.'
+                );
+                echo json_encode($response);
+                exit;
+            }
+        }
+
+        $file_count = count($_FILES['comment_file']['name']);
+        for ($i = 0; $i < $file_count; $i++) {
+            if ($_FILES['comment_file']['size'][$i] > COMMENT_FILE_SiZE) {
+                continue;
+            }
+        }
+        $upload_result = comment_uploader($_FILES['comment_file']);
+        run_event('upload_file', $upload_result);
+
+        set_session("ss_datetime", G5_SERVER_TIME);
+
+        echo json_encode($upload_result);
+        exit;
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+    if (isset($file_name, $bo_table)) {
+        $comment_id = !empty(stripcslashes($comment_id)) ? stripcslashes($comment_id) : null;
+        $select_sql = 'select * from ' . G5_TABLE_PREFIX . 'comment_file as comment_file inner join ' . G5_TABLE_PREFIX . 'write_' . sql_real_escape_string(
+                $bo_table
+            ) .
+            ' as board on comment_file.comment_id = board.wr_id where comment_id = ' . sql_real_escape_string(
+                $comment_id
+            ) . ' and bo_table = "' . sql_real_escape_string(
+                $bo_table
+            ) . '" and comment_file.file_name = "' . sql_real_escape_string($file_name) . '"';
+
+        $row = sql_fetch($select_sql);
+
+        //인증
+        $is_auth = false;
+        if ($is_admin != 'super') {
+            $is_auth = true;
+        }
+
+        if (!empty($row['wr_password'])) { //익명 유저게시판 쓰는 경우
+            if (check_password($wr_password, $row['wr_password'])) {
+                $is_auth = true;
+            }
+        } elseif (get_session('ss_mb_id') === $row['mb_id']) { //가입된 유저
+            $is_auth = true;
+        }
+
+        if ($is_auth === false) {
+            $response = array(
+                'is_error' => true,
+                'msg' => '잘못된 요청입니다.'
+            );
+            echo json_encode($response);
+            exit;
+        }
+        //인증 끝
+
+        if (isset($row['file_name']) && ($row['file_name'] === $file_name)) {
+            str_replace(G5_DATA_URL, G5_DATA_PATH, $file_url);
+            $delete_sql = 'delete from' . G5_TABLE_PREFIX . 'comment_file where comment_id=' . sql_real_escape_string(
+                    $comment_id
+                ) . 'and bo_table = ' . sql_real_escape_string($bo_table);
+            $get_date = date($row['save_time']);
+            $file_path = COMMENT_FILE_PATH . '/' . $get_date('ym') . '/' . $file_name;
+            $result = unlink($file_path);
+        }
+    }
+    $response = array();
+    if (isset($result) && $result) {
+        $response['is_success'] = true;
+    } else {
+        $response['is_success'] = false;
+    }
+    echo json_encode($response);
+    exit;
 }
 
 function comment_uploader($file)
