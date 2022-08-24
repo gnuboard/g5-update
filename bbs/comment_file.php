@@ -9,10 +9,24 @@ define('COMMENT_FIlE_DIR', 'comment');
 define('COMMENT_FILE_PATH', G5_DATA_PATH . '/' . 'comment');
 define('COMMENT_FILE_SiZE', 1000000);
 
-// 인증 토큰체크
+//입력
+$input_data = json_decode(file_get_contents('php://input'), true);
+if (!empty($input_data)) {
+    $token = isset($input_data['token']) ? $input_data['token'] : '';
+    $bo_table = isset($input_data['bo_table']) ? $input_data['bo_table'] : '';
+    $comment_id = isset($input_data['comment_id']) ? $input_data['comment_id'] : '';
+    $file_name = isset($input_data['file_name']) ? $input_data['file_name'] : '';
+    $wr_password = isset($input_data['wr_password']) ? $input_data['wr_password'] : '';
+    $w = isset($input_data['w']) ? $input_data['w'] : ''; //파일 작업 모드
+} else {
+    $token = isset($_POST['token']) ? $_POST['token'] : '';
+}
+
+// 세션 인증 토큰
 $comment_token = trim(get_session('ss_comment_token'));
 $mb_id = get_session('ss_mb_id');
-if (empty($_POST['token']) || empty($comment_token) || $comment_token != $_POST['token']) {
+
+if (empty($token) || empty($comment_token) || $comment_token != $token) {
     echo json_encode('올바른 방법으로 이용해 주십시오.');
     exit;
 }
