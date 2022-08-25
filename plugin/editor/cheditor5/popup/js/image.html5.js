@@ -1362,6 +1362,11 @@ DoUpload.prototype = {
                             if (debug) {
                                 console.log('Uploaded');
                             }
+                            /**
+                             * 업로드 이미지 HTML 추가
+                             * @since 22.08.25
+                             */
+                            parent.document.getElementById(oEditor.inputForm).insertAdjacentHTML('afterend', '<input type="hidden" name="addImage[]" value="'+jsonData.fileUrl+'">');
                         };
                         img = new Image();
                         img.onload = onLoadHandler;
