@@ -175,6 +175,9 @@ jQuery(function ($) {
                         .append($('<span/>').text(size_text))
                         .find("img.pre_thumb").attr({ "src": file.url, "width": ret['width'], "height": ret['height'] })
                         .end().find(".delete_img").attr({ "data-delete": file.name, "data-url": file.url });
+
+                    opener.nhn.husky.PopUpManager.setCallback(window, 'ADD_IMAGE_INPUT', [file.url]);
+
                 } else if (file.error) {
                     var error = $('<span class="text-danger"/>').text(file.error);
                     $(data.context.children()[index])

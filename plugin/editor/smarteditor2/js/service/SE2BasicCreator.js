@@ -108,6 +108,10 @@ function createSEditor2(elIRField, htParams, elSeAppContainer){
 	if(nhn.husky.SE2M_AttachQuickPhoto){
 		oEditor.registerPlugin(new nhn.husky.SE2M_AttachQuickPhoto(elAppContainer));			// 사진			
 	}
+	if(nhn.husky.SE2M_AddImageToForm){
+		oEditor.registerPlugin(new nhn.husky.SE2M_AddImageToForm(elAppContainer));
+	}
+
 
 	oEditor.registerPlugin(new nhn.husky.MessageManager(oMessageMap, htParams.I18N_LOCALE));
 	oEditor.registerPlugin(new nhn.husky.SE2M_QuickEditor_Common(elAppContainer));			// 퀵에디터 공통(표, 이미지)

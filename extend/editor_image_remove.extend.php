@@ -2,7 +2,7 @@
 if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 
 $before_content = "";
-$edtor_debug = true;
+$edtor_debug = false;
 
 add_event('write_update_before', 'set_before_write_content', 1, 3);
 add_event('write_update_after', 'remove_editor_upload_image', 1);
@@ -60,9 +60,8 @@ function remove_editor_upload_image()
         foreach ($addImage as $image) {
             $tmp = explode("/", $image);
             $filename = trim(end($tmp));
-
             if (!strstr($wr_content, $filename)) {
-                delete_editor_image_file($filename);
+                delete_editor_image_file($image);
             }
         }
     }
@@ -125,6 +124,10 @@ function get_image_from_text($content)
 function delete_editor_image_file($image_url)
 {
     global $edtor_debug;
+
+    if ($edtor_debug) {
+        echo "삭제예정파일 : " . $image_url . "<br>";
+    }
 
     $image_path = str_replace(G5_URL, G5_PATH, $image_url);
 
