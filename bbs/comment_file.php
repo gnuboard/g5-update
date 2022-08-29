@@ -14,10 +14,11 @@ $input_data = json_decode(file_get_contents('php://input'), true);
 if (!empty($input_data)) {
     $token = isset($input_data['token']) ? $input_data['token'] : '';
     $bo_table = isset($input_data['bo_table']) ? $input_data['bo_table'] : '';
-    $comment_id = isset($input_data['comment_id']) ? $input_data['comment_id'] : '';
+    $comment_id = isset($input_data['comment_id']) ? $input_data['comment_id'] : null;
     $file_name = isset($input_data['file_name']) ? $input_data['file_name'] : '';
     $wr_password = isset($input_data['wr_password']) ? $input_data['wr_password'] : '';
     $w = isset($input_data['w']) ? $input_data['w'] : ''; //파일 작업 모드
+    $wr_id = isset($input_data['wr_id']) ? $input_data['wr_id'] : '';
 } else {
     $token = isset($_POST['token']) ? $_POST['token'] : '';
 }
@@ -232,25 +233,26 @@ function comment_uploader($file)
 
 /**
  * 코맨트 DB에 파일정보기록
- * @param string $file_name
- * @param string $save_name
+ * @param string $file_original_name
+ * @param string $file_save_name
  * @return void
  */
-function write_file_name_comment_db($file_name, $save_name)
+function write_file_name_comment_db($file_original_name, $file_save_name)
 {
-    if (function_exists('mysqli_connect')) {
-        $write_file_info_sql = 'INSERT INTO ' . G5_TABLE_PREFIX . 'comment_file  set file_source_name = ?, file_name = ?';
+    if (G5_MYSQLI_USE && function_exists('mysqli_connect')) {
+        $write_file_info_sql = 'INSERT INTO ' . G5_TABLE_PREFIX . 'comment_file  set file_source_name = ?, file_name = ?, save_time = ?';
         /**
          * @var $stmt mysqli_stmt
          */
         $stmt = $GLOBALS['connect_db']->prepare($write_file_info_sql);
-        $stmt->bind_param('ss', $file_name, $save_name);
+        $time = G5_TIME_YMDHIS;
+        $stmt->bind_param('sss', $file_original_name, $file_save_name, $time);
         $stmt->execute();
     } else {
-        $write_file_info_sql = 'INSERT INTO ' . G5_TABLE_PREFIX . 'comment_file  set file_source_name = ' . sql_real_escape_string(
-                $file_name
+        $write_file_info_sql = 'INSERT INTO ' . G5_TABLE_PREFIX . 'comment_file  set file_source_name = "' . sql_real_escape_string(
+                $file_original_name
             ) .
-            ', file_name = ' . sql_real_escape_string($save_name);
+            '", file_name =  "' . sql_real_escape_string($file_save_name) . '" , save_time = "' . G5_TIME_YMDHIS . '"';
         sql_query($write_file_info_sql);
     }
 }
