@@ -38,21 +38,32 @@ if (!is_dir(COMMENT_FILE_PATH)) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!isset($w)) {
-        echo json_encode('설정 파라미터 w 값이 없습니다');
-        exit;
-    }
-    if ($w === 'u') { //upload
-        $file_count = count($_FILES['comment_file']['name']);
-        for ($i = 0; $i < $file_count; $i++) {
-            if ($_FILES['comment_file']['size'][$i] > COMMENT_FILE_SiZE) {
-                continue;
+    if ($w == 'a') {
+        if(empty($bo_table)){
+            echo json_encode(array());
+            exit;
+        }
+        $select_all_sql = 'select wr_id, file_id, file_source_name as original_name, file_name, file_download_count, comment_id, save_time, wr_option, wr_password from '. G5_TABLE_PREFIX . 'write_' . sql_real_escape_string($bo_table). ' as board inner join ' . G5_TABLE_PREFIX . 'comment_file as comment_file ' .
+        ' on  board.wr_id = comment_file.comment_id where wr_parent = ' . sql_real_escape_string($wr_id). ' order by wr_id' ;
+
+        $result = sql_query($select_all_sql);
+        $response_row = array();
+
+        if($result){
+            while($row = sql_fetch_array($result)){
+                if ($row['wr_option'] === 'secret') {
+                    $ss_name = 'ss_secret_comment_' . $bo_table;
+                    if (!get_session($ss_name)) {
+                        continue;
+                    }
+                }
+                unset($row['wr_password']);
+                unset($row['wr_option']);
+                $response_row[$row['comment_id']]['files'][] = $row;
             }
         }
-        $upload_result = comment_uploader($_FILES['comment_file']);
-        run_event('upload_file', $upload_result);
-
-        echo json_encode($upload_result);
+        $response = $response_row;
+        echo json_encode($response);
         exit;
 
     }
