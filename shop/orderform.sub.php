@@ -1,6 +1,9 @@
 <?php
 if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 
+// tosspayments 테스트용 
+$default['de_pg_service'] = 'toss';
+
 require_once(G5_SHOP_PATH.'/settle_'.$default['de_pg_service'].'.inc.php');
 require_once(G5_SHOP_PATH.'/settle_kakaopay.inc.php');
 
@@ -26,9 +29,6 @@ if(function_exists('is_use_easypay') && is_use_easypay('global_nhnkcp')){  // �
 if($is_kakaopay_use) {
     require_once(G5_SHOP_PATH.'/kakaopay/orderform.1.php');
 }
-
-// test 
-require_once(G5_SHOP_PATH.'/toss/orderform.1.php');
 ?>
 
 <form name="forderform" id="forderform" method="post" action="<?php echo $order_action_url; ?>" autocomplete="off">
@@ -1457,6 +1457,42 @@ function forderform_check(f)
                 f.pay_method.value   = "무통장";
                 break;
         }
+        <?php } else if($default['de_pg_service'] == 'toss') { ?>
+
+        switch(settle_method)
+        {
+            case "신용카드":
+                f.settle_method.value = "CARD";
+                break;
+            case "가상계좌":
+                f.settle_method.value = "VIRTUAL_ACCOUNT";
+                break;
+            case "휴대폰":
+                f.settle_method.value = "MOBILE_PHONE";
+                break;
+            case "계좌이체":
+                f.settle_method.value = "TRANSFER";
+                break;
+            case "간편결제":
+                f.settle_method.value = "CARD";
+                tossPayments.CARD.flowMode = "DIRECT";
+                tossPayments.CARD.easyPay = "PAYCO";
+                /*
+                easyPay 설정 필요
+                토스페이	TOSSPAY
+                네이버페이	NAVERPAY
+                삼성페이	SAMSUNGPAY
+                엘페이	LPAY
+                카카오페이	KAKAOPAY
+                페이코	PAYCO
+                LG페이	LGPAY
+                SSG페이	SSG
+                */
+                break;
+            default:
+                f.settle_method.value = "무통장";
+                break;
+        }
         <?php } else if($default['de_pg_service'] == 'lg') { ?>
         f.LGD_EASYPAY_ONLY.value = "";
         if(typeof f.LGD_CUSTOM_USABLEPAY === "undefined") {
@@ -1548,6 +1584,30 @@ function forderform_check(f)
             f.submit();
         }
         <?php } ?>
+
+        <?php if ($default['de_pg_service'] == 'toss') { ?>
+        // tossParameter 결제정보 추가
+        tossParameter.order.amount = tot_price;
+        tossParameter.order.orderId = '<?php echo $s_cart_id; ?>';
+        tossParameter.order.orderName = '<?php echo $goods; ?>';
+        tossParameter.order.customerName = f.od_name.value;
+        tossParameter.order.customerEmail = f.od_email.value;
+
+        /**
+         * @since 22.08.29
+         * @todo 빈 값의 경우 객체에서 제거하는 방법으로 진행
+         */
+        var tosspay_info = {}; 
+        Object.assign(tosspay_info, tossParameter.common, tossParameter.order, tossParameter[f.settle_method.value]);
+        console.log(tosspay_info)
+
+        if(f.settle_method.value != "무통장") {
+            tossPayments.requestPayment(f.settle_method.value, tosspay_info);
+        } else {
+            f.submit();
+        }
+        <?php } ?>
+
         <?php if($default['de_pg_service'] == 'lg') { ?>
         f.LGD_BUYER.value = f.od_name.value;
         f.LGD_BUYEREMAIL.value = f.od_email.value;
