@@ -63,7 +63,7 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
              * @var string
              * @see https://docs.tosspayments.com/reference/codes#%EC%B9%B4%EB%93%9C%EC%82%AC-%EC%BD%94%EB%93%9C
              */
-            cardCompany : '',
+            // cardCompany : '',
 
             /**
              * 할부 개월 수를 고정해 결제창을 열 때 사용합니다. 결제 금액(amount)이 5만원 이상일 때만 사용할 수 있습니다.
@@ -81,7 +81,7 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
              * 
              * @var int
              */
-            maxCardInstallmentPlan : 0,
+            // maxCardInstallmentPlan : 0,
 
             /**
              * 무이자 할부를 적용할 카드사 및 할부 개월 정보입니다. 이 파라미터에 포함된 정보와 고객이 선택한 카드사 및 할부 개월이 매칭되면 무이자 할부가 적용됩니다.
@@ -93,9 +93,9 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
              * months 필수 array
              * - 무이자를 적용할 할부 개월 정보입니다. 할부 개월을 배열에 추가해주세요.
              */
-            freeInstallmentPlans : [
-                {company : '', months : []}
-            ],
+            // freeInstallmentPlans : [
+            //     {company : '', months : []}
+            // ],
 
             /**
              * 카드사 포인트를 사용했는지 여부입니다. 값을 주지 않으면 사용자가 카드사 포인트 사용 여부를 결정할 수 있습니다.
@@ -126,7 +126,7 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
              * 
              * @var string
              */
-            flowMode : 'DEFAULT',
+            // flowMode : 'DEFAULT',
 
             /**
              * 간편결제 결제 수단 타입입니다. flowMode 값이 DIRECT여야 합니다. 간편결제 서비스 중 하나의 값이 들어올 수 있습니다.
@@ -134,7 +134,7 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
              * @var string
              * @see https://docs.tosspayments.com/reference/enum-codes#%EA%B0%84%ED%8E%B8%EA%B2%B0%EC%A0%9C-%EC%84%9C%EB%B9%84%EC%8A%A4
              */
-            easyPay : '',
+            // easyPay : '',
 
             /**
              * 카드사의 할인 코드입니다. flowMode 값이 DIRECT여야 합니다. 카드 혜택 조회 API를 통해 적용할 수 있는 할인 코드의 목록을 조회할 수 있습니다.
@@ -142,7 +142,7 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
              * @var string
              * @see https://docs.tosspayments.com/reference#%EC%B9%B4%EB%93%9C-%ED%98%9C%ED%83%9D-%EC%A1%B0%ED%9A%8C
              */
-            discountCode : '',
+            // discountCode : '',
 
             /**
              * 모바일 ISP 앱에서 상점 앱으로 돌아오기 위해 사용됩니다. 상점의 앱 스킴을 지정하면 됩니다. 예를 들면 testapp://같은 형태입니다.
@@ -158,7 +158,8 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
              * @var object
              */
             cashReceipt : {
-                type : "미발행"     // 현금영수증 발급 용도입니다. 소득공제, 지출증빙, 미발행 중 하나입니다. 소득공제, 지출증빙 중 하나의 값을 넣으면 해당 용도가 선택된 상태로 결제창이 열립니다. 미발행을 넣으면 결제창에서 현금영수증 발급 용도를 선택할 수 없습니다.
+                // 현금영수증 발급 용도입니다. 소득공제, 지출증빙, 미발행 중 하나입니다. 소득공제, 지출증빙 중 하나의 값을 넣으면 해당 용도가 선택된 상태로 결제창이 열립니다. 미발행을 넣으면 결제창에서 현금영수증 발급 용도를 선택할 수 없습니다.
+                type : "<?php echo (($default['de_taxsave_use'] && strstr($default['de_taxsave_types'], 'transfer'))? '소득공제' : '미발행') ?>"
             },
 
             /**
@@ -166,7 +167,7 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
              *
              * @var boolean
              */
-            useEscrow : false,
+            useEscrow : <?php echo $default['de_escrow_use'] ? 'true' : 'false' ?>,
 
             /**
              * 각 상품에 대한 상세 정보를 담는 배열입니다.
@@ -174,13 +175,13 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
              * 
              * @var object
              */
-            escrowProducts : {
-                id : "",            // 상품의 ID입니다. 이 값은 유니크해야 합니다.
-                name : "",          // 상품 이름입니다
-                code : "",          // 상점에서 사용하는 상품 관리 코드입니다.
-                unitPrice : 0,      // 상품의 가격입니다. 전체를 합한 가격이 아닌 상품의 개당 가격인 점에 유의해주세요.
-                quantity : 0,       // 상품 구매 수량입니다.
-            }
+            // escrowProducts : {
+            //     id : "",            // 상품의 ID입니다. 이 값은 유니크해야 합니다.
+            //     name : "",          // 상품 이름입니다
+            //     code : "",          // 상점에서 사용하는 상품 관리 코드입니다.
+            //     unitPrice : 0,      // 상품의 가격입니다. 전체를 합한 가격이 아닌 상품의 개당 가격인 점에 유의해주세요.
+            //     quantity : 0,       // 상품 구매 수량입니다.
+            // }
         },
         VIRTUAL_ACCOUNT : {
             /**
@@ -198,21 +199,21 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
              *
              * @var string
              */
-            dueDate : '',
+            // dueDate : '',
 
             /**
              * 가상계좌 웹훅 URL 주소입니다.
              *
              * @var string
              */
-            virtualAccountCallbackUrl : '',
+            // virtualAccountCallbackUrl : '',
 
             /**
              * 고객의 휴대폰 번호입니다.
              *
              * @var string
              */
-            customerMobilePhone : '',
+            // customerMobilePhone : '',
 
             /**
              * 현금영수증 발급 정보를 담는 객체입니다.
@@ -220,7 +221,8 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
              * @var object
              */
             cashReceipt : {
-                type : "미발행"     // 현금영수증 발급 용도입니다. 소득공제, 지출증빙, 미발행 중 하나입니다. 소득공제, 지출증빙 중 하나의 값을 넣으면 해당 용도가 선택된 상태로 결제창이 열립니다. 미발행을 넣으면 결제창에서 현금영수증 발급 용도를 선택할 수 없습니다.
+                // 현금영수증 발급 용도입니다. 소득공제, 지출증빙, 미발행 중 하나입니다. 소득공제, 지출증빙 중 하나의 값을 넣으면 해당 용도가 선택된 상태로 결제창이 열립니다. 미발행을 넣으면 결제창에서 현금영수증 발급 용도를 선택할 수 없습니다.
+                type : "<?php echo (($default['de_taxsave_use'] && strstr($default['de_taxsave_types'], 'vbank'))? '소득공제' : '미발행') ?>"
             },
 
             /**
@@ -228,7 +230,7 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
              *
              * @var boolean
              */
-            useEscrow : false,
+            useEscrow : <?php echo $default['de_escrow_use'] ? 'true' : 'false' ?>,
 
             /**
              * 각 상품에 대한 상세 정보를 담는 배열입니다.
@@ -236,13 +238,13 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
              * 
              * @var object
              */
-            escrowProducts : {
-                id : "",            // 상품의 ID입니다. 이 값은 유니크해야 합니다.
-                name : "",          // 상품 이름입니다
-                code : "",          // 상점에서 사용하는 상품 관리 코드입니다.
-                unitPrice : 0,      // 상품의 가격입니다. 전체를 합한 가격이 아닌 상품의 개당 가격인 점에 유의해주세요.
-                quantity : 0,       // 상품 구매 수량입니다.
-            },
+            // escrowProducts : {
+            //     id : "",            // 상품의 ID입니다. 이 값은 유니크해야 합니다.
+            //     name : "",          // 상품 이름입니다
+            //     code : "",          // 상점에서 사용하는 상품 관리 코드입니다.
+            //     unitPrice : 0,      // 상품의 가격입니다. 전체를 합한 가격이 아닌 상품의 개당 가격인 점에 유의해주세요.
+            //     quantity : 0,       // 상품 구매 수량입니다.
+            // },
 
             /**
              * 결제할 때 사용할 통화 단위입니다. 값을 넣지 않으면 기본값인 KRW로 설정됩니다. 원화인 KRW만 사용합니다.

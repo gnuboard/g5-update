@@ -1593,6 +1593,11 @@ function forderform_check(f)
         tossParameter.order.customerName = f.od_name.value;
         tossParameter.order.customerEmail = f.od_email.value;
 
+        // 면세 금액처리
+        <?php if ($default['de_tax_flag_use']) { ?>
+        tossParameter.common.taxFreeAmount = f.comm_free_mny.value;
+        <?php } ?>
+
         /**
          * @since 22.08.29
          * @todo 빈 값의 경우 객체에서 제거하는 방법으로 진행
