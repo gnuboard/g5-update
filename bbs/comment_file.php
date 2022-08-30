@@ -39,18 +39,22 @@ if (!is_dir(COMMENT_FILE_PATH)) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($w == 'a') {
-        if(empty($bo_table)){
+        if (empty($bo_table)) {
             echo json_encode(array());
             exit;
         }
-        $select_all_sql = 'select wr_id, file_id, file_source_name as original_name, file_name, file_download_count, comment_id, save_time, wr_option, wr_password from '. G5_TABLE_PREFIX . 'write_' . sql_real_escape_string($bo_table). ' as board inner join ' . G5_TABLE_PREFIX . 'comment_file as comment_file ' .
-        ' on  board.wr_id = comment_file.comment_id where wr_parent = ' . sql_real_escape_string($wr_id). ' order by wr_id' ;
+        $select_all_sql = 'select wr_id, file_id, file_source_name as original_name, file_name, file_size, file_download_count, comment_id, save_time, wr_option, wr_password from ' . G5_TABLE_PREFIX . 'write_' . sql_real_escape_string(
+                $bo_table
+            ) . ' as board inner join ' . G5_TABLE_PREFIX . 'comment_file as comment_file ' .
+            ' on  board.wr_id = comment_file.comment_id where wr_parent = ' . sql_real_escape_string(
+                $wr_id
+            ) . ' order by wr_id';
 
         $result = sql_query($select_all_sql);
         $response_row = array();
 
-        if($result){
-            while($row = sql_fetch_array($result)){
+        if ($result) {
+            while ($row = sql_fetch_array($result)) {
                 if ($row['wr_option'] === 'secret') {
                     $ss_name = 'ss_secret_comment_' . $bo_table;
                     if (!get_session($ss_name)) {
@@ -63,9 +67,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         $response = $response_row;
+        if (empty($response)) {
+            $response['files'] = array();
+        }
         echo json_encode($response);
         exit;
-
     }
     if ($w === 'r') {
         if (empty($comment_id)) {
@@ -76,8 +82,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (G5_MYSQLI_USE && function_exists('mysqli_connect') && version_compare(PHP_VERSION, '5.3.0') >= 0) { //바인딩 쿼리
             $link = $GLOBALS['g5']['connect_db'];
 
-            $select_sql = "select file_name, file_source_name, comment_id, mb_id, save_time, wr_option
-            from " . G5_TABLE_PREFIX . "comment_file as comment_file inner join " . G5_TABLE_PREFIX . 'write_free as board  on comment_file.comment_id = board.wr_id 
+            $select_sql = "select file_name, file_source_name, comment_id, mb_id, save_time, wr_option, file_size
+            from " . G5_TABLE_PREFIX . "comment_file as comment_file inner join " . G5_TABLE_PREFIX . 'write_' . sql_real_escape_string(
+                    $bo_table
+                ) . ' as board  on comment_file.comment_id = board.wr_id 
             where comment_id = ?';
 
             /**
@@ -89,8 +97,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute();
             $result = $stmt->get_result();
         } else {
-            $select_sql = "select file_name, file_source_name, comment_id, mb_id, save_time, wr_option
-            from " . G5_TABLE_PREFIX . "comment_file as comment_file inner join " . G5_TABLE_PREFIX . 'write_free as board  on comment_file.comment_id = board.wr_id 
+            $select_sql = "select file_name, file_source_name, comment_id, mb_id, save_time, wr_option, file_size
+            from " . G5_TABLE_PREFIX . "comment_file as comment_file inner join " . G5_TABLE_PREFIX . 'write_' . sql_real_escape_string(
+                    $bo_table
+                ) . ' as board  on comment_file.comment_id = board.wr_id 
             where comment_id =' . sql_real_escape_string($comment_id);
             $result = sql_query($select_sql);
         }
@@ -122,6 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'original_name' => $row['file_source_name'],
                 'file_name' => $row['file_name'],
                 'file_type' => $pathinfo['extension'],
+                'file_size' => $row['file_size'],
                 'comment_id' => $row['comment_id'],
                 'end_point' => $end_point_url
             );
@@ -165,8 +176,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($w === 'd') { //delete 삭제
         $link = $GLOBALS['g5']['connect_db'];
 
-        //$comment_id = empty($comment_id) ? stripcslashes($comment_id) : null;
-
         if ($comment_id === null) { // 댓글 저장전 삭제할 때
             $is_valid = false;
             if (G5_MYSQLI_USE && function_exists('mysqli_connect')) {
@@ -199,7 +208,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } else { // 댓글 수정시 삭제 할 때
             $is_valid = false;
-            $select_sql = 'select * from ' . G5_TABLE_PREFIX . 'comment_file as comment_file inner join ' . G5_TABLE_PREFIX . 'write_' . sql_real_escape_string(
+            $select_sql = 'select wr_password, mb_id, file_name, save_time from ' . G5_TABLE_PREFIX . 'comment_file as comment_file inner join ' . G5_TABLE_PREFIX . 'write_' . sql_real_escape_string(
                     $bo_table
                 ) .
                 ' as board on comment_file.comment_id = board.wr_id where comment_id = ' . sql_real_escape_string(
@@ -238,9 +247,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             //인증 끝
 
             if (isset($row['file_name']) && ($row['file_name'] === $file_name)) {
-                $delete_sql = 'delete from' . G5_TABLE_PREFIX . 'comment_file where comment_id=' . sql_real_escape_string(
+                $delete_sql = 'delete from ' . G5_TABLE_PREFIX . 'comment_file where comment_id = ' . sql_real_escape_string(
                         $comment_id
-                    ) . 'and bo_table = "' . sql_real_escape_string($bo_table) . '"';
+                    ) . ' and bo_table = "' . sql_real_escape_string($bo_table) . '"';
                 sql_query($delete_sql);
                 $get_save_month = date('ym', strtotime($row['save_time']));
                 $file_path = COMMENT_FILE_PATH . '/' . $get_save_month . '/' . $file_name;
@@ -336,7 +345,7 @@ function comment_uploader($file)
         }
 
         if ($is_success) {
-            write_file_name_comment_db($file['name'][$i], $result_save_file);
+            write_comment_file_info($file['name'][$i], $result_save_file, $file['size'][$i]);
             $pathinfo = pathinfo($result_save_file);
             $comment_file_url = G5_DATA_URL . '/' . 'comment' . '/' . $ym;
             $end_point_url = run_replace('replace_url', $comment_file_url);
@@ -359,22 +368,24 @@ function comment_uploader($file)
  * @param string $file_save_name
  * @return void
  */
-function write_file_name_comment_db($file_original_name, $file_save_name)
+function write_comment_file_info($file_original_name, $file_save_name, $file_size)
 {
     if (G5_MYSQLI_USE && function_exists('mysqli_connect')) {
-        $write_file_info_sql = 'INSERT INTO ' . G5_TABLE_PREFIX . 'comment_file  set file_source_name = ?, file_name = ?, save_time = ?';
+        $write_file_info_sql = 'INSERT INTO ' . G5_TABLE_PREFIX . 'comment_file  set file_source_name = ?, file_name = ?, save_time = ?, file_size = ?';
         /**
          * @var $stmt mysqli_stmt
          */
         $stmt = $GLOBALS['connect_db']->prepare($write_file_info_sql);
         $time = G5_TIME_YMDHIS;
-        $stmt->bind_param('sss', $file_original_name, $file_save_name, $time);
+        $stmt->bind_param('sssi', $file_original_name, $file_save_name, $time, $file_size);
         $stmt->execute();
     } else {
         $write_file_info_sql = 'INSERT INTO ' . G5_TABLE_PREFIX . 'comment_file  set file_source_name = "' . sql_real_escape_string(
                 $file_original_name
             ) .
-            '", file_name =  "' . sql_real_escape_string($file_save_name) . '" , save_time = "' . G5_TIME_YMDHIS . '"';
+            '", file_name =  "' . sql_real_escape_string(
+                $file_save_name
+            ) . '" , save_time = "' . G5_TIME_YMDHIS . '"' . ', file_size = ' . sql_real_escape_string($file_size);
         sql_query($write_file_info_sql);
     }
 }
