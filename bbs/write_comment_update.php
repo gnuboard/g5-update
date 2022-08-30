@@ -204,7 +204,7 @@ if ($w == 'c') // 댓글 입력
         foreach ($comment_file_info[1] as $value) {
             if (strpos($value, G5_DATA_DIR . '/comment') !== false) {
                 $file_name = basename($value);
-                update_fileinfo($bo_table, $wr_content, $comment_id, $file_name);
+                update_fileinfo($bo_table, $comment_id, $file_name);
             }
         }
     }
@@ -379,9 +379,9 @@ goto_url($redirect_url);
  * @param $file_name
  * @return void
  */
-function update_fileinfo($bo_table, $comment, $comment_id, $file_name)
+function update_fileinfo($bo_table, $comment_id, $file_name)
 {
-    if (function_exists('mysqli_connect')) {
+    if (function_exists('mysqli_connect') && G5_MYSQLI_USE) {
         $write_file_info_sql = 'UPDATE ' . G5_TABLE_PREFIX . 'comment_file SET comment_id = ?, bo_table = ? WHERE comment_id IS null AND file_name = ? ';
         /**
          * @var $stmt mysqli_stmt
@@ -392,8 +392,8 @@ function update_fileinfo($bo_table, $comment, $comment_id, $file_name)
     } else {
         $write_file_info_sql = "UPDATE " . G5_TABLE_PREFIX . "comment_file SET 
         comment_id = " . sql_real_escape_string($comment_id) . ", 
-        bo_table = " . sql_real_escape_string($bo_table) .
-        " WHERE comment_id != null AND file_name = " . sql_real_escape_string($file_name);
+        bo_table = '" . sql_real_escape_string($bo_table) . "'" .
+        " WHERE comment_id is null AND file_name = '" . sql_real_escape_string($file_name) . "'";
         sql_query($write_file_info_sql);
     }
 }
