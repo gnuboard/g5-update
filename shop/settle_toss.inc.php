@@ -1,11 +1,21 @@
 <?php
+/**
+ * @since 22.08.30
+ * @todo tossParameter 중에서 필요한 것만 선언해야한다. (체크 필요함)
+ */
 if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
+/**
+ * 공개 테스트 키
+ * $clientKey = test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq
+ * $secretKey = test_sk_zXLkKEypNArWmo50nX3lmeaxYG5R
+ */
+$clientKey = 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq';
+$secretKey = 'test_sk_zXLkKEypNArWmo50nX3lmeaxYG5R';
 ?>
-
 <script>
     var tossParameter = {
         common : {
-            clientKey : '<?php echo ($default['de_card_test'] ? 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq' : ''); ?>', 
+            clientKey : '<?php echo ($default['de_card_test'] ? $clientKey : ''); ?>', 
 
             /**
              * 결제가 성공하고 나면 리다이렉트(Redirect)되는 URL입니다.
@@ -190,7 +200,7 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
              *
              * @var int
              */
-            validHours : 0,
+            // validHours : 0,
 
             /**
              * 입금 기한입니다. 현재 시간을 기준으로 720시간(30일) 이내의 특정 시점으로 입금 기한을 직접 설정하고 싶을 때 사용합니다. 720시간 이후로 기한을 설정하면 에러가 발생합니다.

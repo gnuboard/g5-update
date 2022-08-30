@@ -14,7 +14,11 @@ if(function_exists('is_use_easypay') && is_use_easypay('global_nhnkcp') && isset
 
 if(function_exists('add_order_post_log')) add_order_post_log('init', 'init');
 
-if(($od_settle_case != '무통장' && $od_settle_case != 'KAKAOPAY') && $default['de_pg_service'] == 'lg' && !$_POST['LGD_PAYKEY']){
+if(
+    ($od_settle_case != '무통장' && $od_settle_case != 'KAKAOPAY') 
+    && $default['de_pg_service'] == 'lg'
+    && !$_POST['LGD_PAYKEY']
+    && !$default['de_pg_service'] == 'toss'){
     if(function_exists('add_order_post_log')) add_order_post_log('결제등록 요청 후 주문해 주십시오.');
     alert('결제등록 요청 후 주문해 주십시오.');
 }
@@ -327,6 +331,8 @@ else if ($od_settle_case == "계좌이체")
         case 'inicis':
             include G5_SHOP_PATH.'/inicis/inistdpay_result.php';
             break;
+        case 'toss':
+            break;
         default:
             include G5_SHOP_PATH.'/kcp/pp_ax_hub.php';
             $bank_name  = iconv("cp949", "utf-8", $bank_name);
@@ -355,6 +361,8 @@ else if ($od_settle_case == "가상계좌")
             include G5_SHOP_PATH.'/inicis/inistdpay_result.php';
             $od_app_no = $app_no;
             break;
+        case 'toss':
+            break;
         default:
             include G5_SHOP_PATH.'/kcp/pp_ax_hub.php';
             $bankname   = iconv("cp949", "utf-8", $bankname);
@@ -379,6 +387,8 @@ else if ($od_settle_case == "휴대폰")
         case 'inicis':
             include G5_SHOP_PATH.'/inicis/inistdpay_result.php';
             break;
+        case 'toss':
+            break;
         default:
             include G5_SHOP_PATH.'/kcp/pp_ax_hub.php';
             break;
@@ -402,6 +412,8 @@ else if ($od_settle_case == "신용카드")
             break;
         case 'inicis':
             include G5_SHOP_PATH.'/inicis/inistdpay_result.php';
+            break;
+        case 'toss':
             break;
         default:
             include G5_SHOP_PATH.'/kcp/pp_ax_hub.php';
@@ -428,6 +440,8 @@ else if ($od_settle_case == "간편결제" || (($od_settle_case == "lpay" || $od
             break;
         case 'inicis':
             include G5_SHOP_PATH.'/inicis/inistdpay_result.php';
+            break;
+        case 'toss':
             break;
         default:
             include G5_SHOP_PATH.'/kcp/pp_ax_hub.php';

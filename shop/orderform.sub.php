@@ -1588,7 +1588,7 @@ function forderform_check(f)
         <?php if ($default['de_pg_service'] == 'toss') { ?>
         // tossParameter 결제정보 추가
         tossParameter.order.amount = tot_price;
-        tossParameter.order.orderId = '<?php echo $s_cart_id; ?>';
+        tossParameter.order.orderId = '<?php echo get_session('ss_order_id'); ?>';
         tossParameter.order.orderName = '<?php echo $goods; ?>';
         tossParameter.order.customerName = f.od_name.value;
         tossParameter.order.customerEmail = f.od_email.value;
@@ -1598,15 +1598,34 @@ function forderform_check(f)
         tossParameter.common.taxFreeAmount = f.comm_free_mny.value;
         <?php } ?>
 
-        /**
-         * @since 22.08.29
-         * @todo 빈 값의 경우 객체에서 제거하는 방법으로 진행
-         */
         var tosspay_info = {}; 
         Object.assign(tosspay_info, tossParameter.common, tossParameter.order, tossParameter[f.settle_method.value]);
         console.log(tosspay_info)
 
         if(f.settle_method.value != "무통장") {
+            // 주문정보 임시저장
+            var order_data = $(f).serialize();
+            var save_result = "";
+            $.ajax({
+                type: "POST",
+                data: order_data,
+                url: g5_url+"/shop/ajax.orderdatasave.php",
+                cache: false,
+                async: false,
+                success: function(data) {
+                    save_result = data;
+                }
+            });
+
+            if (save_result) {
+                alert(save_result);
+                return false;
+            }
+
+            // if (!make_signature(f)) {
+            //     return false;
+            // }
+
             tossPayments.requestPayment(f.settle_method.value, tosspay_info);
         } else {
             f.submit();
