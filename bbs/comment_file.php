@@ -268,6 +268,83 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode($response);
         exit;
     }
+
+    if ($w === 'download') {
+        ob_end_clean();
+
+        @include_once($board_skin_path . '/comment_download.skin.php'); //사용자 코드
+
+        $select_sql = 'select file_name, file_download_count, file_source_name, save_time from ' . G5_TABLE_PREFIX . 'comment_file  where comment_id =' . sql_real_escape_string(
+                $comment_id
+            ) . ' and file_name = "' . sql_real_escape_string(
+                $file_name
+            ) . '" and bo_table = "' . sql_real_escape_string($bo_table) . '"';
+
+        $result = sql_query($select_sql);
+        if ($result) {
+            $count = sql_num_rows($result);
+            if ($count !== 1) {
+                exit;
+            }
+
+            while ($fileinfo_row = sql_fetch_array($result)) {
+                $file_download_count = $fileinfo_row['file_download_count'];
+                $file_name = $fileinfo_row['file_name'];
+                $file_original_name = rawurlencode($fileinfo_row['file_source_name']);
+                $get_save_month = date('ym', strtotime($fileinfo_row['save_time']));
+            }
+            $ss_name = 'ss_down_' . $bo_table . '_' . $comment_id;
+            if (!get_session($ss_name)) {
+                $file_download_count++;
+                $update_download_count_sql = 'update ' . G5_TABLE_PREFIX . 'comment_file set file_download_count = ' . sql_real_escape_string(
+                        $file_download_count
+                    )
+                    . ' where file_name = "' . sql_real_escape_string(
+                        $file_name
+                    ) . '" and bo_table = "' . sql_real_escape_string($bo_table) . '"';
+                sql_query($update_download_count_sql);
+
+                set_session($ss_name, true);
+            }
+
+            $file_path = COMMENT_FILE_PATH . "/{$get_save_month}/" . $file_name;
+            $file_exist_check = file_exists($file_path);
+
+            run_event('download_file_header', $fileinfo_row, $file_exist_check);
+
+            if ($file_exist_check === false) {
+                exit;
+            }
+
+            if (stripos($_SERVER['HTTP_USER_AGENT'], "Firefox") !== false) {
+                header("content-type: file/unknown");
+                header("content-length: " . filesize($file_path));
+                header("content-disposition: attachment; filename=\"" . $file_original_name . "\"");
+                header("content-description: php generated data");
+            } else {
+                header("content-type: file/unknown");
+                header("content-length: " . filesize($file_path));
+                header("content-disposition: attachment; filename=\"$file_original_name\"");
+                header("content-description: php generated data");
+            }
+            header("pragma: no-cache");
+            header("expires: 0");
+            flush();
+
+            $fp = fopen($file_path, 'rb');
+
+            $download_rate = 10;
+
+            while (!feof($fp)) {
+                print fread($fp, round($download_rate * 1024));
+                flush();
+                usleep(1000);
+            }
+
+            fclose($fp);
+            flush();
+        }
+    }
 }
 
 function comment_uploader($file)
