@@ -165,8 +165,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 continue;
             }
         }
-        $upload_result = comment_uploader($_FILES['comment_file']);
-        run_event('upload_file', $upload_result);
+
+        run_event('before_upload_comment_file', $_FILES['comment_file']);
+
+        $upload_result = comment_file_uploader($_FILES['comment_file']);
+        if (isset($upload_result['is_error'])) {
+            header('400 Bad Request ', true, 400);
+        }
+
+        run_event('after_upload_comment_file', $upload_result);
 
         set_session("ss_datetime", G5_SERVER_TIME);
 
@@ -246,6 +253,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             }
             //인증 끝
+
+            run_event('before_delete_comment_file', $bo_table, $row);
 
             if (isset($row['file_name']) && ($row['file_name'] === $file_name)) {
                 $delete_sql = 'delete from ' . G5_TABLE_PREFIX . 'comment_file where comment_id = ' . sql_real_escape_string(
