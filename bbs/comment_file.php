@@ -63,6 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 unset($row['wr_password']);
                 unset($row['wr_option']);
+                $row['original_name'] = html_purifier($row['original_name']);
                 $response_row[$row['comment_id']]['files'][] = $row;
             }
         }
@@ -129,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $save_fileinfo = array(
-                'original_name' => $row['file_source_name'],
+                'original_name' => html_purifier($row['file_source_name']),
                 'file_name' => $row['file_name'],
                 'file_type' => $pathinfo['extension'],
                 'file_size' => $row['file_size'],
