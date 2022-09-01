@@ -348,7 +348,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-function comment_uploader($file)
+/**
+ * 댓글 첨부 파일 업로더
+ * @param $file
+ * @return array
+ */
+function comment_file_uploader($file)
 {
     $ym = date('ym', G5_SERVER_TIME);
     $file_count = count($file['name']);
@@ -365,8 +370,21 @@ function comment_uploader($file)
             continue;
         }
 
+        $file_name_pathinfo = pathinfo(get_safe_filename(strtolower($file['name'][$i])));
+        $file_extension = $file_name_pathinfo['extension'];
+
         if (preg_match('/(\.jpe?g|\.gif|\.png|\.webp|bmp)$/i', $file['name'][$i])) {
             $imageinfo = getimagesize($file['tmp_name'][$i]);
+            if ($imageinfo === false) {
+                if (!($file_extension === 'webp' && PHP_VERSION_ID < 70100)) {
+                    $response = array(
+                        'is_error' => true,
+                        'msg' => '잘못된 사진 파일입니다.'
+                    );
+                }
+                return json_encode($response);
+            }
+
             $thumb_width = round($imageinfo[0] * 0.8);
             $thumb_height = round($imageinfo[1] * 0.8);
             $tmp_file_name = basename($file['tmp_name'][$i]);
@@ -380,7 +398,6 @@ function comment_uploader($file)
                 false
             );
 
-            $file_name_pathinfo = pathinfo(get_safe_filename(strtolower($file['name'][$i])));
             $new_file_name = file_name_generator($file_name_pathinfo['filename']);
             $temp_file_name_pathinfo = pathinfo($file['tmp_name'][$i]);
 
@@ -424,13 +441,12 @@ function comment_uploader($file)
 
         if ($is_success) {
             write_comment_file_info($file['name'][$i], $result_save_file, $file['size'][$i]);
-            $pathinfo = pathinfo($result_save_file);
             $comment_file_url = G5_DATA_URL . '/' . 'comment' . '/' . $ym;
             $end_point_url = run_replace('replace_url', $comment_file_url);
             $save_fileinfo = array(
                 'original_name' => $file['name'][$i],
                 'file_name' => $result_save_file,
-                'file_type' => $pathinfo['extension'],
+                'file_type' => $file_extension,
                 'end_point' => $end_point_url
             );
             $response['files'][] = $save_fileinfo;
