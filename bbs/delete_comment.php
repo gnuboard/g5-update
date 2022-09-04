@@ -10,7 +10,6 @@ set_session('ss_delete_comment_'.$comment_id.'_token', '');
 if (!($token && $delete_comment_token == $token))
     alert('토큰 에러로 삭제 불가합니다.');
 
-// 4.1
 @include_once($board_skin_path.'/delete_comment.head.skin.php');
 
 $write = sql_fetch(" select * from {$write_table} where wr_id = '{$comment_id}' ");
@@ -18,8 +17,8 @@ $write = sql_fetch(" select * from {$write_table} where wr_id = '{$comment_id}' 
 if (!$write['wr_id'] || !$write['wr_is_comment'])
     alert('등록된 코멘트가 없거나 코멘트 글이 아닙니다.');
 
-if ($is_admin == 'super') // 최고관리자 통과
-    ;
+if ($is_admin == 'super') {// 최고관리자 통과
+}
 else if ($is_admin == 'group') { // 그룹관리자
     $mb = get_member($write['mb_id']);
     if ($member['mb_id'] === $group['gr_admin']) { // 자신이 관리하는 그룹인가?
@@ -79,6 +78,24 @@ sql_query(" update {$g5['board_table']} set bo_count_comment = bo_count_comment 
 
 // 새글 삭제
 sql_query(" delete from {$g5['board_new_table']} where bo_table = '{$bo_table}' and wr_id = '{$comment_id}' ");
+
+if (($board['is_late_delete']) === 1) {
+    sql_query("update " . G5_TABLE_PREFIX . "comment_file set is_delete = 1 where bo_table = '{$bo_table}' and comment_id = '{$comment_id}' ");
+} else {
+    $result = sql_query("select file_name, save_time from " . G5_TABLE_PREFIX . "comment_file where bo_table = '{$bo_table}' and comment_id = '{$comment_id}' ");
+
+    if ($result = run_replace('delete_comment_file_before', $result)) {
+
+        while ($row = sql_fetch_array($result)) {
+            $save_dir = date('ym', strtotime($row['save_time']));
+            G5_DATA_PATH . '/' . G5_COMMENT_DIR . '/' . $save_dir . '/' . $row['file_name'];
+            @unlink(G5_DATA_PATH . '/' . G5_COMMENT_DIR . '/' . $save_dir . '/' . $row['file_name']);
+        }
+        sql_query(
+            " delete from " . G5_TABLE_PREFIX . "comment_file where bo_table = '{$bo_table}' and wr_id = '{$comment_id}' "
+        );
+    }
+}
 
 // 사용자 코드 실행
 @include_once($board_skin_path.'/delete_comment.skin.php');
