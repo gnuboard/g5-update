@@ -89,6 +89,30 @@ if (!isset($board['bo_select_editor'])) {
     sql_query(" ALTER TABLE `{$g5['board_table']}` ADD `bo_select_editor` VARCHAR(50) NOT NULL DEFAULT '' AFTER `bo_use_dhtml_editor` ", false);
 }
 
+if (!isset($board['bo_cf_count'])) {
+    sql_query("ALTER TABLE `{$g5['comment_file_table']}` ADD `bo_cf_count` TINYINT NOT NULL DEFAULT '2' AFTER `bo_10` ", false);
+}
+
+if (!isset($board['bo_cf_size_limit'])) {
+    sql_query("ALTER TABLE `{$g5['comment_file_table']}` ADD `bo_cf_size_limit` INT NOT NULL DEFAULT '1,048,576' AFTER `bo_cf_count` ", false);
+}
+
+if (!isset($board['bo_cf_upload_level'])) {
+    sql_query("ALTER TABLE `{$g5['comment_file_table']}` ADD `bo_cf_upload_level` TINYINT NOT NULL DEFAULT '1' AFTER `bo_cf_size_limit` ", false);
+}
+
+if (!isset($board['bo_cf_download_level'])) {
+    sql_query("ALTER TABLE `{$g5['comment_file_table']}` ADD `bo_cf_download_level` TINYINT NOT NULL DEFAULT '1' AFTER `bo_cf_upload_level` ", false);
+}
+
+if (!isset($board['bo_cf_is_late_delete'])) {
+    sql_query("ALTER TABLE `{$g5['comment_file_table']}` ADD `bo_cf_is_late_delete` TINYINT NOT NULL DEFAULT '0' AFTER `bo_cf_download_level` ", false);
+}
+
+if (!isset($board['bo_cf_resize'] )) {
+    sql_query("ALTER TABLE `{$g5['comment_file_table']}` ADD `bo_cf_resize` TINYINT NOT NULL DEFAULT '100' AFTER `bo_cf_is_late_delete` ", false);
+}
+
 $board_default = array(
 'bo_mobile_subject'=>'',
 'bo_device'=>'',
@@ -724,7 +748,7 @@ $pg_anchor = '<ul class="anchor">
             </td>
         </tr>
         <tr>
-            <th scope="row"><label for="bo_upload_count">파일 업로드 개수<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_upload_count">게시글 파일 업로드 개수<strong class="sound_only">필수</strong></label></th>
             <td>
                 <?php echo help('게시물 한건당 업로드 할 수 있는 파일의 최대 개수 (0 은 파일첨부 사용하지 않음)') ?>
                 <input type="text" name="bo_upload_count" value="<?php echo $board['bo_upload_count'] ?>" id="bo_upload_count" required class="required numeric frm_input" size="4">
@@ -737,7 +761,7 @@ $pg_anchor = '<ul class="anchor">
             </td>
         </tr>
         <tr>
-            <th scope="row"><label for="bo_upload_size">파일 업로드 용량<strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label for="bo_upload_size">게시글 파일 업로드 용량<strong class="sound_only">필수</strong></label></th>
             <td>
                 <?php echo help('최대 '.ini_get("upload_max_filesize").' 이하 업로드 가능, 1 MB = 1,048,576 bytes') ?>
                 업로드 파일 한개당 <input type="text" name="bo_upload_size" value="<?php echo $board['bo_upload_size'] ?>" id="bo_upload_size" required class="required numeric frm_input"  size="10"> bytes 이하
@@ -813,6 +837,77 @@ $pg_anchor = '<ul class="anchor">
                 <label for="chk_all_comment_max">전체적용</label>
             </td>
         </tr>
+
+        <tr>
+            <th scope="row"><label for="bo_cf_count">댓글 첨부파일 및 이미지 개수</label></th>
+            <td>
+                <?php echo help('댓글에 업로드 할수 있는 이미지와 첨부파일의 개수 입니다. (0 은 파일첨부 사용하지 않음) ') ?>
+                <input type="text" name="bo_cf_count" value="<?php echo $board['bo_cf_count'] ?>" id="bo_cf_count" class="numeric frm_input" size="4">개
+            </td>
+            <td class="td_grpset">
+                <input type="checkbox" name="chk_grp_bo_cf_count" value="1" id="chk_grp_bo_cf_count">
+                <label for="chk_grp_comment_max">그룹적용</label>
+                <input type="checkbox" name="chk_all_bo_cf_count" value="1" id="chk_all_bo_cf_count">
+                <label for="chk_all_comment_max">전체적용</label>
+            </td>
+        </tr>
+
+        <tr>
+            <th scope="row"><label for="bo_cf_size_limit">댓글 첨부파일 업로드 용량</label></th>
+            <td>
+                <?php echo help('최대 '.ini_get("upload_max_filesize").' 이하 업로드 가능, byte 단위') ?>
+                업로드 파일 한개당 <input type="text" name="bo_cf_size_limit" value="<?php echo ($board['bo_cf_size_limit']) ?>" id="bo_cf_size_limit" required class="required numeric frm_input"  size="10"> 바이트 이하
+            </td>
+            <td class="td_grpset">
+                <input type="checkbox" name="chk_grp_bo_cf_size_limit" value="1" id="chk_grp_bo_cf_size_limit">
+                <label for="chk_grp_bo_cf_size_limit">그룹적용</label>
+                <input type="checkbox" name="chk_all_bo_cf_size_limit" value="1" id="chk_all_bo_cf_size_limit">
+                <label for="chk_all_bo_cf_size_limit">전체적용</label>
+            </td>
+        </tr>
+
+        <tr>
+            <th scope="row"><label for="bo_cf_upload_level">댓글 첨부파일 업로드 레벨</label></th>
+            <td>
+                <?php echo help('댓글의 이미지와 첨부파일을 업로드 할 수 있는 권한을 설정합니다. (0은 익명의 사용자도 가능)') ?>
+                <input type="text" name="bo_cf_upload_level" value="<?php echo $board['bo_cf_upload_level'] ?>" id="bo_cf_upload_level" class="numeric frm_input" size="4">
+            </td>
+            <td class="td_grpset">
+                <input type="checkbox" name="chk_grp_bo_cf_upload_level" value="1" id="chk_grp_bo_cf_upload_level">
+                <label for="chk_grp_bo_cf_upload_level">그룹적용</label>
+                <input type="checkbox" name="chk_all_bo_cf_upload_level" value="1" id="chk_all_bo_cf_upload_level">
+                <label for="chk_all_bo_cf_upload_level">전체적용</label>
+            </td>
+        </tr>
+
+        <tr>
+            <th scope="row"><label for="bo_cf_download_level">댓글 첨부파일 다운로드 레벨</label></th>
+            <td>
+                <?php echo help('댓글의 이미지와 첨부파일을 다운로드 할 수 있는 권한을 설정합니다. (0은 익명의 사용자도 가능)') ?>
+                <input type="text" name="bo_cf_download_level" value="<?php echo $board['bo_cf_download_level'] ?>" id="bo_cf_download_level" class="numeric frm_input" size="4">
+            </td>
+            <td class="td_grpset">
+                <input type="checkbox" name="chk_grp_bo_cf_download_level" value="1" id="chk_grp_bo_cf_download_level">
+                <label for="chk_grp_bo_cf_download_level">그룹적용</label>
+                <input type="checkbox" name="chk_all_bo_cf_download_level" value="1" id="chk_all_bo_cf_download_level">
+                <label for="chk_all_bo_cf_download_level">전체적용</label>
+            </td>
+        </tr>
+
+        <tr>
+            <th scope="row"><label for="bo_cf_download_level">댓글 첨부파일 이미지 썸네일 리사이즈</label></th>
+            <td>
+                <?php echo help('댓글의 이미지 썸네일 리사이크를 설정합니다. 0은 사용안함, %단위') ?>
+                <input type="number" name="bo_cf_resize" value="<?php echo $board['bo_cf_resize'] ?>" id="bo_cf_resize" class="numeric frm_input" size="4">%
+            </td>
+            <td class="td_grpset">
+                <input type="checkbox" name="chk_grp_bo_cf_resize" value="1" id="chk_grp_bo_cf_resize">
+                <label for="chk_grp_bo_cf_resize">그룹적용</label>
+                <input type="checkbox" name="chk_all_bo_cf_resize" value="1" id="chk_all_bo_cf_resize">
+                <label for="chk_all_bo_cf_resize">전체적용</label>
+            </td>
+        </tr>
+
         <tr>
             <th scope="row"><label for="bo_use_sns">SNS 사용</label></th>
             <td>

@@ -249,7 +249,13 @@ $sql_common .= " bo_insert_content   = '{$bo_insert_content}',
                 bo_write_min        = '{$bo_write_min}',
                 bo_write_max        = '{$bo_write_max}',
                 bo_comment_min      = '{$bo_comment_min}',
-                bo_comment_max      = '{$bo_comment_max}',
+                bo_comment_max      = '{$bo_comment_max}',                
+                bo_cf_count         = '{$bo_cf_count}',
+                bo_cf_size_limit      = '{$bo_cf_size_limit}',
+                bo_cf_upload_level    = '{$bo_cf_upload_level}',
+                bo_cf_download_level  = '{$bo_cf_download_level}',
+                bo_cf_is_late_delete  = '{$bo_cf_is_late_delete}',
+                bo_cf_resize        = '{$bo_cf_resize}',
                 bo_sort_field       = '{$bo_sort_field}',
                 bo_1_subj           = '{$bo_1_subj}',
                 bo_2_subj           = '{$bo_2_subj}',
@@ -419,6 +425,11 @@ if (is_checked('chk_grp_comment_min'))          $grp_fields .= " , bo_comment_mi
 if (is_checked('chk_grp_comment_max'))          $grp_fields .= " , bo_comment_max = '{$bo_comment_max}' ";
 if (is_checked('chk_grp_upload_count'))         $grp_fields .= " , bo_upload_count = '{$bo_upload_count}' ";
 if (is_checked('chk_grp_upload_size'))          $grp_fields .= " , bo_upload_size = '{$bo_upload_size}' ";
+if (is_checked('chk_grp_bo_cf_count'))          $grp_fields .= " , bo_cf_count = '{$bo_cf_count}' ";
+if (is_checked('chk_grp_bo_cf_size_limit'))     $grp_fields .= " , bo_cf_size_limit   = '{$bo_cf_size_limit}' ";
+if (is_checked('chk_grp_bo_cf_upload_level'))   $grp_fields .= " , bo_cf_upload_level = '{$bo_cf_upload_level}' ";
+if (is_checked('chk_grp_bo_cf_download_level')) $grp_fields .= " , bo_cf_download_level = '{$bo_cf_download_level}' ";
+if (is_checked('chk_grp_bo_cf_resize'))         $grp_fields .= " , bo_cf_resize = '{$bo_cf_resize}' ";
 
 //최고관리자만 수정가능
 if ($is_admin === 'super') {
@@ -509,6 +520,11 @@ if (is_checked('chk_all_comment_min'))          $all_fields .= " , bo_comment_mi
 if (is_checked('chk_all_comment_max'))          $all_fields .= " , bo_comment_max = '{$bo_comment_max}' ";
 if (is_checked('chk_all_upload_count'))         $all_fields .= " , bo_upload_count = '{$bo_upload_count}' ";
 if (is_checked('chk_all_upload_size'))          $all_fields .= " , bo_upload_size = '{$bo_upload_size}' ";
+if (is_checked('chk_all_bo_cf_count'))          $all_fields .= " , bo_cf_count = '{$bo_cf_count}' ";
+if (is_checked('chk_all_bo_cf_size_limit'))     $all_fields .= " , bo_cf_size_limit   = '{$bo_cf_size_limit}' ";
+if (is_checked('chk_all_bo_cf_upload_level'))   $all_fields .= " , bo_cf_upload_level = '{$bo_cf_upload_level}' ";
+if (is_checked('chk_all_bo_cf_download_level')) $all_fields .= " , bo_cf_download_level = '{$bo_cf_download_level}' ";
+if (is_checked('chk_all_bo_cf_resize'))         $all_fields .= " , bo_cf_resize = '{$bo_cf_resize}' ";
 
 //최고관리자만 수정가능
 if ($is_admin === 'super') {
