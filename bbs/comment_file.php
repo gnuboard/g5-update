@@ -493,8 +493,13 @@ function comment_file_uploader($file)
                 return json_encode($response);
             }
 
-            $thumb_width = round($imageinfo[0] * 0.8);
-            $thumb_height = round($imageinfo[1] * 0.8);
+            if (COMMENT_FILE_IMG_RESIZE == 0 ) {
+                $thumb_width = $imageinfo[0];
+                $thumb_height = $imageinfo[1];
+            } else {
+                $thumb_width = round($imageinfo[0] * (COMMENT_FILE_IMG_RESIZE / 100));
+                $thumb_height = round($imageinfo[1] * (COMMENT_FILE_IMG_RESIZE / 100));
+            }
             $tmp_file_name = basename($file['tmp_name'][$i]);
             $tmp_path = dirname($file['tmp_name'][$i]);
             $thumbnail_file_name = thumbnail(
