@@ -129,35 +129,6 @@ include_once($board_skin_path.'/view_comment.skin.php');
 if (!$member['mb_id']) // 비회원일 경우에만
     echo '<script src="'.G5_JS_URL.'/md5.js"></script>'."\n";
 
-function convert_ampsend($content)
-{
-    return str_replace(array('&amp;lt;','&amp;gt'),array('&lt;','&gt;'), $content);
-    //return str_replace(array('<script>', '</script>'), array('', ''), $content);
-}
-
-function html_entities_decode_tag($content)
-{
-    $tags = array(
-        "&lt;br&gt;" => '<br>',
-        "&lt;div&gt;" => '<div>',
-        "&lt;/div&gt;" => '</div>',
-        "&lt;p&gt;" => '<p>',
-        "&lt;/p&gt;" => '</p>',
-        "&lt;span" => '<span',
-        "&lt;span&gt;" => '<span>',
-        "&lt;/span&gt;" => '</span>',
-        "&nbsp;" => ' ',
-        "amp;amp;" => '&',
-        "&quot;" => '"'
-    );
-
-    foreach ($tags as $tag => $value) {
-        $content = str_replace($tag, $value, $content);
-    }
-
-    return $content;
-}
-
 /**
  * 댓글에 [첨부파일 url] 의 [ <a href='이미지주소'></a> ] -> img 태그로 치환
  * @param $contents

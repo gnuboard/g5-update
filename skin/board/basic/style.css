@@ -97,11 +97,11 @@ box-shadow:inset 0 2px 5px rgb(33, 135, 202)}
 .bo_sch legend {background:red}
 .bo_sch form {padding:15px;display:block}
 .bo_sch select {border:0;width:100%;height:40px;border:1px solid #d0d3db;border-radius:2px;-webkit-box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075);
--moz-box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075);
-box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075)}
+    -moz-box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075);
+    box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075)}
 .bo_sch .sch_bar {display:inline-block;width:100%;clear:both;margin-top:15px;border:1px solid #d0d3db;border-radius:2px;-webkit-box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075);
--moz-box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075);
-box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075)}
+    -moz-box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075);
+    box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075)}
 .bo_sch .sch_input {width:250px;height:38px;border:0;padding:0;background-color:transparent;float:left}
 .bo_sch .sch_btn {height:38px;float:right;color:#656565;background:none;border:0;width:40px;font-size:15px}
 .bo_sch .bo_sch_cls {position:absolute;right:0;top:0;color:#b5b8bb;border:0;padding:12px 15px;font-size:16px;background:#fff}
@@ -114,9 +114,9 @@ box-shadow:inset 0 1px 1px rgba(0, 0, 0, .075)}
 
 #autosave_wrapper {position:relative}
 #autosave_pop {display:none;z-index:10;position:absolute !important;top:34px;right:0;width:350px;height:auto !important;height:180px;max-height:180px;border:1px solid #565656;background:#fff;
--webkit-box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2);
--moz-box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2);
-box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
+    -webkit-box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2);
+    -moz-box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2);
+    box-shadow:2px 2px 3px 0px rgba(0,0,0,0.2)}
 #autosave_pop:before {content:"";position:absolute;top:-8px;right:45px;width:0;height:0;border-style:solid;border-width:0 6px 8px 6px;border-color:transparent transparent #000 transparent}
 #autosave_pop:after {content:"";position:absolute;top:-7px;right:45px;width:0;height:0;border-style:solid;border-width:0 6px 8px 6px;border-color:transparent transparent #fff transparent}
 html.no-overflowscrolling #autosave_pop {height:auto;max-height:10000px !important} /* overflow 미지원 기기 대응 */
@@ -143,7 +143,7 @@ html.no-overflowscrolling #autosave_pop {height:auto;max-height:10000px !importa
 #bo_v_title .bo_v_tit {display:block;font-size:2em;margin:5px 0 0;word-break:break-all}
 
 #bo_v_info {margin:0;border-bottom:1px solid #f1f1f1;color:#666}
-#bo_v_info:after {display:block;visibility:hidden;clear:both;content:""} 
+#bo_v_info:after {display:block;visibility:hidden;clear:both;content:""}
 #bo_v_info h2 {position:absolute;font-size:0;line-height:0;overflow:hidden}
 
 #bo_v_info .profile_info {margin:20px 0 10px;display:inline-block;float:left}
@@ -263,7 +263,7 @@ box-shadow:1px 1px 5px 0px hsl(232, 36%, 96%)}
 #bo_vc article .profile_img img {border-radius:50%}
 #bo_vc article .pf_img {float:left;margin-right:10px}
 #bo_vc article .pf_img img {border-radius:50%;width:50px;height:50px}
-#bo_vc article .cm_wrap {float:left;max-width:870px;width:90%}
+#bo_vc article .cm_wrap {max-width:870px;width:90%}
 #bo_vc header {position:relative;width:100%}
 #bo_vc header:after {display:block;visibility:hidden;clear:both;content:""}
 #bo_vc header .profile_img {display:none}
@@ -272,6 +272,7 @@ box-shadow:1px 1px 5px 0px hsl(232, 36%, 96%)}
 .bo_vc_hdinfo {color:#777}
 #bo_vc h1 {position:absolute;font-size:0;line-height:0;overflow:hidden}
 #bo_vc .cmt_contents {line-height:1.8em;padding:0 0 20px}
+#bo_vc .cmt_contents img {max-width: 100%}
 #bo_vc p a {text-decoration:underline}
 #bo_vc p a.s_cmt {text-decoration:underline;color:#ed6479}
 #bo_vc_empty {margin:0;padding:80px 0 !important;color:#777;text-align:center}
@@ -315,6 +316,30 @@ box-shadow:inset 0 1px 2px rgba(0, 0, 0, 0.1)}
 #bo_vc_sns .sns_li_off {background:#bbb}
 #bo_vc_sns a {display:inline-block;padding:0 15px 0 5px}
 #bo_vc_sns input {margin:0 5px 0 0}
+
+/* 댓글 입력창 */
+.comment_content {display:inline-block;width:100%;height:180px;padding:5px;border:1px solid #d0d3db;background:#fff;color:#000;overflow-y: scroll;resize: vertical}
+.comment_content img {max-width: 100%; resize: both}
+
+/* 댓글 파일 수정 */
+.upload-file-list .file_wr {position:relative;border:1px solid #ccc;background:#fff;color:#000;vertical-align:middle;border-radius:3px;height:40px;margin:15px 0}
+.upload-file-list .btn_delete_file {position: absolute;right: 20px;border:1px solid #ccc;background:#fff;color:#000;border-radius:3px;padding:0 10px;height:30px;margin-top: 5px;cursor:pointer}
+.upload-file-list .btn_download_file {position: absolute;right: 20px;border:1px solid #ccc;background:#fff;color:#000;border-radius:3px;padding:0 10px;height:30px;margin-top: 5px;cursor:pointer}
+.upload-file-list.write_div {margin:10px 5px;position:relative;display: flex;align-items: center;}
+.upload-file-list .lb_icon {margin-left: 15px;border-radius:3px 0 0 3px;height:38px;line-height:38px;font-size:1.2em;text-align:center;color:#b2b2b2}
+.upload-file-list .form_file {padding-left: 10px;}
+.upload-file-list #comment_img { display:block;position:relative; max-width: 100%; }
+
+/* 댓글 파일 출력 */
+.upload-file-list i {color: #b2b2b2;font-size: 2.35em;margin-right: 20px;}
+.upload-file-list .file-info-wrapper {display: inline-block;}
+.upload-file-list li {padding: 15px;position: relative;margin: 10px 0;border: 1px solid #dfdfdf;border-radius: 5px;}
+.upload-file-list .file-info-wrapper span {display: block;color: #b2b2b2;font-size: 0.92em;}
+.upload-file-list .file-info-wrapper a {cursor: pointer}
+.upload-file-list li:hover {border-color:#bed4f4;color:#bed4f4}
+.upload-file-list li:hover a  {color:#3a8afd}
+.upload-file-list li:hover span  {color:#3a8afd}
+.upload-file-list .file-info-wrapper:hover {color:#99c2fc}
 
 /*글쓰기*/
 #bo_w .bo_v_option li {display:inline-block;float:left;text-align:left;margin:0 5px 0 0}

@@ -358,6 +358,19 @@ else if ($w == 'cu') // 댓글 수정
               where wr_id = '$comment_id' ";
 
     sql_query($sql);
+
+    //첨부파일 있으면 기록 댓글 번호, 게시판 기록
+    $comment_file_info = array();
+
+    preg_match_all('/\[(.*?.)]/', $wr_content, $comment_file_info);
+    if (count($comment_file_info[1]) > 0) {
+        foreach ($comment_file_info[1] as $value) {
+            if (strpos($value, G5_DATA_DIR . '/comment') !== false) {
+                $file_name = basename($value);
+                update_fileinfo($bo_table, $comment_id, $file_name);
+            }
+        }
+    }
 }
 
 // 사용자 코드 실행
