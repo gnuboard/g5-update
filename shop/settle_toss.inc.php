@@ -11,6 +11,13 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
  */
 $clientKey = 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq';
 $secretKey = 'test_sk_zXLkKEypNArWmo50nX3lmeaxYG5R';
+
+/**
+ * URL
+ */
+$successUrl = G5_SHOP_URL . '/toss/success.php';
+$failUrl    = G5_SHOP_URL . '/toss/fail.php';
+$virtualAccountCallbackUrl = G5_SHOP_URL . '/toss/virtaul_account.php';
 ?>
 <script>
     var tossParameter = {
@@ -24,14 +31,14 @@ $secretKey = 'test_sk_zXLkKEypNArWmo50nX3lmeaxYG5R';
              * 
              * @var string
              */
-            successUrl : '<?php echo G5_SHOP_URL . '/toss/success.php'; ?>',
+            successUrl : '<?php echo $successUrl; ?>',
 
             /**
              * 결제가 실패하면 리다이렉트되는 URL입니다. 에러 코드 및 에러 메시지가 쿼리 파라미터로 함께 전송됩니다. 반드시 오리진(origin)을 포함해야 합니다.
              * 
              * @var string
              */
-            failUrl : '<?php echo G5_SHOP_URL . '/toss/fail.php'; ?>',
+            failUrl : '<?php echo $failUrl; ?>',
             
             /**
              * 브라우저에서 결제창이 열리는 프레임을 지정합니다. self, iframe 중 하나입니다.

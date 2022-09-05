@@ -1466,6 +1466,7 @@ function forderform_check(f)
                 break;
             case "가상계좌":
                 f.settle_method.value = "VIRTUAL_ACCOUNT";
+                tossParameter.VIRTUAL_ACCOUNT.virtualAccountCallbackUrl = '<?php echo $virtualAccountCallbackUrl ?>';
                 break;
             case "휴대폰":
                 f.settle_method.value = "MOBILE_PHONE";

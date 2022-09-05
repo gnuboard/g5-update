@@ -9,7 +9,7 @@ $default['de_pg_service'] = 'toss';
  * @since 22.08.30
  * @todo 결제취소를 하기위해서 paymentKey를 저장해야한다
  * @todo 현금영수증 발급 시, 응답 변수 중 receiptKey를 저장해야한다. (주문취소시 현금영수증도 취소할 때 사용).
- * @todo 가상계좌 웹훅 처리를 통해 입금내역을 업데이트 해야한다.
+ * @todo 가상계좌 웹훅 처리를 통해 입금내역을 업데이트 해야한다. => secret 값을 저장해야한다.
  */
 $request_paymentKey = isset($_GET['paymentKey']) ? clean_xss_tags($_GET['paymentKey']) : "";
 $request_orderId    = isset($_GET['orderId']) ? clean_xss_tags($_GET['orderId']) : "";
