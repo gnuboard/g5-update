@@ -40,23 +40,22 @@ if (!$orderId) {
 }
 
 // 주문 임시데이터 체크
-$row = sql_fetch("SELECT * FROM {$g5['g5_shop_order_data_table']} WHERE od_id = '{$orderId}' ");
-if (empty($row)) {
+$orderInfo = sql_fetch("SELECT * FROM {$g5['g5_shop_order_table']} WHERE od_id = '{$orderId}' ");
+if (empty($orderInfo)) {
     alert("임시 주문정보가 저장되지 않았습니다.");
 }
 
 /**
  * secret 값 비교 
- * @todo API호출 결과에서 저장한 secret 값을 조회 후 비교해야한다.
  */ 
-if ($secret) {
+if ($secret == $orderInfo['od_app_no']) {
     $isSuccess = true;
 }
 
 /**
  * 결제데이터 처리 및 결과 전송
  */
-if ($isSuccess) { 
+if ($isSuccess) {
 
     $ct_status = '입금';
 
