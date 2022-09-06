@@ -70,7 +70,7 @@ if ($isSuccess) {
                 WHERE od_id = '$orderId'";
     sql_query($sql);
 
-    $price = (int)$row['od_misu'];
+    $price = (int)$orderInfo['od_misu'];
     $sql = "UPDATE {$g5['g5_shop_order_table']}
                 SET 
                     od_status = '{$ct_status}',
