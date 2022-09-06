@@ -511,6 +511,14 @@ add_javascript(G5_POSTCODE_JS, 0);    //다음 주소 js
                                         $pg_test .= ' 테스트 ';
                                     }
                                     break;
+                                case 'toss':
+                                    $pg_url  = 'http://pgweb.uplus.co.kr';
+                                    $pg_test = '토스페이먼츠';
+                                    if ($default['de_card_test']) {
+                                        $pg_url = 'http://pgweb.uplus.co.kr/tmert';
+                                        $pg_test .= ' 테스트 ';
+                                    }
+                                    break;
                                 case 'inicis':
                                     $pg_url  = 'https://iniweb.inicis.com/';
                                     $pg_test = 'KG이니시스';

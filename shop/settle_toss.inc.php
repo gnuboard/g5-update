@@ -9,8 +9,8 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
  * $clientKey = test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq
  * $secretKey = test_sk_zXLkKEypNArWmo50nX3lmeaxYG5R
  */
-$clientKey = 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq';
-$secretKey = 'test_sk_zXLkKEypNArWmo50nX3lmeaxYG5R';
+$clientKey = 'test_ck_k6bJXmgo28ew6ZZP5B6VLAnGKWx4';
+$secretKey = 'test_sk_Lex6BJGQOVDEYRX9A4QrW4w2zNbg';
 
 /**
  * URL
