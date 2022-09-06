@@ -90,27 +90,27 @@ if (!isset($board['bo_select_editor'])) {
 }
 
 if (!isset($board['bo_cf_count'])) {
-    sql_query("ALTER TABLE `{$g5['comment_file_table']}` ADD `bo_cf_count` TINYINT NOT NULL DEFAULT '2' AFTER `bo_10` ", false);
+    sql_query("ALTER TABLE `{$g5['board_table']}` ADD `bo_cf_count` TINYINT NOT NULL DEFAULT '2' AFTER `bo_10` ", false);
 }
 
 if (!isset($board['bo_cf_size_limit'])) {
-    sql_query("ALTER TABLE `{$g5['comment_file_table']}` ADD `bo_cf_size_limit` INT NOT NULL DEFAULT '1,048,576' AFTER `bo_cf_count` ", false);
+    sql_query("ALTER TABLE `{$g5['board_table']}` ADD `bo_cf_size_limit` INT NOT NULL DEFAULT '1,048,576' AFTER `bo_cf_count` ", false);
 }
 
 if (!isset($board['bo_cf_upload_level'])) {
-    sql_query("ALTER TABLE `{$g5['comment_file_table']}` ADD `bo_cf_upload_level` TINYINT NOT NULL DEFAULT '1' AFTER `bo_cf_size_limit` ", false);
+    sql_query("ALTER TABLE `{$g5['board_table']}` ADD `bo_cf_upload_level` TINYINT NOT NULL DEFAULT '1' AFTER `bo_cf_size_limit` ", false);
 }
 
 if (!isset($board['bo_cf_download_level'])) {
-    sql_query("ALTER TABLE `{$g5['comment_file_table']}` ADD `bo_cf_download_level` TINYINT NOT NULL DEFAULT '1' AFTER `bo_cf_upload_level` ", false);
+    sql_query("ALTER TABLE `{$g5['board_table']}` ADD `bo_cf_download_level` TINYINT NOT NULL DEFAULT '1' AFTER `bo_cf_upload_level` ", false);
 }
 
 if (!isset($board['bo_cf_is_late_delete'])) {
-    sql_query("ALTER TABLE `{$g5['comment_file_table']}` ADD `bo_cf_is_late_delete` TINYINT NOT NULL DEFAULT '0' AFTER `bo_cf_download_level` ", false);
+    sql_query("ALTER TABLE `{$g5['board_table']}` ADD `bo_cf_is_late_delete` TINYINT NOT NULL DEFAULT '0' AFTER `bo_cf_download_level` ", false);
 }
 
 if (!isset($board['bo_cf_resize'] )) {
-    sql_query("ALTER TABLE `{$g5['comment_file_table']}` ADD `bo_cf_resize` TINYINT NOT NULL DEFAULT '100' AFTER `bo_cf_is_late_delete` ", false);
+    sql_query("ALTER TABLE `{$g5['board_table']}` ADD `bo_cf_resize` TINYINT NOT NULL DEFAULT '100' AFTER `bo_cf_is_late_delete` ", false);
 }
 
 $board_default = array(

@@ -603,6 +603,7 @@ fwrite($f, "\$g5['new_win_table'] = G5_TABLE_PREFIX.'new_win'; // 새창 테이�
 fwrite($f, "\$g5['menu_table'] = G5_TABLE_PREFIX.'menu'; // 메뉴관리 테이블\n");
 fwrite($f, "\$g5['social_profile_table'] = G5_TABLE_PREFIX.'member_social_profiles'; // 소셜 로그인 테이블\n");
 fwrite($f, "\$g5['member_cert_history_table'] = G5_TABLE_PREFIX.'member_cert_history'; // 본인인증 변경내역 테이블\n");
+fwrite($f, "\$g5['comment_file_table'] = G5_TABLE_PREFIX.'comment_file'; // 댓글 첨부파일\n");
 
 if($g5_shop_install) {
     fwrite($f, "\n");
@@ -633,8 +634,6 @@ if($g5_shop_install) {
     fwrite($f, "\$g5['g5_shop_order_data_table'] = G5_SHOP_TABLE_PREFIX.'order_data'; // 모바일 결제정보 임시저장 테이블\n");
     fwrite($f, "\$g5['g5_shop_inicis_log_table'] = G5_SHOP_TABLE_PREFIX.'inicis_log'; // 이니시스 모바일 계좌이체 로그 테이블\n");
 }
-
-fwrite($f, "?>");
 
 fclose($f);
 @chmod($file, G5_FILE_PERMISSION);

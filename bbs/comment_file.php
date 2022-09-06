@@ -48,10 +48,11 @@ if (empty($token) || empty($comment_token) || $comment_token != $token) {
 if (!is_dir(COMMENT_FILE_PATH)) {
     @mkdir(COMMENT_FILE_PATH);
     chmod(COMMENT_FILE_PATH, G5_DIR_PERMISSION);
+    create_comment_file_table();
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if ($w == 'a') {
+    if ($w == 'all') {
         if (empty($bo_table) || empty($wr_id)) {
             echo json_encode(array());
             header('401 Unauthorized', true, 401);
@@ -478,6 +479,7 @@ function comment_file_uploader($file)
             continue;
         }
 
+        $file['name'][$i] = str_replace(' ', '_', trim($file['name'][$i]));
         $file_name_pathinfo = pathinfo(get_safe_filename(strtolower($file['name'][$i])));
         $file_extension = $file_name_pathinfo['extension'];
 
@@ -604,4 +606,23 @@ function file_name_generator($file_name)
     shuffle($chars_array);
     $shuffle = implode('', $chars_array);
     return sha1(microtime()) . '_' . substr($shuffle, 0, 8) . '_' . replace_filename(get_safe_filename($file_name));
+}
+
+function create_comment_file_table()
+{
+    global $g5;
+    $create_table = "CREATE TABLE IF NOT EXISTS `{$g5['comment_file_table']}` (
+    `file_id` int(11) NOT NULL AUTO_INCREMENT,
+      `file_source_name` varchar(255) NOT NULL,
+      `file_name` varchar(255) NOT NULL,
+      `file_download_count` int(11) DEFAULT 0,
+      `comment_id` int(11) DEFAULT NULL,
+      `bo_table` varchar(11) DEFAULT NULL,
+      `is_delete` tinyint(4) DEFAULT 0,
+      `save_time` datetime NOT NULL,
+      PRIMARY KEY (`file_id`)
+    ) ENGINE=MyISAM DEFAULT CHARSET=utf8";
+
+    $create_table = get_db_create_replace($create_table);
+    sql_query($create_table, true);
 }
