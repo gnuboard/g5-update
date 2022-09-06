@@ -1476,19 +1476,19 @@ function forderform_check(f)
                 break;
             case "간편결제":
                 f.settle_method.value = "CARD";
-                tossPayments.CARD.flowMode = "DIRECT";
-                tossPayments.CARD.easyPay = "PAYCO";
-                /*
-                easyPay 설정 필요
-                토스페이	TOSSPAY
-                네이버페이	NAVERPAY
-                삼성페이	SAMSUNGPAY
-                엘페이	LPAY
-                카카오페이	KAKAOPAY
-                페이코	PAYCO
-                LG페이	LGPAY
-                SSG페이	SSG
-                */
+                tossParameter.CARD.flowMode = "DIRECT";
+                tossParameter.CARD.easyPay = "PAYCO";
+                /**
+                 * @todo easyPay 설정 필요
+                    토스페이	TOSSPAY
+                    네이버페이	NAVERPAY
+                    삼성페이	SAMSUNGPAY
+                    엘페이	LPAY
+                    카카오페이	KAKAOPAY
+                    페이코	PAYCO
+                    LG페이	LGPAY
+                    SSG페이	SSG
+                 */
                 break;
             default:
                 f.settle_method.value = "무통장";
