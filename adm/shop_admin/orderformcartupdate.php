@@ -271,6 +271,12 @@ if (in_array($_POST['ct_status'], $status_cancel)) {
                         $_REQUEST['PartialCancelCode'] = 0;
                         include G5_SHOP_PATH.'/kakaopay/kakaopay_cancel.php';
                         break;
+                    case 'toss':
+                        include_once G5_SHOP_PATH.'/settle_toss.inc.php';
+                        $paymentKey = $od['od_tno'];
+                        $cancel_msg = '쇼핑몰 운영자 승인 취소';
+                        include G5_SHOP_PATH.'/toss/tosspayments_cancel.php';
+                        break;
                     default:
                         include_once(G5_SHOP_PATH.'/settle_kcp.inc.php');
                         require_once(G5_SHOP_PATH.'/kcp/pp_ax_hub_lib.php');
