@@ -89,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($result) {
             while ($row = sql_fetch_array($result)) {
-                if ($row['wr_option'] === 'secret') {
+                if ($is_admin !== 'super' && $row['wr_option'] === 'secret') {
                     $ss_name = 'ss_secret_comment_' . $bo_table;
                     if (!get_session($ss_name)) {
                         continue;
@@ -156,7 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $end_point_url = run_replace('replace_url', $comment_file_url);
             $pathinfo = pathinfo($row['file_name']);
 
-            if ($row['wr_option'] === 'secret') {
+            if ($is_admin !== 'super' && $row['wr_option'] === 'secret') {
                 $ss_name = 'ss_secret_comment_' . $bo_table;
                 if (!get_session($ss_name)) {
                     $response['files'] = array();
