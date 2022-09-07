@@ -39,10 +39,10 @@ if (!$orderId) {
     alert("주문번호가 없습니다.");
 }
 
-// 주문 임시데이터 체크
+// 주문데이터 체크
 $orderInfo = sql_fetch("SELECT * FROM {$g5['g5_shop_order_table']} WHERE od_id = '{$orderId}' ");
 if (empty($orderInfo)) {
-    alert("임시 주문정보가 저장되지 않았습니다.");
+    alert("주문정보가 저장되지 않았습니다.");
 }
 
 /**

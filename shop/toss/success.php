@@ -37,93 +37,43 @@ if ((int)$request_amount !== (int)$total_amount) {
     alert("결제요청 금액이 일치하지 않습니다.");
 }
 
-/**
- * 결제 승인 API 호출
- */
-$url = 'https://api.tosspayments.com/v1/payments/' . $paymentKey;
+$params = array();
+$var_datas = array();
 
-$data = ['orderId' => $orderId, 'amount' => $amount];
-
-$credential = base64_encode($secretKey . ':');
-
-$curlHandle = curl_init($url);
-
-curl_setopt_array($curlHandle, [
-    CURLOPT_POST => TRUE,
-    CURLOPT_RETURNTRANSFER => TRUE,
-    CURLOPT_HTTPHEADER => [
-        'Authorization: Basic ' . $credential,
-        'Content-Type: application/json'
-    ],
-    CURLOPT_POSTFIELDS => json_encode($data)
-]);
-
-$response = curl_exec($curlHandle);
-
-$httpCode = curl_getinfo($curlHandle, CURLINFO_HTTP_CODE);
-$isSuccess = $httpCode == 200;
-$responseJson = json_decode($response);
-
-/**
- * 결제데이터 처리 및 결과 전송
- */
-if ($isSuccess) { 
-    // echo json_encode($responseJson, JSON_UNESCAPED_UNICODE);
-    // exit;
-
-    // 결제취소를 위한 paymentKey 저장
-    if (isset($request_paymentKey)) {
-        $tno = $request_paymentKey;
-    }
-    // 가상계좌 결제 시 callback 응답을 위한 secret값 저장
-    if ($responseJson->method == '가상계좌' && isset($responseJson->secret)) {
-        $od_app_no = $responseJson->secret;
-    }
-    // 현금영수증 발급 체크
-    if (isset($responseJson->receipt->url)) {
-        
-    }
-
-    $params = array();
-    $var_datas = array();
-
-    foreach ($order_data as $key => $value) {
-        if (is_array($value)) {
-            foreach ($value as $k => $v) {
-                $_POST[$key][$k] = $params[$key][$k] = clean_xss_tags(strip_tags($v));
-            }
+foreach ($order_data as $key => $value) {
+    if (is_array($value)) {
+        foreach ($value as $k => $v) {
+            $_POST[$key][$k] = $params[$key][$k] = clean_xss_tags(strip_tags($v));
+        }
+    } else {
+        if (in_array($key, array('od_memo'))) {
+            $_POST[$key] = $params[$key] = clean_xss_tags(strip_tags($value), 0, 0, 0, 0);
         } else {
-            if (in_array($key, array('od_memo'))) {
-                $_POST[$key] = $params[$key] = clean_xss_tags(strip_tags($value), 0, 0, 0, 0);
-            } else {
-                $_POST[$key] = $params[$key] = clean_xss_tags(strip_tags($value));
-            }
+            $_POST[$key] = $params[$key] = clean_xss_tags(strip_tags($value));
+        }
+    }
+}
+
+// 개인결제
+if (isset($order_data['pp_id']) && $order_data['pp_id']) {
+    foreach ($params as $key => $value){
+        if (in_array($key, array('pp_name', 'pp_email', 'pp_hp', 'pp_settle_case'))) {
+            $var_datas[$key] = $value;
+            $$key = $value;
+        }
+    }
+    include_once(G5_SHOP_PATH.'/personalpayformupdate.php');
+
+} else {    //상점주문
+    foreach ($params as $key => $value){
+        if (in_array($key, array('od_price', 'od_name', 'od_tel', 'od_hp', 'od_email', 'od_memo', 'od_settle_case', 'max_temp_point', 'od_temp_point', 'od_bank_account', 'od_deposit_name', 'od_test', 'od_ip', 'od_zip', 'od_addr1', 'od_addr2', 'od_addr3', 'od_addr_jibeon', 'od_b_name', 'od_b_tel', 'od_b_hp', 'od_b_addr1', 'od_b_addr2', 'od_b_addr3', 'od_b_addr_jibeon', 'od_b_zip', 'od_send_cost', 'od_send_cost2', 'od_hope_date'))) {
+            $var_datas[$key] = $value;
+            $$key = $value;
         }
     }
 
-    // 개인결제
-    if (isset($order_data['pp_id']) && $order_data['pp_id']) {
-        foreach ($params as $key => $value){
-            if (in_array($key, array('pp_name', 'pp_email', 'pp_hp', 'pp_settle_case'))) {
-                $var_datas[$key] = $value;
-                $$key = $value;
-            }
-        }
-        include_once(G5_SHOP_PATH.'/personalpayformupdate.php');
+    $od_send_cost = (int) $_POST['od_send_cost'];
+    $od_send_cost2 = (int) $_POST['od_send_cost2'];
 
-    } else {    //상점주문
-        foreach ($params as $key => $value){
-            if (in_array($key, array('od_price', 'od_name', 'od_tel', 'od_hp', 'od_email', 'od_memo', 'od_settle_case', 'max_temp_point', 'od_temp_point', 'od_bank_account', 'od_deposit_name', 'od_test', 'od_ip', 'od_zip', 'od_addr1', 'od_addr2', 'od_addr3', 'od_addr_jibeon', 'od_b_name', 'od_b_tel', 'od_b_hp', 'od_b_addr1', 'od_b_addr2', 'od_b_addr3', 'od_b_addr_jibeon', 'od_b_zip', 'od_send_cost', 'od_send_cost2', 'od_hope_date'))) {
-                $var_datas[$key] = $value;
-                $$key = $value;
-            }
-        }
-
-        $od_send_cost = (int) $_POST['od_send_cost'];
-        $od_send_cost2 = (int) $_POST['od_send_cost2'];
-
-        include_once(G5_SHOP_PATH . '/orderformupdate.php');
-    }
-} else {
-    alert("[{$responseJson->code}] " . $responseJson->message );
+    include_once(G5_SHOP_PATH . '/orderformupdate.php');
 }
