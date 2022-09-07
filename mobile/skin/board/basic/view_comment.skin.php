@@ -115,6 +115,7 @@ var char_max = parseInt(<?php echo $comment_max ?>); // 최대
         <input type="hidden" name="spt" value="<?php echo $spt ?>">
         <input type="hidden" name="page" value="<?php echo $page ?>">
         <input type="hidden" name="is_good" value="">
+        <input type="hidden" name="upload_file_list" value="">
 
         <?php if ($comment_min || $comment_max) { ?><strong id="char_cnt"><span id="char_count"></span>글자</strong><?php } ?>
         <div id="wr_content" class="comment_content" contenteditable='true' name="wr_content"  title="내용" placeholder="댓글내용을 입력해주세요"
@@ -165,8 +166,7 @@ var char_max = parseInt(<?php echo $comment_max ?>); // 최대
     <script>
     var save_before = '';
     var save_html = document.getElementById('bo_vc_w').innerHTML;
-
-    document.getElementById('wr_content').addEventListener('keypress', add_paragraph)
+    const max_file_count = <?php echo $board['bo_cf_count']; ?>;
 
     function good_and_write()
     {
@@ -188,6 +188,7 @@ var char_max = parseInt(<?php echo $comment_max ?>); // 최대
         input_wr_content.value = wr_content;
         $(f).prepend(input_wr_content);
         f.is_good.value = 0;
+        f.upload_file_list.value = check_upload_file_list();
 
         /*
         var s;
@@ -284,20 +285,23 @@ var char_max = parseInt(<?php echo $comment_max ?>); // 최대
         respond = document.getElementById(form_el);
 
         // 댓글 아이디가 넘어오면 답변, 수정
-        if (comment_id)
-        {
-            if (work == 'c')
+        if (comment_id) {
+            if (work == 'c') {
                 el_id = 'reply_' + comment_id;
-            else
-                el_id = 'edit_' + comment_id;
-        }
-        else
-            el_id = 'bo_vc_w';
+                let file_uploader = document.getElementById('fcomment_file')
+                file_uploader.reset();
+                file_uploader.querySelector('.upload-file-list').innerHTML = '';
+                document.getElementById(el_id).appendChild(file_uploader);
 
-        if (save_before != el_id)
-        {
-            if (save_before)
-            {
+            } else {
+                el_id = 'edit_' + comment_id;
+            }
+        } else {
+            el_id = 'bo_vc_w';
+        }
+
+        if (save_before != el_id) {
+            if (save_before) {
                 document.getElementById(save_before).style.display = 'none';
             }
 
@@ -329,8 +333,9 @@ var char_max = parseInt(<?php echo $comment_max ?>); // 최대
             document.getElementById('comment_id').value = comment_id;
             document.getElementById('w').value = work;
 
-            if(save_before)
+            if(save_before) {
                 $("#captcha_reload").trigger("click");
+            }
 
             save_before = el_id;
         }
@@ -363,16 +368,20 @@ var char_max = parseInt(<?php echo $comment_max ?>); // 최대
             error: function (e) {
                 let res = JSON.parse(e.responseText)
                 let error_files = res.error_file_list;
-                if(typeof res.allow_file_size){
+                if(res.allow_file_size !== undefined){
                     alert(res.msg + error_files + ' ' + res.allow_file_size + ' 이하로 확인해 주세요')
+                } else {
+                    alert(res.msg)
                 }
-                alert(res.msg + error_files)
             }
         });
 
     }
 
     function view_image(data) {
+        if(data['files'] === undefined){
+            return;
+        }
         let image = ''
         let comment_content = document.querySelector('#wr_content');
         let image_temp_wrapper = document.createDocumentFragment();
@@ -427,8 +436,14 @@ var char_max = parseInt(<?php echo $comment_max ?>); // 최대
             file_name_span.className = 'form_file';
             file_name_span.innerText = file_data['original_name'];
 
+            let saved_file_name = document.createElement('input');
+            saved_file_name.type = 'hidden';
+            saved_file_name.className = 'save_file_name'
+            saved_file_name.value = file_data['file_name'];
+
             icon_tag.appendChild(icon_tag_span);
             files_div.appendChild(icon_tag);
+            files_div.appendChild(saved_file_name);
             files_div.appendChild(file_name_span);
 
             let delete_file_button = document.createElement('input');
@@ -442,6 +457,7 @@ var char_max = parseInt(<?php echo $comment_max ?>); // 최대
             files_div.appendChild(delete_file_button);
             template.appendChild(files_div)
         }
+
         return template;
     }
 
@@ -505,7 +521,14 @@ var char_max = parseInt(<?php echo $comment_max ?>); // 최대
     function add_comment_file_event() {
         document.querySelector('#btn_comment_file_send').addEventListener('click', function (e) {
             e.preventDefault();
-            comment_file_submit();
+            let upload_file_list = check_upload_file_list();
+            let form = document.querySelector('#fcomment_file');
+            let file_tag = form.querySelector('input[name="comment_file[]"]');
+            if((upload_file_list.length + file_tag.files.length) > max_file_count){
+                alert('최대 ' + max_file_count + '개 업로드 가능합니다.');
+            } else {
+                comment_file_submit();
+            }
         });
     }
 
@@ -569,15 +592,14 @@ var char_max = parseInt(<?php echo $comment_max ?>); // 최대
                 let file_list = create_comment_file_list(result)
                 let comment_id_selector = '#c_' + comment_id + ' > .upload-file-list';
                 document.querySelector(comment_id_selector).innerHTML = '';
-                let upload_file_section = document.querySelector('#fcomment_file .upload-file-list');
-                upload_file_section.appendChild(file_list);
+                document.querySelector('#fcomment_file .upload-file-list').appendChild(file_list);
             }
         })
     }
 
     function load_comment_file_list(bo_table, wr_id) {
         let data = {
-            w: 'a',
+            w: 'all',
             bo_table: bo_table,
             wr_id: wr_id,
             token: get_comment_token()
@@ -640,6 +662,15 @@ var char_max = parseInt(<?php echo $comment_max ?>); // 최대
         }
     }
 
+    function check_upload_file_list(){
+        let upload_file_nodes = document.querySelectorAll('.save_file_name')
+        let file_list = [];
+        for(let i=0; i < upload_file_nodes.length;i++){
+            file_list[i] = upload_file_nodes[i].value;
+        }
+        return file_list;
+    }
+
     comment_box('', 'c'); // 댓글 입력폼이 보이도록 처리하기위해서 추가 (root님)
 
     <?php if($board['bo_use_sns'] && ($config['cf_facebook_appid'] || $config['cf_twitter_key'])) { ?>
@@ -662,7 +693,9 @@ var char_max = parseInt(<?php echo $comment_max ?>); // 최대
             $("#bo_vc").toggle();
         });
         add_comment_file_event();
-        load_comment_file_list(g5_bo_table, <?= $wr_id?> );
+        load_comment_file_list(g5_bo_table, <?php echo $wr_id?> );
+
+        document.getElementById('wr_content').addEventListener('keypress', add_paragraph);
     });
     </script>
     <?php }
