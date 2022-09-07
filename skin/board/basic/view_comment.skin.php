@@ -691,6 +691,44 @@ jQuery(function($) {
     load_comment_file_list(g5_bo_table, <?php echo $wr_id?> );
 
     document.querySelector('#wr_content').addEventListener('keypress', add_paragraph);
+    load_comment_file_list(g5_bo_table, <?= $wr_id?> );
+    document.querySelector('#wr_content').addEventListener("paste", image_paste_uploader);
+
+    function image_paste_uploader(event) {
+        let items = (event.clipboardData || event.originalEvent.clipboardData).items;
+        if (items[0] == undefined) {
+            event.preventDefault();
+            return;
+        }
+        if(items[0].type.includes('image')){
+            event.preventDefault();
+        }
+
+        let blob = items[0].getAsFile();
+        if (blob == null) {
+            if(items[1] == undefined){
+                return;
+            }
+            if(items[1].type.includes('image')){
+                event.preventDefault();
+                blob = items[1].getAsFile();
+            }
+        }
+
+        let blobs = [blob];
+        if(blobs[0] == null){
+            return;
+        }
+
+        let image_file = new File(blobs, Date.now().toString() + '.png');
+        let file_data_transfer = new DataTransfer();
+
+        file_data_transfer.items.add(image_file);
+        let comment_file_form = document.querySelector('#fcomment_file');
+        comment_file_form.querySelector("input[name='comment_file[]']").files = file_data_transfer.files;
+        comment_file_submit();
+    }
+
 });
 
     $(function() {

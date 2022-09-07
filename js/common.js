@@ -562,6 +562,26 @@ function set_comment_token(f)
     });
 }
 
+/**
+ * 댓글 토큰
+ * @returns string
+ */
+function get_comment_token()
+{
+    let result = '';
+    $.ajax({
+        url: g5_bbs_url + "/ajax.comment_token.php",
+        type: "GET",
+        dataType: "json",
+        async: false,
+        cache: false,
+        success: function (data) {
+            result = data.token;
+        }
+    });
+    return result;
+}
+
 $(function(){
     $(".win_point").click(function() {
         win_point(this.href);
