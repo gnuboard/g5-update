@@ -56,28 +56,53 @@ if ($secret == $orderInfo['od_app_no']) {
  * 결제데이터 처리 및 결과 전송
  */
 if ($isSuccess) {
+    // 정상처리
+    if ($status == "DONE") {
+        $ct_status = '입금';
 
-    $ct_status = '입금';
+        // 히스토리에 남김 (작업|아이디|시간|IP|나머지 자료)
+        $now = G5_TIME_YMDHIS;
+        $ct_history="\n$ct_status|virtualAccountCallback|$now|$REMOTE_ADDR";
 
-    // 히스토리에 남김
-    // 히스토리에 남길때는 작업|아이디|시간|IP|그리고 나머지 자료
-    $now = G5_TIME_YMDHIS;
-    $ct_history="\n$ct_status|virtualAccountCallback|$now|$REMOTE_ADDR";
+        $sql = "UPDATE {$g5['g5_shop_cart_table']}
+                    SET ct_status     = '$ct_status',
+                        ct_history    = CONCAT(ct_history, '$ct_history')
+                    WHERE od_id = '$orderId'";
+        sql_query($sql);
 
-    $sql = "UPDATE {$g5['g5_shop_cart_table']}
-                SET ct_status     = '$ct_status',
-                    ct_history    = CONCAT(ct_history, '$ct_history')
+        $price = (int)$orderInfo['od_misu'];
+        $sql = "UPDATE {$g5['g5_shop_order_table']}
+                    SET 
+                        od_status = '{$ct_status}',
+                        od_misu = 0,
+                        od_receipt_price = {$price},
+                        od_receipt_time = now()
                 WHERE od_id = '$orderId'";
-    sql_query($sql);
+        sql_query($sql);
 
-    $price = (int)$orderInfo['od_misu'];
-    $sql = "UPDATE {$g5['g5_shop_order_table']}
-                SET 
-                    od_status = '{$ct_status}',
-                    od_misu = 0,
-                    od_receipt_price = {$price},
-                    od_receipt_time = now()
-            WHERE od_id = '$orderId'";
+    // 고객 계좌 송금 한도가 초과되었거나 네트워크 이슈 등으로 입금이 취소되어 요청이 재전송 된 경우
+    } else if ($status == "WAITING_FOR_DEPOSIT") {
+        $ct_status = '주문';
 
-    sql_query($sql);
+        // 히스토리에 남김 (작업|아이디|시간|IP|나머지 자료)
+        $now = G5_TIME_YMDHIS;
+        $ct_history="\n$ct_status|virtualAccountCallback|$now|$REMOTE_ADDR";
+
+        $sql = "UPDATE {$g5['g5_shop_cart_table']}
+                    SET ct_status     = '$ct_status',
+                        ct_history    = CONCAT(ct_history, '$ct_history')
+                    WHERE od_id = '$orderId'";
+        sql_query($sql);
+
+
+        $price = (int)$orderInfo['od_receipt_price'];
+        $sql = "UPDATE {$g5['g5_shop_order_table']}
+                    SET 
+                        od_status = '{$ct_status}',
+                        od_misu = {$price},
+                        od_receipt_price = 0,
+                        od_receipt_time = '0000-00-00 00:00:00'
+                WHERE od_id = '$orderId'";
+        sql_query($sql);
+    }
 }
