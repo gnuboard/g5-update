@@ -524,6 +524,9 @@ var char_max = parseInt(<?php echo $comment_max ?>); // 최대
             let upload_file_list = check_upload_file_list();
             let form = document.querySelector('#fcomment_file');
             let file_tag = form.querySelector('input[name="comment_file[]"]');
+            if(file_tag.files.length == 0){
+                return;
+            }
             if((upload_file_list.length + file_tag.files.length) > max_file_count){
                 alert('최대 ' + max_file_count + '개 업로드 가능합니다.');
             } else {

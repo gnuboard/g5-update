@@ -181,7 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($w === 'u') {//upload
 
-        if (empty($bo_table)) {
+        if (empty($bo_table) || (count($_FILES['comment_file']['name']) == 0)) {
             $response = array(
                 'is_error' => true,
                 'msg' => '잘못된 요청입니다.'
