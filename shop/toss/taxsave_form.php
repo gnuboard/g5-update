@@ -4,7 +4,7 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
 
 <script>
     // 현금영수증 MAIN FUNC
-    function  jsf__pay_cash( form )
+    function jsf__pay_cash( form )
     {
         jsf__show_progress(true);
 
@@ -18,7 +18,7 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
     }
 
     // 진행 바
-    function  jsf__show_progress( show )
+    function jsf__show_progress( show )
     {
         if ( show == true )
         {
@@ -33,47 +33,47 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
     }
 
     // 포맷 체크
-    function  jsf__chk_cash( form )
+    function jsf__chk_cash( form )
     {
-        if (  form.tr_code[0].checked )
+        if (  form.type[0].checked )
         {
-            if ( form.id_info.value.length != 10 &&
-                 form.id_info.value.length != 11 &&
-                 form.id_info.value.length != 13 )
+            if ( form.customerIdentityNumber.value.length != 10 &&
+                 form.customerIdentityNumber.value.length != 11 &&
+                 form.customerIdentityNumber.value.length != 13 )
             {
                 alert("주민번호 또는 휴대폰번호를 정확히 입력해 주시기 바랍니다.");
-                form.id_info.select();
-                form.id_info.focus();
+                form.customerIdentityNumber.select();
+                form.customerIdentityNumber.focus();
                 return false;
             }
         }
-        else if (  form.tr_code[1].checked )
+        else if (  form.type[1].checked )
         {
-            if ( form.id_info.value.length != 10 )
+            if ( form.customerIdentityNumber.value.length != 10 )
             {
                 alert("사업자번호를 정확히 입력해 주시기 바랍니다.");
-                form.id_info.select();
-                form.id_info.focus();
+                form.customerIdentityNumber.select();
+                form.customerIdentityNumber.focus();
                 return false;
             }
         }
         return true;
     }
 
-    function  jsf__chk_tr_code( form )
+    function jsf__chk_tr_code( form )
     {
-        var span_tr_code_0 = document.getElementById( "span_tr_code_0" );
-        var span_tr_code_1 = document.getElementById( "span_tr_code_1" );
+        var span_type_1 = document.getElementById( "span_type_1" );
+        var span_type_2 = document.getElementById( "span_type_2" );
 
-        if ( form.tr_code[0].checked )
+        if ( form.type[0].checked )
         {
-            span_tr_code_0.style.display = "block";
-            span_tr_code_1.style.display = "none";
+            span_type_1.style.display = "block";
+            span_type_2.style.display = "none";
         }
-        else if (form.tr_code[1].checked )
+        else if (form.type[1].checked )
         {
-            span_tr_code_0.style.display = "none";
-            span_tr_code_1.style.display = "block";
+            span_type_1.style.display = "none";
+            span_type_2.style.display = "block";
         }
     }
 
@@ -120,9 +120,11 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
     <section>
         <h2>현금영수증 발급 정보</h2>
 
-        <form method="post" id="LGD_PAYINFO" action="<?php echo G5_SHOP_URL; ?>/lg/taxsave_result.php">
-        <input type="hidden" name="tx"        value="<?php echo $tx; ?>">
-        <input type="hidden" name="od_id" value="<?php echo $od_id; ?>">
+        <form method="post" id="toss_pay_info" action="<?php echo G5_SHOP_URL; ?>/toss/taxsave_result.php">
+        <input type="hidden" name="tx"    value="<?php echo $tx; ?>">
+        <input type="hidden" name="orderId" value="<?php echo $od_id; ?>">
+        <input type="hidden" name="amount" value="<?php echo $amt_tot; ?>">
+        
         <div class="tbl_head01 tbl_wrap">
             <table>
             <colgroup>
@@ -137,21 +139,21 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
             <tr>
                 <th scope="row">발행 용도</th>
                 <td>
-                    <input type="radio" name="tr_code" value="1" id="tr_code1" onClick="jsf__chk_tr_code( this.form )" checked>
-                    <label for="tr_code1">소득공제용</label>
-                    <input type="radio" name="tr_code" value="2" id="tr_code2" onClick="jsf__chk_tr_code( this.form )">
-                    <label for="tr_code2">지출증빙용</label>
+                    <input type="radio" name="type" value="소득공제" id="type1" onClick="jsf__chk_tr_code( this.form )" checked>
+                    <label for="type1">소득공제용</label>
+                    <input type="radio" name="type" value="지출증빙" id="type2" onClick="jsf__chk_tr_code( this.form )">
+                    <label for="type2">지출증빙용</label>
                 </td>
             </tr>
             <tr>
                 <th scope="row">
-                    <label for="id_info">
-                        <span id="span_tr_code_0" style="display:inline">주민(휴대폰)번호</span>
-                        <span id="span_tr_code_1" style="display:none">사업자번호</span>
+                    <label for="customerIdentityNumber">
+                        <span id="span_type_1" style="display:inline">주민(휴대폰)번호</span>
+                        <span id="span_type_2" style="display:none">사업자번호</span>
                     </label>
                 </th>
                 <td>
-                    <input type="text" name="id_info" id="id_info" class="frm_input" size="16" maxlength="13"> ("-" 생략)
+                    <input type="text" name="customerIdentityNumber" id="customerIdentityNumber" class="frm_input" size="16" maxlength="13"> ("-" 생략)
                 </td>
             </tr>
             <tr>

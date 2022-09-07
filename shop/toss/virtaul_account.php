@@ -75,7 +75,8 @@ if ($isSuccess) {
                 SET 
                     od_status = '{$ct_status}',
                     od_misu = 0,
-                    od_receipt_price = {$price}
+                    od_receipt_price = {$price},
+                    od_receipt_time = now()
             WHERE od_id = '$orderId'";
 
     sql_query($sql);

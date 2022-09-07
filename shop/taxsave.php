@@ -50,7 +50,7 @@ if($tx == 'personalpay') {
     $amt_svc = 0;
 }
 
-$trad_time = date("YmdHis");
+$trad_time = date("Y년 m월 d일 H:i:s");
 
 // 신청폼
 if(!$dir)
