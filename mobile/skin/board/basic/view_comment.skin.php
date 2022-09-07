@@ -81,7 +81,7 @@ var char_max = parseInt(<?php echo $comment_max ?>); // 최대
                             }
                             $c_wr_content = $cmt['wr_content'];
                         }
-                        
+
                     }
                 ?>
                 <?php } ?>
@@ -121,7 +121,7 @@ var char_max = parseInt(<?php echo $comment_max ?>); // 최대
         <div id="wr_content" class="comment_content" contenteditable='true' name="wr_content"  title="내용" placeholder="댓글내용을 입력해주세요"
         <?php if ($comment_min || $comment_max) { ?>onkeyup="check_byte('wr_content', 'char_count');"<?php } ?> ><?php echo $c_wr_content; ?></div>
         <?php if ($comment_min || $comment_max) { ?><script> check_byte('wr_content', 'char_count'); </script><?php } ?>
-                
+
         <div class="bo_vc_w_wr">
             <div class="bo_vc_w_info">
                 <?php if ($is_guest) { ?>
@@ -590,7 +590,7 @@ var char_max = parseInt(<?php echo $comment_max ?>); // 최대
             success: function (data) {
                 let result = JSON.parse(data)
                 let file_list = create_comment_file_list(result)
-                let comment_id_selector = '#c_' + comment_id + ' > .upload-file-list';
+                let comment_id_selector = '#c_' + comment_id + '  .upload-file-list';
                 document.querySelector(comment_id_selector).innerHTML = '';
                 document.querySelector('#fcomment_file .upload-file-list').appendChild(file_list);
             }
@@ -682,11 +682,11 @@ var char_max = parseInt(<?php echo $comment_max ?>); // 최대
                 save_html = document.getElementById('bo_vc_w').innerHTML;
             }
         );
-           
+
     });
     <?php } ?>
 
-    $(function() {            
+    $(function() {
         //댓글열기
         $(".cmt_btn").click(function(){
             $(this).toggleClass("cmt_btn_op");
@@ -696,6 +696,42 @@ var char_max = parseInt(<?php echo $comment_max ?>); // 최대
         load_comment_file_list(g5_bo_table, <?php echo $wr_id?> );
 
         document.getElementById('wr_content').addEventListener('keypress', add_paragraph);
+        document.querySelector('#wr_content').addEventListener("paste", image_paste_uploader);
+
+        function image_paste_uploader(event) {
+            let items = (event.clipboardData || event.originalEvent.clipboardData).items;
+            if (items[0] == undefined) {
+                event.preventDefault();
+                return;
+            }
+            if(items[0].type.includes('image')){
+                event.preventDefault();
+            }
+
+            let blob = items[0].getAsFile();
+            if (blob == null) {
+                if(items[1] == undefined){
+                    return;
+                }
+                if(items[1].type.includes('image')){
+                    event.preventDefault();
+                    blob = items[1].getAsFile();
+                }
+            }
+
+            let blobs = [blob];
+            if(blobs[0] == null){
+                return;
+            }
+
+            let image_file = new File(blobs, Date.now().toString() + '.png');
+            let file_data_transfer = new DataTransfer();
+
+            file_data_transfer.items.add(image_file);
+            let comment_file_form = document.querySelector('#fcomment_file');
+            comment_file_form.querySelector("input[name='comment_file[]']").files = file_data_transfer.files;
+            comment_file_submit();
+        }
     });
     </script>
     <?php }

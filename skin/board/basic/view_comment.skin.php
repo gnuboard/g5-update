@@ -691,7 +691,6 @@ jQuery(function($) {
     load_comment_file_list(g5_bo_table, <?php echo $wr_id?> );
 
     document.querySelector('#wr_content').addEventListener('keypress', add_paragraph);
-    load_comment_file_list(g5_bo_table, <?= $wr_id?> );
     document.querySelector('#wr_content').addEventListener("paste", image_paste_uploader);
 
     function image_paste_uploader(event) {

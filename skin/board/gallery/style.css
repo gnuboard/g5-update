@@ -297,7 +297,7 @@ box-shadow:1px 1px 5px 0px hsl(232, 36%, 96%)}
 #bo_vc article .profile_img img {border-radius:50%}
 #bo_vc article .pf_img {float:left;margin-right:10px}
 #bo_vc article .pf_img img {border-radius:50%;width:50px;height:50px}
-#bo_vc article .cm_wrap {float:left;max-width:870px;width:90%}
+#bo_vc article .cm_wrap {max-width:870px;width:90%}
 #bo_vc header {position:relative;width:100%}
 #bo_vc header:after {display:block;visibility:hidden;clear:both;content:""}
 #bo_vc header .profile_img {display:none}
@@ -349,6 +349,30 @@ box-shadow:inset 0 1px 2px rgba(0, 0, 0, 0.1)}
 #bo_vc_sns .sns_li_off {background:#bbb}
 #bo_vc_sns a {display:inline-block;padding:0 15px 0 5px}
 #bo_vc_sns input {margin:0 5px 0 0}
+
+/* 댓글 입력창 */
+.comment_content {display:inline-block;width:100%;height:180px;padding:5px;border:1px solid #d0d3db;background:#fff;color:#000;overflow-y: scroll;resize: vertical}
+.comment_content img {max-width: 100%; resize: both}
+#bo_vc .cmt_contents img {max-width: 100%}
+
+/* 댓글 파일 수정 */
+.upload-file-list .file_wr {position:relative;border:1px solid #ccc;background:#fff;color:#000;vertical-align:middle;border-radius:3px;height:40px;margin:15px 0}
+.upload-file-list .btn_delete_file {position: absolute;right: 20px;border:1px solid #ccc;background:#fff;color:#000;border-radius:3px;padding:0 10px;height:30px;margin-top: 5px;cursor:pointer}
+.upload-file-list.write_div {margin:10px 5px;position:relative;display: flex;align-items: center;}
+.upload-file-list .lb_icon {margin-left: 15px;border-radius:3px 0 0 3px;height:38px;line-height:38px;font-size:1.2em;text-align:center;color:#b2b2b2}
+.upload-file-list .form_file {padding-left: 10px;}
+.upload-file-list #comment_img { display:block;position:relative; max-width: 100%; }
+
+/* 댓글 파일 출력 */
+.upload-file-list i {color: #b2b2b2;font-size: 2.35em;margin-right: 20px;}
+.upload-file-list .file-info-wrapper {display: inline-block;}
+.upload-file-list li {padding: 15px;position: relative;margin: 10px 0;border: 1px solid #dfdfdf;border-radius: 5px;}
+.upload-file-list .file-info-wrapper span {display: block;color: #b2b2b2;font-size: 0.92em;}
+.upload-file-list .file-info-wrapper a {cursor: pointer}
+.upload-file-list li:hover {border-color:#bed4f4;color:#bed4f4}
+.upload-file-list li:hover a  {color:#3a8afd}
+.upload-file-list li:hover span  {color:#3a8afd}
+.upload-file-list .file-info-wrapper:hover {color:#99c2fc}
 
 /*글쓰기*/
 #bo_w .bo_v_option li {display:inline-block;float:left;text-align:left;margin:0 5px 0 0}

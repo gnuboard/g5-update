@@ -233,7 +233,7 @@
 #bo_vc article {}
 #bo_vc article .comment_inner{margin:15px 0 0;padding:15px;background:#fff;border-bottom:1px solid #e4e4ec}
 #bo_vc article h2 {position:absolute;font-size:0;text-indent:-9999em;line-height:0;overflow:hidden}
-#bo_vc header {position:relative;padding:0;line-height:20px;padding-right:18px}
+#bo_vc header {position:relative;padding:0;line-height:20px;}
 #bo_vc .profile_img {vertical-align:text-bottom}
 #bo_vc .profile_img img {width:23px;height:23px;border-radius:50%}
 #bo_vc header .bo_vl_opt {position:absolute;top:-5px;right:-8px}
@@ -316,7 +316,6 @@
 /* 댓글 파일 수정 */
 .upload-file-list .file_wr {position:relative;border:1px solid #ccc;background:#fff;color:#000;vertical-align:middle;border-radius:3px;height:40px;margin:15px 0}
 .upload-file-list .btn_delete_file {position: absolute;right: 20px;border:1px solid #ccc;background:#fff;color:#000;border-radius:3px;padding:0 10px;height:30px;margin-top: 5px;cursor:pointer}
-.upload-file-list .btn_download_file {position: absolute;right: 20px;border:1px solid #ccc;background:#fff;color:#000;border-radius:3px;padding:0 10px;height:30px;margin-top: 5px;cursor:pointer}
 .upload-file-list.write_div {margin:10px 5px;position:relative;display: flex;align-items: center;}
 .upload-file-list .lb_icon {margin-left: 15px;border-radius:3px 0 0 3px;height:38px;line-height:38px;font-size:1.2em;text-align:center;color:#b2b2b2}
 .upload-file-list .form_file {padding-left: 10px;}
@@ -324,10 +323,9 @@
 
 /* 댓글 파일 출력 */
 .upload-file-list i {color: #b2b2b2;font-size: 2.35em;margin-right: 20px;}
-.upload-file-list .file-info-wrapper {display: inline-block;}
 .upload-file-list li {padding: 15px;position: relative;margin: 10px 0;border: 1px solid #dfdfdf;border-radius: 5px;}
 .upload-file-list .file-info-wrapper span {display: block;color: #b2b2b2;font-size: 0.92em;}
-.upload-file-list .file-info-wrapper a {cursor: pointer}
+.upload-file-list .file-info-wrapper a {cursor: pointer;display: block;overflow: hidden}
 .upload-file-list li:hover {border-color:#bed4f4;color:#bed4f4}
 .upload-file-list li:hover a  {color:#3a8afd}
 .upload-file-list li:hover span  {color:#3a8afd}
