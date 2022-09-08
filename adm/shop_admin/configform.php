@@ -756,7 +756,8 @@ if(!$default['de_kakaopay_cancelpwd']){
                 <?php echo help('쇼핑몰에서 사용할 결제대행사를 선택합니다.'); ?>
                 <ul class="de_pg_tab">
                     <li class="<?php if($default['de_pg_service'] == 'kcp') echo 'tab-current'; ?>"><a href="#kcp_info_anchor" data-value="kcp" title="NHN KCP 선택하기" >NHN KCP</a></li>
-                    <li class="<?php if($default['de_pg_service'] == 'lg') echo 'tab-current'; ?>"><a href="#lg_info_anchor" data-value="lg" title="토스페이먼츠 선택하기">토스페이먼츠</a></li>
+                    <li class="<?php if($default['de_pg_service'] == 'lg') echo 'tab-current'; ?>"><a href="#lg_info_anchor" data-value="lg" title="토스페이먼츠 선택하기">토스페이먼츠(구)</a></li>
+                    <li class="<?php if($default['de_pg_service'] == 'toss') echo 'tab-current'; ?>"><a href="#toss_info_anchor" data-value="toss" title="토스페이먼츠 선택하기">토스페이먼츠(신)</a></li>
                     <li class="<?php if($default['de_pg_service'] == 'inicis') echo 'tab-current'; ?>"><a href="#inicis_info_anchor" data-value="inicis" title="KG이니시스 선택하기">KG이니시스</a></li>
                 </ul>
             </td>
@@ -816,6 +817,23 @@ if(!$default['de_kakaopay_cancelpwd']){
             <td>
                 <?php echo help("토스페이먼츠 상점MertKey는 상점관리자 -> 계약정보 -> 상점정보관리에서 확인하실 수 있습니다.\n예) 95160cce09854ef44d2edb2bfb05f9f3\n<a href=\"".G5_ADMIN_URL."/config_form.php#anc_cf_cert\">기본환경설정 &gt; 본인확인</a> 설정의 토스페이먼츠 MERT KEY와 동일합니다."); ?>
                 <input type="text" name="cf_lg_mert_key" value="<?php echo get_sanitize_input($config['cf_lg_mert_key']); ?>" id="cf_lg_mert_key" class="frm_input " size="36" maxlength="50">
+            </td>
+        </tr>
+        <tr class="pg_info_fld toss_info_fld" id="toss_info_anchor">
+            <th scope="row">
+                <label for="cf_toss_client_key">토스페이먼츠(신) Client Key</label><br>
+                <a href="http://sir.kr/main/service/lg_pg.php" target="_blank" id="scf_lgreg" class="lg_btn">토스페이먼츠 신청하기</a>
+            </th>
+            <td>
+                <?php echo help("토스페이먼츠에서 받은 클라이언트 키를 입력하세요.\n상점관리자 -> API키 -> 클라이언트 키\n"); ?>
+                <input type="text" name="cf_toss_client_key" value="<?php echo get_sanitize_input($config['cf_toss_client_key']); ?>" id="cf_toss_client_key" class="frm_input code_input" size="50" maxlength="50">
+            </td>
+        </tr>
+        <tr class="pg_info_fld toss_info_fld">
+            <th scope="row"><label for="cf_toss_secret_key">토스페이먼츠(신) Secret Key</label></th>
+            <td>
+                <?php echo help("토스페이먼츠에서 받은 시크릿 키를 입력하세요.\n상점관리자 -> API키 -> 시크릿 키\n"); ?>
+                <input type="text" name="cf_toss_secret_key" value="<?php echo get_sanitize_input($config['cf_toss_secret_key']); ?>" id="cf_toss_secret_key" class="frm_input code_input" size="50" maxlength="50">
             </td>
         </tr>
         <tr class="pg_info_fld inicis_info_fld" id="inicis_info_anchor">

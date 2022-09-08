@@ -9,8 +9,8 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
  * $clientKey = test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq
  * $secretKey = test_sk_zXLkKEypNArWmo50nX3lmeaxYG5R
  */
-$clientKey = 'test_ck_k6bJXmgo28ew6ZZP5B6VLAnGKWx4';
-$secretKey = 'test_sk_Lex6BJGQOVDEYRX9A4QrW4w2zNbg';
+$clientKey = $config['cf_toss_client_key'];
+$secretKey = $config['cf_toss_secret_key'];
 
 /**
  * URL
@@ -81,7 +81,7 @@ $BANK_CODE_KR = array(
 <script>
     var tossParameter = {
         common : {
-            clientKey : '<?php echo ($default['de_card_test'] ? $clientKey : ''); ?>', 
+            clientKey : '<?php echo ($default['de_card_test'] ? $clientKey : 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq'); ?>', 
 
             /**
              * 결제가 성공하고 나면 리다이렉트(Redirect)되는 URL입니다.
@@ -251,13 +251,15 @@ $BANK_CODE_KR = array(
              * 
              * @var object
              */
-            // escrowProducts : {
+            <?php if ($default['de_escrow_use']) { ?>
+            // escrowProducts : [{
             //     id : "",            // 상품의 ID입니다. 이 값은 유니크해야 합니다.
             //     name : "",          // 상품 이름입니다
             //     code : "",          // 상점에서 사용하는 상품 관리 코드입니다.
             //     unitPrice : 0,      // 상품의 가격입니다. 전체를 합한 가격이 아닌 상품의 개당 가격인 점에 유의해주세요.
             //     quantity : 0,       // 상품 구매 수량입니다.
-            // }
+            // }],
+            <?php } ?>
         },
         VIRTUAL_ACCOUNT : {
             /**
@@ -312,15 +314,15 @@ $BANK_CODE_KR = array(
              * 각 상품에 대한 상세 정보를 담는 배열입니다.
              * 예를 들어 사용자가 세 가지 종류의 상품을 구매했다면 길이가 3인 배열이어야 합니다. 에스크로 결제를 사용할 때만 필요한 파라미터입니다.
              * 
-             * @var object
+             * @var array
              */
-            // escrowProducts : {
+            // escrowProducts : [{
             //     id : "",            // 상품의 ID입니다. 이 값은 유니크해야 합니다.
             //     name : "",          // 상품 이름입니다
             //     code : "",          // 상점에서 사용하는 상품 관리 코드입니다.
             //     unitPrice : 0,      // 상품의 가격입니다. 전체를 합한 가격이 아닌 상품의 개당 가격인 점에 유의해주세요.
             //     quantity : 0,       // 상품 구매 수량입니다.
-            // },
+            // }],
 
             /**
              * 결제할 때 사용할 통화 단위입니다. 값을 넣지 않으면 기본값인 KRW로 설정됩니다. 원화인 KRW만 사용합니다.

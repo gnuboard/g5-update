@@ -2,9 +2,6 @@
 include_once './_common.php';
 include_once '../settle_toss.inc.php';
 
-// Tosspayments 테스트용 선언
-$default['de_pg_service'] = 'toss';
-
 $isSuccess = false;
 
 // 가상계좌 결제 데이터

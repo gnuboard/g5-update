@@ -2,9 +2,6 @@
 include_once './_common.php';
 include_once '../settle_toss.inc.php';
 
-// Tosspayments 테스트용 선언
-$default['de_pg_service'] = 'toss';
-
 /**
  * @since 22.08.30
  * @see 결제취소를 하기위해서 paymentKey를 저장한다. [g5_shop_order > od_tno]

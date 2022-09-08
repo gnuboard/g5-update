@@ -1,9 +1,6 @@
 <?php
 if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 
-// tosspayments 테스트용 
-$default['de_pg_service'] = 'toss';
-
 require_once(G5_SHOP_PATH.'/settle_'.$default['de_pg_service'].'.inc.php');
 require_once(G5_SHOP_PATH.'/settle_kakaopay.inc.php');
 
@@ -1458,6 +1455,7 @@ function forderform_check(f)
                 break;
         }
         <?php } else if($default['de_pg_service'] == 'toss') { ?>
+        tossParameter.CARD.flowMode = 'DEFAULT';
 
         switch(settle_method)
         {
@@ -1481,13 +1479,13 @@ function forderform_check(f)
                 /**
                  * @todo easyPay 설정 필요
                     토스페이	TOSSPAY
-                    네이버페이	NAVERPAY
                     삼성페이	SAMSUNGPAY
                     엘페이	LPAY
                     카카오페이	KAKAOPAY
                     페이코	PAYCO
                     LG페이	LGPAY
                     SSG페이	SSG
+                    (네이버페이	NAVERPAY)
                  */
                 break;
             default:

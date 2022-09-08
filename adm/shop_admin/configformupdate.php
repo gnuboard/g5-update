@@ -159,6 +159,8 @@ $check_sanitize_keys = array(
 'de_kcp_site_key',              //NHN KCP SITE KEY
 'cf_lg_mid',                    //LG유플러스 상점아이디
 'cf_lg_mert_key',               //LG유플러스 MERT KEY
+'cf_toss_client_key',           //토스페이먼츠 Client Key
+'cf_toss_secret_key',           //토스페이먼츠 Secret Key
 'de_inicis_mid',                //KG이니시스 상점아이디
 'de_inicis_admin_key',          //KG이니시스 키패스워드
 'de_inicis_sign_key',           //KG이니시스 웹결제 사인키
@@ -449,7 +451,7 @@ sql_query($sql);
 // 환경설정 > 포인트 사용
 sql_query(" update {$g5['config_table']} set cf_use_point = '{$cf_use_point}' ");
 
-// LG, 아이코드 설정
+// LG, Tosspayment, 아이코드 설정
 $sql = " update {$g5['config_table']}
             set cf_sms_use              = '{$cf_sms_use}',
                 cf_sms_type             = '{$cf_sms_type}',
@@ -459,7 +461,9 @@ $sql = " update {$g5['config_table']}
                 cf_icode_server_port    = '{$_POST['cf_icode_server_port']}',
                 cf_icode_token_key      = '{$cf_icode_token_key}',
                 cf_lg_mid               = '{$cf_lg_mid}',
-                cf_lg_mert_key          = '{$cf_lg_mert_key}' ";
+                cf_lg_mert_key          = '{$cf_lg_mert_key}',
+                cf_toss_client_key      = '{$cf_toss_client_key}',
+                cf_toss_secret_key      = '{$cf_toss_secret_key}' ";
 sql_query($sql);
 
 run_event('shop_admin_configformupdate');
