@@ -310,7 +310,7 @@
 #bo_w .btn_cancel {width:49%;line-height:45px;height:45px;padding:0 30px;font-weight:bold;font-size:1.083em;background:#fff;border-radius:3px;border:1px solid #dcdcdc}
 
 /* 댓글 입력창 */
-.comment_content {display:inline-block;width:100%;height:180px;padding:5px;border:1px solid #d0d3db;background:#fff;color:#000;overflow-y: scroll;resize: vertical}
+.comment_content {display:inline-block;width:100%;min-height:180px;padding:5px;border:1px solid #d0d3db;background:#fff;color:#000;overflow-y: scroll;resize: vertical}
 .comment_content img {max-width: 100%; resize: both}
 
 /* 댓글 파일 수정 */
@@ -330,5 +330,9 @@
 .upload-file-list li:hover a  {color:#3a8afd}
 .upload-file-list li:hover span  {color:#3a8afd}
 .upload-file-list .file-info-wrapper:hover {color:#99c2fc}
+
+/* 댓글 파일 업로드 진행바 */
+#fcomment_file progress {appearance: none;display: block;width: 100%;height: 1rem;border: 0;margin-top: 10px}
+#fcomment_file progress::-webkit-progress-value {background: #06c;transition: width 2.5s ease-in-out;}
 
 #fcomment_file {margin:15px}
