@@ -204,7 +204,7 @@ class G5Migration
      */
     public function setMigrationMethod()
     {
-        if (isset(self::$targetVersion) && version_compare(G5Version::$currentVersion, self::$targetVersion, ">=")) {
+        if (isset(self::$targetVersion) && G5Version::version_compare_format(G5Version::$currentVersion, self::$targetVersion, ">=")) {
             $this->migrationMethod = "down";
         } else {
             $this->migrationMethod = "up";
@@ -265,10 +265,12 @@ class G5Migration
      */
     public function sortByVersion($a, $b)
     {
+        $versionClass = new G5Version();
+        
         if ($this->getMigrationMethod() == "up") {
-            return version_compare($a["version"], $b["version"]);
+            return $versionClass->version_compare_format($a["version"], $b["version"]);
         } else {
-            return version_compare($b["version"], $a["version"]);
+            return $versionClass->version_compare_format($b["version"], $a["version"]);
         }
     }
 

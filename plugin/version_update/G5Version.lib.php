@@ -62,7 +62,7 @@ class G5Version
                     continue;
                 }
                 // 버전형식 체크 및 beta버전 제외
-                if (!preg_match('/^v[a-z0-9\.]+$/i', $data->tag_name)){
+                if (!preg_match('/^[a-z0-9\.]+$/i', $data->tag_name)){
                     continue;
                 }
                 $versionList[] = $data->tag_name;
@@ -98,7 +98,7 @@ class G5Version
      */
     private function compareVersion()
     {
-        return version_compare(self::$currentVersion, $this->getLatestVersion());
+        return $this->version_compare_format(self::$currentVersion, $this->getLatestVersion());
     }
 
     /**
@@ -150,20 +150,20 @@ class G5Version
         foreach ((array)$versionList as $version) {
             // 현재버전 ~ 목표버전
             if ($targetVersion) {
-                if (version_compare($targetVersion, self::$currentVersion, ">")) {
-                    if (version_compare($version, self::$currentVersion, ">")
-                        && version_compare($version, $targetVersion, "<=")) {
+                if (self::version_compare_format($targetVersion, self::$currentVersion, ">")) {
+                    if (self::version_compare_format($version, self::$currentVersion, ">")
+                        && self::version_compare_format($version, $targetVersion, "<=")) {
                         array_unshift($list, $version);
                     }
                 } else {
-                    if (version_compare($version, self::$currentVersion, "<=")
-                        && version_compare($version, $targetVersion, ">")) {
+                    if (self::version_compare_format($version, self::$currentVersion, "<=")
+                        && self::version_compare_format($version, $targetVersion, ">")) {
                         $list[] = $version;
                     }
                 }
             // 현재버전 이하
             } else {
-                if (version_compare($version, self::$currentVersion) <= 0) {
+                if (self::version_compare_format($version, self::$currentVersion) <= 0) {
                     $list[] = $version;
                 }
             }
@@ -238,5 +238,19 @@ class G5Version
             self::$latestVersion = $versionList[0];
         }
         return self::$latestVersion;
+    }
+
+    /**
+     * 그누보드 버전비교 포맷
+     * - 5.4.7 이전버전의 경우, 버전 앞에 'v'가 빠져있는 것을 처리함
+     * @param string
+     * @return string
+     */
+    public static function version_compare_format($version1, $version2, $operator = null)
+    {
+        $version_num1 = str_replace('v', '', $version1);
+        $version_num2 = str_replace('v', '', $version2);
+
+        return version_compare($version_num1, $version_num2, $operator);
     }
 }
