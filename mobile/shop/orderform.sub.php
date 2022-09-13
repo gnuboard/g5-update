@@ -1319,6 +1319,73 @@ function pay_approval()
             if(typeof f.pay_method !== "undefined") f.pay_method.value = "card";        // 대소문자 구분
 
         }
+        <?php } else if($default['de_pg_service'] == 'toss') { ?>
+        tossParameter.CARD.flowMode = 'DEFAULT';
+
+        switch(settle_method)
+        {
+            case "신용카드":
+                pf.settle_method.value = "CARD";
+                break;
+            case "가상계좌":
+                pf.settle_method.value = "VIRTUAL_ACCOUNT";
+                tossParameter.VIRTUAL_ACCOUNT.virtualAccountCallbackUrl = '<?php echo $virtualAccountCallbackUrl ?>';
+                break;
+            case "휴대폰":
+                pf.settle_method.value = "MOBILE_PHONE";
+                break;
+            case "계좌이체":
+                pf.settle_method.value = "TRANSFER";
+                break;
+            case "간편결제":
+                pf.settle_method.value = "CARD";
+                tossParameter.CARD.flowMode = "DIRECT";
+                tossParameter.CARD.easyPay = "PAYCO";
+                break;
+        }
+
+        // tossParameter 결제정보 추가
+        tossParameter.order.amount = f.good_mny.value;
+        tossParameter.order.orderId = '<?php echo get_session('ss_order_id'); ?>';
+        tossParameter.order.orderName = '<?php echo $goods; ?>';
+        tossParameter.order.customerName = pf.od_name.value;
+        tossParameter.order.customerEmail = pf.od_email.value;
+
+        // 면세 금액처리
+        <?php if ($default['de_tax_flag_use']) { ?>
+        tossParameter.common.taxFreeAmount = pf.comm_free_mny.value;
+        <?php } ?>
+
+        var tosspay_info = {}; 
+        Object.assign(tosspay_info, tossParameter.common, tossParameter.order, tossParameter[pf.settle_method.value]);
+        console.log(tosspay_info);
+
+        if(pf.settle_method.value != "무통장") {
+            // 주문정보 임시저장
+            var order_data = $(pf).serialize();
+            var save_result = "";
+            $.ajax({
+                type: "POST",
+                data: order_data,
+                url: g5_url+"/shop/ajax.orderdatasave.php",
+                cache: false,
+                async: false,
+                success: function(data) {
+                    save_result = data;
+                }
+            });
+
+            if (save_result) {
+                alert(save_result);
+                return false;
+            }
+
+            tossPayments.requestPayment(pf.settle_method.value, tosspay_info);
+        } else {
+            pf.submit();
+        }
+
+        return false;
 
         <?php } else if($default['de_pg_service'] == 'lg') { ?>
         var pay_method = "";
