@@ -897,7 +897,7 @@ $pg_anchor = '<ul class="anchor">
         <tr>
             <th scope="row"><label for="bo_cf_download_level">댓글 첨부파일 이미지 썸네일 리사이즈</label></th>
             <td>
-                <?php echo help('댓글의 이미지 썸네일 리사이즈를 설정합니다. 0은 사용안함, %단위') ?>
+                <?php echo help('댓글의 이미지 썸네일 크기 비율을 설정합니다. 0은 사용안함, %단위') ?>
                 <input type="number" name="bo_cf_resize" value="<?php echo $board['bo_cf_resize'] ?>" id="bo_cf_resize" class="numeric frm_input" size="3">%
             </td>
             <td class="td_grpset">
@@ -911,7 +911,7 @@ $pg_anchor = '<ul class="anchor">
             <th scope="row"><label for="bo_cf_download_level">댓글 첨부파일 나중에 삭제하기 적용</label></th>
             <td>
                 <?php echo help('사용자가 댓글 첨부파일 삭제시 바로 삭제되지 않게 합니다. (cron 등 배치작업으로 삭제할 시 사용)') ?>
-                <input type="number" name="bo_cf_is_late_delete" value="<?php echo $board['bo_cf_is_late_delete'] ?>" id="bo_cf_is_late_delete" class="numeric frm_input" size="3">%
+                <input type="checkbox" name="bo_cf_is_late_delete" value="1" id="bo_cf_is_late_delete" <?php echo $board['bo_cf_is_late_delete']?'checked':''; ?>>사용
             </td>
             <td class="td_grpset">
                 <input type="checkbox" name="chk_grp_bo_cf_is_late_delete" value="1" id="chk_grp_bo_cf_is_late_delete">
