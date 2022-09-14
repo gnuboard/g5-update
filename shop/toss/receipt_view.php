@@ -16,7 +16,7 @@ curl_setopt_array($curl, [
   CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
   CURLOPT_CUSTOMREQUEST => "GET",
   CURLOPT_HTTPHEADER => [
-    "Authorization: Basic dGVzdF9za19MZXg2QkpHUU9WREVZUlg5QTRRclc0dzJ6TmJnOg=="
+    "Authorization: Basic " . $credential
   ],
 ]);
 

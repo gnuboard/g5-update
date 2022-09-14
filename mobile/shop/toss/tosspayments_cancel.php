@@ -34,7 +34,7 @@ if ($cancelFlag == "true") {
     CURLOPT_CUSTOMREQUEST => "POST",
     CURLOPT_POSTFIELDS => "{\"cancelReason\":\"{$cancel_msg}\"}",
     CURLOPT_HTTPHEADER => [
-        "Authorization: Basic dGVzdF9za19MZXg2QkpHUU9WREVZUlg5QTRRclc0dzJ6TmJnOg==",
+        "Authorization: Basic " . $credential,
         "Content-Type: application/json"
     ],
     ]);

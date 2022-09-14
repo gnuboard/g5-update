@@ -9,8 +9,6 @@ require_once(G5_SHOP_PATH.'/settle_toss.inc.php');
  */
 $data = ['paymentKey' => $paymentKey, 'orderId' => $orderId, 'amount' => $amount];
 
-$credential = base64_encode($secretKey . ':');
-
 $curlHandle = curl_init($paymentsUrl);
 
 curl_setopt_array($curlHandle, [

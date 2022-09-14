@@ -12,6 +12,9 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
 $clientKey = $config['cf_toss_client_key'];
 $secretKey = $config['cf_toss_secret_key'];
 
+// Authorization 
+$credential = base64_encode($secretKey . ':');
+
 /**
  * URL
  */

@@ -17,7 +17,7 @@ CURLOPT_MAXREDIRS => 10,
 CURLOPT_TIMEOUT => 30,
 CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
 CURLOPT_HTTPHEADER => [
-    "Authorization: Basic dGVzdF9za19MZXg2QkpHUU9WREVZUlg5QTRRclc0dzJ6TmJnOg==",
+    "Authorization: Basic " . $credential,
     "Content-Type: application/json"
 ],
 ]);
