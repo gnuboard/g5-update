@@ -40,6 +40,12 @@ if (!in_array($settle_case, array('가상계좌', '계좌이체', '무통장')))
     die('<p id="scash_empty">현금영수증은 무통장, 가상계좌, 계좌이체에 한해 발급요청이 가능합니다.</p>');
 }
 
+$data = ['orderId' => $orderId,
+         'orderName' => $orderName,
+         'amount' => $amount,
+         'type' => $type,
+         'customerIdentityNumber' => $customerIdentityNumber];
+
 $curl = curl_init();
 
 curl_setopt_array($curl, [
@@ -50,7 +56,7 @@ curl_setopt_array($curl, [
   CURLOPT_TIMEOUT => 30,
   CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
   CURLOPT_CUSTOMREQUEST => "POST",
-  CURLOPT_POSTFIELDS => "{\"orderId\":\"{$orderId}\",\"orderName\":\"{$orderName}\",\"amount\":\"{$amount}\",\"type\":\"{$type}\",\"customerIdentityNumber\":\"{$customerIdentityNumber}\"}",
+  CURLOPT_POSTFIELDS => json_encode($data),
   CURLOPT_HTTPHEADER => [
     "Authorization: Basic dGVzdF9za19MZXg2QkpHUU9WREVZUlg5QTRRclc0dzJ6TmJnOg==",
     "Content-Type: application/json"

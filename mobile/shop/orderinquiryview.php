@@ -335,6 +335,8 @@ if($od['od_pg'] == 'lg') {
                                 $LGD_HASHDATA = md5($LGD_MID.$LGD_TID.$LGD_MERTKEY);
 
                                 $hp_receipt_script = 'showReceiptByTID(\''.$LGD_MID.'\', \''.$LGD_TID.'\', \''.$LGD_HASHDATA.'\');';
+                            } else if($od['od_pg'] == 'toss') {
+                                $hp_receipt_script = 'window.open(\'' . G5_SHOP_URL. '/toss/receipt_view.php?od_tno=' . $od['od_tno'] . '\',\'receipt\',\'width=900,height=700\');';
                             } else if($od['od_pg'] == 'inicis') {
                                 $hp_receipt_script = 'window.open(\'https://iniweb.inicis.com/DefaultWebApp/mall/cr/cm/mCmReceipt_head.jsp?noTid='.$od['od_tno'].'&noMethod=1\',\'receipt\',\'width=430,height=700\');';
                             } else {
@@ -354,6 +356,8 @@ if($od['od_pg'] == 'lg') {
                                 $LGD_HASHDATA = md5($LGD_MID.$LGD_TID.$LGD_MERTKEY);
 
                                 $card_receipt_script = 'showReceiptByTID(\''.$LGD_MID.'\', \''.$LGD_TID.'\', \''.$LGD_HASHDATA.'\');';
+                            } else if($od['od_pg'] == 'toss') {
+                                $card_receipt_script = 'window.open(\'' . G5_SHOP_URL. '/toss/receipt_view.php?od_tno=' . $od['od_tno'] . '\',\'receipt\',\'width=900,height=700\');';
                             } else if($od['od_pg'] == 'inicis') {
                                 $card_receipt_script = 'window.open(\'https://iniweb.inicis.com/DefaultWebApp/mall/cr/cm/mCmReceipt_head.jsp?noTid='.$od['od_tno'].'&noMethod=1\',\'receipt\',\'width=430,height=700\');';
                             } else {

@@ -8,6 +8,11 @@ if (!$od_id){
     alert('주문번호가 누락되었습니다.');
 }
 
+$result = sql_fetch("SELECT EXISTS (SELECT 1 FROM g5_shop_order WHERE od_id = '{$od_id}' AND mb_id = '{$member['mb_id']}') as exist");
+if (!$is_admin && !$result['exist']) {
+    alert('본인의 주문 건만 신청할 수 있습니다.');
+}
+
 $g5['title'] = '주문번호 '.$od_id.' 현금영수증 발행';
 include_once(G5_PATH.'/head.sub.php');
 
