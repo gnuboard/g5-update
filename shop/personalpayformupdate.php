@@ -34,6 +34,10 @@ if ($pp_settle_case == "계좌이체")
         case 'inicis':
             include G5_SHOP_PATH.'/inicis/inistdpay_result.php';
             break;
+        case 'toss':
+            include G5_SHOP_PATH.'/toss/tosspayments_result.php';
+            $od_app_no = $app_no;
+            break;
         default:
             include G5_SHOP_PATH.'/kcp/pp_ax_hub.php';
             $bank_name  = iconv("cp949", "utf-8", $bank_name);
@@ -55,6 +59,10 @@ else if ($pp_settle_case == "가상계좌")
             break;
         case 'inicis':
             include G5_SHOP_PATH.'/inicis/inistdpay_result.php';
+            break;
+        case 'toss':
+            include G5_SHOP_PATH.'/toss/tosspayments_result.php';
+            $od_app_no = $app_no;
             break;
         default:
             include G5_SHOP_PATH.'/kcp/pp_ax_hub.php';
@@ -78,6 +86,10 @@ else if ($pp_settle_case == "휴대폰")
         case 'inicis':
             include G5_SHOP_PATH.'/inicis/inistdpay_result.php';
             break;
+        case 'toss':
+            include G5_SHOP_PATH.'/toss/tosspayments_result.php';
+            $od_app_no = $app_no;
+            break;
         default:
             include G5_SHOP_PATH.'/kcp/pp_ax_hub.php';
             break;
@@ -97,6 +109,10 @@ else if ($pp_settle_case == "신용카드")
             break;
         case 'inicis':
             include G5_SHOP_PATH.'/inicis/inistdpay_result.php';
+            break;
+        case 'toss':
+            include G5_SHOP_PATH.'/toss/tosspayments_result.php';
+            $od_app_no = $app_no;
             break;
         default:
             include G5_SHOP_PATH.'/kcp/pp_ax_hub.php';
@@ -124,6 +140,9 @@ if((int)$pp['pp_price'] !== (int)$pg_price) {
             break;
         case 'inicis':
             include G5_SHOP_PATH.'/inicis/inipay_cancel.php';
+            break;
+        case 'toss':
+            include G5_SHOP_PATH.'/toss/tosspayments_cancel.php';
             break;
         default:
             include G5_SHOP_PATH.'/kcp/pp_ax_hub_cancel.php';
@@ -162,6 +181,9 @@ if(!$result) {
         case 'inicis':
             include G5_SHOP_PATH.'/inicis/inipay_cancel.php';
             break;
+        case 'toss':
+            include G5_SHOP_PATH.'/toss/tosspayments_cancel.php';
+            break;
         default:
             include G5_SHOP_PATH.'/kcp/pp_ax_hub_cancel.php';
             break;
@@ -198,8 +220,11 @@ if($pp_receipt_price > 0 && $pp['pp_id'] && $pp['od_id']) {
                 include G5_SHOP_PATH.'/lg/xpay_cancel.php';
                 break;
             case 'inicis':
-            include G5_SHOP_PATH.'/inicis/inipay_cancel.php';
-            break;
+                include G5_SHOP_PATH.'/inicis/inipay_cancel.php';
+                break;
+            case 'toss':
+                include G5_SHOP_PATH.'/toss/tosspayments_cancel.php';
+                break;
             default:
                 include G5_SHOP_PATH.'/kcp/pp_ax_hub_cancel.php';
                 break;

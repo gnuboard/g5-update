@@ -276,6 +276,14 @@ if (in_array($_POST['ct_status'], $status_cancel)) {
                         $paymentKey = $od['od_tno'];
                         $cancel_msg = '쇼핑몰 운영자 승인 취소';
                         include G5_SHOP_PATH.'/toss/tosspayments_cancel.php';
+                        /**
+                         * 현금영수증 취소
+                         * @todo 신용카드만 취소되므로 해당 프로세스 미작동
+                         */
+                        // if ($pg_res_cd == '' && isset($od['od_casseqno']) && $od['od_casseqno'] != '') {
+                        //     $receiptKey = $od['od_casseqno'];
+                        //     include_once G5_SHOP_PATH . '/toss/cash_receipt_cancel.php';
+                        // }
                         break;
                     default:
                         include_once(G5_SHOP_PATH.'/settle_kcp.inc.php');

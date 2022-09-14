@@ -355,6 +355,9 @@ else if ($od_settle_case == "계좌이체")
         case 'inicis':
             include G5_MSHOP_PATH.'/inicis/pay_result.php';
             break;
+        case 'toss':
+            include G5_SHOP_PATH.'/toss/tosspayments_result.php';
+            break;
         default:
             include G5_MSHOP_PATH.'/kcp/pp_ax_hub.php';
             $bank_name  = iconv("cp949", "utf-8", $bank_name);
@@ -380,6 +383,9 @@ else if ($od_settle_case == "가상계좌")
             break;
         case 'inicis':
             include G5_MSHOP_PATH.'/inicis/pay_result.php';
+            break;
+        case 'toss':
+            include G5_SHOP_PATH.'/toss/tosspayments_result.php';
             break;
         default:
             include G5_MSHOP_PATH.'/kcp/pp_ax_hub.php';
@@ -407,6 +413,9 @@ else if ($od_settle_case == "휴대폰")
         case 'inicis':
             include G5_MSHOP_PATH.'/inicis/pay_result.php';
             break;
+        case 'toss':
+            include G5_SHOP_PATH.'/toss/tosspayments_result.php';
+            break;
         default:
             include G5_MSHOP_PATH.'/kcp/pp_ax_hub.php';
             break;
@@ -430,6 +439,9 @@ else if ($od_settle_case == "신용카드")
             break;
         case 'inicis':
             include G5_MSHOP_PATH.'/inicis/pay_result.php';
+            break;
+        case 'toss':
+            include G5_SHOP_PATH.'/toss/tosspayments_result.php';
             break;
         default:
             include G5_MSHOP_PATH.'/kcp/pp_ax_hub.php';
@@ -456,6 +468,9 @@ else if ($od_settle_case == "간편결제")
             break;
         case 'inicis':
             include G5_MSHOP_PATH.'/inicis/pay_result.php';
+            break;
+        case 'toss':
+            include G5_SHOP_PATH.'/toss/tosspayments_result.php';
             break;
         default:
             include G5_MSHOP_PATH.'/kcp/pp_ax_hub.php';
@@ -524,6 +539,9 @@ if($tno) {
                 break;
             case 'inicis':
                 include G5_SHOP_PATH.'/inicis/inipay_cancel.php';
+                break;
+            case 'toss':
+                include G5_SHOP_PATH.'/toss/tosspayments_cancel.php';
                 break;
             case 'KAKAOPAY':
                 $_REQUEST['TID']               = $tno;
@@ -671,6 +689,9 @@ if(! $result || ! (isset($exists_order['od_id']) && $od_id && $exists_order['od_
             case 'lg':
                 include G5_SHOP_PATH.'/lg/xpay_cancel.php';
                 break;
+            case 'toss':
+                include G5_SHOP_PATH.'/toss/tosspayments_cancel.php';
+                break;
             case 'inicis':
                 include G5_SHOP_PATH.'/inicis/inipay_cancel.php';
                 break;
@@ -720,6 +741,9 @@ if(!$result) {
         switch($od_pg) {
             case 'lg':
                 include G5_SHOP_PATH.'/lg/xpay_cancel.php';
+                break;
+            case 'toss':
+                include G5_SHOP_PATH.'/toss/tosspayments_cancel.php';
                 break;
             case 'inicis':
                 include G5_SHOP_PATH.'/inicis/inipay_cancel.php';

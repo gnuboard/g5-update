@@ -104,6 +104,9 @@ $colspan = 10;
             case 'lg':
                 $pg = 'LGU+';
                 break;
+            case 'toss':
+                $pg = '토스페이먼츠';
+                break;
             default:
                 $pg = 'KCP';
                 break;

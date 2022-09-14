@@ -97,36 +97,13 @@ if ($err) {
     $result = sql_query($sql, false);
 
     // DB 정보갱신 실패시 취소
-    if (!$result) { 
+    if (!$result) {
         // 현금영수증 취소처리
-        $curl = curl_init();
+        $receiptKey = $responseJson->receiptKey;
+        include_once G5_SHOP_PATH . '/toss/cash_receipt_cancel.php';
 
-        curl_setopt_array($curl, [
-        CURLOPT_URL => "https://api.tosspayments.com/v1/cash-receipts/" . $responseJson->receiptKey . "/cancel",
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_ENCODING => "",
-        CURLOPT_MAXREDIRS => 10,
-        CURLOPT_TIMEOUT => 30,
-        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-        CURLOPT_HTTPHEADER => [
-            "Authorization: Basic dGVzdF9za19MZXg2QkpHUU9WREVZUlg5QTRRclc0dzJ6TmJnOg==",
-            "Content-Type: application/json"
-        ],
-        ]);
-
-        $response_cancel = curl_exec($curl);
-        $err_cancel = curl_error($curl);
-
-        curl_close($curl);
-
-        if ($err_cancel) {
-            $msg = '현금영수증 취소 요청처리가 정상적으로 완료되지 않았습니다.';
-            if (!$is_admin) {
-                $msg .= '쇼핑몰 관리자에게 문의해 주십시오.';
-            }
-            alert_close($msg);
-        } else {
-
+        if ($receipt_result_msg) {
+            alert_close($receipt_result_msg);
         }
     }
 }
