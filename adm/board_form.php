@@ -94,7 +94,7 @@ if (!isset($board['bo_cf_count'])) {
 }
 
 if (!isset($board['bo_cf_size_limit'])) {
-    sql_query("ALTER TABLE `{$g5['board_table']}` ADD `bo_cf_size_limit` INT NOT NULL DEFAULT '1,048,576' AFTER `bo_cf_count` ", false);
+    sql_query("ALTER TABLE `{$g5['board_table']}` ADD `bo_cf_size_limit` INT NOT NULL DEFAULT '3,145,728' AFTER `bo_cf_count` ", false);
 }
 
 if (!isset($board['bo_cf_upload_level'])) {
@@ -897,14 +897,43 @@ $pg_anchor = '<ul class="anchor">
         <tr>
             <th scope="row"><label for="bo_cf_download_level">댓글 첨부파일 이미지 썸네일 리사이즈</label></th>
             <td>
-                <?php echo help('댓글의 이미지 썸네일 리사이크를 설정합니다. 0은 사용안함, %단위') ?>
-                <input type="number" name="bo_cf_resize" value="<?php echo $board['bo_cf_resize'] ?>" id="bo_cf_resize" class="numeric frm_input" size="4">%
+                <?php echo help('댓글의 이미지 썸네일 리사이즈를 설정합니다. 0은 사용안함, %단위') ?>
+                <input type="number" name="bo_cf_resize" value="<?php echo $board['bo_cf_resize'] ?>" id="bo_cf_resize" class="numeric frm_input" size="3">%
             </td>
             <td class="td_grpset">
                 <input type="checkbox" name="chk_grp_bo_cf_resize" value="1" id="chk_grp_bo_cf_resize">
                 <label for="chk_grp_bo_cf_resize">그룹적용</label>
                 <input type="checkbox" name="chk_all_bo_cf_resize" value="1" id="chk_all_bo_cf_resize">
                 <label for="chk_all_bo_cf_resize">전체적용</label>
+            </td>
+        </tr>
+        <tr>
+            <th scope="row"><label for="bo_cf_download_level">댓글 첨부파일 나중에 삭제하기 적용</label></th>
+            <td>
+                <?php echo help('사용자가 댓글 첨부파일 삭제시 바로 삭제되지 않게 합니다. (cron 등 배치작업으로 삭제할 시 사용)') ?>
+                <input type="number" name="bo_cf_is_late_delete" value="<?php echo $board['bo_cf_is_late_delete'] ?>" id="bo_cf_is_late_delete" class="numeric frm_input" size="3">%
+            </td>
+            <td class="td_grpset">
+                <input type="checkbox" name="chk_grp_bo_cf_is_late_delete" value="1" id="chk_grp_bo_cf_is_late_delete">
+                <label for="chk_grp_bo_cf_is_late_delete">그룹적용</label>
+                <input type="checkbox" name="chk_all_bo_cf_is_late_delete" value="1" id="chk_all_bo_cf_is_late_delete">
+                <label for="chk_all_bo_cf_is_late_delete">전체적용</label>
+            </td>
+        </tr>
+
+        <tr>
+            <th scope="row"><label for="">댓글 첨부파일 나중에 삭제 체크된것 삭제</label></th>
+            <td>
+                <?php echo help('나중에 삭제하기로 체크된 파일들을 삭제합니다.') ?>
+                <input type="button" value="삭제" onclick="delete_check_late_comment_file()" class="btn_02 btn" size="4">
+            </td>
+        </tr>
+
+        <tr>
+            <th scope="row"><label for="">댓글의 임시 첨부파일 삭제</label></th>
+            <td>
+                <?php echo help('하루 전까지 업로드된 댓글의 첨부 파일 중 등록되지 않은 파일을 삭제합니다.') ?>
+                <input type="button" value="삭제" onclick="delete_temp_comment_file()" class="btn_02 btn" size="4">
             </td>
         </tr>
 
@@ -1587,6 +1616,56 @@ function fboardform_submit(f)
     }
 
     return true;
+}
+
+function delete_temp_comment_file() {
+    let data = {
+        w: 'delete_temp',
+        bo_table: g5_bo_table,
+        token: get_comment_token()
+    };
+
+    $.ajax({
+        url: g5_bbs_url + "/comment_file.php",
+        type: 'post',
+        data: JSON.stringify(data),
+        processData: false,
+        contentType: false,
+        cache: false,
+        success: function (data) {
+            let res = JSON.parse(data)
+            alert(res.msg);
+        },
+        error: function (e) {
+            let res = JSON.parse(e.responseText)
+            alert(res.msg)
+        }
+    });
+}
+
+function delete_check_late_comment_file() {
+    let data = {
+        w: 'delete_check_late',
+        bo_table: g5_bo_table,
+        token: get_comment_token()
+    };
+
+    $.ajax({
+        url: g5_bbs_url + "/comment_file.php",
+        type: 'post',
+        data: JSON.stringify(data),
+        processData: false,
+        contentType: false,
+        cache: false,
+        success: function (data) {
+            let res = JSON.parse(data)
+            alert(res.msg);
+        },
+        error: function (e) {
+            let res = JSON.parse(e.responseText)
+            alert(res.msg)
+        }
+    });
 }
 </script>
 

@@ -430,6 +430,7 @@ if (is_checked('chk_grp_bo_cf_size_limit'))     $grp_fields .= " , bo_cf_size_li
 if (is_checked('chk_grp_bo_cf_upload_level'))   $grp_fields .= " , bo_cf_upload_level = '{$bo_cf_upload_level}' ";
 if (is_checked('chk_grp_bo_cf_download_level')) $grp_fields .= " , bo_cf_download_level = '{$bo_cf_download_level}' ";
 if (is_checked('chk_grp_bo_cf_resize'))         $grp_fields .= " , bo_cf_resize = '{$bo_cf_resize}' ";
+if (is_checked('chk_grp_bo_cf_is_late_delete')) $grp_fields .= " , bo_cf_is_late_delete = '{$bo_cf_is_late_delete}' ";
 
 //최고관리자만 수정가능
 if ($is_admin === 'super') {
@@ -525,6 +526,7 @@ if (is_checked('chk_all_bo_cf_size_limit'))     $all_fields .= " , bo_cf_size_li
 if (is_checked('chk_all_bo_cf_upload_level'))   $all_fields .= " , bo_cf_upload_level = '{$bo_cf_upload_level}' ";
 if (is_checked('chk_all_bo_cf_download_level')) $all_fields .= " , bo_cf_download_level = '{$bo_cf_download_level}' ";
 if (is_checked('chk_all_bo_cf_resize'))         $all_fields .= " , bo_cf_resize = '{$bo_cf_resize}' ";
+if (is_checked('chk_all_bo_cf_is_late_delete')) $all_fields .= " , bo_cf_is_late_delete = '{$bo_cf_is_late_delete}' ";
 
 //최고관리자만 수정가능
 if ($is_admin === 'super') {

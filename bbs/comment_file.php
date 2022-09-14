@@ -24,6 +24,10 @@ if (!empty($input_data)) {
     $bo_table = isset($bo_table) ? stripslashes($bo_table) : null;
 }
 
+// 세션 인증 토큰
+$comment_token = trim(get_session('ss_comment_token'));
+$mb_id = get_session('ss_mb_id');
+
 if (empty($token) || empty($comment_token) || $comment_token != $token) {
     echo json_encode('올바른 방법으로 이용해 주십시오.');
     exit;
@@ -39,13 +43,10 @@ define('COMMENT_FILE_COUNT_LIMIT', $board['bo_cf_count']);
 define('COMMENT_FILE_SiZE', $board['bo_cf_size_limit']);
 define('COMMENT_FILE_IMG_RESIZE', $board['bo_cf_resize']);
 
-$is_late_delete = $board['bo_cf_is_late_delete'];
+$is_late_delete = isset($board['bo_cf_is_late_delete']) && ($board['bo_cf_is_late_delete'] == 1);
 $upload_level = $board['bo_cf_upload_level'];
 $download_level = $board['bo_cf_download_level'];
 
-// 세션 인증 토큰
-$comment_token = trim(get_session('ss_comment_token'));
-$mb_id = get_session('ss_mb_id');
 
 if (!isset($g5['comment_file_table'])) {
     $g5['comment_file_table'] = G5_TABLE_PREFIX . 'comment_file';
@@ -75,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $select_all_sql = 'select wr_id, file_id, file_source_name as original_name, file_name, file_size, file_download_count, comment_id, save_time, wr_option, wr_password from ' . G5_TABLE_PREFIX . 'write_' . sql_real_escape_string(
                     $bo_table
                 ) . ' as board inner join ' . $g5['comment_file_table'] . ' as comment_file ' .
-                ' on  board.wr_id = comment_file.comment_id where wr_parent = ? order by wr_id';
+                ' on  board.wr_id = comment_file.comment_id where comment_file.is_delete = 0 and wr_parent = ? order by wr_id';
 
             /**
              * @var $stmt mysqli_stmt
@@ -88,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $select_all_sql = 'select wr_id, file_id, file_source_name as original_name, file_name, file_size, file_download_count, comment_id, save_time, wr_option, wr_password from ' . G5_TABLE_PREFIX . 'write_' . sql_real_escape_string(
                     $bo_table
                 ) . ' as board inner join ' . $g5['comment_file_table'] . ' as comment_file ' .
-                ' on  board.wr_id = comment_file.comment_id where wr_parent = ' . sql_real_escape_string(
+                ' on  board.wr_id = comment_file.comment_id where comment_file.is_delete = 0 and wr_parent = ' . sql_real_escape_string(
                     $wr_id
                 ) . ' order by wr_id';
 
@@ -133,7 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             from " . $g5['comment_file_table'] . " as comment_file inner join " . G5_TABLE_PREFIX . 'write_' . sql_real_escape_string(
                     $bo_table
                 ) . ' as board  on comment_file.comment_id = board.wr_id 
-            where comment_id = ?';
+            where comment_id = ? and is_delete = 0';
 
             /**
              * @var $stmt mysqli_stmt
@@ -148,7 +149,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             from " . $g5['comment_file_table'] . " as comment_file inner join " . G5_TABLE_PREFIX . 'write_' . sql_real_escape_string(
                     $bo_table
                 ) . ' as board  on comment_file.comment_id = board.wr_id 
-            where comment_id =' . sql_real_escape_string($comment_id);
+            where comment_id =' . sql_real_escape_string($comment_id) . ' and is_delete = 0';
             $result = sql_query($select_sql);
         }
 
@@ -280,6 +281,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($comment_id === null) { // 댓글 저장전 삭제할 때
             $is_valid = false;
+            if ($is_late_delete) {
+                if (G5_MYSQLI_USE && function_exists('mysqli_connect')) {
+                    $sql = 'update  ' . $g5['comment_file_table'] . ' set is_delete = 1 where file_name = ? and comment_id IS NULL';
+                    $stmt = $link->prepare($delete_sql);
+                    $stmt->bind_param('s', $file_name);
+                    $result = $stmt->execute();
+                    if ($stmt->affected_rows > 0) {
+                        $is_valid = true;
+                    }
+                } else {
+                    $sql = 'update ' . $g5['comment_file_table'] . ' set is_delete = 1 where file_name = "' . sql_real_escape_string(
+                            $file_name
+                        )
+                        . '" and comment_id IS NULL';
+                    sql_query($sql);
+
+                    if (mysql_affected_rows($link) > 0) {
+                        $is_valid = true;
+                    }
+                }
+
+                $response = array();
+                if ($is_valid) {
+                    $response['is_error'] = false;
+                    $response['msg'] = '삭제되었습니다.';
+                }
+                echo json_encode($response);
+                exit;
+            }
             if (G5_MYSQLI_USE && function_exists('mysqli_connect')) {
                 $delete_sql = 'delete from ' . $g5['comment_file_table'] . ' where file_name = ? and comment_id IS NULL';
                 /**
@@ -307,6 +337,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $get_save_month = $ym = date('ym', G5_SERVER_TIME);
                 $file_path = COMMENT_FILE_PATH . '/' . $get_save_month . '/' . $file_name;
                 $is_delete = @unlink($file_path);
+
+                if (strpos($file_name, 'thumb-') !== false) {
+                    $file_name_pathinfo = pathinfo($file_name);
+                    $file_extension = $file_name_pathinfo['extension'];
+                    $tmp = explode('thumb-', $file_name);
+                    $name = $tmp[1];
+                    $file_name = explode('_', $name);
+                    $file_name = $file_name[0] . '_' . $file_name[1] . '_' . $file_name[2] . '.' . $file_extension;
+
+                    $file_path = COMMENT_FILE_PATH . '/' . $get_save_month . '/' . $file_name;
+                    $is_delete = @unlink($file_path);
+                }
             }
         } else { // 댓글 수정시 삭제 할 때
             $is_valid = false;
@@ -351,13 +393,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             run_event('before_delete_comment_file', $bo_table, $row);
 
             if (isset($row['file_name']) && ($row['file_name'] === $file_name)) {
+                if ($is_late_delete) {
+                    $sql = 'update ' . $g5['comment_file_table'] . ' set is_delete = 1 where comment_id = ' . sql_real_escape_string(
+                            $comment_id
+                        ) . ' and bo_table = "' . sql_real_escape_string($bo_table) . '"' . ' and file_name = "' . sql_real_escape_string($file_name) . '"';
+                    $result = sql_query($delete_sql);
+                    $response = array();
+                    if ($result) {
+                        $response['is_error'] = false;
+                        $response['msg'] = '삭제되었습니다.';
+                    }
+                    echo json_encode($response);
+                    exit;
+                }
+
                 $delete_sql = 'delete from ' . $g5['comment_file_table'] . ' where comment_id = ' . sql_real_escape_string(
                         $comment_id
-                    ) . ' and bo_table = "' . sql_real_escape_string($bo_table) . '"';
+                    ) . ' and bo_table = "' . sql_real_escape_string($bo_table) . '"' . ' and file_name = "' . sql_real_escape_string($file_name) . '"';
                 sql_query($delete_sql);
+
                 $get_save_month = date('ym', strtotime($row['save_time']));
                 $file_path = COMMENT_FILE_PATH . '/' . $get_save_month . '/' . $file_name;
                 $is_delete = @unlink($file_path);
+
+                if (strpos($file_name, 'thumb-') !== false) {
+                    $file_name_pathinfo = pathinfo($file_name);
+                    $file_extension = $file_name_pathinfo['extension'];
+                    $tmp = explode('thumb-', $file_name);
+                    $name = $tmp[1];
+                    $file_name = explode('_', $name);
+                    $file_name = $file_name[0] . '_' . $file_name[1] . '_' . $file_name[2] . '.' . $file_extension;
+
+                    $file_path = COMMENT_FILE_PATH . '/' . $get_save_month . '/' . $file_name;
+                    $is_delete = @unlink($file_path);
+                }
             }
         }
 
@@ -373,6 +442,148 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         echo json_encode($response);
         exit;
+    }
+
+    if ($w === 'delete_temp') {
+        $is_auth = false;
+        if ($is_admin === 'super') {
+            $is_auth = true;
+        }
+        if (!$is_auth) {
+            $response = array(
+                'is_error' => true,
+                'msg' => '권한이 없습니다.'
+            );
+            header('401 Unauthorized', true, 401);
+            echo json_encode($response);
+            exit;
+        }
+
+        $date = date_create(G5_TIME_YMDHIS);
+        date_modify($date, '-1 day');
+        $yesterday = date_format($date, 'Y-m-d H:i:s');
+
+        $select_sql = "select file_name, save_time from {$g5['comment_file_table']} where comment_id is null and save_time < '{$yesterday}'";
+        $result = sql_query($select_sql);
+        if ($result) {
+            $remove_files = array();
+            $remove_original_images = array();
+            while ($row = sql_fetch_array($result)) {
+                $file_info = array('file_name' => $row['file_name'], 'save_time' => $row['save_time']);
+                $remove_files[] = $file_info;
+
+                $file_name_pathinfo = pathinfo(strtolower($row['file_name']));
+                $file_extension = $file_name_pathinfo['extension'];
+                if (strpos($row['file_name'], 'thumb-') !== false) {
+                    $tmp = explode('thumb-', $row['file_name']);
+                    $name = $tmp[1];
+                    $file_name = explode('_', $name);
+                    $file_name = $file_name[0] . '_' . $file_name[1] . '_' . $file_name[2] . '.' . $file_extension;
+                    $remove_original_images[] = array('file_name' => $file_name, 'save_time' => $row['save_time']);
+                }
+            }
+
+
+            run_event('remove_invalid_file', $remove_files, $remove_original_images);
+
+            if (isset($remove_original_images) && count($remove_original_images) > 0) {
+                foreach ($remove_original_images as $key) {
+                    $get_save_month = date('ym', strtotime($key['save_time']));
+                    $path = COMMENT_FILE_PATH . '/' . $get_save_month . '/' . $key['file_name'];
+                    @unlink(COMMENT_FILE_PATH . '/' . $get_save_month . '/' . $key['file_name']);
+                }
+            }
+
+            if (count($remove_files) > 0) {
+                foreach ($remove_files as $key) {
+                    $get_save_month = date('ym', strtotime($key['save_time']));
+                    $path = COMMENT_FILE_PATH . '/' . $get_save_month . '/' . $key['file_name'];
+                    $remove_result = @unlink(COMMENT_FILE_PATH . '/' . $get_save_month . '/' . $key['file_name']);
+                }
+
+                $delete_sql = "delete from {$g5['comment_file_table']} where comment_id is null and save_time < '{$yesterday}'";
+                $result = sql_query($delete_sql);
+
+                if ($result) {
+                    $response = array('is_error' => false, 'msg' => '완료되었습니다');
+                    echo json_encode($response);
+                    exit;
+                }
+            } else {
+                $response = array('is_error' => false, 'msg' => '삭제할 파일이 없습니다.');
+                echo json_encode($response);
+                exit;
+            }
+        }
+    }
+
+    if ($w === 'delete_check_late') {
+        $is_auth = false;
+        if ($is_admin === 'super') {
+            $is_auth = true;
+        }
+        if (!$is_auth) {
+            $response = array(
+                'is_error' => true,
+                'msg' => '권한이 없습니다.'
+            );
+            header('401 Unauthorized', true, 401);
+            echo json_encode($response);
+            exit;
+        }
+
+        $select_sql = "select file_name, save_time from {$g5['comment_file_table']} where is_delete = 1";
+        $result = sql_query($select_sql);
+        if ($result) {
+            $remove_files = array();
+            $remove_original_images = array();
+            while ($row = sql_fetch_array($result)) {
+                $file_info = array('file_name' => $row['file_name'], 'save_time' => $row['save_time']);
+                $remove_files[] = $file_info;
+
+                $file_name_pathinfo = pathinfo(strtolower($row['file_name']));
+                $file_extension = $file_name_pathinfo['extension'];
+                if (strpos($row['file_name'], 'thumb-') !== false) {
+                    $tmp = explode('thumb-', $row['file_name']);
+                    $name = $tmp[1];
+                    $file_name = explode('_', $name);
+                    $file_name = $file_name[0] . '_' . $file_name[1] . '_' . $file_name[2] . '.' . $file_extension;
+                    $remove_original_images[] = array('file_name' => $file_name, 'save_time' => $row['save_time']);
+                }
+            }
+
+
+            run_event('remove_check_late_file', $remove_files, $remove_original_images);
+
+            if (isset($remove_original_images) && count($remove_original_images) > 0) {
+                foreach ($remove_original_images as $key) {
+                    $get_save_month = date('ym', strtotime($key['save_time']));
+                    $path = COMMENT_FILE_PATH . '/' . $get_save_month . '/' . $key['file_name'];
+                    @unlink(COMMENT_FILE_PATH . '/' . $get_save_month . '/' . $key['file_name']);
+                }
+            }
+
+            if (count($remove_files) > 0) {
+                foreach ($remove_files as $key) {
+                    $get_save_month = date('ym', strtotime($key['save_time']));
+                    $path = COMMENT_FILE_PATH . '/' . $get_save_month . '/' . $key['file_name'];
+                    $remove_result = @unlink(COMMENT_FILE_PATH . '/' . $get_save_month . '/' . $key['file_name']);
+                }
+
+                $delete_sql = "delete from {$g5['comment_file_table']} where is_delete = 1";
+                $result = sql_query($delete_sql);
+
+                if ($result) {
+                    $response = array('is_error' => false, 'msg' => '완료되었습니다');
+                    echo json_encode($response);
+                    exit;
+                }
+            } else {
+                $response = array('is_error' => false, 'msg' => '삭제할 파일이 없습니다.');
+                echo json_encode($response);
+                exit;
+            }
+        }
     }
 
     if ($w === 'download') {
@@ -664,5 +875,4 @@ function add_comment_setting_columns()
     if (!isset($board['bo_cf_resize'])) {
         sql_query("ALTER TABLE `{$g5['board_table']}` ADD `bo_cf_resize` TINYINT NOT NULL DEFAULT '100' AFTER `bo_cf_is_late_delete` ", false);
     }
-
 }
