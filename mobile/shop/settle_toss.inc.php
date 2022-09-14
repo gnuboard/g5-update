@@ -9,8 +9,12 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
  * $clientKey = test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq
  * $secretKey = test_sk_zXLkKEypNArWmo50nX3lmeaxYG5R
  */
+$testClientKey = $config['cf_toss_client_key'];
 $clientKey = $config['cf_toss_client_key'];
 $secretKey = $config['cf_toss_secret_key'];
+
+// Authorization 
+$credential = base64_encode($secretKey . ':');
 
 /**
  * URL
@@ -81,7 +85,7 @@ $BANK_CODE_KR = array(
 <script>
     var tossParameter = {
         common : {
-            clientKey : '<?php echo ($default['de_card_test'] ? $clientKey : 'test_ck_D5GePWvyJnrK0W0k6q8gLzN97Eoq'); ?>', 
+            clientKey : '<?php echo ($default['de_card_test'] ? $testClientKey : $clientKey); ?>', 
 
             /**
              * 결제가 성공하고 나면 리다이렉트(Redirect)되는 URL입니다.
