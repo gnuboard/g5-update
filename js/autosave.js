@@ -7,6 +7,7 @@ var save_wr_content = null;
 
 function autosave() {
     $("form#fwrite").each(function() {
+        this.wr_content = this.querySelector('#wr_content');
         if(g5_editor != "") {
             if (g5_editor.indexOf("ckeditor4") != -1 && typeof(CKEDITOR.instances.wr_content)!="undefined") {
                 this.wr_content.value = CKEDITOR.instances.wr_content.getData();
@@ -17,8 +18,11 @@ function autosave() {
                     this.wr_content.value = get_editor_wr_content();
                 }
             }
+        } else {
+            if (this.wr_content.nodeName.toLowerCase() == 'div') {
+                this.wr_content.value = this.wr_content.innerHTML;
+            }
         }
-
         // 변수에 저장해 놓은 값과 다를 경우에만 임시 저장함
         if (save_wr_subject != this.wr_subject.value || save_wr_content != this.wr_content.value) {
             $.ajax({
@@ -95,6 +99,12 @@ $(function(){
                 }
             } else {
                 $("#fwrite #wr_content").val(content);
+
+                let wr_content = document.querySelector('#wr_content');
+                if (wr_content.nodeName.toLowerCase() == 'div') {
+                    wr_content.innerHTML += content;
+                    console.log(content)
+                }
             }
         }, "xml");
         $("#autosave_pop").hide();
