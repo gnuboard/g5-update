@@ -338,3 +338,8 @@
 #fcomment_file progress::-webkit-progress-value {background: #06c;transition: width 2.5s ease-in-out;}
 
 #fcomment_file {margin:15px}
+
+/* 에디터 */
+.normal_editor {background:#fff; width: 100%; min-height: 300px;border: 1px solid #d0d3db; border-radius: 2px;box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);}
+.normal_editor .img_wrapper {max-width: 100%}
+.normal_editor .img_wrapper img {width: 100%}
