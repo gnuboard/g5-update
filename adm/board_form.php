@@ -94,7 +94,7 @@ if (!isset($board['bo_cf_count'])) {
 }
 
 if (!isset($board['bo_cf_size_limit'])) {
-    sql_query("ALTER TABLE `{$g5['board_table']}` ADD `bo_cf_size_limit` INT NOT NULL DEFAULT '3,145,728' AFTER `bo_cf_count` ", false);
+    sql_query("ALTER TABLE `{$g5['board_table']}` ADD `bo_cf_size_limit` INT NOT NULL DEFAULT '3145728' AFTER `bo_cf_count` ", false);
 }
 
 if (!isset($board['bo_cf_upload_level'])) {
@@ -1331,7 +1331,7 @@ $pg_anchor = '<ul class="anchor">
                         } else {
                             $selected = ($board['bo_sort_field'] === $v[0]) ? 'selected="selected"' : '';
                         }
-                        
+
                         if ($order_by_str !== 'wr_num, wr_reply') {
                             $tmp = explode(',', $v[0]);
                             $order_by_str = $tmp[0];

@@ -857,7 +857,7 @@ function add_comment_setting_columns()
     sql_query("ALTER TABLE `{$g5['board_table']}` ADD `bo_cf_count` TINYINT NOT NULL DEFAULT '2' AFTER `bo_10` ", false);
 
     if (!isset($board['bo_cf_size_limit'])) {
-        sql_query("ALTER TABLE `{$g5['board_table']}` ADD `bo_cf_size_limit` INT NOT NULL DEFAULT '3,145,728' AFTER `bo_cf_count` ", false);
+        sql_query("ALTER TABLE `{$g5['board_table']}` ADD `bo_cf_size_limit` INT NOT NULL DEFAULT '3145728' AFTER `bo_cf_count` ", false);
     }
 
     if (!isset($board['bo_cf_upload_level'])) {
