@@ -1,8 +1,8 @@
 <?php
 /**
- * v5.5.8.3 데이터베이스 마이그레이션 (예정)
+ * v5.5.8.2.1 데이터베이스 마이그레이션
  */
-class V5583AddPollUse extends Migration
+class V55821AddPollUse extends Migration
 {
     public function up()
     {
