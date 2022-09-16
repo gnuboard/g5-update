@@ -1,16 +1,13 @@
 <?php
 
-require_once('./_common.php');
-require_once(G5_LIB_PATH . '/' . 'editor.lib.php'); //NONCE
-
+include_once('./_common.php');
+include_once(G5_LIB_PATH . '/Nonce.php');  //NONCE
 $is_editor_upload = false;
 $nonce = Nonce::get_instance();
-$get_nonce = get_session('token_' . FT_NONCE_SESSION_KEY);
 
-if ($get_nonce && $nonce->ft_nonce_is_valid($get_nonce, 'editor_image_upload')) {
+if ($nonce->ft_nonce_is_valid('editor_image_upload')) {
     $is_editor_upload = true;
 }
-
 
 $board = get_board_db($bo_table);
 
