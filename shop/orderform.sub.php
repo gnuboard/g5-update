@@ -1599,7 +1599,12 @@ function forderform_check(f)
 
         var tosspay_info = {}; 
         Object.assign(tosspay_info, tossParameter.common, tossParameter.order, tossParameter[f.settle_method.value]);
-        console.log(tosspay_info)
+        console.log(tosspay_info);
+
+        if (!tosspay_info.clientKey) {
+            alert("토스페이먼츠 클라이언트키가 등록되지 않았습니다. 자세한 내용은 관리자에게 문의해주세요.");
+            return false;
+        }
 
         if(f.settle_method.value != "무통장") {
             // 주문정보 임시저장
