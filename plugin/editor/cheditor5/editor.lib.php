@@ -1,11 +1,14 @@
 <?php
 if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
+include_once(G5_LIB_PATH . '/Nonce.php');  //NONCE
 
 function editor_html($id, $content, $is_dhtml_editor=true)
 {
     global $config, $w, $board, $write;
     global $editor_width, $editor_height;
     static $js = true;
+    $nonce = Nonce::get_instance();
+    $nonce->ft_nonce_create('editor_image_upload');
 
     if( 
         $is_dhtml_editor && $content && 
@@ -36,16 +39,196 @@ function editor_html($id, $content, $is_dhtml_editor=true)
         $html .= "var ed_nonce = \"".ft_nonce_create('cheditor')."\";\n";
         $html .= "var ed_{$id} = new cheditor('ed_{$id}');\n";
         $html .= "ed_{$id}.config.editorWidth = \"{$width}\";\n";             
-        $html .= "ed_{$id}.config.editorHeight = \"{$height}\";\n";           
+        $html .= "ed_{$id}.config.editorHeight = \"{$height}\";\n";
+
         $html .= "ed_{$id}.config.imgReSize = false;\n";                    
         $html .= "ed_{$id}.config.fullHTMLSource = false;\n";               
         $html .= "ed_{$id}.config.editorPath = \"{$editor_url}\";\n"; 
         $html .= "ed_{$id}.inputForm = \"tx_{$id}\";\n";
-        $html .= "</script>\n";                                             
+        $html .= "</script>\n";
+        $here = <<<HERE
+        <script>
+        var event_count = 0; //전역변수
+        window.addEventListener('load', function(){
+            add_image_upload_event();
+        });
+            
+        function add_image_upload_event (){
+            event_count++;
+            if(event_count > 1){ //이벤트 중복 등록방지
+                return;
+            }
+                let editor_iframe = document.querySelectorAll('.cheditor-container')
+                for(let i = 0; i < editor_iframe.length; i++){
+                    let inner_iframe = editor_iframe[i].querySelector('iframe')   
+                    if(inner_iframe.contentDocument.readyState == 'complete'){
+                        let input_area = inner_iframe.contentDocument.querySelector('body')
+                        
+                        //에디터와 이벤트 등록
+                            function paste_event(event){
+                                image_paste_uploader(event, input_area);
+                            }
+                            input_area.removeEventListener("paste", paste_event);
+                            input_area.addEventListener("paste", paste_event);
+                            
+                            function drop_event(event){
+                                image_drop(event, input_area);
+                            }
+                            input_area.removeEventListener("drop", drop_event);
+                            input_area.addEventListener("drop", drop_event );
+                        }
+                        let user_agent = navigator.userAgent;
+                        if( user_agent.search('Trident') != -1 || (user_agent.toLowerCase().indexOf("msie") != -1)) {
+                            return;
+                        }
+                    }
+            }
+            
+            function image_paste_uploader(event, target_tag) {
+                let items = (event.clipboardData || event.originalEvent.clipboardData).items;
+                if (items[0] == undefined) {
+                    event.preventDefault();
+                    return;
+                }
+                if (items[0].type.includes('image')) {
+                    event.preventDefault();
+                }
+    
+                let blob = items[0].getAsFile();
+                if (blob == null) {
+                    if (items[1] == undefined) {
+                        return;
+                    }
+                    if (items[1].type.includes('image')) {
+                        event.preventDefault();
+                        blob = items[1].getAsFile();
+                    }
+                }
+    
+                let blobs = [blob];
+                if (blobs[0] == null) {
+                    return;
+                }
+                file_submit(blob, target_tag);
+            }
+        
+            function file_submit(data, target_tag){
+                let editor = target_tag
+                let progressbar = document.createElement('progress');
+                progressbar.max = 100;
+                editor.appendChild(progressbar);
+    
+                let upload_percent = 0;
+                let req = new XMLHttpRequest();
+                req.upload.onprogress = function (e) {
+                    if (e.lengthComputable) {
+                        upload_percent = Math.round(e.loaded / e.total * 100);
+                        progressbar.value = upload_percent
+                        
+                        if (upload_percent == 100) {
+                            progressbar.style.display = 'none';
+                            progressbar.remove()
+                        }
+                    }
+                }
+    
+                let url = g5_bbs_url + "/ajax.image.uploader.php";
+                req.open('POST', url, true);
+                let formData = new FormData();
+                formData.append('bo_table', g5_bo_table)
+                formData.append('file[]', data);
+                formData.append('w', 'u'); //upload
+                req.send(formData);
+                req.onreadystatechange = function () {
+                    if (req.readyState === 4)  {
+    
+                        if(this.status == 200) {
+                            upload_success(req.response);
+                        } else {
+                            let result = JSON.parse(req.response)
+                            if(result == null){
+                                alert('업로드에 실패했습니다.')
+                            } else if(result.allow_file_size != undefined) {
+                                alert('파일 크기는 ' + result.allow_file_size + ' MB 이하만 허용됩니다')
+                            } else {
+                                alert(result.msg);
+                            }
+                        }
+                    }
+                }
+    
+                function upload_success(data) {
+                    let res = JSON.parse(data)
+                    view_image(res, target_tag);
+                }
+            }
+    
+            function view_image(data, target_tag) {
+                if(data['files'] === undefined){
+                    return;
+                }
+
+                let image = ''
+                let editor = target_tag;
+
+                let image_temp_wrapper = document.createDocumentFragment();
+                let regexImageExtension = /(png|jpg|jpeg|gif|webp)/i;
+                let newLine = document.createElement('br');
+    
+                for (let i = 0; i < data['files'].length; i++) {
+                    if(data['files'][i]['file_type'] == null) {
+                        continue;
+                    }
+                    if (data['files'][i]['file_type'].search(regexImageExtension) === -1) {
+                        continue;
+                    }
+                    let image_container_div = document.createElement('div');
+                    image_container_div.className = 'img_wrapper'
+                    //image_container_div.className = '' 클래스이름 지정
+                    image = document.createElement('img');
+                    image.src = data['files'][i]['end_point'] + '/' + data['files'][i]['file_name'];
+                    image.alt = data['files'][i]['original_name'];
+    
+                    image_container_div.appendChild(image);
+                    image_temp_wrapper.appendChild(image_container_div);
+                    image_temp_wrapper.appendChild(newLine);
+                }
+    
+                if (image_temp_wrapper.hasChildNodes()) {
+                    editor.appendChild(image_temp_wrapper);
+                }
+            }
+            
+            function image_drop(event, editor) {
+                event.preventDefault();
+                let file_data = event.dataTransfer.files[0];
+
+                if (file_data !== undefined) {
+                    file_submit(file_data, event.target);
+                }
+            }
+
+        </script>
+HERE;
+
         $html .= "<span class=\"sound_only\">웹에디터 시작</span>";
         $html .= "<textarea name=\"{$id}\" id=\"tx_{$id}\" style=\"display:none;\">{$content}</textarea>\n";
         $html .= "\n<span class=\"sound_only\">웹 에디터 끝</span>";
+
+
+
+
+
+
+
+
+
+
         $html .= "<script>ed_{$id}.run();</script>\n";
+
+
+
+        $html .= $here;
     } else {
         $html .= "<textarea id=\"$id\" name=\"$id\" style=\"width:{$width};height:{$height};\" maxlength=\"65536\">$content</textarea>\n";
     }
@@ -87,7 +270,7 @@ if (!defined('FT_NONCE_SESSION_KEY'))
 if (!defined('FT_NONCE_DURATION'))
     define( 'FT_NONCE_DURATION' , 60 * 30  ); // 300 makes link or form good for 5 minutes from time of generation,  300은 5분간 유효, 60 * 60 은 1시간
 
-if (!defined('FT_NONCE_KEY'))
+//if (!defined('FT_NONCE_KEY'))
     define( 'FT_NONCE_KEY' , '_nonce' );
 
 // This method creates a key / value pair for a url string
@@ -135,7 +318,7 @@ if(!function_exists('ft_nonce_is_valid')){
 			return false;
 		}
 		$salt = $a[0];
-		$maxTime = intval($a[1]);
+		$maxTime = (int)$a[1];
 		$hash = $a[2];
 		$back = sha1( $salt . $secret . $maxTime );
 		if ($back != $hash) {

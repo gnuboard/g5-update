@@ -20,7 +20,7 @@ $upload_config = array(
     'thumb_width' => $board['bo_image_width']
 );
 
-if($w == 'u') {
+if ($w == 'u') {
     if ($is_editor_upload === false || empty($board['bo_table']) || (count($_FILES['file']['name']) == 0)) {
         $response = array(
             'is_error' => true,
