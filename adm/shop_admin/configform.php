@@ -202,6 +202,14 @@ if( ! isset($default['de_easy_pay_services']) ){
     sql_query($sql, false);
 }
 
+// Tosspayments 결제모듈 ClientKey, SecretKey 추가
+if (!isset($conifg['cf_toss_client_key'])) {
+    $sql = "ALTER TABLE `{$g5['config_table']}` 
+            ADD COLUMN `cf_toss_client_key` VARCHAR(100) NOT NULL DEFAULT '' AFTER `cf_recaptcha_secret_key`,
+            ADD COLUMN `cf_toss_secret_key` VARCHAR(100) NOT NULL DEFAULT '' AFTER `cf_toss_client_key`; ";
+    sql_query($sql, false);
+}
+
 if( function_exists('pg_setting_check') ){
     pg_setting_check(true);
 }
