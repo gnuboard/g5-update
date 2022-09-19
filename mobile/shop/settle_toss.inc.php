@@ -21,7 +21,7 @@ $credential = base64_encode($secretKey . ':');
  */
 $successUrl = G5_MSHOP_URL . '/toss/success.php';
 $failUrl    = G5_MSHOP_URL . '/toss/fail.php';
-$virtualAccountCallbackUrl = G5_SHOP_URL . '/toss/virtaul_account.php';
+$virtualAccountCallbackUrl = G5_SHOP_URL . '/toss/virtual_account.php';
 
 $paymentsUrl = 'https://api.tosspayments.com/v1/payments/confirm';
 

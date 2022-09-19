@@ -206,7 +206,15 @@ if( ! isset($default['de_easy_pay_services']) ){
 if (!isset($conifg['cf_toss_client_key'])) {
     $sql = "ALTER TABLE `{$g5['config_table']}` 
             ADD COLUMN `cf_toss_client_key` VARCHAR(100) NOT NULL DEFAULT '' AFTER `cf_recaptcha_secret_key`,
-            ADD COLUMN `cf_toss_secret_key` VARCHAR(100) NOT NULL DEFAULT '' AFTER `cf_toss_client_key`; ";
+            ADD COLUMN `cf_toss_secret_key` VARCHAR(100) NOT NULL DEFAULT '' AFTER `cf_toss_client_key`";
+    sql_query($sql, false);
+}
+// od_app_no 길이 변경 (20 => 100)
+$sql = "SELECT DATA_TYPE, CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{$g5['g5_shop_order_table']}' AND COLUMN_NAME = 'od_app_no'";
+$od_app_no = sql_fetch($sql);
+if ($od_app_no['DATA_TYPE'] == 'varchar' && $od_app_no['CHARACTER_MAXIMUM_LENGTH'] == '20') {
+    $sql = "ALTER TABLE `{$g5['g5_shop_order_table']}`
+            MODIFY od_app_no VARCHAR(100) NOT NULL DEFAULT ''; ";
     sql_query($sql, false);
 }
 
