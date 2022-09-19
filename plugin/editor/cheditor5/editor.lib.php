@@ -58,30 +58,31 @@ function editor_html($id, $content, $is_dhtml_editor=true)
             if(event_count > 1){ //이벤트 중복 등록방지
                 return;
             }
-                let editor_iframe = document.querySelectorAll('.cheditor-container')
-                for(let i = 0; i < editor_iframe.length; i++){
-                    let inner_iframe = editor_iframe[i].querySelector('iframe')   
-                    if(inner_iframe.contentDocument.readyState == 'complete'){
-                        let input_area = inner_iframe.contentDocument.querySelector('body')
+            
+            let user_agent = navigator.userAgent; //ie 미지원
+            if( user_agent.search('Trident') != -1 || (user_agent.toLowerCase().indexOf("msie") != -1)) {
+                return;
+            }
+            
+            let editor_iframe = document.querySelectorAll('.cheditor-container')
+            for(let i = 0; i < editor_iframe.length; i++){
+                let inner_iframe = editor_iframe[i].querySelector('iframe')   
+                if(inner_iframe.contentDocument.readyState == 'complete'){
+                    let input_area = inner_iframe.contentDocument.querySelector('body')
+                    
+                    //에디터와 이벤트 등록
+                        function paste_event(event){
+                            image_paste_uploader(event, input_area);
+                        }
+                        input_area.addEventListener("paste", paste_event);
                         
-                        //에디터와 이벤트 등록
-                            function paste_event(event){
-                                image_paste_uploader(event, input_area);
-                            }
-                            input_area.removeEventListener("paste", paste_event);
-                            input_area.addEventListener("paste", paste_event);
-                            
-                            function drop_event(event){
-                                image_drop(event, input_area);
-                            }
-                            input_area.removeEventListener("drop", drop_event);
-                            input_area.addEventListener("drop", drop_event );
+                        function drop_event(event){
+                            image_drop(event, input_area);
                         }
-                        let user_agent = navigator.userAgent;
-                        if( user_agent.search('Trident') != -1 || (user_agent.toLowerCase().indexOf("msie") != -1)) {
-                            return;
-                        }
+                        input_area.addEventListener("drop", drop_event );
                     }
+                    
+                }
             }
             
             function image_paste_uploader(event, target_tag) {

@@ -57,29 +57,33 @@ function editor_html($id, $content, $is_dhtml_editor=true)
 ';
         $here = <<<HERE
         $(document).ready(function(){
-        let editor_input_area = [];
+        
+            let user_agent = navigator.userAgent; //ie 미지원
+            if( user_agent.search('Trident') != -1 || (user_agent.toLowerCase().indexOf("msie") != -1)) {
+                return;
+            }
+            
+            let editor_input_area = [];
             let editor_iframe = document.querySelectorAll('#smart_editor2')
             for(let i = 0; i < editor_iframe.length; i++){
-
-            editor_iframe[i].onload = function(){
-                let inner_iframe = editor_iframe[i].contentDocument.querySelector('iframe')
-                inner_iframe.onload = function(){
-                    let input_area = inner_iframe.contentDocument.querySelector('.se2_inputarea')
-                    editor_input_area[i] = input_area;
+                editor_iframe[i].onload = function(){
+                    let inner_iframe = editor_iframe[i].contentDocument.querySelector('iframe')
+                    inner_iframe.onload = function(){
+                        let input_area = inner_iframe.contentDocument.querySelector('.se2_inputarea')
+                        editor_input_area[i] = input_area;
+                        
+                        //에디터와 이벤트 등록
+                        input_area.addEventListener("paste", function(event){
+                            image_paste_uploader(event, editor_input_area[i]);
+                        });
+                        
+                        input_area.addEventListener("drop", function(event){
+                            image_drop(event, editor_input_area[i]);
+                        });        
+                    } //end onload inner_iframe
                     
-                    //에디터와 이벤트 등록
-                    input_area.addEventListener("paste", function(event){
-                        image_paste_uploader(event, editor_input_area[i]);
-                    });
-                    
-                    input_area.addEventListener("drop", function(event){
-                        image_drop(event, editor_input_area[i]);
-                    });
-                    
-                }
-                
-            }
-          }
+                  } // end onload editor_iframe
+            } //end for
           
             function image_paste_uploader(event, target_tag) {
 
