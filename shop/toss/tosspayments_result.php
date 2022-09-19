@@ -7,21 +7,22 @@ require_once(G5_SHOP_PATH.'/settle_toss.inc.php');
 /**
  * 결제 승인 API 호출
  */
-$data = ['paymentKey' => $paymentKey, 'orderId' => $orderId, 'amount' => $amount];
+$data = array('paymentKey' => $paymentKey, 'orderId' => $orderId, 'amount' => $amount);
 
 $curlHandle = curl_init($paymentsUrl);
 
-curl_setopt_array($curlHandle, [
+curl_setopt_array($curlHandle, array(
     CURLOPT_POST => TRUE,
     CURLOPT_RETURNTRANSFER => TRUE,
-    CURLOPT_HTTPHEADER => [
+    CURLOPT_HTTPHEADER => array(
         'Authorization: Basic ' . $credential,
         'Content-Type: application/json'
-    ],
+    ),
     CURLOPT_POSTFIELDS => json_encode($data)
-]);
+));
 
 $response = curl_exec($curlHandle);
+$curl_err = curl_error($curlHandle);
 
 $httpCode = curl_getinfo($curlHandle, CURLINFO_HTTP_CODE);
 $isSuccess = $httpCode == 200;
@@ -30,7 +31,7 @@ $responseJson = json_decode($response);
 /**
  * 결제데이터 처리 및 결과 전송
  */
-if ($isSuccess) { 
+if ($isSuccess) {
     // echo json_encode($responseJson, JSON_UNESCAPED_UNICODE);
     // exit;
 
@@ -100,5 +101,9 @@ if ($isSuccess) {
         
     // }
 } else {
-    alert("[{$responseJson->code}] " . $responseJson->message );
+    if (isset($responseJson)) {
+        alert("[" . $responseJson->code . "] " . $responseJson->message );
+    } else {
+        alert($curl_err);
+    }
 }

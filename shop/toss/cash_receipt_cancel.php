@@ -9,18 +9,18 @@ include_once(G5_SHOP_PATH.'/settle_toss.inc.php');
 
 $curl = curl_init();
 
-curl_setopt_array($curl, [
+curl_setopt_array($curl, array(
 CURLOPT_URL => "https://api.tosspayments.com/v1/cash-receipts/" . $receiptKey . "/cancel",
 CURLOPT_RETURNTRANSFER => true,
 CURLOPT_ENCODING => "",
 CURLOPT_MAXREDIRS => 10,
 CURLOPT_TIMEOUT => 30,
 CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-CURLOPT_HTTPHEADER => [
+CURLOPT_HTTPHEADER => array(
     "Authorization: Basic " . $credential,
     "Content-Type: application/json"
-],
-]);
+),
+));
 
 $response_cancel = curl_exec($curl);
 $err_cancel = curl_error($curl);

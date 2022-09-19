@@ -24,7 +24,7 @@ if ($cancelFlag == "true") {
 
     $curl = curl_init();
 
-    curl_setopt_array($curl, [
+    curl_setopt_array($curl, array(
     CURLOPT_URL => "https://api.tosspayments.com/v1/payments/{$paymentKey}/cancel",
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_ENCODING => "",
@@ -33,11 +33,11 @@ if ($cancelFlag == "true") {
     CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
     CURLOPT_CUSTOMREQUEST => "POST",
     CURLOPT_POSTFIELDS => "{\"cancelReason\":\"{$cancel_msg}\"}",
-    CURLOPT_HTTPHEADER => [
+    CURLOPT_HTTPHEADER => array(
         "Authorization: Basic " . $credential,
         "Content-Type: application/json"
-    ],
-    ]);
+    ),
+    ));
 
     $response = curl_exec($curl);
     $err = curl_error($curl);
