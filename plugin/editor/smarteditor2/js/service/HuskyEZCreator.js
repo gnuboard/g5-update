@@ -73,7 +73,7 @@ nhn.husky.EZCreator = new (function(){
 			elIFrame.setAttribute("frameborder", "0");
 			elIFrame.setAttribute("scrolling", "no");
 		}
-		
+		elIFrame.id='smart_editor2'
 		elIFrame.style.width = "1px";
 		elIFrame.style.height = "1px";
 		elPlaceHolder.parentNode.insertBefore(elIFrame, elPlaceHolder.nextSibling);
