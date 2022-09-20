@@ -7,6 +7,10 @@ if (!defined('_GNUBOARD_')) {
  * 그누보드5 버전 업데이트
  *
  * @todo
+ * 1. 권한관련 문제
+ *  - ftp, sftp connection 계정으로 파일을 생성 및 처리하도록 통일 
+ *      - fopen($archiveFile, 'w+');
+ *      => fopen("ssh2.sftp://" . $this->connPath . $archiveFile, 'w+');
  * 2. 업데이트에 필요한 최소용량 및 용량 초과시 예외처리
  * 3. disk_total_space, disk_free_space > 호스팅 환경에서는 용량표시가 제대로 안됨
  */
