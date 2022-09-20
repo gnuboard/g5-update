@@ -1330,6 +1330,7 @@ $(function(){
         <tr>
             <th scope="row"><label for="it_img<?php echo $i; ?>">이미지 <?php echo $i; ?></label></th>
             <td>
+                <img class="preview_upload_item">
                 <input type="file" name="it_img<?php echo $i; ?>" id="it_img<?php echo $i; ?>">
                 <?php
                 $it_img = G5_DATA_PATH.'/item/'.$it['it_img'.$i];
@@ -1881,7 +1882,7 @@ function fitemformcheck(f)
 
 function categorychange(f)
 {
-    var idx = f.ca_id.value;
+    let idx = f.ca_id.value;
 
     if (f.w.value == "" && idx)
     {
@@ -1891,7 +1892,67 @@ function categorychange(f)
     }
 }
 
+function shop_item_image_preview() {
+
+    window.addEventListener('dragover', function (e) {
+        e = e || event;
+        e.preventDefault();
+    }, false);
+
+    window.addEventListener('drop', function (e) {
+        e = e || event;
+        e.preventDefault();
+    }, false);
+
+    for (let i = 1; i <= 10; i++) {
+        let image = document.querySelector('#it_img' + i);
+        image.addEventListener('change', function (event) {
+            file_select(event)
+        })
+        image.parentNode.addEventListener('drop', drag_image);
+    }
+
+    function drag_image(event) {
+        let data = event.dataTransfer.files[0];
+        let target_node = event.target;
+
+        view_image(data, target_node);
+
+        let file_data_transfer = new DataTransfer();
+        file_data_transfer.items.add(data);
+        target_node.parentNode.querySelector('[type="file"]').files = file_data_transfer.files;
+    }
+
+    function file_select(event) {
+        view_image(event.target.files[0], event.target)
+    }
+
+    function view_image(data, target_node) {
+        let regexImageExtension = /(png|jpg|jpeg|gif|webp)/i;
+        if (data.name === null || data.name.search(regexImageExtension) === -1) {
+            return;
+        }
+
+        let file_reader = new FileReader();
+        file_reader.readAsDataURL(data);
+        file_reader.onload = function () {
+            let preview = new Image();
+            preview.src = file_reader.result;
+            preview.onload = function () {
+                target_node.parentNode.querySelector('img').src = preview.src;
+            }
+        }
+
+        file_reader.onerror = function () {
+            alert('잘못된 이미지 파일 입니다.')
+        }
+    }
+}
+
 categorychange(document.fitemform);
+
+shop_item_image_preview();
+
 </script>
 
 <?php
