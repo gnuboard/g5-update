@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result = sql_query($select_all_sql);
         }
 
-        $response_row = array();
+        $response = array();
 
         if ($result) {
             while ($row = sql_fetch_array($result)) {
@@ -106,13 +106,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         continue;
                     }
                 }
-                unset($row['wr_password']);
-                unset($row['wr_option']);
+                unset($row['wr_password'], $row['wr_option']);
                 $row['original_name'] = html_purifier($row['original_name']);
-                $response_row[$row['comment_id']]['files'][] = $row;
+                $response[$row['comment_id']]['files'][] = $row;
             }
         }
-        $response = $response_row;
+
         if (empty($response)) {
             $response['files'] = array();
         }
@@ -843,7 +842,7 @@ function create_comment_file_table()
       `bo_table` varchar(11) DEFAULT NULL,
       `is_delete` tinyint(4) DEFAULT 0,
       `save_time` datetime NOT NULL,
-      `file_size` INT(10) NULL DEFAULT NULL,
+      `file_size` INT(11) NULL DEFAULT NULL
       PRIMARY KEY (`file_id`)
     ) ENGINE=MyISAM DEFAULT CHARSET=utf8";
 
