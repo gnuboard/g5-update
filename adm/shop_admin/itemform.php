@@ -1329,8 +1329,18 @@ $(function(){
         <?php for($i=1; $i<=10; $i++) { ?>
         <tr>
             <th scope="row"><label for="it_img<?php echo $i; ?>">이미지 <?php echo $i; ?></label></th>
-            <td>
-                <img class="preview_upload_item">
+            <td id="upload_image_row<?php echo $i?>">
+                <div><img class="preview_upload_item">
+                    <span class="upload_cancel_button">
+                        <i>
+                            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000">
+                                <path d="M0 0h24v24H0z"
+                                      fill="none"/>
+                                <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/>
+                            </svg>
+                        </i>
+                    </span>
+                </div>
                 <input type="file" name="it_img<?php echo $i; ?>" id="it_img<?php echo $i; ?>">
                 <?php
                 $it_img = G5_DATA_PATH.'/item/'.$it['it_img'.$i];
@@ -1905,29 +1915,27 @@ function shop_item_image_preview() {
     }, false);
 
     for (let i = 1; i <= 10; i++) {
-        let image = document.querySelector('#it_img' + i);
-        image.addEventListener('change', function (event) {
-            file_select(event)
+        let file_input_tag = document.querySelector('#it_img' + i);
+        let row_node = document.querySelector('#upload_image_row' + i); //이미지가 속한 td열
+
+        file_input_tag.addEventListener('change', function (event) {
+            view_image(event.target.files[0], row_node)
         })
-        image.parentNode.addEventListener('drop', drag_image);
+        row_node.addEventListener('drop', function () {
+            drag_image(event, row_node);
+        });
     }
 
-    function drag_image(event) {
+    function drag_image(event, row_node) {
         let data = event.dataTransfer.files[0];
-        let target_node = event.target;
-
-        view_image(data, target_node);
+        view_image(data, row_node);
 
         let file_data_transfer = new DataTransfer();
         file_data_transfer.items.add(data);
-        target_node.parentNode.querySelector('[type="file"]').files = file_data_transfer.files;
+        row_node.querySelector('[type="file"]').files = file_data_transfer.files;
     }
 
-    function file_select(event) {
-        view_image(event.target.files[0], event.target)
-    }
-
-    function view_image(data, target_node) {
+    function view_image(data, row_node) {
         let regexImageExtension = /(png|jpg|jpeg|gif|webp)/i;
         if (data.name === null || data.name.search(regexImageExtension) === -1) {
             return;
@@ -1936,10 +1944,24 @@ function shop_item_image_preview() {
         let file_reader = new FileReader();
         file_reader.readAsDataURL(data);
         file_reader.onload = function () {
+
             let preview = new Image();
             preview.src = file_reader.result;
             preview.onload = function () {
-                target_node.parentNode.querySelector('img').src = preview.src;
+                row_node.querySelector('img').src = preview.src;
+
+                let cancel_button = row_node.querySelector('.upload_cancel_button');
+                cancel_button.style = 'position: absolute'
+                cancel_button.className = 'upload_cancel_button upload_cancel_button_show';
+                cancel_button.addEventListener('click', function () {
+                    row_node.querySelector('img').src = '';
+                    row_node.querySelector('[type="file"]').files = new DataTransfer().files;
+                    this.className = 'upload_cancel_button';
+                });
+
+                cancel_button.querySelector('svg').addEventListener('click', function (event) {
+                    event.preventDefault();
+                })
             }
         }
 
