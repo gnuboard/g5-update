@@ -371,7 +371,6 @@ if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
                 if (e.lengthComputable) {
                     upload_percent = Math.round(e.loaded / e.total * 100);
                     progressbar.value = upload_percent
-                    console.log(upload_percent)
                     if (upload_percent == 100) {
                         progressbar.style.display = 'none';
                     }
@@ -518,7 +517,6 @@ if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 
                 link.addEventListener('click', function (e) {
                     download_comment_file(file_data)
-                    console.log(file_data)
                 })
 
                 let file_info_span = document.createElement('span');
@@ -727,7 +725,7 @@ if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
             function add_comment_editor_event() {
                 document.querySelector('#wr_content').addEventListener('keypress', add_paragraph);
                 document.querySelector('#wr_content').addEventListener("paste", image_paste_uploader);
-                document.querySelector('#wr_content').addEventListener('drop', imageDrop, false);
+                document.querySelector('#wr_content').addEventListener('drop', image_drop, false);
                 $(document).on("keyup change", "#wr_content", function() {
                     let str = $(this).html()
                     let max = char_max ? parseInt(char_max) : null
@@ -742,9 +740,8 @@ if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
                 });
             }
 
-            function imageDrop(event) {
+            function image_drop(event) {
                 event.preventDefault();
-                console.log(event.dataTransfer.files[0]);
                 let file_data = event.dataTransfer.files;
                 if (file_data !== undefined) {
                     let comment_file_form = document.querySelector('#fcomment_file');
