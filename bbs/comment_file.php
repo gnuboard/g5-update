@@ -835,7 +835,7 @@ function create_comment_file_table()
     global $g5;
 
     $create_table = "CREATE TABLE IF NOT EXISTS `{$g5['comment_file_table']}` (
-    `file_id` int(11) NOT NULL AUTO_INCREMENT,
+      `file_id` int(11) NOT NULL AUTO_INCREMENT,
       `file_source_name` varchar(255) NOT NULL,
       `file_name` varchar(255) NOT NULL,
       `file_download_count` int(11) DEFAULT 0,
@@ -843,6 +843,7 @@ function create_comment_file_table()
       `bo_table` varchar(11) DEFAULT NULL,
       `is_delete` tinyint(4) DEFAULT 0,
       `save_time` datetime NOT NULL,
+      `file_size` INT(10) NULL DEFAULT NULL,
       PRIMARY KEY (`file_id`)
     ) ENGINE=MyISAM DEFAULT CHARSET=utf8";
 
