@@ -1,0 +1,8 @@
+RewriteEngine On
+
+RewriteBase /g5-update/plugin/router/demo/
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+# Push every request to index.php
+RewriteRule ^(.*)$ index.php [QSA]
