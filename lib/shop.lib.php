@@ -474,8 +474,9 @@ function get_it_thumbnail($img, $width, $height=0, $id='', $is_crop=false)
     if (! (isset($size) && is_array($size))) 
         return '';
 
-    if($size[2] < 1 || $size[2] > 3)
+    if($size[2] < 1 || ($size[2] > 3 && $size[2] != 18 )) {
         return '';
+    }
 
     $img_width = $size[0];
     $img_height = $size[1];
@@ -515,8 +516,9 @@ function get_it_imageurl($it_id)
             continue;
 
         $size = @getimagesize($file);
-        if($size[2] < 1 || $size[2] > 3)
+        if($size[2] < 1 || ($size[2] > 3 && $size[2] != 18 )) {
             continue;
+        }
 
         $filepath = $file;
         break;
@@ -647,11 +649,11 @@ function it_img_upload($srcfile, $filename, $dir)
         return '';
 
     $size = @getimagesize($srcfile);
-    if($size[2] < 1 || $size[2] > 3)
+    if($size[2] < 1 || ($size[2] > 3 && $size[2] != 18 )) //18 webp
         return '';
 
     //php파일도 getimagesize 에서 Image Type Flag 를 속일수 있다
-    if (!preg_match('/\.(gif|jpe?g|png)$/i', $filename))
+    if (!preg_match('/\.(gif|jpe?g|png|webp)$/i', $filename))
         return '';
 
     if(!is_dir($dir)) {
