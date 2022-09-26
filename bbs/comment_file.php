@@ -46,7 +46,7 @@ define('COMMENT_FILE_IMG_RESIZE', $board['bo_cf_resize']);
 $is_late_delete = isset($board['bo_cf_is_late_delete']) && ($board['bo_cf_is_late_delete'] == 1);
 $upload_level = $board['bo_cf_upload_level'];
 $download_level = $board['bo_cf_download_level'];
-
+$member_level = $member['mb_level'];
 
 if (!isset($g5['comment_file_table'])) {
     $g5['comment_file_table'] = G5_TABLE_PREFIX . 'comment_file';
@@ -201,8 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        $member_level = $is_guest ? 0 : $member['mb_level']; //guest 는 0
-        if (!($member_level >= $upload_level)) {
+        if ($member_level < $upload_level) {
             $response = array(
                 'is_error' => true,
                 'msg' => '권한이 없습니다.'
@@ -590,7 +589,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         @include_once($board_skin_path . '/comment_download.skin.php'); //사용자 코드
 
-        if (!($member_level >= $download_level)) {
+        if ($member_level < $download_level) {
             $response = array(
                 'is_error' => true,
                 'msg' => '권한이 없습니다.'
@@ -873,6 +872,6 @@ function add_comment_setting_columns()
     }
 
     if (!isset($board['bo_cf_resize'])) {
-        sql_query("ALTER TABLE `{$g5['board_table']}` ADD `bo_cf_resize` TINYINT NOT NULL DEFAULT '100' AFTER `bo_cf_is_late_delete` ", false);
+        sql_query("ALTER TABLE `{$g5['board_table']}` ADD `bo_cf_resize` TINYINT NOT NULL DEFAULT '90' AFTER `bo_cf_is_late_delete` ", false);
     }
 }

@@ -110,7 +110,7 @@ if (!isset($board['bo_cf_is_late_delete'])) {
 }
 
 if (!isset($board['bo_cf_resize'] )) {
-    sql_query("ALTER TABLE `{$g5['board_table']}` ADD `bo_cf_resize` TINYINT NOT NULL DEFAULT '100' AFTER `bo_cf_is_late_delete` ", false);
+    sql_query("ALTER TABLE `{$g5['board_table']}` ADD `bo_cf_resize` TINYINT NOT NULL DEFAULT '90' AFTER `bo_cf_is_late_delete` ", false);
 }
 
 $board_default = array(
@@ -869,7 +869,7 @@ $pg_anchor = '<ul class="anchor">
         <tr>
             <th scope="row"><label for="bo_cf_upload_level">댓글 첨부파일 업로드 레벨</label></th>
             <td>
-                <?php echo help('댓글의 이미지와 첨부파일을 업로드 할 수 있는 권한을 설정합니다. (0은 익명의 사용자도 가능)') ?>
+                <?php echo help('댓글의 이미지와 첨부파일을 업로드 할 수 있는 권한을 설정합니다. (레벨 1은 익명의 사용자)') ?>
                 <input type="text" name="bo_cf_upload_level" value="<?php echo $board['bo_cf_upload_level'] ?>" id="bo_cf_upload_level" class="numeric frm_input" size="4">
             </td>
             <td class="td_grpset">
@@ -883,7 +883,7 @@ $pg_anchor = '<ul class="anchor">
         <tr>
             <th scope="row"><label for="bo_cf_download_level">댓글 첨부파일 다운로드 레벨</label></th>
             <td>
-                <?php echo help('댓글의 이미지와 첨부파일을 다운로드 할 수 있는 권한을 설정합니다. (0은 익명의 사용자도 가능)') ?>
+                <?php echo help('댓글의 이미지와 첨부파일을 다운로드 할 수 있는 권한을 설정합니다. (레벨 1은 익명의 사용자)') ?>
                 <input type="text" name="bo_cf_download_level" value="<?php echo $board['bo_cf_download_level'] ?>" id="bo_cf_download_level" class="numeric frm_input" size="4">
             </td>
             <td class="td_grpset">
