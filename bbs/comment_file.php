@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        if (G5_MYSQLI_USE && function_exists('mysqli_connect') && version_compare(PHP_VERSION, '5.3.0') >= 0) { //바인딩 쿼리
+        if (G5_MYSQLI_USE && function_exists('mysqli_connect') && version_compare(PHP_VERSION, '5.4.1') >= 0) { //바인딩 쿼리
             $link = $GLOBALS['g5']['connect_db'];
 
             $select_all_sql = 'select wr_id, file_id, file_source_name as original_name, file_name, file_size, file_download_count, comment_id, save_time, wr_option, wr_password from ' . G5_TABLE_PREFIX . 'write_' . sql_real_escape_string(
@@ -126,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        if (G5_MYSQLI_USE && function_exists('mysqli_connect') && version_compare(PHP_VERSION, '5.3.0') >= 0) { //바인딩 쿼리
+        if (G5_MYSQLI_USE && function_exists('mysqli_connect') && version_compare(PHP_VERSION, '5.4.1') >= 0) { //바인딩 쿼리
             $link = $GLOBALS['g5']['connect_db'];
 
             $select_sql = "select file_name, file_source_name, comment_id, mb_id, save_time, wr_option, file_size
