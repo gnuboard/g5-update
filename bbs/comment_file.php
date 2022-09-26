@@ -841,7 +841,7 @@ function create_comment_file_table()
       `bo_table` varchar(11) DEFAULT NULL,
       `is_delete` tinyint(4) DEFAULT 0,
       `save_time` datetime NOT NULL,
-      `file_size` INT(11) NULL DEFAULT NULL
+      `file_size` int(11) NULL DEFAULT 0,
       PRIMARY KEY (`file_id`)
     ) ENGINE=MyISAM DEFAULT CHARSET=utf8";
 
