@@ -1789,6 +1789,10 @@ $(function() {
 });
 <?php } ?>
 
+var is_webp_support =  '<?php
+    echo version_compare(PHP_VERSION, '7.1.0', '<') ? 't': 'f';
+?>';
+
 function fitemformcheck(f)
 {
     if (!f.ca_id.value) {
@@ -1928,6 +1932,13 @@ function shop_item_image_preview() {
 
     function drag_image(event, row_node) {
         let data = event.dataTransfer.files[0];
+        if(data.name.toLowerCase().includes('webp')){
+            if(is_webp_support === 'f'){
+                alert('webp 이미지는 PHP 7.1 미만에서는 지원되지 않습니다.');
+                return;
+            }
+        }
+
         view_image(data, row_node);
 
         let file_data_transfer = new DataTransfer();

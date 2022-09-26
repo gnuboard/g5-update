@@ -649,7 +649,7 @@ function it_img_upload($srcfile, $filename, $dir)
         return '';
 
     $size = @getimagesize($srcfile);
-    if($size[2] < 1 || ($size[2] > 3 && $size[2] != 18 )) //18 webp
+    if($size[2] < 1 || ($size[2] > 3 && $size[2] != 18 )) //18: webp
         return '';
 
     //php파일도 getimagesize 에서 Image Type Flag 를 속일수 있다
