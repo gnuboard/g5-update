@@ -31,8 +31,7 @@ if ($w == 'u') {
         exit;
     }
 
-    $member_level = $is_guest ? 0 : $member['mb_level']; //guest 는 0
-    if (!($member_level >= $upload_config['upload_level'])) {
+    if ($member['mb_level'] < $upload_config['upload_level']) {
         $response = array(
             'is_error' => true,
             'msg' => '권한이 없습니다.'
