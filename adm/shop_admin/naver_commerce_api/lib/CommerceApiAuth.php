@@ -62,26 +62,44 @@ class CommerceApiAuth {
      */
     public function getAccessToken()
     {
-        $commerceApi = new CommerceApi();
+        try {
+            $commerceApi = new CommerceApi();
 
-        $ApiData = array(
-            'client_id' => $this->clientId,
-            'timestamp' => $this->timestamp,
-            'client_secret_sign' => $this->signature,
-            'grant_type' => 'client_credentials',
-            'type' => 'SELF'
-        );
+            $ApiData = array(
+                'client_id' => $this->clientId,
+                'timestamp' => $this->timestamp,
+                'client_secret_sign' => $this->signature,
+                'grant_type' => 'client_credentials',
+                'type' => 'SELF'
+            );
+    
+            $resultData = $commerceApi->requestCurl("POST", $this->urlAccessToken, $ApiData);
 
-        $resultData = $commerceApi->requestCurl("POST", $this->urlAccessToken, $ApiData);
-
-        return $resultData->access_token;
+            if (empty($resultData->access_token)){
+                throw new Exception("엑세스 토큰이 없습니다.");
+            }
+    
+            return $resultData->access_token;
+        } catch (Exception $e) {
+            print_r($e->getMessage());
+        }
     }
 
+    /**
+     * set authorizationHeader
+     * 
+     * @param string $accessToken
+     * @return void
+     */
     public function setAuthorizationHeader($accessToken)
     {
         $this->authorizationHeader = "Authorization: Bearer " . $accessToken;
     }
-
+    /**
+     * get authorizationHeader
+     * 
+     * @return string
+     */
     public function getAuthorizationHeader()
     {
         return $this->authorizationHeader;

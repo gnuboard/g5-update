@@ -35,6 +35,29 @@ if ($is_admin != 'super') {     // 최고관리자가 아니면 체크
     }
 }
 
+/**
+ * 네이버 스마트스토어 연동
+ * - it_img_upload함수의 move_upload_file로 인해 이미지파일이 임시경로에서 없어지므로 상품등록이 안되어 상단에 위치함.
+ * @todo 상품등록 프로세스 안쪽으로 이동해야함.
+ */
+// 
+if ($naver_smartstore_yn) {
+    include_once 'naver_commerce_api/lib/interface/SignatureInterface.php';
+    include_once 'naver_commerce_api/lib/SignatureGeneratorSimple.php';
+    include_once 'naver_commerce_api/lib/CommerceApi.php';
+    include_once 'naver_commerce_api/lib/CommerceApiAuth.php';
+    include_once 'naver_commerce_api/lib/G5SmartstoreProduct.php';
+    include_once 'naver_commerce_api/lib/G5SmartstoreProductData.php';
+
+    $client_id = '';
+    $client_secret = '';
+    $commerceApiAuth = new CommerceApiAuth($client_id, $client_secret, new SignatureGeneratorSimple());
+    $productInstance = new G5SmartstoreProduct($commerceApiAuth);
+    $response = $productInstance->createChannerProduct($_POST, $_FILES);
+    
+    $ec_mall_pid = $response->smartstoreChannelProductNo;
+}
+
 $it_img1 = $it_img2 = $it_img3 = $it_img4 = $it_img5 = $it_img6 = $it_img7 = $it_img8 = $it_img9 = $it_img10 = '';
 // 파일정보
 if($w == "u") {

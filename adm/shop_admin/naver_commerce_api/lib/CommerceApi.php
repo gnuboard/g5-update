@@ -28,14 +28,21 @@ class CommerceApi {
     public function requestCurl($method, $url, $data = array())
     {   
         $curlHandle = curl_init();
-
-        // Access Token Header 추가
+        /* HTTP Header */
+        $header = array();        
+        // Add Access Token Header 
         if (isset($this->commerceApiAuth)) {
-            $authorizationHeader =$this->commerceApiAuth->getAuthorizationHeader();
-            curl_setopt($curlHandle, CURLOPT_HTTPHEADER, array($authorizationHeader));
+            array_push($header, $this->commerceApiAuth->getAuthorizationHeader());
         }
+        if ($url == G5SmartstoreProduct::$urlCreateChannelProduct) {
+            array_push($header, "content-type: application/json");
+        }
+        if ($url == G5SmartstoreProduct::$urlUploadProductImage) {
+            array_push($header, "content-type: multipart/form-data");
+        }
+        curl_setopt($curlHandle, CURLOPT_HTTPHEADER, $header);
 
-        // CURL 옵션설정
+        /* CURL option Setting */
         if ($method === "GET") {
             $url .= "?" . htmlspecialchars(http_build_query($data), ENT_QUOTES, 'UTF-8');
         } elseif ($method === "POST") {
@@ -45,12 +52,12 @@ class CommerceApi {
         curl_setopt($curlHandle, CURLOPT_URL, $url);
         curl_setopt($curlHandle, CURLOPT_RETURNTRANSFER, true);
 
-        // CURL 결과처리
+        /* CURL result */
         $response = curl_exec($curlHandle);
         $curl_err = curl_error($curlHandle);
         $httpCode = curl_getinfo($curlHandle, CURLINFO_HTTP_CODE);
         curl_close($curlHandle);
-
+        print_r($response);
         $isSuccess = $httpCode == 200;
         $responseJson = json_decode($response);
 
