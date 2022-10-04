@@ -337,8 +337,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $is_delete = @unlink($file_path);
 
                 if (strpos($file_name, 'thumb-') !== false) {
-                    $file_name_pathinfo = pathinfo($file_name);
-                    $file_extension = $file_name_pathinfo['extension'];
+                    $file_extension = pathinfo($file_name, PATHINFO_EXTENSION);
                     $tmp = explode('thumb-', $file_name);
                     $name = $tmp[1];
                     $file_name = explode('_', $name);
@@ -415,8 +414,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $is_delete = @unlink($file_path);
 
                 if (strpos($file_name, 'thumb-') !== false) {
-                    $file_name_pathinfo = pathinfo($file_name);
-                    $file_extension = $file_name_pathinfo['extension'];
+                    $file_extension = pathinfo($file_name, PATHINFO_EXTENSION);
                     $tmp = explode('thumb-', $file_name);
                     $name = $tmp[1];
                     $file_name = explode('_', $name);
@@ -469,9 +467,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             while ($row = sql_fetch_array($result)) {
                 $file_info = array('file_name' => $row['file_name'], 'save_time' => $row['save_time']);
                 $remove_files[] = $file_info;
+                $file_extension = pathinfo(strtolower($row['file_name']), PATHINFO_EXTENSION);
 
-                $file_name_pathinfo = pathinfo(strtolower($row['file_name']));
-                $file_extension = $file_name_pathinfo['extension'];
                 if (strpos($row['file_name'], 'thumb-') !== false) {
                     $tmp = explode('thumb-', $row['file_name']);
                     $name = $tmp[1];
@@ -539,8 +536,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $file_info = array('file_name' => $row['file_name'], 'save_time' => $row['save_time']);
                 $remove_files[] = $file_info;
 
-                $file_name_pathinfo = pathinfo(strtolower($row['file_name']));
-                $file_extension = $file_name_pathinfo['extension'];
+                $file_extension = pathinfo(strtolower($row['file_name']), PATHINFO_EXTENSION);
+
                 if (strpos($row['file_name'], 'thumb-') !== false) {
                     $tmp = explode('thumb-', $row['file_name']);
                     $name = $tmp[1];
@@ -662,7 +659,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $download_rate = 10;
 
             while (!feof($fp)) {
-                print fread($fp, round($download_rate * 1024));
+                print fread($fp, (int)round($download_rate * 1024));
                 flush();
                 usleep(1000);
             }
