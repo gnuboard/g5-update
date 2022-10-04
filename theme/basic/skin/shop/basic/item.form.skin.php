@@ -366,6 +366,8 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_SHOP_CSS_URL.'/style.css">', 0
 	</form>
 </div>
 
+
+<script src="<?php echo G5_JS_URL; ?>/image.zoom.js"></script>
 <script>
 $(function(){
     // 상품이미지 첫번째 링크
@@ -523,6 +525,27 @@ function fitem_submit(f)
 
     return true;
 }
+
+function add_image_zoom() {
+    $('#sit_pvi_big a img')
+        .wrap('<span style="display:inline-block"></span>')
+        .css('display', 'block')
+        .parent()
+        .zoom({
+            magnify:2,
+            callback: function(){
+                //1500사이즈가 아닐 경우 확대하지 않게 하기 위함
+                // if(this.width < 1500 && this.height < 1500) {
+                //     $(this).css('width', '0')
+                //     $(this).css('height', '0')
+                // }
+            }
+        });
+}
+
+$(function() {
+    add_image_zoom();
+})
 </script>
 <?php /* 2017 리뉴얼한 테마 적용 스크립트입니다. 기존 스크립트를 오버라이드 합니다. */ ?>
 <script src="<?php echo G5_JS_URL; ?>/shop.override.js"></script>
