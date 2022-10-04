@@ -898,7 +898,7 @@ $pg_anchor = '<ul class="anchor">
             <th scope="row"><label for="bo_cf_download_level">댓글 첨부파일 이미지 썸네일 리사이즈</label></th>
             <td>
                 <?php echo help('댓글의 이미지 썸네일 크기 비율을 설정합니다. 0은 사용안함, %단위') ?>
-                <input type="number" name="bo_cf_resize" value="<?php echo $board['bo_cf_resize'] ?>" id="bo_cf_resize" class="numeric frm_input" size="3">%
+                <input type="number" name="bo_cf_resize" value="<?php echo $board['bo_cf_resize'] ?>" id="bo_cf_resize" class="numeric frm_input" size="7">%
             </td>
             <td class="td_grpset">
                 <input type="checkbox" name="chk_grp_bo_cf_resize" value="1" id="chk_grp_bo_cf_resize">
