@@ -206,6 +206,18 @@ if(!sql_query(" select it_skin from {$g5['g5_shop_item_table']} limit 1", false)
                     ADD `it_skin` varchar(255) NOT NULL DEFAULT '' AFTER `ca_id3`,
                     ADD `it_mobile_skin` varchar(255) NOT NULL DEFAULT '' AFTER `it_skin` ", true);
 }
+// update autoloader
+include_once G5_ADMIN_PATH . '/shop_admin/naver_commerce_api/lib/CommerceApiAutoLoader.php';
+$autoloader = new CommerceApiAutoLoader();
+$autoloader->register();
+
+$client_id = '3hbo1Jkxt6KuGF59qHnqPw';
+$client_secret = '$2a$04$svzh.qMoWeF5L4ob9IMMC.';
+$commerceApiAuth = new CommerceApiAuth($client_id, $client_secret, new SignatureGeneratorSimple());
+$productInstance = new G5SmartstoreProduct($commerceApiAuth);
+$productInstance->getChannelProduct(7246247899);
+
+$autoloader->unregister();
 ?>
 
 <form name="fitemform" action="./itemformupdate.php" method="post" enctype="MULTIPART/FORM-DATA" autocomplete="off" onsubmit="return fitemformcheck(this)">

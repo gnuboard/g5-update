@@ -39,10 +39,10 @@ class G5SmartstoreProduct {
      */
     public function getChannelProduct($channelProductNo)
     {
-        $resultData = $this->commerceApi->requestCurl("GET", self::$urlGetChannelProduct . $channelProductNo);
-        echo "<br>";
-        echo "<br>";
-        print_r($resultData);
+        $resultData = $this->commerceApi->requestCurl("GET", $this->urlGetChannelProduct . $channelProductNo);
+        // echo "<br>";
+        // echo "<br>";
+        // print_r($resultData);
     }
 
     /**

@@ -42,20 +42,19 @@ if ($is_admin != 'super') {     // 최고관리자가 아니면 체크
  */
 // 
 if ($naver_smartstore_yn) {
-    include_once 'naver_commerce_api/lib/interface/SignatureInterface.php';
-    include_once 'naver_commerce_api/lib/SignatureGeneratorSimple.php';
-    include_once 'naver_commerce_api/lib/CommerceApi.php';
-    include_once 'naver_commerce_api/lib/CommerceApiAuth.php';
-    include_once 'naver_commerce_api/lib/G5SmartstoreProduct.php';
-    include_once 'naver_commerce_api/lib/G5SmartstoreProductData.php';
+    include_once G5_ADMIN_PATH . '/shop_admin/naver_commerce_api/lib/CommerceApiAutoLoader.php';
+    $autoloader = new CommerceApiAutoLoader();
+    $autoloader->register();
 
-    $client_id = '';
-    $client_secret = '';
+    $client_id = '3hbo1Jkxt6KuGF59qHnqPw';
+    $client_secret = '$2a$04$svzh.qMoWeF5L4ob9IMMC.';
     $commerceApiAuth = new CommerceApiAuth($client_id, $client_secret, new SignatureGeneratorSimple());
     $productInstance = new G5SmartstoreProduct($commerceApiAuth);
     $response = $productInstance->createChannerProduct($_POST, $_FILES);
     
     $ec_mall_pid = $response->smartstoreChannelProductNo;
+    
+    $autoloader->unregister();
 }
 
 $it_img1 = $it_img2 = $it_img3 = $it_img4 = $it_img5 = $it_img6 = $it_img7 = $it_img8 = $it_img9 = $it_img10 = '';

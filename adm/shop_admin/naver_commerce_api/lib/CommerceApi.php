@@ -57,7 +57,7 @@ class CommerceApi {
         $curl_err = curl_error($curlHandle);
         $httpCode = curl_getinfo($curlHandle, CURLINFO_HTTP_CODE);
         curl_close($curlHandle);
-        print_r($response);
+
         $isSuccess = $httpCode == 200;
         $responseJson = json_decode($response);
 
