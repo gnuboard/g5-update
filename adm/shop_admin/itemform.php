@@ -206,18 +206,22 @@ if(!sql_query(" select it_skin from {$g5['g5_shop_item_table']} limit 1", false)
                     ADD `it_skin` varchar(255) NOT NULL DEFAULT '' AFTER `ca_id3`,
                     ADD `it_mobile_skin` varchar(255) NOT NULL DEFAULT '' AFTER `it_skin` ", true);
 }
-// update autoloader
-include_once G5_ADMIN_PATH . '/shop_admin/naver_commerce_api/lib/CommerceApiAutoLoader.php';
-$autoloader = new CommerceApiAutoLoader();
-$autoloader->register();
 
-$client_id = '3hbo1Jkxt6KuGF59qHnqPw';
-$client_secret = '$2a$04$svzh.qMoWeF5L4ob9IMMC.';
-$commerceApiAuth = new CommerceApiAuth($client_id, $client_secret, new SignatureGeneratorSimple());
-$productInstance = new G5SmartstoreProduct($commerceApiAuth);
-$productInstance->getChannelProduct(7246247899);
-
-$autoloader->unregister();
+// 스마트스토어 상품데이터 조회
+if ($it['ec_mall_pid'] != null) {
+    include_once G5_ADMIN_PATH . '/shop_admin/naver_commerce_api/lib/CommerceApiAutoLoader.php';
+    $autoloader = new CommerceApiAutoLoader();
+    $autoloader->register();
+    
+    $client_id = '3hbo1Jkxt6KuGF59qHnqPw';
+    $client_secret = '$2a$04$svzh.qMoWeF5L4ob9IMMC.';
+    $commerceApiAuth = new CommerceApiAuth($client_id, $client_secret, new SignatureGeneratorSimple());
+    $productInstance = new G5SmartstoreProduct($commerceApiAuth);
+    echo "<br>" . $it['ec_mall_pid'] . "<br>";
+    print_r($productInstance->getChannelProduct($it['ec_mall_pid']));
+    
+    $autoloader->unregister();
+}
 ?>
 
 <form name="fitemform" action="./itemformupdate.php" method="post" enctype="MULTIPART/FORM-DATA" autocomplete="off" onsubmit="return fitemformcheck(this)">
@@ -508,6 +512,15 @@ $autoloader->unregister();
                 <input type="text" name="ec_mall_pid" value="<?php echo get_text($it['ec_mall_pid']); ?>" id="ec_mall_pid" class="frm_input" size="20">
             </td>
         </tr>
+
+        <tr>
+            <th scope="row"><label for="ec_mall_pid">스마트스토어 상품정보 연동</label></th>
+            <td colspan="2">
+                <?php echo help("네이버 스마트스토어에 상품정보를 등록합니다."); ?>
+                <input type="checkbox" name="naver_smartstore_yn" value="1" id="naver_smartstore_yn" class="frm_input"> 예
+            </td>
+        </tr>
+        
         <tr>
             <th scope="row">상품설명</th>
             <td colspan="2"> <?php echo editor_html('it_explan', get_text(html_purifier($it['it_explan']), 0)); ?></td>

@@ -284,8 +284,6 @@ class G5SmartstoreProductData
             default :
                 if ($default['de_send_cost_case'] == '차등') {
                     $info['deliveryFee']['deliveryFeeType'] = 'PAID';
-                    // 금액별 차등 설정
-                    // $info['deliveryFee']['baseFee']
                 } else {
                     $info['deliveryFee']['deliveryFeeType'] = 'FREE';
                 }
@@ -326,6 +324,13 @@ class G5SmartstoreProductData
         global $default;
 
         $detailAttribute = array(
+            // 네이버쇼핑 검색 정보
+            "naverShoppingSearchInfo" => array(
+                // "modelId" => 0,                              // integer <int64> (모델명 ID)
+                "manufacturerName" => $formData['it_maker'],    // string (제조사명)
+                "brandName" => $formData['it_brand'],           // string (브랜드명)
+                "modelName" => $formData['it_model']            // string (모델명)
+            ),
             // A/S 정보 (required)
             "afterServiceInfo" => array(
                 "afterServiceTelephoneNumber" => $default['de_admin_company_tel'],  // A/S 전화번호 (required)
@@ -336,13 +341,6 @@ class G5SmartstoreProductData
                 "originAreaCode" => "00"    // 원산지 상세 지역 코드 (required)
                 // "content" => "원산지",    // 원산지 표시 내용, originAreaCode가 '기타: 직접 입력'인 경우 필수
             ),
-            // 판매자 코드 정보
-            // "sellerCodeInfo" => array(
-                // "sellerManagementCode" => "string", // 판매자 관리 코드
-                // "sellerBarcode" => "string",        // 판매자 바코드
-                // "sellerCustomCode1" => "string",    // 판매자 내부 코드 1
-                // "sellerCustomCode2" => "string"     // 판매자 내부 코드 2
-            // ),
             // 옵션 정보 (데이터 확인 필요)
             // "optionInfo" => array(
             //     "simpleOptionSortType" => "CREATE",
@@ -427,35 +425,7 @@ class G5SmartstoreProductData
             //         )
             //     )
             // ),
-            // 도서 항목 부가 정보
-            // "bookInfo" => array(
-            //     "publishDay" => "string",   // 출간일 'YYYY-MM-DD'
-            //     // 출판사 (required)
-            //     "publisher" => array(
-            //         "code" => "string",     // 코드
-            //         "text" => "string"      // 텍스트 (출판사는 필수값으로 입력)
-            //     ),
-            //     // 글작가명 (required)
-            //     "authors" => array(
-            //         array(
-            //             "code" => "string",     // 코드
-            //             "text" => "string"      // 텍스트
-            //         )
-            //     ),
-            // ),
-            // "manufactureDate" => "2019-08-24",  // 제조일자 'yyyy-MM-dd'
-            // "validDate" => "2019-08-24",        // 유효일자 'yyyy-MM-dd'
             "taxType" => ($formData['it_notax'] == 1) ? "DUTYFREE" : "TAX",     // 부가가치세 타입 코드 : TAX(과세 상품), DUTYFREE(면세 상품), SMALL(영세 상품)
-            // 인증 정보 목록 ('어린이제품 인증 대상' 카테고리 상품인 경우 필수)
-            // "productCertificationInfos" => array(
-            //     array(
-            //         "certificationInfoId" => 0,                     // 인증 유형 ID (required)
-            //         "certificationKindType" => "KC_CERTIFICATION",  // 인증 정보 종류 코드 : KC_CERTIFICATION(KC 인증), CHILD_CERTIFICATION(어린이제품 인증), GREEN_PRODUCTS(친환경 인증), OVERSEAS(구매대행(구매대행 선택 시 인증 정보 필수 등록)), PARALLEL_IMPORT(병행수입(병행수입 선택 시 인증 정보 필수 등록)), ETC(기타 인증)
-            //         "name" => "string",                             // 인증 기관명 (어린이제품/생활용품/전기용품 공급자적합성 유형인 경우 비필수)
-            //         "certificationNumber" => "string",              // 인증번호 (어린이제품/생활용품/전기용품 공급자적합성 유형인 경우 비필수)
-            //         "certificationDate" => "2019-08-24"             // 인증일자
-            //     )
-            // ),
             "minorPurchasable" => true,     // 미성년자 구매 가능 여부 (required)
         );
         $detailAttribute['productInfoProvidedNotice'] = $this->setProductInfoProvidedNotice($formData);
@@ -468,8 +438,23 @@ class G5SmartstoreProductData
 
     public function setProductInfoProvidedNotice($formData)
     {
-        if (isset($formData['ir_info_gubun'])) {
+        global $item_info;
 
+        if (isset($formData['ir_info_gubun'])) {
+            $itemInfoKeyList = array_keys($item_info);
+            
+            $productInfoProvidedNoticeTypeList = array(
+                "WEAR", "SHOES", "BAG", "FASHION_ITEMS", "SLEEPING_GEAR",
+                "FURNITURE", "IMAGE_APPLIANCES", "HOME_APPLIANCES", "SEASON_APPLIANCES", "OFFICE_APPLIANCES",
+                "OPTICS_APPLIANCES", "MICROELECTRONICS", "CELLPHONE", "NAVIGATION", "CAR_ARTICLES",
+                "MEDICAL_APPLIANCES", "KITCHEN_UTENSILS", "COSMETIC", "JEWELLERY", "FOOD",
+                "GENERAL_FOOD", "DIET_FOOD", "KIDS", "MUSICAL_INSTRUMENT", "SPORTS_EQUIPMENT",
+                "BOOKS", "LODGMENT_RESERVATION", "TRAVEL_PACKAGE", "AIRLINE_TICKET", "RENT_CAR",
+                "RENTAL_HA", "RENTAL_ETC", "DIGITAL_CONTENTS", "GIFT_CARD", "MOBILE_COUPON",
+                "MOVIE_SHOW", "ETC_SERVICE", "BIOCHEMISTRY", "BIOCIDAL", "ETC"
+            );
+            // "LODGMENT_RESERVATION", "TRAVEL_PACKAGE", "AIRLINE_TICKET", "RENT_CAR", "RENTAL_HA", "RENTAL_ETC"
+            // => rentalEtc
         }
 
         // 상품정보제공고시 (상품 등록 시 필수)

@@ -57,14 +57,14 @@ class G5SmartstoreProduct {
         $productData->setStatusType("SALE");
         $productData->setLeafCategoryId("50000805");
         $productData->setName($formData['it_name']);
-        $productData->setDetailContent($formData['it_explan']);
+        $productData->setDetailContent('asdf');//$formData['it_explan']
         $productData->setSalePrice($formData['it_price']);
         $productData->setStockQuantity($formData['it_stock_qty']);
         // 이미지
         if ($fileData) {
             $imageUrlList = $this->uploadProductImage($fileData);
-            // echo "<br>==================================productData responseImage()==================================<br>";
-            // print_r($imageUrlList);
+            echo "<br>==================================productData responseImage()==================================<br>";
+            print_r($imageUrlList);
             $productData->setImages($imageUrlList->images[0]->url, 'representative');
         }
         // 배송정보
@@ -72,11 +72,11 @@ class G5SmartstoreProduct {
         // 원상품 상세 속성
         $productData->setDetailAttribute($formData);
         /* 상품데이터 입력 END */
-        // echo "<br>==================================productData getProductData()==================================<br>";
-        // print_r($productData->getProductData());
+        echo "<br>==================================productData getProductData()==================================<br>";
+        print_r($productData->getProductData());
         $resultData = $this->commerceApi->requestCurl("POST", self::$urlCreateChannelProduct, json_encode($productData->getProductData()));
-        // echo "<br>==================================productData createProduct()==================================<br>";
-        // print_r($resultData);
+        echo "<br>==================================productData createProduct()==================================<br>";
+        print_r($resultData);
 
         return $resultData;
     }

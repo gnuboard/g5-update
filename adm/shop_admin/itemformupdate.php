@@ -1,6 +1,7 @@
 <?php
 $sub_menu = '400300';
 include_once('./_common.php');
+include_once(G5_LIB_PATH.'/iteminfo.lib.php');
 
 if ($w == "u" || $w == "d")
     check_demo();
@@ -40,8 +41,9 @@ if ($is_admin != 'super') {     // 최고관리자가 아니면 체크
  * - it_img_upload함수의 move_upload_file로 인해 이미지파일이 임시경로에서 없어지므로 상품등록이 안되어 상단에 위치함.
  * @todo 상품등록 프로세스 안쪽으로 이동해야함.
  */
-// 
-if ($naver_smartstore_yn) {
+$smartstoreChannelId = '';
+
+if ($naver_smartstore_yn == 1) {
     include_once G5_ADMIN_PATH . '/shop_admin/naver_commerce_api/lib/CommerceApiAutoLoader.php';
     $autoloader = new CommerceApiAutoLoader();
     $autoloader->register();
@@ -49,11 +51,17 @@ if ($naver_smartstore_yn) {
     $client_id = '3hbo1Jkxt6KuGF59qHnqPw';
     $client_secret = '$2a$04$svzh.qMoWeF5L4ob9IMMC.';
     $commerceApiAuth = new CommerceApiAuth($client_id, $client_secret, new SignatureGeneratorSimple());
-    $productInstance = new G5SmartstoreProduct($commerceApiAuth);
-    $response = $productInstance->createChannerProduct($_POST, $_FILES);
-    
-    $ec_mall_pid = $response->smartstoreChannelProductNo;
-    
+
+    if ($w == '') {
+        $productInstance = new G5SmartstoreProduct($commerceApiAuth);
+        $response = $productInstance->createChannerProduct($_POST, $_FILES);
+
+        $smartstoreChannelId = $response->smartstoreChannelProductNo;
+        
+    } elseif ($w == 'u') {
+        
+    }
+
     $autoloader->unregister();
 }
 
@@ -351,6 +359,11 @@ $check_sanitize_keys = array(
 
 foreach( $check_sanitize_keys as $key ){
     $$key = isset($_POST[$key]) ? strip_tags(clean_xss_attributes($_POST[$key])) : '';
+}
+
+// 스마트스토어 상품등록 ID연결
+if (isset($smartstoreChannelId) && $smartstoreChannelId != '') {
+    $ec_mall_pid = $smartstoreChannelId;
 }
 
 $it_basic = preg_replace('#<script(.*?)>(.*?)<\/script>#is', '', $it_basic);
@@ -657,7 +670,7 @@ $is_seo_title_edit = $w ? true : false;
 if( function_exists('shop_seo_title_update') ) shop_seo_title_update($it_id, $is_seo_title_edit);
 
 run_event('shop_admin_itemformupdate', $it_id, $w);
-
+exit;
 $qstr = "$qstr&amp;sca=$sca&amp;page=$page";
 
 if ($w == "u") {
