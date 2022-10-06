@@ -11,12 +11,29 @@ class G5SmartstoreProductData
         "originProduct" => array(
             "saleType" => "NEW"
         ),
+        // 배송정보
+        "deliveryInfo" => array(
+            "deliveryType" => "DELIVERY",           // 배송 방법 유형 코드 (required) / DELIVERY(택배, 소포, 등기), DIRECT(직접배송(화물배달))
+            "deliveryAttributeType" => "NORMAL",    // 배송 속성 타입 코드 (required)
+            "deliveryCompany" => 'CJGLS',           // 택배사 (DELIVERY(택배, 소포, 등기)일 때 필수)
+            // 배송비 정보 (required)
+            "deliveryFee" => array(
+                "deliveryFeeType" => "FREE",            // FREE(무료), CONDITIONAL_FREE(조건부 무료), PAID(유료), UNIT_QUANTITY_PAID(수량별), RANGE_QUANTITY_PAID(구간별)
+                "deliveryFeePayType" => "PREPAID"       // 배송비 결제 방식 코드 (COLLECT(착불), PREPAID(선결제), COLLECT_OR_PREPAID(착불 또는 선결제))
+            ),
+            // 클레임(반품/교환) 정보 (required)
+            "claimDeliveryInfo" => array(
+                "returnDeliveryFee" => 0,     // 반품 배송비 (required)
+                "exchangeDeliveryFee" => 0    // 교환 배송비 (required)
+            )
+        ),
         // 스마트스토어 채널 상품 (required)
         "smartstoreChannelProduct" => array(
             "naverShoppingRegistration" => false,       // 네이버쇼핑 등록 여부 (required) : 네이버 쇼핑 광고주가 아닌 경우에는 false로 저장됩니다.
             "channelProductDisplayStatusType" => "ON"   // 전시 상태 코드(스마트스토어 채널 전용) (required) : WAIT(전시 대기), ON(전시 중), SUSPENSION(전시 중지)
         )
     );
+    
     public $statusType      = '';       // 상품 판매 상태 코드 (required)
     public $saleType        = '';       // 상품 판매 유형 코드 : NEW(새 상품), OLD(중고 상품)
     public $leafCategoryId  = '';       // 리프 카테고리 ID (상품 등록 시에는 필수)
@@ -25,11 +42,14 @@ class G5SmartstoreProductData
     public $detailContent   = '';       // 상품 상세 정보 (required)
     public $salePrice       = '';       // 상품 판매 가격 (required)
     public $stockQuantity   = '';       // 재고 수량
-    public $deliveryInfo    = array();  // 배송 정보
     public $detailAttribute = array();  // 원상품 상세 속성 (required)
 
     public function __construct()
     {
+        global $default;
+
+        $this->productData['deliveryInfo']['claimDeliveryInfo']['returnDeliveryFee'] = $default['de_send_cost_list'];
+        $this->productData['deliveryInfo']['claimDeliveryInfo']['exchangeDeliveryFee'] = $default['de_send_cost_list'];
     }
 
     public function setProductImage($urlList)
@@ -231,15 +251,7 @@ class G5SmartstoreProductData
     }
 
     /**
-     * Get the value of deliveryInfo
-     */
-    public function getDeliveryInfo()
-    {
-        return $this->deliveryInfo;
-    }
-
-    /**
-     * Set the value of deliveryInfo
+     * Set the value of productData->deliveryInfo
      *
      * @return  self
      */
@@ -247,21 +259,8 @@ class G5SmartstoreProductData
     {
         global $default;
 
-        $info = array(
-            "deliveryType" => "DELIVERY",           // 배송 방법 유형 코드 (required) / DELIVERY(택배, 소포, 등기), DIRECT(직접배송(화물배달))
-            "deliveryAttributeType" => "NORMAL",    // 배송 속성 타입 코드 (required)
-            "deliveryCompany" => 'CJGLS',           // 택배사 (DELIVERY(택배, 소포, 등기)일 때 필수)
-            // 배송비 정보 (required)
-            "deliveryFee" => array(
-                "deliveryFeeType" => "FREE",            // FREE(무료), CONDITIONAL_FREE(조건부 무료), PAID(유료), UNIT_QUANTITY_PAID(수량별), RANGE_QUANTITY_PAID(구간별)
-                "deliveryFeePayType" => "PREPAID"       // 배송비 결제 방식 코드 (COLLECT(착불), PREPAID(선결제), COLLECT_OR_PREPAID(착불 또는 선결제))
-            ),
-            // 클레임(반품/교환) 정보 (required)
-            "claimDeliveryInfo" => array(
-                "returnDeliveryFee" => $default['de_send_cost_list'],     // 반품 배송비 (required)
-                "exchangeDeliveryFee" => $default['de_send_cost_list'],   // 교환 배송비 (required)
-            ),
-        );
+        $info = $this->productData['originProduct']['deliveryInfo'];
+
         // 기본 배송비
         $info['deliveryFee']['baseFee'] = isset($formData['it_sc_price']) ? $formData['it_sc_price'] : $default['de_send_cost_list'];
 
@@ -298,10 +297,15 @@ class G5SmartstoreProductData
             case 2 :
                 $info['deliveryFee']['deliveryFeePayType'] = 'COLLECT_OR_PREPAID';
                 break;
+            default :
+                $info['deliveryFee']['deliveryFeePayType'] = 'PREPAID';
+                break;
         }
+        // 클레임(반품/교환) 정보 (required)
+        $info['claimDeliveryInfo']['returnDeliveryFee'] = $default['de_send_cost_list'];     // 반품 배송비 (required)
+        $info['claimDeliveryInfo']['exchangeDeliveryFee'] = $default['de_send_cost_list'];     // 교환 배송비 (required)
 
-        $this->deliveryInfo = $info;
-        $this->productData['originProduct']['deliveryInfo'] = $this->deliveryInfo;
+        $this->productData['originProduct']['deliveryInfo'] = $info;
         
         return $this;
     }

@@ -41,7 +41,7 @@ if ($is_admin != 'super') {     // 최고관리자가 아니면 체크
  * - it_img_upload함수의 move_upload_file로 인해 이미지파일이 임시경로에서 없어지므로 상품등록이 안되어 상단에 위치함.
  * @todo 상품등록 프로세스 안쪽으로 이동해야함.
  */
-$smartstoreChannelId = '';
+$channelProductNo = '';
 
 if ($naver_smartstore_yn == 1) {
     include_once G5_ADMIN_PATH . '/shop_admin/naver_commerce_api/lib/CommerceApiAutoLoader.php';
@@ -51,19 +51,20 @@ if ($naver_smartstore_yn == 1) {
     $client_id = '3hbo1Jkxt6KuGF59qHnqPw';
     $client_secret = '$2a$04$svzh.qMoWeF5L4ob9IMMC.';
     $commerceApiAuth = new CommerceApiAuth($client_id, $client_secret, new SignatureGeneratorSimple());
+    $productInstance = new G5SmartstoreProduct($commerceApiAuth);
 
     if ($w == '') {
-        $productInstance = new G5SmartstoreProduct($commerceApiAuth);
         $response = $productInstance->createChannerProduct($_POST, $_FILES);
-
-        $smartstoreChannelId = $response->smartstoreChannelProductNo;
+        $channelProductNo = $response->smartstoreChannelProductNo;
         
     } elseif ($w == 'u') {
-        
+        $productInstance->updateChannerProduct($_POST['ec_mall_pid'], $_POST, $_FILES);
     }
 
     $autoloader->unregister();
 }
+
+// exit;
 
 $it_img1 = $it_img2 = $it_img3 = $it_img4 = $it_img5 = $it_img6 = $it_img7 = $it_img8 = $it_img9 = $it_img10 = '';
 // 파일정보
@@ -362,8 +363,8 @@ foreach( $check_sanitize_keys as $key ){
 }
 
 // 스마트스토어 상품등록 ID연결
-if (isset($smartstoreChannelId) && $smartstoreChannelId != '') {
-    $ec_mall_pid = $smartstoreChannelId;
+if (isset($channelProductNo) && $channelProductNo != '') {
+    $ec_mall_pid = $channelProductNo;
 }
 
 $it_basic = preg_replace('#<script(.*?)>(.*?)<\/script>#is', '', $it_basic);
@@ -670,7 +671,7 @@ $is_seo_title_edit = $w ? true : false;
 if( function_exists('shop_seo_title_update') ) shop_seo_title_update($it_id, $is_seo_title_edit);
 
 run_event('shop_admin_itemformupdate', $it_id, $w);
-exit;
+// exit;
 $qstr = "$qstr&amp;sca=$sca&amp;page=$page";
 
 if ($w == "u") {

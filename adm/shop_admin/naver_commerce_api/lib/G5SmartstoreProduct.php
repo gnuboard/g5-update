@@ -21,6 +21,10 @@ class G5SmartstoreProduct {
      */
     public static $urlCreateChannelProduct = "https://api.commerce.naver.com/external/v1/products";
     /**
+     * @var string 상품 수정 URL
+     */
+    public static $urlUpdateChannelProduct = "https://api.commerce.naver.com/external/v1/products/channel-products/";
+    /**
      * @var string 이미지 다건 업로드 URL
      */
     public static $urlUploadProductImage = "https://api.commerce.naver.com/external/v1/product-images/upload";
@@ -43,6 +47,8 @@ class G5SmartstoreProduct {
         // echo "<br>";
         // echo "<br>";
         // print_r($resultData);
+
+        return $resultData;
     }
 
     /**
@@ -57,7 +63,47 @@ class G5SmartstoreProduct {
         $productData->setStatusType("SALE");
         $productData->setLeafCategoryId("50000805");
         $productData->setName($formData['it_name']);
-        $productData->setDetailContent('asdf');//$formData['it_explan']
+        $productData->setDetailContent($formData['it_explan']);
+        $productData->setSalePrice($formData['it_price']);
+        $productData->setStockQuantity($formData['it_stock_qty']);
+        // 이미지
+        if ($fileData) {
+            $imageUrlList = $this->uploadProductImage($fileData);
+            // echo "<br>==================================productData responseImage()==================================<br>";
+            // print_r($imageUrlList);
+            $productData->setImages($imageUrlList->images[0]->url, 'representative');
+        }
+        // 배송정보
+        $productData->setDeliveryInfo($formData);
+        // 원상품 상세 속성
+        $productData->setDetailAttribute($formData);
+        /* 상품데이터 입력 END */
+        // echo "<br>==================================productData getProductData()==================================<br>";
+        // print_r($productData->getProductData());
+        $resultData = $this->commerceApi->requestCurl("POST", self::$urlCreateChannelProduct, json_encode($productData->getProductData()));
+        // echo "<br>==================================productData createProduct()==================================<br>";
+        // print_r($resultData);
+
+        return $resultData;
+    }
+
+    /**
+     * 상품 등록
+     * @param int   $productNo 스마트스토어 채널상품 번호
+     * @param array $formData 입력 폼 데이터 ($_POST)
+     * @param array $fileData 업로드 이미지 ($_FILE)
+     */
+    public function updateChannerProduct($channelProductNo, $formData, $fileData)
+    {
+        /* 상품데이터 입력 START */
+        $productData = new G5SmartstoreProductData();
+
+        $channelProductData = $this->getChannelProduct($channelProductNo);
+        echo "<br>==================================productData formData()==================================<br>";
+        print_r($formData);
+        $productData->setProductData(json_decode(json_encode($channelProductData), true));
+        $productData->setName($formData['it_name']);
+        $productData->setDetailContent('asdf'); //$formData['it_explan']
         $productData->setSalePrice($formData['it_price']);
         $productData->setStockQuantity($formData['it_stock_qty']);
         // 이미지
@@ -65,7 +111,9 @@ class G5SmartstoreProduct {
             $imageUrlList = $this->uploadProductImage($fileData);
             echo "<br>==================================productData responseImage()==================================<br>";
             print_r($imageUrlList);
-            $productData->setImages($imageUrlList->images[0]->url, 'representative');
+            if (isset($imageUrlList->images)) {
+                $productData->setImages($imageUrlList->images[0]->url, 'representative');
+            }
         }
         // 배송정보
         $productData->setDeliveryInfo($formData);
@@ -74,8 +122,9 @@ class G5SmartstoreProduct {
         /* 상품데이터 입력 END */
         echo "<br>==================================productData getProductData()==================================<br>";
         print_r($productData->getProductData());
-        $resultData = $this->commerceApi->requestCurl("POST", self::$urlCreateChannelProduct, json_encode($productData->getProductData()));
-        echo "<br>==================================productData createProduct()==================================<br>";
+        $updateData = str_replace("[]", "{}", json_encode($productData->getProductData()));
+        $resultData = $this->commerceApi->requestCurl("PUT", self::$urlUpdateChannelProduct . $channelProductNo, $updateData);
+        echo "<br>==================================productData updateChannerProduct()==================================<br>";
         print_r($resultData);
 
         return $resultData;

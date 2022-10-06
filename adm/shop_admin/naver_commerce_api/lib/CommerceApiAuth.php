@@ -42,9 +42,9 @@ class CommerceApiAuth {
      */
     public function __construct($clientId, $clientSecret, SignatureInterface $signatureInterface)
     {
-        $this->clientId = $clientId;
+        $this->clientId     = $clientId;
         $this->clientSecret = $clientSecret;
-        $this->timestamp = (int)round(microtime(true) * 1000);
+        $this->timestamp    = (int)round(microtime(true) * 1000);
         
         // 전자서명 생성
         $this->signature = $signatureInterface->generateSignature($this->clientId, $this->clientSecret, $this->timestamp);
@@ -65,7 +65,7 @@ class CommerceApiAuth {
         try {
             $commerceApi = new CommerceApi();
 
-            $ApiData = array(
+            $apiData = array(
                 'client_id' => $this->clientId,
                 'timestamp' => $this->timestamp,
                 'client_secret_sign' => $this->signature,
@@ -73,7 +73,7 @@ class CommerceApiAuth {
                 'type' => 'SELF'
             );
     
-            $resultData = $commerceApi->requestCurl("POST", $this->urlAccessToken, $ApiData);
+            $resultData = $commerceApi->requestCurl("POST", $this->urlAccessToken, $apiData);
 
             if (empty($resultData->access_token)){
                 throw new Exception("엑세스 토큰이 없습니다.");

@@ -28,39 +28,35 @@ class CommerceApi {
     public function requestCurl($method, $url, $data = array())
     {   
         $curlHandle = curl_init();
+
         /* HTTP Header */
         $header = array();        
-        // Add Access Token Header 
         if (isset($this->commerceApiAuth)) {
             array_push($header, $this->commerceApiAuth->getAuthorizationHeader());
         }
-        if ($url == G5SmartstoreProduct::$urlCreateChannelProduct) {
+        if ($url == G5SmartstoreProduct::$urlCreateChannelProduct
+            || (strpos($url, G5SmartstoreProduct::$urlUpdateChannelProduct) !== false && $method == "PUT")) {
             array_push($header, "content-type: application/json");
-        }
-        if ($url == G5SmartstoreProduct::$urlUploadProductImage) {
+        } elseif ($url == G5SmartstoreProduct::$urlUploadProductImage) {
             array_push($header, "content-type: multipart/form-data");
         }
-        curl_setopt($curlHandle, CURLOPT_HTTPHEADER, $header);
 
         /* CURL option Setting */
         if ($method === "GET") {
             $url .= "?" . htmlspecialchars(http_build_query($data), ENT_QUOTES, 'UTF-8');
-        } elseif ($method === "POST") {
-            curl_setopt($curlHandle, CURLOPT_POST, true);
+        } elseif ($method === "POST" || $method == "PUT") {
             curl_setopt($curlHandle, CURLOPT_POSTFIELDS, $data);
         }
+
+        curl_setopt($curlHandle, CURLOPT_HTTPHEADER, $header);
+        curl_setopt($curlHandle, CURLOPT_CUSTOMREQUEST, $method);
         curl_setopt($curlHandle, CURLOPT_URL, $url);
         curl_setopt($curlHandle, CURLOPT_RETURNTRANSFER, true);
 
         /* CURL result */
         $response = curl_exec($curlHandle);
-        $curl_err = curl_error($curlHandle);
-        $httpCode = curl_getinfo($curlHandle, CURLINFO_HTTP_CODE);
         curl_close($curlHandle);
 
-        $isSuccess = $httpCode == 200;
-        $responseJson = json_decode($response);
-
-        return $responseJson;
+        return json_decode($response);
     }
 }
