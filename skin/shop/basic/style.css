@@ -962,3 +962,10 @@ box-shadow:0px 1px 6px 0 #dedede
 .couponzone_list ul li .coupon_btn .disabled {background:#c6c6c6;border:1px;color:#fff;border-color:#c6c6c6}
 .couponzone_list ul li .coupon_btn .disabled:hover {background:#c6c6c6;border:1px;color:#fff;border-color:#c6c6c6}
 .couponzone_list .no_coupon {position:relative;padding:100px 0;text-align:center;color:#999}
+
+/* 상품 상단 큰 이미지 슬라이드 버튼 */
+.item-button-prev { align-items: center; position: absolute; top: 50%; left: inherit;
+    background: url("img/left-arrow.svg") no-repeat; background-position-y: center; opacity: 0.3; width: 27px; height: 45px; justify-content: center; z-index: 10;}
+
+.item-button-next { align-items: center; position: absolute; top: 50%; right: 0;
+    background: url("img/right-arrow.svg") no-repeat; background-position-y: center; opacity: 0.3; width: 27px; height: 45px; justify-content: center; z-index: 10;}

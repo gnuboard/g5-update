@@ -9,9 +9,9 @@
         url: false,
         callback: false,
         target: false,
-        duration: 30,
+        duration: 10,
         on: 'mouseover', // other options: grab, click, toggle
-        touch: true, // enables a touch fallback
+        touch: true,
         onZoomIn: false,
         onZoomOut: false,
         magnify: 1
@@ -30,7 +30,7 @@
             position = $target.css('position'),
             $source = $(source);
 
-        // The parent element needs positioning so that the zoomed element can be correctly positioned within.
+        // 부모태그에 position 속성이 지정되어야 합니다.
         target.style.position = /(absolute|fixed)/.test(position) ? position : 'relative';
         target.style.overflow = 'hidden';
         img.style.width = img.style.height = '';
@@ -140,7 +140,6 @@
                                     $(document).one('mouseup.zoom',
                                         function () {
                                             stop();
-
                                             $(document).off(mousemove, zoom.move);
                                         }
                                     );

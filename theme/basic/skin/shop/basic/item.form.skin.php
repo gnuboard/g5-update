@@ -14,29 +14,30 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_SHOP_CSS_URL.'/style.css">', 0
 	    <!-- 상품이미지 미리보기 시작 { -->
 	    <div id="sit_pvi">
 	        <div id="sit_pvi_big">
-	        <?php
-	        $big_img_count = 0;
-	        $thumbnails = array();
-	        for($i=1; $i<=10; $i++) {
-	            if(!$it['it_img'.$i])
-	                continue;
-	
-	            $img = get_it_thumbnail($it['it_img'.$i], $default['de_mimg_width'], $default['de_mimg_height']);
-	
-	            if($img) {
-	                // 썸네일
-	                $thumb = get_it_thumbnail($it['it_img'.$i], 70, 70);
-	                $thumbnails[] = $thumb;
-	                $big_img_count++;
-	
-	                echo '<a href="'.G5_SHOP_URL.'/largeimage.php?it_id='.$it['it_id'].'&amp;no='.$i.'" target="_blank" class="popup_item_image">'.$img.'</a>';
-	            }
-	        }
-	
-	        if($big_img_count == 0) {
-	            echo '<img src="'.G5_SHOP_URL.'/img/no_image.gif" alt="">';
-	        }
-	        ?>
+                <?php
+                $big_img_count = 0;
+                $thumbnails = array();
+                for($i=1; $i<=10; $i++) {
+                    if(!$it['it_img'.$i])
+                        continue;
+                    $img = get_it_thumbnail($it['it_img'.$i], $default['de_mimg_width'], $default['de_mimg_height']);
+
+                    if($img) {
+                        // 썸네일
+                        $thumb = get_it_thumbnail($it['it_img'.$i], 70, 70);
+                        $thumbnails[] = $thumb;
+                        $big_img_count++;
+
+                        echo '<a href="'.G5_SHOP_URL.'/largeimage.php?it_id='.$it['it_id'].'&amp;no='.$i.'" target="_blank" >'.$img.'</a>';
+                    }
+                }
+
+                if($big_img_count === 0) {
+                    echo '<img src="'.G5_SHOP_URL.'/img/no_image.gif" alt="이미지가 없습니다">';
+                }
+                ?>
+            <div class="item-button-next"></div>
+            <div class="item-button-prev"></div>
 	        <a href="<?php echo G5_SHOP_URL; ?>/largeimage.php?it_id=<?php echo $it['it_id']; ?>&amp;no=1" target="_blank" id="popup_item_image" class="popup_item_image"><i class="fa fa-search-plus" aria-hidden="true"></i><span class="sound_only">확대보기</span></a>
 	        </div>
 	        <?php
@@ -367,7 +368,7 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_SHOP_CSS_URL.'/style.css">', 0
 </div>
 
 
-<script src="<?php echo G5_JS_URL; ?>/image.zoom.js"></script>
+<!--<script src="--><?php //echo G5_JS_URL; ?><!--/image.zoom.js"></script>-->
 <script>
 $(function(){
     // 상품이미지 첫번째 링크
@@ -375,7 +376,7 @@ $(function(){
 
     // 상품이미지 미리보기 (썸네일에 마우스 오버시)
     $("#sit_pvi .img_thumb").bind("mouseover focus", function(){
-        var idx = $("#sit_pvi .img_thumb").index($(this));
+        let idx = $("#sit_pvi .img_thumb").index($(this));
         $("#sit_pvi_big a.visible").removeClass("visible");
         $("#sit_pvi_big a:eq("+idx+")").addClass("visible");
     });
@@ -532,20 +533,55 @@ function add_image_zoom() {
         .css('display', 'block')
         .parent()
         .zoom({
-            magnify:2,
-            callback: function(){
-                //1500사이즈가 아닐 경우 확대하지 않게 하기 위함
-                // if(this.width < 1500 && this.height < 1500) {
-                //     $(this).css('width', '0')
-                //     $(this).css('height', '0')
-                // }
+            magnify: 2,
+            callback: function () {
+                //300px 이하는 확대하지 않게 하기 위함
+                if (this.width < 300 && this.height < 300) {
+                    $(this).css('width', '0')
+                    $(this).css('height', '0')
+                }
             }
         });
 }
 
-$(function() {
+$(function () {
+
     add_image_zoom();
+
+    //이미지 슬라이드 번호 가져오기
+    function get_current_slide_index() {
+        let images = document.querySelectorAll('#sit_pvi_big a');
+        for (let i = 0; i < images.length; i++) {
+            if (images[i].className === 'visible') {
+                return i;
+            }
+        }
+    }
+
+    let slide_left_button = document.querySelector('.item-button-prev');
+    slide_left_button.addEventListener('click', function (e) {
+        let idx = get_current_slide_index();
+        if (idx > 0) {
+            idx--;
+            $("#sit_pvi_big a.visible").removeClass("visible");
+            $("#sit_pvi_big a:eq(" + idx + ")").addClass("visible");
+        }
+    })
+
+    let slide_right_button = document.querySelector('.item-button-next');
+    slide_right_button.addEventListener('click', function (e) {
+        let idx = get_current_slide_index();
+        if (idx < --document.querySelectorAll("#sit_pvi .img_thumb").length) {
+            idx++;
+            document.querySelector('#sit_pvi_big a.visible').className = '';
+            $("#sit_pvi_big a.visible").removeClass("visible");
+            $("#sit_pvi_big a:eq(" + idx + ")").addClass("visible");
+        }
+    })
 })
+
 </script>
-<?php /* 2017 리뉴얼한 테마 적용 스크립트입니다. 기존 스크립트를 오버라이드 합니다. */ ?>
+<?php
+add_javascript('<script src="'.G5_JS_URL.'/image.zoom.js"></script>');
+//2017 리뉴얼한 테마 적용 스크립트입니다. 기존 스크립트를 오버라이드 합니다. ?>
 <script src="<?php echo G5_JS_URL; ?>/shop.override.js"></script>
