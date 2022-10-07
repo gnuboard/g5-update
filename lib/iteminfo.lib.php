@@ -5,6 +5,7 @@ if (!defined('_GNUBOARD_')) exit;
 $item_info = array(
     "wear"=>array(
         "title"=>"의류",
+        "productInfoProvidedNoticeType" => "WEAR",
         "article"=>array(
             "material"=>array("제품소재", "섬유의 조성 또는 혼용률을 백분율로 표시, 기능성인 경우 성적서 또는 허가서"),
             "color"=>array("색상", ""),
@@ -19,6 +20,7 @@ $item_info = array(
     ),
     "shoes"=>array(
         "title"=>"구두/신발",
+        "productInfoProvidedNoticeType" => "SHOES",
         "article"=>array(
             "material"=>array("제품 주소재", "운동화인 경우에는 겉감, 안감을 구분하여 표시"),
             "color"=>array("색상", ""),
@@ -33,6 +35,7 @@ $item_info = array(
     ),
     "bag"=>array(
         "title"=>"가방",
+        "productInfoProvidedNoticeType" => "BAG",
         "article"=>array(
             "kind"=>array("종류", ""),
             "material"=>array("소재", ""),
@@ -47,6 +50,7 @@ $item_info = array(
     ),
     "fashion"=>array(
         "title"=>"패션잡화(모자/벨트/액세서리)",
+        "productInfoProvidedNoticeType" => "FASHION_ITEMS",
         "article"=>array(
             "kind"=>array("종류", ""),
             "material"=>array("소재", ""),
@@ -60,6 +64,7 @@ $item_info = array(
     ),
     "bedding"=>array(
         "title"=>"침구류/커튼",
+        "productInfoProvidedNoticeType" => "SLEEPING_GEAR",
         "article"=>array(
             "material"=>array("제품소재", "(섬유의 조성 또는 혼용률을 백분율로 표시) 충전재를 사용한 제품은 충전재를 함께 표기"),
             "color"=>array("색상", ""),
@@ -74,11 +79,12 @@ $item_info = array(
     ),
     "furniture"=>array(
         "title"=>"가구(침대/소파/싱크대/DIY제품)",
+        "productInfoProvidedNoticeType" => "FURNITURE",
         "article"=>array(
             "product_name"=>array("품명", ""),
             "certification"=>array("KC 인증 필 유무", "(전기용품및생활용품안전관리법상 공급자적합성확인대상에 한함)"),
             "color"=>array("색상", ""),
-            "component" =>array("구성품", ""),
+            "component"=>array("구성품", ""),
             "material"=>array("주요소재", ""),
             "maker"=>array("제조자", "수입품의 경우 수입자를 함께 표기 (병행수입의 경우 병행수입 여부로 대체 가능)<br />구성품 별 제조자가 다른 경우 각 구성품의 제조자, 수입자"),
             "madein"=>array("제조국", "구성품 별 제조국이 다른 경우 각 구성품의 제조국"),
@@ -90,6 +96,7 @@ $item_info = array(
     ),
     "image_appliances"=>array(
         "title"=>"영상가전 (TV류)",
+        "productInfoProvidedNoticeType" => "IMAGE_APPLIANCES",
         "article"=>array(
             "product_name"=>array("품명", ""),
             "model_name"=>array("모델명", ""),
@@ -108,6 +115,7 @@ $item_info = array(
     ),
     "home_appliances"=>array(
         "title"=>"가정용전기제품(냉장고/세탁기/식기세척기/전자레인지)",
+        "productInfoProvidedNoticeType" => "HOME_APPLIANCES",
         "article"=>array(
             "product_name"=>array("품명", ""),
             "model_name"=>array("모델명", ""),
@@ -125,6 +133,7 @@ $item_info = array(
     ),
     "season_appliances"=>array(
         "title"=>"계절가전(에어컨/온풍기)",
+        "productInfoProvidedNoticeType" => "SEASON_APPLIANCES",
         "article"=>array(
             "product_name"=>array("품명", ""),
             "model_name"=>array("모델명", ""),
@@ -144,6 +153,7 @@ $item_info = array(
     ),
     "office_appliances"=>array(
         "title"=>"사무용기기(컴퓨터/노트북/프린터)",
+        "productInfoProvidedNoticeType" => "OFFICE_APPLIANCES",
         "article"=>array(
             "product_name"=>array("품명", ""),
             "model_name"=>array("모델명", ""),
@@ -163,6 +173,7 @@ $item_info = array(
     ),
     "optics_appliances"=>array(
         "title"=>"광학기기(디지털카메라/캠코더)",
+        "productInfoProvidedNoticeType" => "OPTICS_APPLIANCES",
         "article"=>array(
             "product_name"=>array("품명", ""),
             "model_name"=>array("모델명", ""),
@@ -179,6 +190,7 @@ $item_info = array(
     ),
     "microelectronics"=>array(
         "title"=>"소형전자(MP3/전자사전등)",
+        "productInfoProvidedNoticeType" => "MICROELECTRONICS",
         "article"=>array(
             "product_name"=>array("품명", ""),
             "model_name"=>array("모델명", ""),
@@ -197,6 +209,7 @@ $item_info = array(
     ),
     "mobile"=>array(
         "title"=>"휴대폰",
+        "productInfoProvidedNoticeType" => "CELLPHONE",
         "article"=>array(
             "product_name"=>array("품명", ""),
             "model_name"=>array("모델명", ""),
@@ -216,6 +229,7 @@ $item_info = array(
     ),
     "navigation"=>array(
         "title"=>"네비게이션",
+        "productInfoProvidedNoticeType" => "NAVIGATION",
         "article"=>array(
             "product_name"=>array("품명", ""),
             "model_name"=>array("모델명", ""),
@@ -236,6 +250,7 @@ $item_info = array(
     ),
     "car"=>array(
         "title"=>"자동차용품(자동차부품/기타자동차용품)",
+        "productInfoProvidedNoticeType" => "CAR_ARTICLES",
         "article"=>array(
             "product_name"=>array("품명", ""),
             "model_name"=>array("모델명", ""),
@@ -253,6 +268,7 @@ $item_info = array(
     ),
     "medical"=>array(
         "title"=>"의료기기",
+        "productInfoProvidedNoticeType" => "MEDICAL_APPLIANCES",
         "article"=>array(
             "product_name"=>array("품명", ""),
             "model_name"=>array("모델명", ""),
@@ -272,6 +288,7 @@ $item_info = array(
     ),
     "kitchenware"=>array(
         "title"=>"주방용품",
+        "productInfoProvidedNoticeType" => "KITCHEN_UTENSILS",
         "article"=>array(
             "product_name"=>array("품명", ""),
             "model_name"=>array("모델명", ""),
@@ -288,6 +305,7 @@ $item_info = array(
     ),
     "cosmetics"=>array(
         "title"=>"화장품",
+        "productInfoProvidedNoticeType" => "COSMETIC",
         "article"=>array(
             "capacity"=>array("용량 또는 중량", ""),
             "specification"=>array("제품 주요사양", "피부타입, 색상(호, 번) 등"),
@@ -305,6 +323,7 @@ $item_info = array(
     ),
     "jewelry"=>array(
         "title"=>"귀금속/보석/시계류",
+        "productInfoProvidedNoticeType" => "JEWELLERY",
         "article"=>array(
             "material"=>array("소재", ""),
             "purity"=>array("순도", ""),
@@ -322,6 +341,7 @@ $item_info = array(
     ),
     "food"=>array(
         "title"=>"식품(농수축산물)",
+        "productInfoProvidedNoticeType" => "FOOD",
         "article"=>array(
             "product_name"=>array("품목 또는 명칭", ""),
             "weight"=>array("포장단위별 용량(중량)", ""),
@@ -340,6 +360,7 @@ $item_info = array(
     ),
     "general_food"=>array(
         "title"=>"가공식품",
+        "productInfoProvidedNoticeType" => "GENERAL_FOOD",
         "article"=>array(
             "product_name"=>array("제품명", ""),
             "food_type"=>array("식품의 유형", ""),
@@ -359,6 +380,7 @@ $item_info = array(
     ),
     "diet_food"=>array(
         "title"=>"건강기능식품",
+        "productInfoProvidedNoticeType" => "DIET_FOOD",
         "article"=>array(
             "product_name"=>array("제품명", ""),
             "food_type"=>array("식품의 유형", ""),
@@ -381,6 +403,7 @@ $item_info = array(
     ),
     "kids"=>array(
         "title"=>"영유아용품",
+        "productInfoProvidedNoticeType" => "KIDS",
         "article"=>array(
             "product_name"=>array("품명", ""),
             "model_name"=>array("모델명", ""),
@@ -400,6 +423,7 @@ $item_info = array(
     ),
     "instrument"=>array(
         "title"=>"악기",
+        "productInfoProvidedNoticeType" => "MUSICAL_INSTRUMENT",
         "article"=>array(
             "product_name"=>array("품명", ""),
             "model_name"=>array("모델명", ""),
@@ -417,6 +441,7 @@ $item_info = array(
     ),
     "sports"=>array(
         "title"=>"스포츠용품",
+        "productInfoProvidedNoticeType" => "SPORTS_EQUIPMENT",
         "article"=>array(
             "product_name"=>array("품명", ""),
             "model_name"=>array("모델명", ""),
@@ -435,6 +460,7 @@ $item_info = array(
     ),
     "books"=>array(
         "title"=>"서적",
+        "productInfoProvidedNoticeType" => "BOOKS",
         "article"=>array(
             "product_name"=>array("도서명", ""),
             "author"=>array("저자", ""),
@@ -448,6 +474,7 @@ $item_info = array(
     ),
     "reserve"=>array(
         "title"=>"호텔/펜션예약",
+        "productInfoProvidedNoticeType" => "LODGMENT_RESERVATION",
         "article"=>array(
             "location"=>array("국가 또는 지역명", ""),
             "lodgment_type"=>array("숙소형태", ""),
@@ -463,6 +490,7 @@ $item_info = array(
     ),
     "travel"=>array(
         "title"=>"여행패키지",
+        "productInfoProvidedNoticeType" => "TRAVEL_PACKAGE",
         "article"=>array(
             "travel_agency"=>array("여행사", ""),
             "flight"=>array("이용항공편", ""),
@@ -484,6 +512,7 @@ $item_info = array(
     ),
     "airline_ticket"=>array(
         "title"=>"항공권",
+        "productInfoProvidedNoticeType" => "AIRLINE_TICKET",
         "article"=>array(
             "charge_condition"=>array("요금조건", ""),
             "round_trip"=>array("왕복&middot;편도 여부", ""),
@@ -498,6 +527,7 @@ $item_info = array(
     ),
     "rent_car"=>array(
         "title"=>"자동차대여서비스(렌터카)",
+        "productInfoProvidedNoticeType" => "RENT_CAR",
         "article"=>array(
             "model"=>array("차종", ""),
             "ownership_transfer"=>array("소유권 이전 조건", "소유권이 이전되는 경우에 한함"),
@@ -510,6 +540,7 @@ $item_info = array(
     ),
     "rental_water"=>array(
         "title"=>"물품대여서비스(정수기,비데,공기청정기 등)",
+        "productInfoProvidedNoticeType" => "RENTAL_HA",
         "article"=>array(
             "product_name"=>array("품명", ""),
             "model_name"=>array("모델명", ""),
@@ -523,6 +554,7 @@ $item_info = array(
     ),
     "rental_etc"=>array(
         "title"=>"물품대여서비스(서적,유아용품,행사용품 등)",
+        "productInfoProvidedNoticeType" => "RENTAL_ETC",
         "article"=>array(
             "product_name"=>array("품명", ""),
             "model_name"=>array("모델명", ""),
@@ -534,6 +566,7 @@ $item_info = array(
     ),
     "digital_contents"=>array(
         "title"=>"디지털콘텐츠(음원,게임,인터넷강의 등)",
+        "productInfoProvidedNoticeType" => "DIGITAL_CONTENTS",
         "article"=>array(
             "producer"=>array("제작자 또는 공급자", ""),
             "terms_of_use"=>array("이용조건", ""),
@@ -546,6 +579,7 @@ $item_info = array(
     ),
     "gift_card"=>array(
         "title"=>"상품권/쿠폰",
+        "productInfoProvidedNoticeType" => "GIFT_CARD",
         "article"=>array(
             "isseur"=>array("발행자", ""),
             "expiration_date"=>array("유효기간", "유효기간 경과 시 보상 기준"),
@@ -557,78 +591,83 @@ $item_info = array(
     ),
     "mobile_coupon" => array(
         "title" => "모바일쿠폰",
+        "productInfoProvidedNoticeType" => "MOBILE_COUPON",
         "article" => array(
             "isseur" => array("발행자", ""),
             "expiration_date" => array("유효기간", "유효기간 경과시 보상 기준 포함"),
-            "terms_of_use" => array("이용조건", "유효기간 경과시 보상 기준 포함"),
             "use_store" => array("이용 가능 매장", ""),
             "refund_policy" => array("환불조건 및 방법", ""),
             "as" => array("소비자상담 관련 전화번호", "")
         )
     ),
-    "movie" => array(
+    "movie_show" => array(
         "title" => "영화&middot공연",
-        "article" => array(
-            "host" => array("주최 또는 기획", "공연에 한함"),
-            "lead_actress" => array("주연", "공연에 한함"),
-            "viewing_class" => array("관람등급", ""),
-            "time" => array("상영&middot공연시간", ""),
-            "place" => array("상영&middot공연장소", ""),
-            "cancel" => array("예매 취소 조건", ""),
-            "refund_policy" => array("취소&middot환불방법", ""),
-            "as" => array("소비자상담 관련 전화번호", "")
+        "productInfoProvidedNoticeType" => "MOVIE_SHOW",
+        "article"           => array(
+            "sponsor"       => array("주최 또는 기획", "공연에 한함"),
+            "actor"         => array("주연", "공연에 한함"),
+            "rating"        => array("관람등급", ""),
+            "showTime"      => array("상영&middot공연시간", ""),
+            "showPlace"     => array("상영&middot공연장소", ""),
+            "cancelationCondition"   => array("예매 취소 조건", ""),
+            "cancelationPolicy" => array("취소&middot환불방법", ""),
+            "customerServicePhoneNumber" => array("소비자상담 관련 전화번호", "")
         )
     ),
     "biochemistry" => array(
         "title" => "생활화학제품",
+        "productInfoProvidedNoticeType" => "BIOCHEMISTRY",
         "article" => array(
-            "product_name"          => array("품목 및 제품명", ""),
-            "dosage_form"           => array("용도 및 제형", "표백제의 경우 계열을 함께 표시"),
-            "manufacturing_ymd"     => array("제조연월", ""),
-            "expiration_date"       => array("유통기한", "해당 없는 제품 생략 가능"),
-            "capacity"              => array("중량&middot용량&middot매수", ""),
+            "productName"           => array("품목 및 제품명", ""),
+            "dosageForm"            => array("용도 및 제형", "표백제의 경우 계열을 함께 표시"),
+            "packDateText"          => array("제조연월", ""),
+            "expirationDateText"    => array("유통기한", "해당 없는 제품 생략 가능"),
+            "weight"                => array("중량&middot용량&middot매수", ""),
             "effect"                => array("효과&middot효능", "승인대상 제품에 한함"),
             "importer"              => array("수입자", "수입제품에 한함"),
-            "madein"                => array("제조국", ""),
-            "maker"                 => array("제조사", ""),
-            "child_protection"      => array("어린이 보호포장 대상 제품 유무", ""),
+            "producer"              => array("제조국", ""),
+            "manufacturer"          => array("제조사", ""),
+            "childProtection"       => array("어린이 보호포장 대상 제품 유무", ""),
             "chemicals"             => array("제품에 사용된 화학물질 명칭", "주요물질,보존제 등 관련 고시에 따른 표시의무 화학물질에 한함"),
             "caution"               => array("사용상 주의사항", ""),
-            "safe_criterion_no"     => array("안전기준 적합확인 신고번호(자가검사번호)또는 안전확인대상 생활화학제품 승인번호", ""),
-            "as"                    => array("소비자상담 관련 전화번호", "")
+            "safeCriterionNo"       => array("안전기준 적합확인 신고번호(자가검사번호)또는 안전확인대상 생활화학제품 승인번호", ""),
+            "customerServicePhoneNumber" => array("소비자상담 관련 전화번호", "")
         )
     ),
     "biocidal" => array(
         "title" => "살생물제품",
+        "productInfoProvidedNoticeType" => "BIOCIDAL",
         "article" => array(
             "product_name"      => array("제품명 및 제품유형", ""),
             "weight"            => array("중량 또는 용량 및 표준사용량", ""),
             "effect"            => array("효과&middot효능", ""),
-            "range_of_use"      => array("사용대상자 및 사용범위", ""),
+            "rangeOfUse"        => array("사용대상자 및 사용범위", ""),
             "importer"          => array("수입자", "수입제품에 한함"),
-            "madein"            => array("제조국", ""),
-            "maker"             => array("제조사", ""),
+            "producer"          => array("제조국", ""),
+            "manufacturer"      => array("제조사", ""),
             "child_protection"  => array("어린이 보호포장 대상 제품 유무", ""),
-            "harmful_chemical_substance" => array("살생물물질,나노물질,기타 화학물질(유해화학물질 또는 중점관리물질)의 명칭", ""),
+            "harmfulChemicalSubstance" => array("살생물물질,나노물질,기타 화학물질(유해화학물질 또는 중점관리물질)의 명칭", ""),
             "maleficence"       => array("제품 유해성&middot위해성 표시", ""),
             "caution"           => array("사용방법 및 사용상 주의사항", ""),
-            "approval_number"   => array("승인번호", ""),
+            "approvalNumber"    => array("승인번호", ""),
             "as"                => array("소비자상담 관련 전화번호", "")
         )
     ),
     "etcService" => array(
         "title" => "기타 용역",
+        "productInfoProvidedNoticeType" => "ETC_SERVICE",
         "article" => array(
-            "provider"          => array("서비스 제공 사업자", ""),
-            "certificate"       => array("법에 의한 인증&middot허가 등을 받았음을 확인할 수 있는 경우 그에 대한 사항", ""),
-            "condition"         => array("이용조건", "이용가능 기간&middot장소, 추가비용 등"),
-            "cancel_standard"   => array("취소&middot중도해약&middot해지 조건 및 환불기준", ""),
-            "cancel_policy"     => array("취소&middot환불방법", ""),
-            "as"                => array("소비자상담 관련 전화번호", "")
+            "serviceProvider"   => array("서비스 제공 사업자", ""),
+            "certificateDetails"       => array("법에 의한 인증&middot허가 등을 받았음을 확인할 수 있는 경우 그에 대한 사항", ""),
+            "usableCondition"         => array("이용조건", "이용가능 기간&middot장소, 추가비용 등"),
+            "cancelationStandard"   => array("취소&middot중도해약&middot해지 조건 및 환불기준", ""),
+            "cancelationPolicy"     => array("취소&middot환불방법", ""),
+            "customerServicePhoneNumber"                => array("소비자상담 관련 전화번호", "")
         )
     ),
     "etc"=>array(
         "title"=>"기타",
+        "productInfoProvidedNoticeType" => "ETC",
         "article"=>array(
             "product_name"=>array("품명", ""),
             "model_name"=>array("모델명", ""),

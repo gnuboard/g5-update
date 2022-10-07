@@ -208,6 +208,7 @@ if(!sql_query(" select it_skin from {$g5['g5_shop_item_table']} limit 1", false)
 }
 
 // 스마트스토어 상품데이터 조회
+$smartstoreConnect = false;
 if ($it['ec_mall_pid'] != null) {
     include_once G5_ADMIN_PATH . '/shop_admin/naver_commerce_api/lib/CommerceApiAutoLoader.php';
     $autoloader = new CommerceApiAutoLoader();
@@ -218,6 +219,10 @@ if ($it['ec_mall_pid'] != null) {
     $commerceApiAuth = new CommerceApiAuth($client_id, $client_secret, new SignatureGeneratorSimple());
     $productInstance = new G5SmartstoreProduct($commerceApiAuth);
     $smartstoreProduct = $productInstance->getChannelProduct($it['ec_mall_pid']);
+
+    if (isset($smartstoreProduct->originProduct)) {
+        $smartstoreConnect = true;
+    }
     
     $autoloader->unregister();
 }
@@ -513,7 +518,7 @@ if ($it['ec_mall_pid'] != null) {
         </tr>
 
         <tr>
-            <th scope="row"><label for="ec_mall_pid">스마트스토어 상품정보 연동</label></th>
+            <th scope="row"><label for="naver_smartstore_yn">스마트스토어 상품정보 연동</label></th>
             <td colspan="2">
                 <?php echo help("네이버 스마트스토어에 상품정보를 등록합니다.<br> 현재 연동된 스마트스토어 상품 : <strong>" . $smartstoreProduct->originProduct->name . "</strong>"); ?>
                 <input type="checkbox" name="naver_smartstore_yn" value="1" id="naver_smartstore_yn" class="frm_input"> 예

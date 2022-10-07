@@ -3,6 +3,8 @@ $sub_menu = '400300';
 include_once('./_common.php');
 include_once(G5_LIB_PATH.'/iteminfo.lib.php');
 
+$commerceApiTest = true;
+
 if ($w == "u" || $w == "d")
     check_demo();
 
@@ -10,8 +12,9 @@ if ($w == '' || $w == 'u')
     auth_check_menu($auth, $sub_menu, "w");
 else if ($w == 'd')
     auth_check_menu($auth, $sub_menu, "d");
-
-check_admin_token();
+if (!$commerceApiTest) {
+    check_admin_token();
+}
 
 @mkdir(G5_DATA_PATH."/item", G5_DIR_PERMISSION);
 @chmod(G5_DATA_PATH."/item", G5_DIR_PERMISSION);
@@ -48,8 +51,8 @@ if ($naver_smartstore_yn == 1) {
     $autoloader = new CommerceApiAutoLoader();
     $autoloader->register();
 
-    $client_id = '3hbo1Jkxt6KuGF59qHnqPw';
-    $client_secret = '$2a$04$svzh.qMoWeF5L4ob9IMMC.';
+    $client_id = '';
+    $client_secret = '';
     $commerceApiAuth = new CommerceApiAuth($client_id, $client_secret, new SignatureGeneratorSimple());
     $productInstance = new G5SmartstoreProduct($commerceApiAuth);
 
@@ -63,8 +66,9 @@ if ($naver_smartstore_yn == 1) {
 
     $autoloader->unregister();
 }
-
-// exit;
+if ($commerceApiTest) {
+    exit;
+}
 
 $it_img1 = $it_img2 = $it_img3 = $it_img4 = $it_img5 = $it_img6 = $it_img7 = $it_img8 = $it_img9 = $it_img10 = '';
 // 파일정보
@@ -671,7 +675,9 @@ $is_seo_title_edit = $w ? true : false;
 if( function_exists('shop_seo_title_update') ) shop_seo_title_update($it_id, $is_seo_title_edit);
 
 run_event('shop_admin_itemformupdate', $it_id, $w);
-// exit;
+if ($commerceApiTest) {
+    exit;
+}
 $qstr = "$qstr&amp;sca=$sca&amp;page=$page";
 
 if ($w == "u") {
