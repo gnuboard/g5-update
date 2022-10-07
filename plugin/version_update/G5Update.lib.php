@@ -86,7 +86,7 @@ class G5Update
             if ($userPassword == null) {
                 throw new Exception("{$port} 비밀번호가 입력되지 않았습니다.");
             }
-            $this->port = $port;
+            $this->setPort($port);
 
             if ($port == "ftp") {
                 if (function_exists("ftp_connect")) {
@@ -299,13 +299,13 @@ class G5Update
                 }
             }
 
-            // 시스템명령어 구분
+            // 기존 버전관련 파일 제거
             if ($this->os == "WINNT") {
                 $dirRemove = escapeshellarg($this->window_dir_update . "\\version\\*.*");
-                exec("for /d %i in (" . $dirRemove . ") do @rmdir /s /q \"%i\"");
+                $this->execCommandByProtocol("for /d %i in (" . $dirRemove . ") do @rmdir /s /q \"%i\"");
             } else {
                 $dirRemove = escapeshellarg($this->dir_version . '/*');
-                exec('rm -rf ' . $dirRemove);
+                $this->execCommandByProtocol('rm -rf ' . $dirRemove);
             }
         } catch (Exception $e) {
             $this->setError($e);
@@ -567,13 +567,13 @@ class G5Update
                             }
                         }
                     }
-                    exec("tar -zxf " . escapeshellarg($backupPath) . " -C " . escapeshellarg($backupDir), $output, $result_code);
-                    if ($result_code != 0) {
+                    $return = $this->execCommandByProtocol("tar -zxf " . escapeshellarg($backupPath) . " -C " . escapeshellarg($backupDir));
+                    if (!$return['result']) {
                         throw new Exception("압축해제에 실패했습니다.");
                     }
                 } else {
-                    $result = exec("unzip -o " . escapeshellarg($backupPath) . " -d " . escapeshellarg($backupDir));
-                    if (!$result) {
+                    $return = $this->execCommandByProtocol("unzip -o " . escapeshellarg($backupPath) . " -d " . escapeshellarg($backupDir));
+                    if (!$return['result']) {
                         throw new Exception("압축해제에 실패했습니다.");
                     }
                 }
@@ -829,50 +829,52 @@ class G5Update
 
             $exe            = $this->os == "WINNT" ? "tar" : "zip";
             $archiveFile    = $this->dir_version . "/gnuboard." . $exe;
-
-            $zip = fopen($archiveFile, 'w+');
-            if ($zip == false) {
+            
+            // 기존 압축파일 삭제 및 생성
+            if (file_exists($archiveFile)) {
+                unlink($archiveFile);
+            }
+            $archiveFileResource = fopen($archiveFile, 'w+');
+            if ($archiveFileResource == false) {
                 throw new Exception('압축파일 생성에 실패했습니다.');
             }
-
+            // API에서 받아온 압축파일 데이터 쓰기
             $result = self::$g5GithubApi->getArchiveData($exe, $version);
-
-            $file_result = @fwrite($zip, (string)$result);
-            if ($file_result == false) {
-                throw new Exception('압축파일 생성에 실패했습니다.');
+            if (!fwrite($archiveFileResource, (string)$result)) {
+                throw new Exception('압축파일 데이터 생성에 실패했습니다.');
             }
 
-            // 시스템명령어 구분
+            // 압축해제 및 버전별 디렉토리 생성
             if ($this->os == "WINNT") {
                 $window_dir_version = $this->window_dir_update . "\\version";
                 $versionDir         = $window_dir_version . '\\' . $version;
                 $escapeVersionDir   = escapeshellarg($versionDir);
 
-                exec("rd /s /q " . $escapeVersionDir);
-                exec("tar -zxf " . escapeshellarg($window_dir_version . "\\gnuboard." . $exe) . " -C " . escapeshellarg($window_dir_version), $output, $result_code);
-                if ($result_code != 0) {
+                $this->execCommandByProtocol("rd /s /q " . $escapeVersionDir);
+                $return = $this->execCommandByProtocol("tar -zxf " . escapeshellarg($window_dir_version . "\\gnuboard." . $exe) . " -C " . escapeshellarg($window_dir_version));
+                if (!$return['result']) {
                     throw new Exception("압축해제에 실패했습니다.");
                 }
-                exec("move " . escapeshellarg($window_dir_version . "\\gnuboard-*") . " " . $escapeVersionDir, $output, $result_code);
-                if ($result_code != 0) {
-                    throw new Exception("압축파일 이동에 실패했습니다. code : " . $result_code);
+                $return = $this->execCommandByProtocol("move " . escapeshellarg($window_dir_version . "\\gnuboard-*") . " " . $escapeVersionDir);
+                if (!$return['result']) {
+                    throw new Exception("압축파일 이동에 실패했습니다.");
                 }
-                exec('del /q ' . escapeshellarg($window_dir_version . "\\gnuboard." . $exe));
+                $this->execCommandByProtocol('del /q ' . escapeshellarg($window_dir_version . "\\gnuboard." . $exe));
             } else {
                 $versionDir         = $this->dir_version . '/' . $version;
                 $escapeVersionDir   = escapeshellarg($versionDir);
 
-                exec('rm -rf ' . $escapeVersionDir);
-                $result = exec('unzip ' . escapeshellarg($archiveFile) . ' -d ' . $escapeVersionDir);
-                if (!$result) {
+                $this->execCommandByProtocol('rm -rf ' . $escapeVersionDir);
+                $return = $this->execCommandByProtocol('unzip ' . escapeshellarg($archiveFile) . ' -d ' . $escapeVersionDir);
+                if (!$return['result']) {
                     throw new Exception("압축해제에 실패했습니다.");
                 }
-                exec('mv -f ' . escapeshellarg($versionDir . '/gnuboard-') . '*/* ' . $escapeVersionDir, $output, $result_code);
-                if ($result_code != 0) {
-                    throw new Exception("압축파일 이동에 실패했습니다. code : " . $result_code);
+                $return = $this->execCommandByProtocol('mv -f ' . escapeshellarg($versionDir . '/gnuboard-') . '*/* ' . $escapeVersionDir);
+                if (!$return['result']) {
+                    throw new Exception("압축파일 이동에 실패했습니다.");
                 }
-                exec('rm -rf ' . escapeshellarg($versionDir . '/gnuboard-') . '*/');
-                exec('rm -rf ' . escapeshellarg($archiveFile));
+                $this->execCommandByProtocol('rm -rf ' . escapeshellarg($versionDir . '/gnuboard-') . '*/');
+                $this->execCommandByProtocol('rm -rf ' . escapeshellarg($archiveFile));
             }
 
             umask(0022);
@@ -1281,5 +1283,63 @@ class G5Update
         } catch (Exception $e) {
             $this->setError($e);
         }
+    }
+
+    /**
+     * Get the value of port
+     */ 
+    public function getPort()
+    {
+        return $this->port;
+    }
+    /**
+     * Set the value of port
+     *
+     * @return  self
+     */ 
+    public function setPort($port)
+    {
+        $this->port = $port;
+
+        return $this;
+    }
+
+    /**
+     * 연결 프로토콜 별 명령실행 요청
+     * 
+     * @param string $command 서버 명령문
+     * @return boolean
+     */
+    public function execCommandByProtocol($command)
+    {
+        $result         = array("result" => false, "message" => "");
+        $success        = null;
+        $success_msg    = "";
+        $fail_msg       = "";
+        
+        if ($this->getPort() == "ftp") {
+            /** @todo ftp_exec 함수로 변경. */
+            $success = exec($this->conn, $command);
+            $success_msg = $success ? $success : ""; // String of false
+        } elseif ($this->getPort() == "sftp") {
+            $stream         = ssh2_exec($this->conn, $command);
+            $errorStream    = ssh2_fetch_stream($stream, SSH2_STREAM_STDERR);
+            stream_set_blocking($stream, true);
+            stream_set_blocking($errorStream, true);
+            $success_msg    = stream_get_contents($stream);
+            $fail_msg       = stream_get_contents($errorStream);
+
+            $success = $stream; // Resource of false
+        }
+
+        if ($success) {
+            $result['result']   = true;
+            $result['message']  = $success_msg;
+        } else {
+            $result['result']   = false;
+            $result['message']  = $fail_msg;
+        }
+
+        return $result;
     }
 }
