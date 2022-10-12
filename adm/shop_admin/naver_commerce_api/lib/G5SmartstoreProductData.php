@@ -4,6 +4,7 @@
  * Convert Form Data to commerce API Data
  * 
  * @link https://apicenter.commerce.naver.com/ko/basic/commerce-api
+ * @todo 옵션(조합형)+추가상품정보 연동
  */
 class G5SmartstoreProductData
 {
@@ -849,23 +850,6 @@ class G5SmartstoreProductData
             ),
             // 옵션 정보 (데이터 확인 필요)
             // "optionInfo" => array(
-            //     "simpleOptionSortType" => "CREATE",
-            //     "optionSimple" => array(
-            //         array(
-            //             "id" => 0,
-            //             "groupName" => "string",
-            //             "name" => "string",
-            //             "usable" => true
-            //         )
-            //     ),
-            //     "optionCustom" => array(
-            //         array(
-            //             "id" => 0,
-            //             "groupName" => "string",
-            //             "name" => "string",
-            //             "usable" => true
-            //         )
-            //     ),
             //     "optionCombinationSortType" => "CREATE",
             //     "optionCombinationGroupNames" => array(
             //         "optionGroupName1" => "string",
@@ -886,31 +870,6 @@ class G5SmartstoreProductData
             //             "usable" => true
             //         )
             //     ),
-            //     "standardOptionGroups" => array(
-            //         array(
-            //             "groupName" => "string",
-            //             "standardOptionAttributes" => array(
-            //                 array(
-            //                     "attributeId" => 0,
-            //                     "attributeValueId" => 0,
-            //                     "attributeValueName" => "string",
-            //                     "imageUrls" => array(
-            //                         "string"
-            //                     )
-            //                 )
-            //             )
-            //         )
-            //     ),
-            //     "optionStandards" => array(
-            //         array(
-            //             "id" => 0,
-            //             "optionName1" => "string",
-            //             "optionName2" => "string",
-            //             "stockQuantity" => 99999999,
-            //             "sellerManagerCode" => "string",
-            //             "usable" => true
-            //         )
-            //     ),
             //     "useStockManagement" => true,
             //     "optionDeliveryAttributes" => array(
             //         "string"
@@ -921,14 +880,17 @@ class G5SmartstoreProductData
             //     "sortType" => "CREATE",
             //     "supplementProducts" => array(
             //         array(
-            //             "id" => 0,
             //             "groupName" => "string",
             //             "name" => "string",
             //             "price" => 999999990,
             //             "stockQuantity" => 99999999,
-            //             "sellerManagementCode" => "string",
-            //             "usable" => true
-            //         )
+            //         ),
+            //         array(
+            //             "groupName" => "string",
+            //             "name" => "string",
+            //             "price" => 999999990,
+            //             "stockQuantity" => 99999999,
+            //         ) ..
             //     )
             // ),
             "taxType" => ($formData['it_notax'] == 1) ? "DUTYFREE" : "TAX",     // 부가가치세 타입 코드 : TAX(과세 상품), DUTYFREE(면세 상품), SMALL(영세 상품)

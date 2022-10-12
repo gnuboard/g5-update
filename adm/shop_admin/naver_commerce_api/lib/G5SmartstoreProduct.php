@@ -43,12 +43,27 @@ class G5SmartstoreProduct {
      */
     public function getChannelProduct($channelProductNo)
     {
-        $resultData = $this->commerceApi->requestCurl("GET", $this->urlGetChannelProduct . $channelProductNo);
-        // echo "<br>";
-        // echo "<br>";
-        // print_r($resultData);
+        try {
+            $channelProductNo = trim($channelProductNo);
+            $resultData = $this->commerceApi->requestCurl("GET", $this->urlGetChannelProduct . $channelProductNo);
+            if (isset($resultData->code)) {
+                throw new Exception($resultData->message);
+            }
+            $resultData->originProduct->detailContent = $this->setHtmlContentJsonParse($resultData->originProduct->detailContent);
 
-        return $resultData;
+            return $resultData;
+
+        } catch (Exception $e) {
+            return $resultData;
+        }
+    }
+
+    /**
+     * Html 태그를 Json.parse 하도록 변환
+     */
+    public function setHtmlContentJsonParse($content)
+    {
+        return preg_replace('/\r\n|\r|\n/', '', str_replace("\"", "\\\"", $content));
     }
 
     /**
@@ -122,7 +137,7 @@ class G5SmartstoreProduct {
         /* 상품데이터 입력 END */
         echo "<br>==================================productData getProductData()==================================<br>";
         print_r($productData->getProductData());
-        $updateData = str_replace("[]", "{}", json_encode($productData->getProductData()));
+        $updateData = json_encode($productData->getProductData(), JSON_FORCE_OBJECT);
         $resultData = $this->commerceApi->requestCurl("PUT", self::$urlUpdateChannelProduct . $channelProductNo, $updateData);
         echo "<br>==================================productData updateChannerProduct()==================================<br>";
         print_r($resultData);

@@ -3,7 +3,7 @@ $sub_menu = '400300';
 include_once('./_common.php');
 include_once(G5_LIB_PATH.'/iteminfo.lib.php');
 
-$commerceApiTest = true;
+$commerceApiTest = false;
 
 if ($w == "u" || $w == "d")
     check_demo();
@@ -44,31 +44,31 @@ if ($is_admin != 'super') {     // 최고관리자가 아니면 체크
  * - it_img_upload함수의 move_upload_file로 인해 이미지파일이 임시경로에서 없어지므로 상품등록이 안되어 상단에 위치함.
  * @todo 상품등록 프로세스 안쪽으로 이동해야함.
  */
+include_once G5_ADMIN_PATH . '/shop_admin/naver_commerce_api/config.php';
+include_once G5_ADMIN_PATH . '/shop_admin/naver_commerce_api/lib/CommerceApiAutoLoader.php';
+$autoloader = new CommerceApiAutoLoader();
+$autoloader->register();
+
 $channelProductNo = '';
+if ($smartstore_connect_type == "create") {
 
-if ($naver_smartstore_yn == 1) {
-    include_once G5_ADMIN_PATH . '/shop_admin/naver_commerce_api/lib/CommerceApiAutoLoader.php';
-    $autoloader = new CommerceApiAutoLoader();
-    $autoloader->register();
-
-    $client_id = '';
-    $client_secret = '';
-    $commerceApiAuth = new CommerceApiAuth($client_id, $client_secret, new SignatureGeneratorSimple());
+    $commerceApiAuth = new CommerceApiAuth(G5_COMMERCE_API_CRIENT_ID, G5_COMMERCE_API_SECRET, new SignatureGeneratorSimple());
     $productInstance = new G5SmartstoreProduct($commerceApiAuth);
 
     if ($w == '') {
         $response = $productInstance->createChannerProduct($_POST, $_FILES);
-        $channelProductNo = $response->smartstoreChannelProductNo;
-        
-    } elseif ($w == 'u') {
-        $productInstance->updateChannerProduct($_POST['ec_mall_pid'], $_POST, $_FILES);
+        $channelProductNo = $response->smartstoreChannelProductNo;   
     }
-
-    $autoloader->unregister();
 }
+if ($w == 'u' && $naver_smartstore_yn) {
+    $productInstance->updateChannerProduct($_POST['ss_channel_product_no'], $_POST, $_FILES);
+}
+
 if ($commerceApiTest) {
     exit;
 }
+
+$autoloader->unregister();
 
 $it_img1 = $it_img2 = $it_img3 = $it_img4 = $it_img5 = $it_img6 = $it_img7 = $it_img8 = $it_img9 = $it_img10 = '';
 // 파일정보
@@ -339,6 +339,7 @@ $check_sanitize_keys = array(
 'it_use',               // 판매가능
 'it_nocoupon',          // 쿠폰적용안함
 'ec_mall_pid',          // 네이버쇼핑 상품ID
+'ss_channel_product_no',// 스마트스토어 채널상품 ID
 'it_sell_email',        // 판매자 e-mail
 'it_price',             // 판매가격
 'it_cust_price',        // 시중가격
@@ -368,7 +369,7 @@ foreach( $check_sanitize_keys as $key ){
 
 // 스마트스토어 상품등록 ID연결
 if (isset($channelProductNo) && $channelProductNo != '') {
-    $ec_mall_pid = $channelProductNo;
+    $ss_channel_product_no = $channelProductNo;
 }
 
 $it_basic = preg_replace('#<script(.*?)>(.*?)<\/script>#is', '', $it_basic);
@@ -429,6 +430,7 @@ $sql_common = " ca_id               = '$ca_id',
                 it_info_value       = '$it_info_value',
                 it_shop_memo        = '$it_shop_memo',
                 ec_mall_pid         = '$ec_mall_pid',
+                ss_channel_product_no = '$ss_channel_product_no',
                 it_img1             = '$it_img1',
                 it_img2             = '$it_img2',
                 it_img3             = '$it_img3',

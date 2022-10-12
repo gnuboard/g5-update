@@ -179,6 +179,7 @@ if(!sql_query(" select ec_mall_pid from {$g5['g5_shop_item_table']} limit 1 ", f
 }
 
 $pg_anchor ='<ul class="anchor">
+<li><a href="#anc_sitfrm_connect">상품데이터연동</a></li>
 <li><a href="#anc_sitfrm_cate">상품분류</a></li>
 <li><a href="#anc_sitfrm_skin">스킨설정</a></li>
 <li><a href="#anc_sitfrm_ini">기본정보</a></li>
@@ -209,17 +210,15 @@ if(!sql_query(" select it_skin from {$g5['g5_shop_item_table']} limit 1", false)
 
 // 스마트스토어 상품데이터 조회
 $smartstoreConnect = false;
-if ($it['ec_mall_pid'] != null) {
+if ($it['ss_channel_product_no'] != null) {
+    include_once G5_ADMIN_PATH . '/shop_admin/naver_commerce_api/config.php';
     include_once G5_ADMIN_PATH . '/shop_admin/naver_commerce_api/lib/CommerceApiAutoLoader.php';
     $autoloader = new CommerceApiAutoLoader();
     $autoloader->register();
     
-    $client_id = '';
-    $client_secret = '';
-    $commerceApiAuth = new CommerceApiAuth($client_id, $client_secret, new SignatureGeneratorSimple());
+    $commerceApiAuth = new CommerceApiAuth(G5_COMMERCE_API_CRIENT_ID, G5_COMMERCE_API_SECRET, new SignatureGeneratorSimple());
     $productInstance = new G5SmartstoreProduct($commerceApiAuth);
-    $smartstoreProduct = $productInstance->getChannelProduct($it['ec_mall_pid']);
-
+    $smartstoreProduct = $productInstance->getChannelProduct($it['ss_channel_product_no']);
     if (isset($smartstoreProduct->originProduct)) {
         $smartstoreConnect = true;
     }
@@ -237,6 +236,68 @@ if ($it['ec_mall_pid'] != null) {
 <input type="hidden" name="sfl" value="<?php echo $sfl; ?>">
 <input type="hidden" name="stx"  value="<?php echo $stx; ?>">
 <input type="hidden" name="page" value="<?php echo $page; ?>">
+
+<section id="anc_sitfrm_connect">
+    <h2 class="h2_frm">외부 상품데이터 연동</h2>
+    <?php echo $pg_anchor; ?>
+    <div class="local_desc02 local_desc">
+        <p>오픈마켓의 상품데이터를 연동합니다.</p>
+    </div>
+
+    <div class="tbl_frm01 tbl_wrap">
+        <table>
+        <caption>상품 검색</caption>
+        <colgroup>
+            <col class="grid_4" >
+            <col>
+        </colgroup>
+        <tbody>
+        <tr>
+            <th scope="row" style="background-color:rgba(3, 199, 90, 0.1);"><label for="channel_id">스마트스토어 상품정보 연동</label></th>
+            <td>
+                <div style="margin-bottom:10px;">
+                    <input type="radio" name="smartstore_connect_type" value="connect" checked>상품 불러오기
+                    <input type="radio" name="smartstore_connect_type" value="create">신규 등록
+                </div>
+                <div id="smartstore_connect">
+                    <?php echo help("네이버 스마트스토어의 <b>상품ID</b>를 통해 상품을 검색하고 상품정보를 반영할 수 있습니다. <br> 현재 연동된 스마트스토어 상품 : <strong id='smartstore_product_name'>" . $smartstoreProduct->originProduct->name . "</strong>"); ?>
+                    <input type="hidden" name="ss_channel_product_no" id="ss_channel_product_no" value="">
+                    <button type="button" id="btn_search_smartstore" class="btn_frmline">검색</button>
+                </div>
+                <?php if ($w == "") { ?>
+                <div id="smartstore_create" style="display:none;">
+                    <?php echo help("네이버 스마트스토어에 상품정보를 새로 등록합니다."); ?>
+                    <input type="checkbox" name="naver_smartstore_yn" value="1" id="naver_smartstore_yn" class="frm_input"> 예
+                </div>
+                <?php } ?>
+                <script>
+                $(function(){
+                    $("input[name=smartstore_connect_type]").on("change", function(){
+                        let type = $(this).val();
+                        if (type == "connect") {
+                            $("#smartstore_connect").css("display", "block");
+                            $("#smartstore_create").css("display", "none");
+                        } else if (type == "create") {
+                            $("#smartstore_connect").css("display", "none");
+                            $("#smartstore_create").css("display", "block");
+                        }
+                        $("#ss_channel_product_no").val("");
+                        $("#naver_smartstore_yn").prop('checked', false);
+                    });
+
+                    $("#btn_search_smartstore").on("click", function(){
+                        var opt = "left=50,top=50,width=700,height=400,scrollbars=1";
+                        var url = "./naver_commerce_api/search_product.php";
+                        window.open(url, "win_member", opt);
+                    });
+                });
+                </script>
+            </td>
+        </tr>
+        </tbody>
+        </table>
+    </div>
+</section>
 
 <section id="anc_sitfrm_cate">
     <h2 class="h2_frm">상품분류</h2>
@@ -515,16 +576,7 @@ if ($it['ec_mall_pid'] != null) {
                 <?php echo help("네이버쇼핑에 입점한 경우 네이버쇼핑 상품ID를 입력하시면 네이버페이와 연동됩니다.<br>일부 쇼핑몰의 경우 네이버쇼핑 상품ID 대신 쇼핑몰 상품ID를 입력해야 하는 경우가 있습니다.<br>네이버페이 연동과정에서 이 부분에 대한 안내가 이뤄지니 안내받은 대로 값을 입력하시면 됩니다."); ?>
                 <input type="text" name="ec_mall_pid" value="<?php echo get_text($it['ec_mall_pid']); ?>" id="ec_mall_pid" class="frm_input" size="20">
             </td>
-        </tr>
-
-        <tr>
-            <th scope="row"><label for="naver_smartstore_yn">스마트스토어 상품정보 연동</label></th>
-            <td colspan="2">
-                <?php echo help("네이버 스마트스토어에 상품정보를 등록합니다.<br> 현재 연동된 스마트스토어 상품 : <strong>" . $smartstoreProduct->originProduct->name . "</strong>"); ?>
-                <input type="checkbox" name="naver_smartstore_yn" value="1" id="naver_smartstore_yn" class="frm_input"> 예
-            </td>
-        </tr>
-        
+        </tr>        
         <tr>
             <th scope="row">상품설명</th>
             <td colspan="2"> <?php echo editor_html('it_explan', get_text(html_purifier($it['it_explan']), 0)); ?></td>
@@ -880,7 +932,7 @@ $(function(){
                             alert("옵션명과 옵션항목을 입력해 주십시오.");
                             return false;
                         }
-
+                        console.log($option_table);
                         $.post(
                             "<?php echo G5_ADMIN_URL; ?>/shop_admin/itemoption.php",
                             { it_id: it_id, w: "<?php echo $w; ?>", opt1_subject: opt1_subject, opt2_subject: opt2_subject, opt3_subject: opt3_subject, opt1: opt1, opt2: opt2, opt3: opt3 },
@@ -1086,7 +1138,8 @@ $(function(){
                             alert("추가옵션명과 추가옵션항목을 입력해 주십시오.");
                             return false;
                         }
-
+                        console.log(subject);
+                        console.log(supply);
                         $.post(
                             "<?php echo G5_ADMIN_URL; ?>/shop_admin/itemsupply.php",
                             { it_id: it_id, w: "<?php echo $w; ?>", 'subject[]': subject, 'supply[]': supply },
