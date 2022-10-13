@@ -43,7 +43,9 @@ class CommerceApi {
 
         /* CURL option Setting */
         if ($method === "GET") {
-            $url .= "?" . htmlspecialchars(http_build_query($data), ENT_QUOTES, 'UTF-8');
+            if (isset($data)) {
+                $url .= "?" . htmlspecialchars(http_build_query($data), ENT_QUOTES, 'UTF-8');
+            }
         } elseif ($method === "POST" || $method == "PUT") {
             curl_setopt($curlHandle, CURLOPT_POSTFIELDS, $data);
         }
