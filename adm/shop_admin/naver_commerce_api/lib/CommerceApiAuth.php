@@ -72,6 +72,8 @@ class CommerceApiAuth {
                 'grant_type' => 'client_credentials',
                 'type' => 'SELF'
             );
+            print_r($this->signature);
+            echo "<br>";
     
             $resultData = $commerceApi->requestCurl("POST", $this->urlAccessToken, $apiData);
 

@@ -256,20 +256,23 @@ if ($it['ss_channel_product_no'] != null) {
             <th scope="row" style="background-color:rgba(3, 199, 90, 0.1);"><label for="channel_id">스마트스토어 상품정보 연동</label></th>
             <td>
                 <div style="margin-bottom:10px;">
-                    <input type="radio" name="smartstore_connect_type" value="connect" checked>상품 불러오기
-                    <input type="radio" name="smartstore_connect_type" value="create">신규 등록
+                    <input type="radio" name="smartstore_connect_type" value="connect" checked> 상품 불러오기
+                    <?php if ($w == "") { ?>
+                    <input type="radio" name="smartstore_connect_type" value="create"> 신규 등록
+                    <?php } ?>
+                    <input type="radio" name="smartstore_connect_type" value="none"> 미사용
                 </div>
                 <div id="smartstore_connect">
                     <?php echo help("네이버 스마트스토어의 <b>상품ID</b>를 통해 상품을 검색하고 상품정보를 반영할 수 있습니다. <br> 현재 연동된 스마트스토어 상품 : <strong id='smartstore_product_name'>" . $smartstoreProduct->originProduct->name . "</strong>"); ?>
-                    <input type="hidden" name="ss_channel_product_no" id="ss_channel_product_no" value="">
+                    <input type="hidden" name="ss_channel_product_no" id="ss_channel_product_no" value="<?php echo $it['ss_channel_product_no'] ?>">
                     <button type="button" id="btn_search_smartstore" class="btn_frmline">검색</button>
                 </div>
-                <?php if ($w == "") { ?>
                 <div id="smartstore_create" style="display:none;">
-                    <?php echo help("네이버 스마트스토어에 상품정보를 새로 등록합니다."); ?>
-                    <input type="checkbox" name="naver_smartstore_yn" value="1" id="naver_smartstore_yn" class="frm_input"> 예
+                    <?php echo help("현재 상품정보를 기반으로 네이버 스마트스토어에 상품을 등록합니다."); ?>
                 </div>
-                <?php } ?>
+                <div id="smartstore_none" style="display:none;">
+                    <?php echo help("현재 상품정보를 기반으로 네이버 스마트스토어에 상품을 등록합니다."); ?>
+                </div>
                 <script>
                 $(function(){
                     $("input[name=smartstore_connect_type]").on("change", function(){
@@ -280,6 +283,9 @@ if ($it['ss_channel_product_no'] != null) {
                         } else if (type == "create") {
                             $("#smartstore_connect").css("display", "none");
                             $("#smartstore_create").css("display", "block");
+                        } else if (type == "none") {
+                            $("#smartstore_connect").css("display", "none");
+                            $("#smartstore_create").css("display", "none");
                         }
                         $("#ss_channel_product_no").val("");
                         $("#naver_smartstore_yn").prop('checked', false);
@@ -294,6 +300,15 @@ if ($it['ss_channel_product_no'] != null) {
                 </script>
             </td>
         </tr>
+        <?php if ($w == "u") { ?>
+        <tr>
+            <th scope="row" style="background-color:rgba(3, 199, 90, 0.1);"><label for="channel_id">상품정보 업데이트</label></th>
+            <td>
+                <?php echo help("현재 상품정보를 네이버 스마트스토어에 반영합니다."); ?>
+                <input type="checkbox" name="naver_smartstore_yn" id="naver_smartstore_yn" value="1"/> 예
+            </td>
+        </tr>
+        <?php } ?>
         </tbody>
         </table>
     </div>

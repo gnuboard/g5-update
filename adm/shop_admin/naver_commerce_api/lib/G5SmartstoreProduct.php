@@ -95,6 +95,7 @@ class G5SmartstoreProduct {
         /* 상품데이터 입력 END */
         // echo "<br>==================================productData getProductData()==================================<br>";
         // print_r($productData->getProductData());
+        // print_r(json_encode($productData->getProductData()));
         $resultData = $this->commerceApi->requestCurl("POST", self::$urlCreateChannelProduct, json_encode($productData->getProductData()));
         // echo "<br>==================================productData createProduct()==================================<br>";
         // print_r($resultData);
@@ -137,8 +138,7 @@ class G5SmartstoreProduct {
         /* 상품데이터 입력 END */
         echo "<br>==================================productData getProductData()==================================<br>";
         print_r($productData->getProductData());
-        $updateData = json_encode($productData->getProductData(), JSON_FORCE_OBJECT);
-        $resultData = $this->commerceApi->requestCurl("PUT", self::$urlUpdateChannelProduct . $channelProductNo, $updateData);
+        $resultData = $this->commerceApi->requestCurl("PUT", self::$urlUpdateChannelProduct . $channelProductNo, json_encode($productData->getProductData(), JSON_FORCE_OBJECT));
         echo "<br>==================================productData updateChannerProduct()==================================<br>";
         print_r($resultData);
 

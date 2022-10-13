@@ -43,25 +43,26 @@ if ($is_admin != 'super') {     // 최고관리자가 아니면 체크
  * 네이버 스마트스토어 연동
  * - it_img_upload함수의 move_upload_file로 인해 이미지파일이 임시경로에서 없어지므로 상품등록이 안되어 상단에 위치함.
  * @todo 상품등록 프로세스 안쪽으로 이동해야함.
+ * @todo 프로세스 간소화해야함 (CommerceApiAuth , G5SmartstoreProduct)
  */
 include_once G5_ADMIN_PATH . '/shop_admin/naver_commerce_api/config.php';
 include_once G5_ADMIN_PATH . '/shop_admin/naver_commerce_api/lib/CommerceApiAutoLoader.php';
 $autoloader = new CommerceApiAutoLoader();
 $autoloader->register();
+$commerceApiAuth = new CommerceApiAuth(G5_COMMERCE_API_CRIENT_ID, G5_COMMERCE_API_SECRET, new SignatureGeneratorSimple());
+$productInstance = new G5SmartstoreProduct($commerceApiAuth);
 
-$channelProductNo = '';
-if ($smartstore_connect_type == "create") {
-
-    $commerceApiAuth = new CommerceApiAuth(G5_COMMERCE_API_CRIENT_ID, G5_COMMERCE_API_SECRET, new SignatureGeneratorSimple());
-    $productInstance = new G5SmartstoreProduct($commerceApiAuth);
-
-    if ($w == '') {
-        $response = $productInstance->createChannerProduct($_POST, $_FILES);
-        $channelProductNo = $response->smartstoreChannelProductNo;   
-    }
+if ($w == '' && $smartstore_connect_type == "create") {
+    $response = $productInstance->createChannerProduct($_POST, $_FILES);
+} elseif ($w == 'u' && $naver_smartstore_yn) {
+    $response = $productInstance->updateChannerProduct(clean_xss_tags($_POST['ss_channel_product_no']), $_POST, $_FILES);
 }
-if ($w == 'u' && $naver_smartstore_yn) {
-    $productInstance->updateChannerProduct($_POST['ss_channel_product_no'], $_POST, $_FILES);
+
+if (isset($response->code)) {
+    print_r($response);
+    exit;
+} elseif (isset($response->smartstoreChannelProductNo)) {
+    $_POST['ss_channel_product_no'] = $response->smartstoreChannelProductNo;
 }
 
 if ($commerceApiTest) {
@@ -365,11 +366,6 @@ $check_sanitize_keys = array(
 
 foreach( $check_sanitize_keys as $key ){
     $$key = isset($_POST[$key]) ? strip_tags(clean_xss_attributes($_POST[$key])) : '';
-}
-
-// 스마트스토어 상품등록 ID연결
-if (isset($channelProductNo) && $channelProductNo != '') {
-    $ss_channel_product_no = $channelProductNo;
 }
 
 $it_basic = preg_replace('#<script(.*?)>(.*?)<\/script>#is', '', $it_basic);
