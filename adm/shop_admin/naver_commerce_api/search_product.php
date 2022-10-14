@@ -18,6 +18,11 @@ if ($productNo) {
     $commerceApiAuth = new CommerceApiAuth(G5_COMMERCE_API_CRIENT_ID, G5_COMMERCE_API_SECRET, new SignatureGeneratorSimple());
     $productInstance = new G5SmartstoreProduct($commerceApiAuth);
     $product = $productInstance->getChannelProduct($productNo);
+    
+    // 전체 카테고리명 설정
+    $categoryInstance = new G5SmartstoreCategory($commerceApiAuth);
+    $ss_category = $categoryInstance->getCategory($product->originProduct->leafCategoryId);
+    $product->originProduct->wholeCategoryName = $ss_category->wholeCategoryName;
 }
 echo "<br> 상품 번호 샘플 : 7324377112 / 7324748992  / 7374866983 <br>";
 ?>
@@ -94,6 +99,9 @@ $(function(){
         // 스마트스토어 상품ID 추가
         opener.document.getElementById("smartstore_product_name").innerHTML = orgProduct.name + " (" + productNo + ")";
         opener.document.getElementById("ss_channel_product_no").value       = productNo;
+        // 스마트스토어 카테고리 추가
+        opener.document.getElementById("smartstore_category_name").innerHTML    = orgProduct.wholeCategoryName;
+        opener.document.getElementById("ss_category_id").value                  = orgProduct.leafCategoryId;
 
         if (confirm("추가적으로 스마트스토어의 상품정보를 반영하겠습니까?")) {
             /* 기본 상품데이터 */
@@ -334,7 +342,6 @@ $(function(){
 
             for (let key in supplementArray) {
                 $add_supply_row.dispatchEvent(new Event("click"));
-                console.log(key, supplementArray[key]);
 
                 // 폼 데이터 추가
                 opener.document.getElementById("spl_subject_" + key).value  = supplementArray[key]?.name;

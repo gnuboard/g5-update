@@ -341,6 +341,7 @@ $check_sanitize_keys = array(
 'it_nocoupon',          // 쿠폰적용안함
 'ec_mall_pid',          // 네이버쇼핑 상품ID
 'ss_channel_product_no',// 스마트스토어 채널상품 ID
+'ss_category_id',       // 스마트스토어 카테고리 ID
 'it_sell_email',        // 판매자 e-mail
 'it_price',             // 판매가격
 'it_cust_price',        // 시중가격
@@ -427,6 +428,7 @@ $sql_common = " ca_id               = '$ca_id',
                 it_shop_memo        = '$it_shop_memo',
                 ec_mall_pid         = '$ec_mall_pid',
                 ss_channel_product_no = '$ss_channel_product_no',
+                ss_category_id      = '$ss_category_id',
                 it_img1             = '$it_img1',
                 it_img2             = '$it_img2',
                 it_img3             = '$it_img3',

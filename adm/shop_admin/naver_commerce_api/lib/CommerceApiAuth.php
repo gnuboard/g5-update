@@ -53,7 +53,7 @@ class CommerceApiAuth {
         $this->setAuthorizationHeader($this->getAccessToken());
 
         // 헤더 값 출력 (테스트)
-        echo $this->getAuthorizationHeader();
+        echo $this->getAuthorizationHeader() . "<br><br>";
     }
 
     /**

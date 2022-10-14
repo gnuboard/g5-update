@@ -48,10 +48,10 @@ class G5SmartstoreCategory {
                 throw new Exception($resultData->message);
             }
 
-            return $resultData;
+            return $this->convertResponseToCategoriesArray($resultData);
 
         } catch (Exception $e) {
-            return $e;
+            print_r($e->getMessage());
         }
     }
 
@@ -98,5 +98,46 @@ class G5SmartstoreCategory {
         } catch (Exception $e) {
             return $e;
         }
+    }
+
+    /**
+     * 전체 카테고리 목록 > PHP 계층구조 배열로 변환
+     * @param stdClass $response API 응답결과
+     * @return array
+     */
+    public function convertResponseToCategoriesArray($response)
+    {
+        /* 카테고리 배열 생성 */
+        $category = array();
+        $categoryInfo1 = array("id" => "", "name" => "");
+        $categoryInfo2 = array("id" => "", "name" => "");
+        $categoryInfo3 = array("id" => "", "name" => "");
+
+        foreach ($response as $key => $value) {
+            $wholeCategoryName  = $response[$key]->wholeCategoryName;
+            $categoryName       = $response[$key]->name;
+            $categoryId         = $response[$key]->id;
+
+            if ($wholeCategoryName == $categoryName) {
+                $categoryInfo1['id']        = $categoryId;
+                $categoryInfo1['name']      = $categoryName;
+                $category[$categoryId] = $response[$key];
+
+            } elseif ($wholeCategoryName == $categoryInfo1['name'] . ">" . $categoryName) {
+                $categoryInfo2['id']        = $categoryId;
+                $categoryInfo2['name']      = $categoryName;
+                $category[$categoryInfo1['id']]->child[$categoryId] = $response[$key];
+
+            } elseif ($wholeCategoryName == $categoryInfo1['name'] . ">" . $categoryInfo2['name'] . ">" . $categoryName) {
+                $categoryInfo3['id']        = $categoryId;
+                $categoryInfo3['name']      = $categoryName;
+                $category[$categoryInfo1['id']]->child[$categoryInfo2['id']]->child[$categoryId] = $response[$key];
+
+            } elseif ($wholeCategoryName == $categoryInfo1['name'] . ">" . $categoryInfo2['name'] . ">" . $categoryInfo3['name'] . ">" . $categoryName) {
+                $category[$categoryInfo1['id']]->child[$categoryInfo2['id']]->child[$categoryInfo3['id']]->child[$categoryId] = $response[$key];
+            }
+        }
+
+        return $category;
     }
 }

@@ -26,6 +26,8 @@ $it = array(
 'it_use'=>0,
 'it_nocoupon'=>0,
 'ec_mall_pid'=>'',
+'ss_channel_product_no'=>'',
+'ss_category_id'=>'',
 'it_mobile_explan'=>'',
 'it_sell_email'=>'',
 'it_shop_memo'=>'',
@@ -208,23 +210,33 @@ if(!sql_query(" select it_skin from {$g5['g5_shop_item_table']} limit 1", false)
                     ADD `it_mobile_skin` varchar(255) NOT NULL DEFAULT '' AFTER `it_skin` ", true);
 }
 
-// 스마트스토어 상품데이터 조회
-$smartstoreConnect = false;
-if ($it['ss_channel_product_no'] != null) {
-    include_once G5_ADMIN_PATH . '/shop_admin/naver_commerce_api/config.php';
-    include_once G5_ADMIN_PATH . '/shop_admin/naver_commerce_api/lib/CommerceApiAutoLoader.php';
-    $autoloader = new CommerceApiAutoLoader();
-    $autoloader->register();
-    
-    $commerceApiAuth = new CommerceApiAuth(G5_COMMERCE_API_CRIENT_ID, G5_COMMERCE_API_SECRET, new SignatureGeneratorSimple());
+/* 커머스 API 설정 */
+include_once G5_ADMIN_PATH . '/shop_admin/naver_commerce_api/config.php';
+include_once G5_ADMIN_PATH . '/shop_admin/naver_commerce_api/lib/CommerceApiAutoLoader.php';
+$autoloader = new CommerceApiAutoLoader();
+$autoloader->register();
+$commerceApiAuth = new CommerceApiAuth(G5_COMMERCE_API_CRIENT_ID, G5_COMMERCE_API_SECRET, new SignatureGeneratorSimple());
+
+/* 스마트스토어 카테고리 */
+$categoryInstance = new G5SmartstoreCategory($commerceApiAuth);
+$categories = $categoryInstance->getCategories();
+// 전체 카테고리명 설정
+$smartstoreCategoryName = "";
+$ss_category = $categoryInstance->getCategory($it['ss_category_id']);
+if (isset($ss_category->wholeCategoryName)) {
+    $smartstoreCategoryName = $ss_category->wholeCategoryName;
+}
+
+/* 스마트스토어 상품정보 */
+$smartstoreProductName = "";
+if (isset($it['ss_channel_product_no'])) {
     $productInstance = new G5SmartstoreProduct($commerceApiAuth);
     $smartstoreProduct = $productInstance->getChannelProduct($it['ss_channel_product_no']);
     if (isset($smartstoreProduct->originProduct)) {
-        $smartstoreConnect = true;
+        $smartstoreProductName = $smartstoreProduct->originProduct->name;
     }
-    
-    $autoloader->unregister();
 }
+$autoloader->unregister();
 ?>
 
 <form name="fitemform" action="./itemformupdate.php" method="post" enctype="MULTIPART/FORM-DATA" autocomplete="off" onsubmit="return fitemformcheck(this)">
@@ -262,42 +274,41 @@ if ($it['ss_channel_product_no'] != null) {
                     <?php } ?>
                     <input type="radio" name="smartstore_connect_type" value="none"> 미사용
                 </div>
-                <div id="smartstore_connect">
-                    <?php echo help("네이버 스마트스토어의 <b>상품ID</b>를 통해 상품을 검색하고 상품정보를 반영할 수 있습니다. <br> 현재 연동된 스마트스토어 상품 : <strong id='smartstore_product_name'>" . $smartstoreProduct->originProduct->name . "</strong>"); ?>
+                <div class="smartstore_connect" id="smartstore_connect">
+                    <?php echo help("네이버 스마트스토어의 <b>상품ID</b>를 통해 상품을 검색하고 상품정보를 반영할 수 있습니다."); ?>
+                    <?php echo help("연동된 스마트스토어 상품 : <strong id='smartstore_product_name'>" . $smartstoreProductName . "</strong>"); ?>
                     <input type="hidden" name="ss_channel_product_no" id="ss_channel_product_no" value="<?php echo $it['ss_channel_product_no'] ?>">
                     <button type="button" id="btn_search_smartstore" class="btn_frmline">검색</button>
                 </div>
-                <div id="smartstore_create" style="display:none;">
+                <div class="smartstore_connect" id="smartstore_create" style="display:none;">
                     <?php echo help("현재 상품정보를 기반으로 네이버 스마트스토어에 상품을 등록합니다."); ?>
                 </div>
-                <div id="smartstore_none" style="display:none;">
-                    <?php echo help("현재 상품정보를 기반으로 네이버 스마트스토어에 상품을 등록합니다."); ?>
+                <div class="smartstore_connect" id="smartstore_none" style="display:none;">
+                    <?php echo help("네이버 스마트스토어에 상품을 등록하지 않거나 연동을 해제합니다."); ?>
                 </div>
-                <script>
-                $(function(){
-                    $("input[name=smartstore_connect_type]").on("change", function(){
-                        let type = $(this).val();
-                        if (type == "connect") {
-                            $("#smartstore_connect").css("display", "block");
-                            $("#smartstore_create").css("display", "none");
-                        } else if (type == "create") {
-                            $("#smartstore_connect").css("display", "none");
-                            $("#smartstore_create").css("display", "block");
-                        } else if (type == "none") {
-                            $("#smartstore_connect").css("display", "none");
-                            $("#smartstore_create").css("display", "none");
-                        }
-                        $("#ss_channel_product_no").val("");
-                        $("#naver_smartstore_yn").prop('checked', false);
-                    });
-
-                    $("#btn_search_smartstore").on("click", function(){
-                        var opt = "left=50,top=50,width=700,height=400,scrollbars=1";
-                        var url = "./naver_commerce_api/search_product.php";
-                        window.open(url, "win_member", opt);
-                    });
-                });
-                </script>
+            </td>
+        </tr>
+        <tr>
+            <th scope="row" style="background-color:rgba(3, 199, 90, 0.1);"><label for="channel_id">상품 카테고리</label></th>
+            <td>
+                <?php echo help("네이버 스마트스토어의 상품 카테고리를 선택해야합니다. 상품 등록 이후에는 첫번째 대카테고리 변경이 불가능합니다."); ?>
+                <?php echo help("선택한 카테고리 : <strong id='smartstore_category_name'>" . $smartstoreCategoryName . "</strong>" ); ?>
+                <input type="hidden" id="ss_category_id" name="ss_category_id" value="<?php echo $it['ss_category_id'] ?>">
+                <select name="category1">
+                    <option value="">대분류 선택</option>
+                    <?php foreach($categories as $key => $val) { ?>
+                    <option value="<?php echo $key; ?>"><?php echo $val->name; ?></option>
+                    <?php } ?>
+                </select>
+                <select name="category2">
+                    <option value="">중분류 선택</option>
+                </select>
+                <select name="category3">
+                    <option value="">소분류 선택</option>
+                </select>
+                <select name="category4">
+                    <option value="">세분류 선택</option>
+                </select>
             </td>
         </tr>
         <?php if ($w == "u") { ?>
@@ -947,7 +958,6 @@ $(function(){
                             alert("옵션명과 옵션항목을 입력해 주십시오.");
                             return false;
                         }
-                        console.log($option_table);
                         $.post(
                             "<?php echo G5_ADMIN_URL; ?>/shop_admin/itemoption.php",
                             { it_id: it_id, w: "<?php echo $w; ?>", opt1_subject: opt1_subject, opt2_subject: opt2_subject, opt3_subject: opt3_subject, opt1: opt1, opt2: opt2, opt3: opt3 },
@@ -1836,7 +1846,111 @@ $(function(){
 </div>
 </form>
 
+<script>
+$(function(){
+    // 스마트스토어 상품정보 연동 선택
+    $("input[name=smartstore_connect_type]").on("change", function(){
+        let type = $(this).val();
+        $(".smartstore_connect").css("display", "none");
+        $("#ss_channel_product_no").val("");
+        $("#naver_smartstore_yn").prop('checked', false);
 
+        if (type == "connect") {
+            $("#smartstore_connect").css("display", "block");
+        } else if (type == "create") {
+            $("#smartstore_create").css("display", "block");
+        } else if (type == "none") {
+            $("#smartstore_none").css("display", "block");
+        }
+    });
+    // 스마트스토어 상품정보 불러오기
+    $("#btn_search_smartstore").on("click", function(){
+        var opt = "left=50,top=50,width=700,height=400,scrollbars=1";
+        var url = "./naver_commerce_api/search_product.php";
+        window.open(url, "win_member", opt);
+    });
+});
+
+/* 스마트스토어 카테고리 선택 */
+let categoriesJson = '<?php echo json_encode($categories, JSON_FORCE_OBJECT); ?>';
+let categories     = JSON.parse(categoriesJson);
+document.addEventListener("DOMContentLoaded", function(){
+    let cateId1 = "";
+    let cateId2 = "";
+    let cateId3 = "";
+    document.querySelector("select[name=category1]").addEventListener("change", function() {
+        let selectId    = this.value;
+        let html        = '<option value="">중분류 선택</option>';
+        let child       = categories[selectId].child;
+
+        for (let id in child) {
+            html += '<option value="' + id + '">' + child[id].name + '</option>';
+        }
+        cateId1 = selectId;
+        document.querySelector("select[name=category2]").innerHTML = html;
+        document.querySelector("#smartstore_category_name").innerHTML = "";
+        document.querySelector("input[name=ss_category_id]").value = "";
+        document.querySelector("select[name=category3]").innerHTML = '<option value="">소분류 선택</option>';
+        document.querySelector("select[name=category4]").innerHTML = '<option value="">세분류 선택</option>';
+    });
+
+    document.querySelector("select[name=category2]").addEventListener("change", function() {
+        let selectId    = this.value;
+        let html        = '<option value="">소분류 선택</option>';
+        let child       = categories[cateId1].child[selectId].child;
+        let last        = categories[cateId1].child[selectId].last;
+        let wholeCategoryName = categories[cateId1].child[selectId].wholeCategoryName;
+
+        if (last) {
+            document.querySelector("#smartstore_category_name").innerHTML = wholeCategoryName;
+            document.querySelector("input[name=ss_category_id]").value = selectId;
+        } else {
+            for (let id in child) {
+                html += '<option value="' + id + '">' + child[id].name + '</option>';
+            }
+            cateId2 = selectId;
+            document.querySelector("#smartstore_category_name").innerHTML = "";
+            document.querySelector("input[name=ss_category_id]").value = "";
+            document.querySelector("select[name=category3]").innerHTML = html;
+            document.querySelector("select[name=category4]").innerHTML = '<option value="">세분류 선택</option>';
+        }
+    });
+
+    document.querySelector("select[name=category3]").addEventListener("change", function() {
+        
+        let selectId    = this.value;
+        let html        = '<option value="">세분류 선택</option>';
+        let child       = categories[cateId1].child[cateId2].child[selectId].child;
+        let last        = categories[cateId1].child[cateId2].child[selectId].last;
+        let wholeCategoryName = categories[cateId1].child[cateId2].child[selectId].wholeCategoryName;
+
+        if (last) {
+            document.querySelector("#smartstore_category_name").innerHTML = wholeCategoryName;
+            document.querySelector("input[name=ss_category_id]").value = selectId;
+        } else {
+            for (let id in child) {
+                html += '<option value="' + id + '">' + child[id].name + '</option>';
+            }
+            cateId3 = selectId;
+            document.querySelector("#smartstore_category_name").innerHTML = "";
+            document.querySelector("input[name=ss_category_id]").value = "";
+            document.querySelector("select[name=category4]").innerHTML = html;
+        }
+    });
+
+    document.querySelector("select[name=category4]").addEventListener("change", function() {
+        
+        let selectId    = this.value;
+        let last        = categories[cateId1].child[cateId2].child[cateId3].child[selectId].last;
+        let wholeCategoryName = categories[cateId1].child[cateId2].child[cateId3].child[selectId].wholeCategoryName;
+
+        if (last) {
+            document.querySelector("#smartstore_category_name").innerHTML = wholeCategoryName;
+            document.querySelector("input[name=ss_category_id]").value = selectId;
+        }
+    });
+});
+</script>
 <script>
 var f = document.fitemform;
 
