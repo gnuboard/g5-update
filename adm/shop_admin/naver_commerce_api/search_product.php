@@ -103,7 +103,7 @@ $(function(){
         opener.document.getElementById("smartstore_category_name").innerHTML    = orgProduct.wholeCategoryName;
         opener.document.getElementById("ss_category_id").value                  = orgProduct.leafCategoryId;
 
-        if (confirm("추가적으로 스마트스토어의 상품정보를 반영하겠습니까?")) {
+        if (confirm("스마트스토어 상품이 연동되었습니다. \n추가적으로 상품정보를 반영하겠습니까? (기존 상품정보가 갱신됩니다)")) {
             /* 기본 상품데이터 */
             opener.document.getElementById("it_name").value                     = orgProduct.name;
             opener.document.getElementById("it_explan").value                   = orgProduct.detailContent;
