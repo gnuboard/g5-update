@@ -2,7 +2,9 @@
 
 /**
  * 커머스API Request Class
+ * 
  * @todo commerceApiAuth > authorizationHeader 값을 가져오기 위해서 더 나은 방법이 있는지 확인
+ * 
  */
 class CommerceApi {
 
@@ -20,10 +22,12 @@ class CommerceApi {
 
     /**
      * CURL Request
+     * - GET방식의 날짜 데이터는 convertTimeFormat으로 변환한 값을 URL에 직접 추가해서 전달받는다
      * 
      * @param string $method    HTTP request method
      * @param string $url       커머스API 요청 URL
      * @param array $data       전송 Data
+     * @return mixed
      */
     public function requestCurl($method, $url, $data = array())
     {   
@@ -44,7 +48,12 @@ class CommerceApi {
         /* CURL option Setting */
         if ($method === "GET") {
             if (isset($data)) {
-                $url .= "?" . htmlspecialchars(http_build_query($data), ENT_QUOTES, 'UTF-8');
+                if (strpos($url, '?') !== false) {
+                    $url .= "&";
+                } else {
+                    $url .= "?";
+                }
+                $url .= htmlspecialchars(http_build_query($data), ENT_QUOTES, 'UTF-8');
             }
         } elseif ($method === "POST" || $method == "PUT") {
             curl_setopt($curlHandle, CURLOPT_POSTFIELDS, $data);
@@ -60,5 +69,15 @@ class CommerceApi {
         curl_close($curlHandle);
 
         return json_decode($response);
+    }
+
+    /**
+     * 날짜형식을 커머스 API 전달형식에 맞게 변환 (ISO 8601)
+     * @param string $date 날짜
+     * @return string
+     */
+    public function convertTimeFormat($date)
+    {
+        return date('Y-m-d\TH:i:s', strtotime($date)) . substr(microtime(), 1, 2) . urlencode(date('O'));
     }
 }
