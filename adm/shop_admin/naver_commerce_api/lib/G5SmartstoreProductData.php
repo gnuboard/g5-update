@@ -674,17 +674,19 @@ class G5SmartstoreProductData
 
     /**
      * Set the value of images
-     * @param string $images    커머스API 이미지 업로드 URL
-     * @param string $type      이미지 타입 (representative : 대표이미지, optional : 추가이미지)
-     * @return  self
+     * @param array     $images     커머스API 이미지 업로드 URL
+     * @return self
      */
-    public function setImages($images, $type)
+    public function setImages($images)
     {
-        if ($type == 'representative') {
-            $this->productData['originProduct']['images']['representativeImage']['url'] = $images;
-        } elseif ($type == 'optional') {
-            $this->productData['originProduct']['images']['optionalImages']['url'][] = $images;
+        foreach($images as $key => $image) {
+            if ($key == 0) {
+                $this->productData['originProduct']['images']['representativeImage']['url'] = $image->url;
+            } else {
+                $this->productData['originProduct']['images']['optionalImages'][]['url'] = $image->url;
+            }
         }
+
         $this->images = $this->productData['originProduct']['images'];
 
         return $this;

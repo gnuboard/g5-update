@@ -87,9 +87,10 @@ class G5SmartstoreProduct {
             // echo "<br>==================================productData responseImage()==================================<br>";
             // print_r($imageUrlList);
             if (isset($imageUrlList->images)) {
-                $productData->setImages($imageUrlList->images[0]->url, 'representative');
+                $productData->setImages($imageUrlList->images);
             }
         }
+
         // 배송정보
         $productData->setDeliveryInfo($formData);
         // 원상품 상세 속성
@@ -131,9 +132,10 @@ class G5SmartstoreProduct {
             // echo "<br>==================================productData responseImage()==================================<br>";
             // print_r($imageUrlList);
             if (isset($imageUrlList->images)) {
-                $productData->setImages($imageUrlList->images[0]->url, 'representative');
+                $productData->setImages($imageUrlList->images);
             }
         }
+
         // 배송정보
         $productData->setDeliveryInfo($formData);
         // 원상품 상세 속성
@@ -149,16 +151,17 @@ class G5SmartstoreProduct {
     }
 
     /**
-     * 이미지 파일 CURL전송 처리 (1건만 등록 가능)
-     * - PHP에서 중복 키를 설정하지 못해 대표 이미지만 업로드 가능. 또한 response도 중복된 Key값으로 리턴됨.
+     * 이미지 파일 CURL전송 처리
+     * - $fileIndex 변수로 키중복 문제 해결
      * @param array $fileData   파일목록
      * @return mixed $response  요청결과
      * @todo PHP >= 5.5.0 제한이 있어 해결해야함. (이전버전 참고용 https://intrepidgeeks.com/tutorial/example-analysis-of-php50-56-compatible-curl-file-upload-function)
      */
     public function uploadProductImage($fileData)
     {
-        $FileList = array();
-        
+        $fileList = array();
+        $fileIndex = 0;
+
         for ($i = 1; $i <= 10; $i++) {
             $tmp_name   = $fileData['it_img' . $i]['tmp_name'];
             $type       = $fileData['it_img' . $i]['type'];
@@ -166,21 +169,12 @@ class G5SmartstoreProduct {
 
             if (isset($tmp_name) && $tmp_name != '') {
                 // PHP >= 5.5.0                
-                $file = new CURLFILE($tmp_name, $type, $filename);
-                $FileList["imageFiles"] = $file;
-                break;
+                $fileList["imageFiles[{$fileIndex}]"] = new CURLFILE($tmp_name, $type, $filename);
+                $fileIndex++;
             }
         }
-        $resultData = $this->commerceApi->requestCurl("POST", self::$urlUploadProductImage, $FileList);
-        /* 이미지 다중 업로드 불가능(중복 키), response 데이터 또한 중복키 값으로 반환됨.
-            response 예시
-            {
-            "images": [
-                {"url": "http://shop1.phinf.naver.net/20220930_128/1664524253387s9sOS_GIF/10364219216524991_361910498.gif"},
-                {"url": "http://shop1.phinf.naver.net/20220930_19/1664524272317dbS6F_GIF/10364240140268719_1069442997.gif"}
-            ]
-            }
-        */
+        $resultData = $this->commerceApi->requestCurl("POST", self::$urlUploadProductImage, $fileList);
+
         return $resultData;
     }
 }
