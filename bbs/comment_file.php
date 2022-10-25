@@ -282,7 +282,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($is_late_delete) {
                 if (G5_MYSQLI_USE && function_exists('mysqli_connect')) {
                     $sql = 'update  ' . $g5['comment_file_table'] . ' set is_delete = 1 where file_name = ? and comment_id IS NULL';
-                    $stmt = $link->prepare($delete_sql);
+                    $stmt = $link->prepare($sql);
                     $stmt->bind_param('s', $file_name);
                     $result = $stmt->execute();
                     if ($stmt->affected_rows > 0) {
@@ -330,7 +330,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $is_valid = true;
                 }
             }
-
+            $is_delete = false;
             if ($is_valid) {
                 $get_save_month = $ym = date('ym', G5_SERVER_TIME);
                 $file_path = COMMENT_FILE_PATH . '/' . $get_save_month . '/' . $file_name;
@@ -391,10 +391,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (isset($row['file_name']) && ($row['file_name'] === $file_name)) {
                 if ($is_late_delete) {
-                    $sql = 'update ' . $g5['comment_file_table'] . ' set is_delete = 1 where comment_id = ' . sql_real_escape_string(
-                            $comment_id
-                        ) . ' and bo_table = "' . sql_real_escape_string($bo_table) . '"' . ' and file_name = "' . sql_real_escape_string($file_name) . '"';
-                    $result = sql_query($delete_sql);
+                    $sql = 'update ' . $g5['comment_file_table'] . ' set is_delete = 1 where comment_id = ' . sql_real_escape_string($comment_id)
+                        . ' and bo_table = "' . sql_real_escape_string($bo_table) . '"' . ' and file_name = "' . sql_real_escape_string($file_name) . '"';
+                    $result = sql_query($sql);
                     $response = array();
                     if ($result) {
                         $response['is_error'] = false;
@@ -404,9 +403,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     exit;
                 }
 
-                $delete_sql = 'delete from ' . $g5['comment_file_table'] . ' where comment_id = ' . sql_real_escape_string(
-                        $comment_id
-                    ) . ' and bo_table = "' . sql_real_escape_string($bo_table) . '"' . ' and file_name = "' . sql_real_escape_string($file_name) . '"';
+                $delete_sql = 'delete from ' . $g5['comment_file_table'] . ' where comment_id = ' . sql_real_escape_string($comment_id)
+                    . ' and bo_table = "' . sql_real_escape_string($bo_table) . '"' . ' and file_name = "' . sql_real_escape_string($file_name) . '"';
                 sql_query($delete_sql);
 
                 $get_save_month = date('ym', strtotime($row['save_time']));
@@ -427,7 +425,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $response = array();
-        if ($is_delete || $is_valid) {
+        if (($is_delete === true) || $is_valid) {
             $response['is_error'] = false;
             $response['msg'] = '삭제되었습니다.';
         } else {
