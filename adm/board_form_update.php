@@ -165,13 +165,6 @@ if (strpbrk($bo_skin.$bo_mobile_skin, "?%*:|\"<>") !== false) {
     alert('스킨 디렉토리명 오류!');
 }
 
-$etcs = array();
-
-for ($i = 1; $i <= 10; $i++) {
-    $etcs['bo_' . $i . '_subj'] = ${'bo_' . $i . '_subj'} = isset($_POST['bo_' . $i . '_subj']) ? $_POST['bo_' . $i . '_subj'] : '';
-    $etcs['bo_' . $i] = ${'bo_' . $i} = isset($_POST['bo_' . $i]) ? $_POST['bo_' . $i] : '';
-}
-
 $sql_common = " gr_id               = '{$gr_id}',
                 bo_subject          = '{$bo_subject}',
                 bo_mobile_subject   = '{$bo_mobile_subject}',
@@ -250,27 +243,21 @@ $sql_common .= " bo_insert_content   = '{$bo_insert_content}',
                 bo_write_max        = '{$bo_write_max}',
                 bo_comment_min      = '{$bo_comment_min}',
                 bo_comment_max      = '{$bo_comment_max}',
-                bo_sort_field       = '{$bo_sort_field}',
-                bo_1_subj           = '{$bo_1_subj}',
-                bo_2_subj           = '{$bo_2_subj}',
-                bo_3_subj           = '{$bo_3_subj}',
-                bo_4_subj           = '{$bo_4_subj}',
-                bo_5_subj           = '{$bo_5_subj}',
-                bo_6_subj           = '{$bo_6_subj}',
-                bo_7_subj           = '{$bo_7_subj}',
-                bo_8_subj           = '{$bo_8_subj}',
-                bo_9_subj           = '{$bo_9_subj}',
-                bo_10_subj          = '{$bo_10_subj}',
-                bo_1                = '{$bo_1}',
-                bo_2                = '{$bo_2}',
-                bo_3                = '{$bo_3}',
-                bo_4                = '{$bo_4}',
-                bo_5                = '{$bo_5}',
-                bo_6                = '{$bo_6}',
-                bo_7                = '{$bo_7}',
-                bo_8                = '{$bo_8}',
-                bo_9                = '{$bo_9}',
-                bo_10               = '{$bo_10}' ";
+                bo_sort_field       = '{$bo_sort_field}'";
+
+// 게시판 여분필드 설정
+$etcs = array();
+for ($i = 1; $i <= 10; $i++) {
+    $subj_name  = "bo_{$i}_subj";
+    $val_name   = "bo_{$i}";
+
+    $etcs[$subj_name]   = isset($_POST[$subj_name]) ? $_POST[$subj_name] : '';
+    $etcs[$val_name]    = isset($_POST[$val_name]) ? $_POST[$val_name] : '';
+
+    // SQL문 추가
+    $sql_common .= ", {$subj_name} = '{$etcs[$subj_name]}'
+                    , {$val_name} = '{$etcs[$val_name]}'";
+}
 
 if ($w == '') {
     $row = sql_fetch(" select count(*) as cnt from {$g5['board_table']} where bo_table = '{$bo_table}' ");

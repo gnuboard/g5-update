@@ -37,10 +37,11 @@ if ($is_admin != 'super') {     // 최고관리자가 아니면 체크
 
 $it_img1 = $it_img2 = $it_img3 = $it_img4 = $it_img5 = $it_img6 = $it_img7 = $it_img8 = $it_img9 = $it_img10 = '';
 // 파일정보
-if($w == "u") {
-    $sql = " select it_img1, it_img2, it_img3, it_img4, it_img5, it_img6, it_img7, it_img8, it_img9, it_img10
-                from {$g5['g5_shop_item_table']}
-                where it_id = '$it_id' ";
+if ($w == "u") {
+    $sql = "SELECT
+                it_img1, it_img2, it_img3, it_img4, it_img5, it_img6, it_img7, it_img8, it_img9, it_img10
+            FROM {$g5['g5_shop_item_table']}
+            WHERE it_id = '{$it_id}'";
     $file = sql_fetch($sql);
 
     $it_img1    = $file['it_img1'];
@@ -55,10 +56,11 @@ if($w == "u") {
     $it_img10   = $file['it_img10'];
 }
 
-$it_img_dir = G5_DATA_PATH.'/item';
+$it_img_dir = G5_DATA_PATH . '/item';
 
-for($i=0;$i<=10;$i++){
-    ${'it_img'.$i.'_del'} = ! empty($_POST['it_img'.$i.'_del']) ? 1 : 0;
+for ($i = 0; $i <= 10; $i++) {
+    $del_name = 'it_img' . $i . '_del';
+    $$del_name = !empty($_POST[$del_name]) ? 1 : 0;
 }
 
 // 파일삭제
