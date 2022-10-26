@@ -287,17 +287,7 @@ class G5Update
             $g5UpdateLog->makeDirectory();
 
             // .htaccess 파일 체크 및 생성
-            $content = "Deny from all";
-            $dir_htacc = self::$dir_update . "/.htaccess";
-            
-            if (!file_exists($dir_htacc)) {
-                $this->createHtaccess($dir_htacc, $content);
-            } else {
-                $fileContent = file_get_contents($dir_htacc);
-                if ($content != (string)$fileContent) {
-                    $this->createHtaccess($dir_htacc, $content);
-                }
-            }
+            $this->createHtaccessFile();
 
             // 기존 버전관련 파일 제거
             if ($this->os == "WINNT") {
@@ -315,19 +305,41 @@ class G5Update
     /**
      * .htaccess 파일 생성
      *
-     * @param string $dir       파일경로
-     * @param string $content   파일내용
      * @return void
+     * @throws Exception
      */
-    function createHtaccess($dir, $content)
+    function createHtaccessFile()
     {
-        $fp = fopen($dir, 'w+');
-        if ($fp) {
-            fwrite($fp, $content);
-            fclose($fp);
-        } else {
-            throw new Exception(".htaccess 파일생성에 실패했습니다.");
+        $content = "Deny from all";
+        $dir_htacc = self::$dir_update . "/.htaccess";
+
+        if (!$this->checkHtaccessFile($dir_htacc, $content)) {
+            $fp = fopen($dir_htacc, 'w+');
+            if ($fp) {
+                fwrite($fp, $content);
+                fclose($fp);
+            } else {
+                throw new Exception(".htaccess 파일생성에 실패했습니다.");
+            }    
         }
+    }
+
+    /**
+     * .htaccess 파일 생성여부 체크
+     * 
+     * @param $dir      파일경로
+     * @param $content  파일내용
+     * @return boolean
+     */
+    function checkHtaccessFile($dir, $content = '')
+    {
+        if (!file_exists($dir)) {
+            return false;
+        }
+        if ($content == '' || ($content != (string)file_get_contents($dir))) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -340,7 +352,7 @@ class G5Update
     {
         try {
             $dfs = disk_free_space("/");
-            if ($dfs < self::INSTALLED_DISK_CAPITAL) {
+            if ((int)$dfs < self::INSTALLED_DISK_CAPITAL) {
                 throw new Exception("설치가능 공간이 부족합니다. (" . $this->getFormatFileSize(self::INSTALLED_DISK_CAPITAL, 0) . " 이상 필요)");
             }
         } catch (Exception $e) {
@@ -408,7 +420,7 @@ class G5Update
      */
     private function getFormatFileSize($bytes, $decimals = 2)
     {
-        $size = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
+        $size   = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
         $factor = floor((strlen((string)$bytes) - 1) / 3);
 
         return sprintf("%.{$decimals}f", $bytes / pow(1024, $factor)) . $size[$factor];
