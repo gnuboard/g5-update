@@ -96,9 +96,9 @@ abstract class Migration
     }
 
     /**
-     * 사용자 임의설정으로 Query 변경
+     * 사용자 임의설정으로 SQL문 변경
      *
-     * @param  string $string
+     * @param  string $string   SQL문
      * @return string
      */
     public function convertCustomSetting($string)

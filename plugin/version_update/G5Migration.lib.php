@@ -173,9 +173,7 @@ class G5Migration
                 if ($this->getMigrationMethod() == "up") {
                     $this->insertMigrationLog($script, $result);
                 } else {
-                    /**
-                     * downgrade 적용하지 않음.
-                     */
+                    // 데이터 손실 우려로 인해 downgrade는 적용하지 않음.
                     // $this->deleteMigrationLog($script);
                 }
             }
@@ -199,6 +197,7 @@ class G5Migration
     }
     /**
      * set Migration Method
+     * - 현재 버전, 업데이트 버전에 따라 up, down이 나누어진다.
      *
      * @return void
      */

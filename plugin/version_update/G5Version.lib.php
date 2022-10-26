@@ -243,7 +243,9 @@ class G5Version
     /**
      * 그누보드 버전비교 포맷
      * - 5.4.7 이전버전의 경우, 버전 앞에 'v'가 빠져있는 것을 처리함
-     * @param string
+     * @param string $version1  첫번째 버전
+     * @param string $version2  두번째 버전
+     * @param string $operator  비교연산자
      * @return string
      */
     public static function version_compare_format($version1, $version2, $operator = null)

@@ -11,7 +11,7 @@ class G5GithubApi
      * @var string Github API를 제한없이 사용하기 위한 Token(PAT)
      * @see https://docs.github.com/en/rest/guides/getting-started-with-the-rest-api
      */
-    const API_TOKEN = "";
+    const API_TOKEN = "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";
 
     /**
      * @var string 그누보드5 Github API URL

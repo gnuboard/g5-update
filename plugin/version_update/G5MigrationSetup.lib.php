@@ -58,9 +58,9 @@ class G5MigrationSetup extends G5Migration
     }
 
     /**
-     * .sql파일의 Query문을 사용자 설정으로 변환
+     * .sql파일의 SQL문을 사용자 설정으로 변환
      *
-     * @param  array<string> $scriptFlieContent
+     * @param  array<string> $scriptFlieContent     .sql파일 내용
      * @return string
      */
     public function setQueryFromScript($scriptFlieContent)
