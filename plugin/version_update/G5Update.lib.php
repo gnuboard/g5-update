@@ -375,9 +375,9 @@ class G5Update
      */
     public function getUseStorageSize()
     {
-        $useSpace = disk_total_space("/") - disk_free_space("/");
+        $useSpace = (int)disk_total_space("/") - (int)disk_free_space("/");
 
-        return $this->getFormatFileSize((int)$useSpace, 2);
+        return $this->getFormatFileSize($useSpace, 2);
     }
     /**
      * 전체 디스크의 사용률 조회
@@ -389,9 +389,13 @@ class G5Update
         $dts = disk_total_space("/");
         $dff = disk_free_space("/");
 
-        $useSpace = $dts - $dff;
+        if ($dts && $dff) {
+            $useSpace = (int)$dts - (int)$dff;
 
-        return round(($useSpace / $dts * 100), 2);
+            return round(($useSpace / $dts * 100), 2);
+        } else {
+            return 0;
+        }
     }
 
     /**
