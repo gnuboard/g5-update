@@ -21,7 +21,7 @@ $wr_name  = isset($_POST['wr_name']) ? clean_xss_tags(trim($_POST['wr_name'])) :
 $wr_secret = isset($_POST['wr_secret']) ? clean_xss_tags($_POST['wr_secret']) : '';
 $wr_email = $wr_subject = '';
 $reply_array = array();
-$wr_content = isset($_POST['wr_content']) ? change_img_tag_comment_file(stripcslashes($wr_content)) : '';
+//$wr_content = isset($_POST['wr_content']) ? change_img_tag_comment_file(stripcslashes($wr_content)) : '';
 $wr_1 = isset($_POST['wr_1']) ? $_POST['wr_1'] : '';
 $wr_2 = isset($_POST['wr_2']) ? $_POST['wr_2'] : '';
 $wr_3 = isset($_POST['wr_3']) ? $_POST['wr_3'] : '';
@@ -196,14 +196,6 @@ if ($w == 'c') // 댓글 입력
 
     $comment_id = sql_insert_id();
 
-    //첨부파일 있으면 기록 댓글 번호, 게시판 기록
-    $upload_file_list = explode(',', $upload_file_list);
-    if (count($upload_file_list) > 0) {
-        foreach ($upload_file_list as $file_name) {
-            update_fileinfo($bo_table, $comment_id, $file_name);
-        }
-    }
-
     // 원글에 댓글수 증가 & 마지막 시간 반영
     sql_query(" update $write_table set wr_comment = wr_comment + 1, wr_last = '".G5_TIME_YMDHIS."' where wr_id = '$wr_id' ");
 
@@ -353,14 +345,6 @@ else if ($w == 'cu') // 댓글 수정
               where wr_id = '$comment_id' ";
 
     sql_query($sql);
-
-    //첨부파일 있으면 기록 댓글 번호, 게시판 기록
-    $upload_file_list = explode(',', $upload_file_list);
-    if (count($upload_file_list) > 0) {
-        foreach ($upload_file_list as $file_name) {
-            update_fileinfo($bo_table, $comment_id, $file_name);
-        }
-    }
 }
 
 // 사용자 코드 실행
@@ -375,53 +359,3 @@ run_event('comment_update_after', $board, $wr_id, $w, $qstr, $redirect_url, $com
 
 goto_url($redirect_url);
 
-/**
- * @param $bo_table
- * @param $comment
- * @param $comment_id
- * @param $file_name
- * @return void
- */
-function update_fileinfo($bo_table, $comment_id, $file_name)
-{
-    if (function_exists('mysqli_connect') && G5_MYSQLI_USE) {
-        $write_file_info_sql = 'UPDATE ' . G5_TABLE_PREFIX . 'comment_file SET comment_id = ?, bo_table = ? WHERE comment_id IS null AND file_name = ? ';
-        /**
-         * @var $stmt mysqli_stmt
-         */
-        $stmt = $GLOBALS['connect_db']->prepare($write_file_info_sql);
-        $stmt->bind_param('iss', $comment_id, $bo_table, $file_name);
-        $stmt->execute();
-    } else {
-        $write_file_info_sql = "UPDATE " . G5_TABLE_PREFIX . "comment_file SET 
-        comment_id = " . sql_real_escape_string($comment_id) . ", 
-        bo_table = '" . sql_real_escape_string($bo_table) . "'" .
-        " WHERE comment_id is null AND file_name = '" . sql_real_escape_string($file_name) . "'";
-        sql_query($write_file_info_sql);
-    }
-}
-
-/**
- * 이미지 태그를 첨부파일 형식으로 변경
- * <img src='url'> -> [url]
- * @param string $content
- * @return array|string|string[]|null
- */
-function change_img_tag_comment_file($content)
-{
-    return preg_replace_callback(
-        '/<img[^>]* src=\"([^\"]*)\"[^>]*>/iS',
-        'generator_comment_save_tag',
-        $content
-    );
-}
-
-function generator_comment_save_tag($content)
-{
-    if (isset($content[1]) && !empty($content[1])) {
-        $url = clean_xss_attributes($content[1]);
-        if (strpos($url, G5_DATA_DIR . '/' . 'comment')) {
-            return "[$url]";
-        }
-    }
-}
