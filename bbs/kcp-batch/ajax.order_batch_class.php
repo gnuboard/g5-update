@@ -160,8 +160,8 @@ if ( $res_cd == "0000" )
         // RES JSON DATA Parsing
         $json_res = json_decode($res_data, true);
         
-        $json_res["res_cd" ] = "9999";//$json_res["res_cd" ];
-        $json_res["res_msg"] = "DB 입력오류로 인한 결제취소처리";//$json_res["res_msg"];
+        // $json_res["res_cd" ] = "9999";//$json_res["res_cd" ];
+        $json_res["res_msg"] = $json_res["res_msg"] . "(DB 입력오류로 인한 결제취소처리)";//$json_res["res_msg"];
     }
 }
 

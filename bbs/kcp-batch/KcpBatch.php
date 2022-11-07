@@ -1,22 +1,43 @@
 <?php
 class KcpBatch
 {
-    public $siteCd = null;
+    /**
+     * @var string KCP 사이트 코드
+     */
+    public $siteCd = "";
     
+    /**
+     * @var string 서비스인증서/개인키 파일 경로
+     */
     public $pathCert = "";
     
+    /**
+     * @var string 서비스인증서 파일이름
+     */
     public $filenameServiceCertification    = "splCert.pem";
+    /**
+     * @var string 개인키 파일이름
+     */
     public $filenamePrivateKey              = "splPrikeyPKCS8.pem";
 
+    /**
+     * @var string 배치 키 발급 API Reqeust URL
+     */
     public $urlGetBatchKey = "https://stg-spl.kcp.co.kr/gw/enc/v1/payment"; // 개발서버
     //public $getBatchKeyURL = "https://spl.kcp.co.kr/gw/enc/v1/payment"; // 운영서버
 
+    /**
+     * @var string 배치 키 결제요청 API Reqeust URL
+     */
     public $urlBatchPayment = "https://stg-spl.kcp.co.kr/gw/hub/v1/payment"; // 개발서버
     //public $urlBatchPayment = "https://spl.kcp.co.kr/gw/hub/v1/payment"; // 운영서버
 
+    /**
+     * @var string 결제취소 요청 API Reqeust URL
+     */
     public $urlBatchCancel = "https://stg-spl.kcp.co.kr/gw/mod/v1/cancel"; // 개발서버
     // public $urlBatchCancel = "https://spl.kcp.co.kr/gw/mod/v1/cancel"; // 운영서버
-    
+
     public function __construct()
     {
         global $site_cd, $path_cert;
@@ -26,7 +47,7 @@ class KcpBatch
     }
 
     /**
-     * 직렬화 서비스 인증서 조회
+     * 서비스 인증서 조회 (직렬화)
      * @param string $path  인증서 경로
      * @return string
      */
@@ -37,20 +58,6 @@ class KcpBatch
         }
 
         return $this->serializeCertification($path . $this->filenameServiceCertification);
-    }
-
-    /**
-     * 직렬화 개인키 조회
-     * @param string $path  개인키 경로
-     * @return string
-     */
-    public function getPrivateKey($path = "")
-    {
-        if ($path == "") {
-            $path = $this->getPathCert();
-        }
-
-        return $this->serializeCertification($path . $this->filenamePrivateKey);
     }
 
     /**
@@ -74,9 +81,9 @@ class KcpBatch
     {
         // 결제 취소 (cancel) = site_cd^KCP거래번호^취소유형
         $cancel_target_data = $this->getSiteCd() . "^" . $tno . "^" . "STSC";
-        
+
         // 개인키 경로 ("splPrikeyPKCS8.pem" 은 테스트용 개인키) / privatekey 파일 read
-        $key_data = file_get_contents($this->getPathCert . $this->filenamePrivateKey);
+        $key_data = file_get_contents($this->getPathCert() . $this->filenamePrivateKey);
         
         // privatekey 추출, 'changeit' 은 테스트용 개인키비밀번호
         $pri_key = openssl_pkey_get_private($key_data, 'changeit');
