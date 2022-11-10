@@ -1,7 +1,8 @@
 <?php
-include_once('./_common.php');
+include_once './_common.php';
 
-include_once(G5_PATH . '/head.php');
+include_once G5_PATH . '/head.php';
+include_once G5_PATH . "/bbs/kcp-batch/KcpBatch.php";
 
 add_stylesheet('<link rel="stylesheet" href="'.$member_skin_url.'/style.css">', 0);
 
@@ -10,6 +11,8 @@ $ordr_idxx      = date('YmdHis') . rand(0, 6);
 <form name="form_batch_key" id="form_batch_key" method="post" enctype="multipart/form-data">
     <input type="hidden" name="ordr_idxx" class="w200" value="<?php echo $ordr_idxx ?>" maxlength="40" />
 
+    <input type="hidden" name="site_cd"         value="<?php echo site_cd ?>" />
+    <input type="hidden" name="kcpgroup_id"     value="<?php echo kcpgroup_id ?>" />
     <!-- 가맹점 정보 설정-->
     <input type="hidden" name="site_name"      value="TEST SITE" />
     <!-- 상품제공기간 설정 -->
