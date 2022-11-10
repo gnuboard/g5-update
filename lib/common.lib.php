@@ -1701,7 +1701,7 @@ function sql_free_result($result)
     if(!is_resource($result)) return;
 
     if(function_exists('mysqli_free_result') && G5_MYSQLI_USE)
-        return mysqli_free_result($result);
+        mysqli_free_result($result);
     else
         return mysql_free_result($result);
 }
@@ -1947,7 +1947,7 @@ function time_select($time, $name="")
     preg_match("/([0-9]{2}):([0-9]{2}):([0-9]{2})/", $time, $m);
 
     // 시
-    $s .= "<select name='{$name}_h'>";
+    $s = "<select name='{$name}_h'>";
     for ($i=0; $i<=23; $i++) {
         $s .= "<option value='$i'";
         if ($i == $m['0']) {
