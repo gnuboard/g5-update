@@ -2,8 +2,6 @@
 header("Content-type: text/html; charset=utf-8");
 
 include_once './_common.php';
-
-include_once G5_PATH . "/bbs/kcp-batch/config.php";
 include_once G5_PATH . "/bbs/kcp-batch/KcpBatch.php";
 
 /* ============================================================================== */
@@ -15,7 +13,7 @@ $enc_info           = $_POST["enc_info"]; // 암호화 인증데이터
 // 인증서 정보(직렬화)
 $kcpBatch           = new KcpBatch();
 $kcp_cert_info      = $kcpBatch->getServiceCertification();
-
+$site_cd            = $kcpBatch->getSiteCd();
 $data = array(
     "tran_cd"        => $tran_cd,
     "site_cd"        => $site_cd,

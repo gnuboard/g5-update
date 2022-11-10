@@ -2,8 +2,6 @@
 header("Content-type: text/html; charset=utf-8");
 
 include_once './_common.php';
-
-include_once G5_PATH . "/bbs/kcp-batch/config.php";
 include_once G5_PATH . "/bbs/kcp-batch/KcpBatch.php";
 
 /* ============================================================================== */
@@ -12,10 +10,10 @@ include_once G5_PATH . "/bbs/kcp-batch/KcpBatch.php";
 // 인증서 정보(직렬화)
 $kcpBatch           = new KcpBatch();
 $kcp_cert_info      = $kcpBatch->getServiceCertification();
-
-$cust_ip            = "";
+$site_cd            = $kcpBatch->getSiteCd();
+$cust_ip            = '';
 $currency           = $_POST[ "currency" ];
-$quota              = "";
+$quota              = '';
 
 $ordr_idxx          = $_POST[ "ordr_idxx" ];
 $good_name          = $_POST[ "good_name" ];
