@@ -143,7 +143,7 @@ function m_Completepayment( frm_mpi, closeEvent )
         let queryString = new URLSearchParams(data).toString();
 
         $.ajax({
-            url : "kcp-batch/ajax.get_batch_key_class.php",
+            url : "kcp-batch/ajax.get_batch_key.php",
             type: "POST",
             data: queryString,
             success: function(data) {
@@ -209,7 +209,7 @@ window.onload = function() {
         let queryString = new URLSearchParams(data).toString();
 
         $.ajax({
-            url : "kcp-batch/ajax.order_batch_class.php",
+            url : "kcp-batch/ajax.order_batch.php",
             type: "POST",
             data: queryString,
             success: function(data) {

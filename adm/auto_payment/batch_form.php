@@ -323,7 +323,7 @@ function m_Completepayment( frm_mpi, closeEvent )
         let queryString = new URLSearchParams(data).toString();
 
         $.ajax({
-            url : "./ajax.get_batch_key_class.php",
+            url : "./ajax.get_batch_key.php",
             type: "POST",
             data: queryString,
             success: function(data) {
