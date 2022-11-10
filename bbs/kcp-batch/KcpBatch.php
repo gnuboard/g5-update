@@ -1,49 +1,110 @@
 <?php
+
+include_once(dirname(__FILE__) . '/config.php' );
+
 class KcpBatch
 {
     /**
      * @var string KCP 사이트 코드
      */
-    public $siteCd = "";
-    
+    private $siteCd = '';
+
     /**
      * @var string 서비스인증서/개인키 파일 경로
      */
-    public $pathCert = "";
-    
+    private $pathCert = '';
+
     /**
      * @var string 서비스인증서 파일이름
      */
-    public $filenameServiceCertification    = "splCert.pem";
+    public $filenameServiceCertification = "splCert.pem";
+
     /**
      * @var string 개인키 파일이름
      */
-    public $filenamePrivateKey              = "splPrikeyPKCS8.pem";
+    public $filenamePrivateKey           = "splPrikeyPKCS8.pem";
 
     /**
      * @var string 배치 키 발급 API Reqeust URL
      */
-    public $urlGetBatchKey = "https://stg-spl.kcp.co.kr/gw/enc/v1/payment"; // 개발서버
-    //public $getBatchKeyURL = "https://spl.kcp.co.kr/gw/enc/v1/payment"; // 운영서버
+    public $urlGetBatchKey = 'https://spl.kcp.co.kr/gw/enc/v1/payment'; // 운영서버
 
     /**
-     * @var string 배치 키 결제요청 API Reqeust URL
+     * @var string 배치 키를 이용한 결제요청 API Reqeust URL
      */
-    public $urlBatchPayment = "https://stg-spl.kcp.co.kr/gw/hub/v1/payment"; // 개발서버
-    //public $urlBatchPayment = "https://spl.kcp.co.kr/gw/hub/v1/payment"; // 운영서버
+    public $urlBatchPayment = 'https://spl.kcp.co.kr/gw/hub/v1/payment'; //운영서버
 
     /**
      * @var string 결제취소 요청 API Reqeust URL
      */
-    public $urlBatchCancel = "https://stg-spl.kcp.co.kr/gw/mod/v1/cancel"; // 개발서버
-    // public $urlBatchCancel = "https://spl.kcp.co.kr/gw/mod/v1/cancel"; // 운영서버
+    public $urlBatchCancel = 'https://spl.kcp.co.kr/gw/mod/v1/cancel'; // 운영서버
+
+    /**
+     * @var string
+     */
+    private $kcpGroupId;
 
     public function __construct()
     {
-        global $site_cd, $path_cert;
+        $this->setSiteCd(site_cd);
+        $this->setPathCert(path_cert);
+        $this->kcpGroupId = kcpgroup_id;
 
-        $this->setSiteCd($site_cd);
-        $this->setPathCert($path_cert);
+        if(G5_DEBUG){ // 개발 서버설정.
+            $this->urlGetBatchKey = 'https://stg-spl.kcp.co.kr/gw/enc/v1/payment';
+            $this->urlBatchPayment = 'https://stg-spl.kcp.co.kr/gw/hub/v1/payment';
+            $this->urlBatchCancel = 'https://stg-spl.kcp.co.kr/gw/mod/v1/cancel';
+        }
+    }
+
+    /**
+     * Get the value of pathCert
+     */
+    public function getPathCert()
+    {
+        return $this->pathCert;
+    }
+
+    /**
+     * Set the value of pathCert
+     *
+     * @return  self
+     */
+    public function setPathCert($pathCert)
+    {
+        $this->pathCert = $pathCert;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of siteCd
+     */
+    public function getSiteCd()
+    {
+        return $this->siteCd;
+    }
+
+    /**
+     * Set the value of siteCd
+     *
+     * @return  self
+     */
+    public function setSiteCd($siteCd)
+    {
+        $this->siteCd = $siteCd;
+
+        return $this;
+    }
+
+    /**
+     * Get KCP group ID
+     *
+     * @return string
+     */
+    public function getKcpGroupId()
+    {
+        return $this->kcpGroupId;
     }
 
     /**
@@ -53,21 +114,21 @@ class KcpBatch
      */
     public function getServiceCertification($path = "")
     {
-        if ($path == "") {
+        if ($path === "") {
             $path = $this->getPathCert();
         }
 
-        return $this->serializeCertification($path . $this->filenameServiceCertification);
+        return $this->serializeCertification($path . '/' . $this->filenameServiceCertification);
     }
 
     /**
      * 인증서 정보 직렬화
-     * @param $path string 인증서 경로
+     * @param  string $path 인증서 경로
      * @return string
      */
     public function serializeCertification($path)
     {
-        return (string)str_replace("\n", "", (string)file_get_contents($path));
+        return (string)str_replace("\n", '', (string)file_get_contents($path));
     }
 
     /**
@@ -83,8 +144,8 @@ class KcpBatch
         $cancel_target_data = $this->getSiteCd() . "^" . $tno . "^" . "STSC";
 
         // 개인키 경로 ("splPrikeyPKCS8.pem" 은 테스트용 개인키) / privatekey 파일 read
-        $key_data = file_get_contents($this->getPathCert() . $this->filenamePrivateKey);
-        
+        $key_data = file_get_contents($this->getPathCert() . '/' . $this->filenamePrivateKey);
+
         // privatekey 추출, 'changeit' 은 테스트용 개인키비밀번호
         $pri_key = openssl_pkey_get_private($key_data, 'changeit');
 
@@ -110,20 +171,20 @@ class KcpBatch
             "mod_type"       => "STSC",
             "mod_desc"       => "가맹점 DB 처리 실패(자동취소)"
         );
-        
+
         return $this->requestApi($this->urlBatchCancel, $data);
     }
 
     /**
      * API 요청
      * @param array $data   배치 키 요청데이터
-     * @return string|bool
+     * @return string | array
      */
     public function requestApi($url, $data)
     {
         $reqData       = json_encode($data);
         $headerData    = array("Content-Type: application/json", "charset=utf-8");
-        
+
         // API REQ
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -132,52 +193,18 @@ class KcpBatch
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
         curl_setopt($ch, CURLOPT_POSTFIELDS, $reqData);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        
+
         // API RES
         $resData  = curl_exec($ch);
-
+        $curlError = curl_error($ch);
+        $curlInfo = curl_getinfo($ch);
         curl_close($ch);
+        if (!empty($curlError)) {
+            return array(
+                'msg'=> 'pg 사와의 통신에 문제가 발생했습니다.',
+                'http_code' => $curlInfo['http_code'] ); //TODO PHP 5.x 버전 테스트
+        }
 
         return $resData;
-    }
-
-    /**
-     * Get the value of pathCert
-     */ 
-    public function getPathCert()
-    {
-        return $this->pathCert;
-    }
-
-    /**
-     * Set the value of pathCert
-     *
-     * @return  self
-     */ 
-    public function setPathCert($pathCert)
-    {
-        $this->pathCert = $pathCert;
-
-        return $this;
-    }
-
-    /**
-     * Get the value of siteCd
-     */ 
-    public function getSiteCd()
-    {
-        return $this->siteCd;
-    }
-
-    /**
-     * Set the value of siteCd
-     *
-     * @return  self
-     */ 
-    public function setSiteCd($siteCd)
-    {
-        $this->siteCd = $siteCd;
-
-        return $this;
     }
 }
