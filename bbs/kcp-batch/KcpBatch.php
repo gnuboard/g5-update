@@ -68,7 +68,7 @@ class KcpBatch
     /**
      * Set the value of pathCert
      *
-     * @return  self
+     * @return self
      */
     public function setPathCert($pathCert)
     {
@@ -110,11 +110,11 @@ class KcpBatch
     /**
      * 서비스 인증서 조회 (직렬화)
      * @param string $path  인증서 경로
-     * @return string
+     * @return string | false  실패시 false
      */
-    public function getServiceCertification($path = "")
+    public function getServiceCertification($path = '')
     {
-        if ($path === "") {
+        if ($path === '') {
             $path = $this->getPathCert();
         }
 
@@ -124,11 +124,15 @@ class KcpBatch
     /**
      * 인증서 정보 직렬화
      * @param  string $path 인증서 경로
-     * @return string
+     * @return string | false 실패시 false
      */
-    public function serializeCertification($path)
+    private function serializeCertification($path)
     {
-        return (string)str_replace("\n", '', (string)file_get_contents($path));
+        $certFile = file_get_contents($path);
+        if($certFile === false){
+           return false ;
+        }
+        return (string)str_replace("\n", '', $certFile);
     }
 
     /**
@@ -136,21 +140,26 @@ class KcpBatch
      * - site_cd(사이트코드) + "^" + tno(거래번호) + "^" + mod_type(취소유형)
      * - NHN KCP로부터 발급받은 개인키(PRIVATE KEY)로 SHA256withRSA 알고리즘을 사용한 문자열 인코딩 값
      * @param string $tno KCP 거래번호
-     * @return string
+     * @return string | false
      */
     public function createKcpSignData($tno)
     {
         // 결제 취소 (cancel) = site_cd^KCP거래번호^취소유형
-        $cancel_target_data = $this->getSiteCd() . "^" . $tno . "^" . "STSC";
+        $cancel_target_data = $this->getSiteCd() . '^' . $tno . '^' . 'STSC';
 
-        // 개인키 경로 ("splPrikeyPKCS8.pem" 은 테스트용 개인키) / privatekey 파일 read
+        // 개인키 읽기 ("splPrikeyPKCS8.pem" 은 인증서 개인키)
         $key_data = file_get_contents($this->getPathCert() . '/' . $this->filenamePrivateKey);
 
-        // privatekey 추출, 'changeit' 은 테스트용 개인키비밀번호
-        $pri_key = openssl_pkey_get_private($key_data, 'changeit');
+        // 개인키 추출, PRIVATE_PW 상수는 개인키 비밀번호. config 에서 로딩.
+        $pri_key = openssl_pkey_get_private($key_data, PRIVATE_PW);
 
         // 결제 취소 signature 생성
-        openssl_sign($cancel_target_data, $signature, $pri_key, 'sha256WithRSAEncryption');
+        $result = openssl_sign($cancel_target_data, $signature, $pri_key, 'sha256WithRSAEncryption');
+
+        //개인키또는 인증서가 맞지 않음
+        if($result === false){
+            return false;
+        }
 
         // kcp_sign_data
         return base64_encode($signature);
@@ -159,17 +168,17 @@ class KcpBatch
     /**
      * 자동결제 거래취소
      * @param string $tno KCP 거래번호
-     * @return string|bool
+     * @return array|string
      */
     public function cancelBatchPayment($tno)
     {
         $data = array(
-            "site_cd"        => $this->getSiteCd(),
-            "kcp_cert_info"  => $this->getServiceCertification(),
-            "kcp_sign_data"  => $this->createKcpSignData($tno),
-            "tno"            => $tno,
-            "mod_type"       => "STSC",
-            "mod_desc"       => "가맹점 DB 처리 실패(자동취소)"
+            'site_cd'       => $this->getSiteCd(),
+            'kcp_cert_info' => $this->getServiceCertification(),
+            'kcp_sign_data' => $this->createKcpSignData($tno),
+            'tno'           => $tno,
+            'mod_type'      => 'STSC',
+            'mod_desc'      => '가맹점 DB 처리 실패(자동취소)'
         );
 
         return $this->requestApi($this->urlBatchCancel, $data);
