@@ -2,6 +2,7 @@
 /**
  * @link https://www.php.net/manual/en/class.mysqli.php
  * @link https://github.com/ThingEngineer/PHP-MySQLi-Database-Class/blob/master/MysqliDb.php
+ * @link https://phpdelusions.net/mysqli
  */
 class G5Mysqli
 {
@@ -39,11 +40,25 @@ class G5Mysqli
     /**
      * MySQL Prepared Statements
      * @param string $sql       Statement to execute;
-     * @param array $params     array of type and values of the parameters (if any)
-     * @param string $close     true to close $stmt (in inserts) false to return an array with the values;
+     * @param array $params     values of the parameters (if any)
+     * @param string $types     a string with parameter types in case we'd decide to set them explicitly (almost never needed)
+     * @return array|null
+     */
+    public function getOne($sql, $params = array(), $types = '')
+    {
+        $result = $this->execSQL($sql, $params, false, $types);
+        return isset($result[0]) ? $result[0] : null;
+    }
+
+    /**
+     * MySQL Prepared Statements
+     * @param string $sql       Statement to execute;
+     * @param array $params     values of the parameters (if any)
+     * @param boolean $close    true to close $stmt (in inserts) false to return an array with the values;   
+     * @param string $types     a string with parameter types in case we'd decide to set them explicitly (almost never needed)
      * @return int|array
      */
-    public function execSQL($sql, $params, $close = false)
+    public function execSQL($sql, $params = array(), $close = false, $types = '')
     {
         try {
             $mysqli = $this->getInstance();
@@ -52,19 +67,24 @@ class G5Mysqli
             if ($mysqli->error) {
                 throw new Exception($mysqli->error);
             }
-            if (!call_user_func_array(array($stmt, 'bind_param'), $this->refValues($params))) {
-                throw new Exception("Error.");
+            if (count($params) > 0) {
+                $types = $types ? $types : str_repeat('s', count($params));
+                array_unshift($params, $types);
+                if (!call_user_func_array(array($stmt, 'bind_param'), $this->refValues($params))) {
+                    throw new Exception('parameter Error.');
+                }
             }
             if (!$stmt->execute()) {
                 throw new Exception($stmt->error);
             }
-    
+
             if ($close) {
                 $stmt->store_result();
                 return $mysqli->affected_rows;
             } else {
                 return $this->execSqlResult($stmt);    
             }
+
         } catch (Exception $e) {
             echo '[Exception] ' . $e->getMessage();
             exit;
@@ -80,10 +100,7 @@ class G5Mysqli
     {
         $result = array();
         if (version_compare(PHP_VERSION, '5.3.0', '>=')) {
-            $getResult = $stmt->get_result();
-            while ($row = $getResult->fetch_assoc()) {
-                array_push($result, $row);
-            }
+            $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         } else {
             
             $meta = $stmt->result_metadata();
@@ -101,11 +118,34 @@ class G5Mysqli
                 array_push($result, $x);
             }
         }
-
+        $stmt->free_result();
         $stmt->close();
-        // $mysqli->close();
 
         return $result;
+    }
+
+    /**
+     * Adding a field name in the ORDER BY clause based on the user's choice
+     * @param string $value     the checked value. It is passed by reference so it won't raise an error in case a variable is not set. It would allow us to assign a default value if no value is provided.
+     * @param array $allowed    the list of allowed values. the first one would serve as a default value
+     * @param string $message   the error message to throw so a programmer would know what caused the error.
+     * @return string
+     * @throws InvalidArgumentException
+     */
+    function whiteList(&$value, $allowed, $message) {
+        try {
+            if ($value === null || $value === '') {
+                return $allowed[0];
+            }
+            $key = array_search($value, $allowed, true);
+            if ($key === false) { 
+                throw new InvalidArgumentException($message); 
+            } else {
+                return $value;
+            }
+        } catch (InvalidArgumentException $e) {
+            echo $e->getMessage();
+        } 
     }
 
     /**
@@ -115,6 +155,9 @@ class G5Mysqli
      */
     function refValues(&$arr)
     {
+        /**
+         * @deprecated 버전 체크
+         */
         if (strnatcmp(phpversion(), '5.3') >= 0)
         {
             $refs = array();
@@ -123,6 +166,15 @@ class G5Mysqli
             return $refs;
         }
         return $arr;
+    }
+
+    /**
+     * Returns the value generated for an AUTO_INCREMENT column by the last query
+     * @return int|string
+     */
+    function insertId()
+    {
+        return $this->getInstance()->insert_id;
     }
 
     /**
