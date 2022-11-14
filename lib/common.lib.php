@@ -2146,29 +2146,33 @@ function is_utf8($str)
 }
 
 
-// UTF-8 문자열 자르기
-// 출처 : https://www.google.co.kr/search?q=utf8_strcut&aq=f&oq=utf8_strcut&aqs=chrome.0.57j0l3.826j0&sourceid=chrome&ie=UTF-8
-function utf8_strcut( $str, $size, $suffix='...' )
+/**
+ * 인코딩이 UTF-8인 문자열 길이 자르기
+ * @param string $str
+ * @param int $length 길이
+ * @param string $suffix 문자열의 접미사
+ * @return string
+ */
+function utf8_strcut($str, $length, $suffix='...' )
 {
-    if( function_exists('mb_strlen') && function_exists('mb_substr') ){
-        
-        if(mb_strlen($str)<=$size) {
+    if(function_exists('mb_strlen')){
+        if (mb_strlen($str) <= $length) {
             return $str;
-        } else {
-            $str = mb_substr($str, 0, $size, 'utf-8');
-            $str .= $suffix;
         }
 
+        $str = mb_substr($str, 0, $length, 'utf-8');
+        $str .= $suffix;
     } else {
-        $substr = substr( $str, 0, $size * 2 );
+        $substr = substr($str, 0, $length * 2 );
         $multi_size = preg_match_all( '/[\x80-\xff]/', $substr, $multi_chars );
 
-        if ( $multi_size > 0 )
-            $size = $size + intval( $multi_size / 3 ) - 1;
+        if ($multi_size > 0 ) {
+            $length = $length + (int)($multi_size / 3) - 1;
+        }
 
-        if ( strlen( $str ) > $size ) {
-            $str = substr( $str, 0, $size );
-            $str = preg_replace( '/(([\x80-\xff]{3})*?)([\x80-\xff]{0,2})$/', '$1', $str );
+        if (strlen($str ) > $length ) {
+            $str = substr($str, 0, $length );
+            $str = preg_replace('/(([\x80-\xff]{3})*?)([\x80-\xff]{0,2})$/', '$1', $str );
             $str .= $suffix;
         }
     }

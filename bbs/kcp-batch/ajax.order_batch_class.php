@@ -30,10 +30,10 @@ if($site_cd !== trim($_POST['site_cd'])){
 
 /**
  * 권장 파라미터
- * @var string $good_name (100byte 이내) 상품명
- * TODO 100바이트 cut
+ * @var string $good_name (100byte 이내 약 33글자) 상품명
+ *
  */
-$good_name          = isset($_POST['good_name']) ? $good_name : '';
+$good_name          = isset($_POST['good_name']) ? utf8_strcut($good_name, 33, '') : '';
 
 //선택 파라미터
 $buyr_name          = isset($_POST['buyr_name']) ? $buyr_name : '';
@@ -128,7 +128,7 @@ $end_date = '0000-00-00 00:00:00'; //구독 만료기간이 정해지지않음.
 
 $g5['batch_info_table'] = 'g5_batch_info';
 $sql_batch_info = "INSERT INTO {$g5['batch_info_table']} SET 
-                od_id               = '{$ordr_idxx}',
+                od_id               = '{$od_id}',
                 mb_id               = '{$member['mb_id']}',
                 batch_key           = '{$bt_batch_key}',
                 kcpgroup_id         = '{$bt_group_id}',
@@ -148,7 +148,7 @@ if($result && affectedRowCounter() === 1) {
 // 자동결제 이력 저장
 $g5['batch_payment_table'] = 'g5_batch_payment';
 $sql_payment = "INSERT INTO {$g5['batch_payment_table']} SET 
-                od_id               = '{$ordr_idxx}',
+                od_id               = '{$od_id}',
                 mb_id               = '{$member['mb_id']}',
                 batch_key           = '{$bt_batch_key}',
                 amount              = '{$amount}',
@@ -183,6 +183,11 @@ if ( $res_cd == '0000')
     {
         // API RES
         $res_data  = $kcpBatch->cancelBatchPayment($tno);
+
+        // 유효성 검사.
+        if($res_data['kcp_sign_data'] === false){
+            $json_res['res_msg'] = $json_res['res_msg'] . '취소가 실패했습니다. 관리자 문의바랍니다.';
+        }
 
         // RES JSON DATA Parsing
         $json_res = json_decode($res_data, true);
