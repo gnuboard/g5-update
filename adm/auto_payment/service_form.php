@@ -2,55 +2,55 @@
 $sub_menu = '400920';
 include_once './_common.php';
 include_once G5_EDITOR_LIB;
-include_once G5_LIB_PATH . '/iteminfo.lib.php';
+require_once G5_PATH . '/bbs/kcp-batch/G5Mysqli.php';
+require_once G5_PATH . '/bbs/kcp-batch/KcpBatch.php';
 
 auth_check_menu($auth, $sub_menu, "w");
 
-$html_title = "구독상품 ";
-/** @todo add dbconfig.php */
-$g5['batch_service_table']          = G5_TABLE_PREFIX . 'batch_service'; 
-$g5['batch_service_price_table']    = G5_TABLE_PREFIX . 'batch_service_price';
-$g5['batch_service_date_table']     = G5_TABLE_PREFIX . 'batch_service_date';
+$html_title = '구독상품 ';
+$g5Mysqli = new G5Mysqli();
 
 // 구독상품 정보
+$board_list     = array();
+
+$service_id     = isset($_GET['service_id']) ? $_GET['service_id'] : 0;
 $service        = array();
 $price_count    = 0;
 $date_count     = 0;
 
-if ($w == "") {
-    $html_title .= "입력";
-} else if ($w == "u") {
-    $html_title .= "수정";
+if ($w == '') {
+    $html_title .= '입력';
+} else if ($w == 'u') {
+    $html_title .= '수정';
 
-    $sql = "SELECT * FROM {$g5['batch_service_table']} WHERE service_id = '{$service_id}'";
-    $service = sql_fetch($sql);
+    $sql = "SELECT * FROM {$g5['batch_service_table']} WHERE service_id = ?";
+    $service = $g5Mysqli->getOne($sql, array($service_id));
     if (!$service) {
         alert('상품정보가 존재하지 않습니다.');
     }
     // 구독상품 가격
-    $sql_price = "SELECT * FROM {$g5['batch_service_price_table']} WHERE service_id = '{$service_id}'";
-    $service_price = sql_query($sql_price);
-    $price_count = $service_price->num_rows;
+    $sql_price = "SELECT * FROM {$g5['batch_service_price_table']} WHERE service_id = ?";
+    $service_price = $g5Mysqli->execSQL($sql_price, array($service_id));
+    $price_count = count($service_price);
 
     // 구독상품 결제 주기
-    $sql_date = "SELECT * FROM {$g5['batch_service_date_table']} WHERE service_id = '{$service_id}'";
-    $service_date = sql_query($sql_date);
-    $date_count = $service_date->num_rows;
+    $sql_date = "SELECT * FROM {$g5['batch_service_date_table']} WHERE service_id = ?";
+    $service_date = $g5Mysqli->execSQL($sql_date, array($service_id));
+    $date_count = count($service_date);
 } else {
-    alert("올바르지 않은 접근입니다.");
+    alert('올바르지 않은 접근입니다.');
 }
 
 // 게시판 리스트
-$board_list = array();
 $sql = "SELECT bo_table, bo_subject FROM {$g5['board_table']}";
-$res_board = sql_query($sql);
-for ($i = 0; $row = sql_fetch_array($res_board); $i++) {
+$res_board = $g5Mysqli->execSQL($sql);
+foreach ($res_board as $i => $row) {
     $board_list[$i] = $row;
     $board_list[$i]['selected'] = get_selected($row['bo_table'], $service['bo_table']);
 }
 
 // etc
-$unit_array = array("y" => "년", "m" => "월", "w" => "주", "d" => "일");
+$unit_array = array('y' => '년', 'm' => '월', 'w' => '주', 'd' => '일');
 $qstr = $qstr . '&amp;sca=' . $sca . '&amp;page=' . $page;
 $pg_anchor = '<ul class="anchor">
 <li><a href="#anc_form_board">게시판 설정</a></li>
@@ -58,8 +58,8 @@ $pg_anchor = '<ul class="anchor">
 <li><a href="#anc_form_cost">가격 및 결제주기</a></li>
 </ul>';
 $g5['title'] = $html_title;
-include_once (G5_ADMIN_PATH.'/admin.head.php');
-include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
+include_once G5_ADMIN_PATH . '/admin.head.php';
+include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
 ?>
 
 <form name="form_service" action="./service_update.php" method="post" enctype="multipart/form-data"
@@ -177,7 +177,7 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
                                 <input type="hidden" name="price_id[<?php echo $row ?>]" value="<?php echo $price['price_id'] ?>">
                                 <input type="text" name="price[<?php echo $row ?>]" value="<?php echo $price['price']; ?>" class="frm_input" size="12"> 원
                                 / 
-                                <input type="text" name="price_apply_date[<?php echo $row ?>]" id="price_apply_date_<?php echo $row ?>" value="<?php echo $price['apply_date']; ?>" id="apply_date" class="frm_input date_format" size="20">부터 반영
+                                <input type="text" name="price_apply_date[<?php echo $row ?>]" id="price_apply_date_<?php echo $row ?>" value="<?php echo $price['apply_date']; ?>" id="apply_date" class="frm_input date_format" size="20"> 적용
                                 <?php if ($price_count == $row) { ?>
                                     <button type="button" name="remove_price_row" class="btn_frmline">삭제</button>
                                 <?php } ?>
@@ -202,7 +202,7 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
                                 <?php } ?>
                                 </select>
                                 / 
-                                <input type="text" name="recurring_apply_date[<?php echo $row ?>]" id="recurring_apply_date_<?php echo $row ?>" value="<?php echo $date['apply_date']; ?>" class="frm_input date_format" size="20">부터 반영
+                                <input type="text" name="recurring_apply_date[<?php echo $row ?>]" id="recurring_apply_date_<?php echo $row ?>" value="<?php echo $date['apply_date']; ?>" class="frm_input date_format" size="20"> 적용
                                 <?php if ($date_count == $row) { ?>
                                     <button type="button" name="remove_date_row" class="btn_frmline">삭제</button>
                                 <?php } ?>
@@ -212,7 +212,7 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
                         
                     </tr>
                     <tr>
-                        <th scope="row"><label for="price">구독 종료설정</label></th>
+                        <th scope="row"><label for="price">구독만료 기간 설정</label></th>
                         <td>
                             <?php echo help("결제일로부터 구독서비스가 종료되는 만기 기간을 설정합니다."); ?>
                             결제일로부터
@@ -292,7 +292,7 @@ function create_price_row()
     let html    = '';
     html += '<div id="td_price_' + price_row + '">';
     html += '<input type="text" name="price[' + price_row + ']" value="" class="frm_input" size="12"> 원 / ';
-    html += '<input type="text" name="price_apply_date[' + price_row + ']" value="" id="price_apply_date_' + price_row + '" class="frm_input date_format" size="20">부터 반영 ';
+    html += '<input type="text" name="price_apply_date[' + price_row + ']" value="" id="price_apply_date_' + price_row + '" class="frm_input date_format" size="20"> 적용';
     html += '</div>';
     $("#td_price").append(html);
 }
@@ -305,7 +305,7 @@ function add_remove_price_btn()
 {
     $("button[name='remove_price_row']").remove();
     if (price_row > 1) {
-        $("#td_price_" + price_row).append('<button type="button" name="remove_price_row" class="btn_frmline">삭제</button>');
+        $("#td_price_" + price_row).append(' <button type="button" name="remove_price_row" class="btn_frmline">삭제</button>');
     }
 }
 function create_date_row()
@@ -326,7 +326,7 @@ function create_date_row()
     html += '<div id="td_date_' + date_row + '">';
     html += '<input type="text" name="recurring_count[' + date_row + ']" value="" class="frm_input" size="12">';
     html += ' ' + html_unit + ' / ';
-    html += '<input type="text" name="recurring_apply_date[' + date_row + ']" value="" id="recurring_apply_date_' + date_row + '" class="frm_input date_format" size="20">부터 반영 ';
+    html += '<input type="text" name="recurring_apply_date[' + date_row + ']" value="" id="recurring_apply_date_' + date_row + '" class="frm_input date_format" size="20"> 적용 ';
     html += '</div>';
     
     $("#td_date").append(html);
@@ -340,7 +340,7 @@ function add_remove_date_btn()
 {
     $("button[name='remove_date_row']").remove();
     if (date_row > 1) {
-        $("#td_date_" + date_row).append('<button type="button" name="remove_date_row" class="btn_frmline">삭제</button>');
+        $("#td_date_" + date_row).append(' <button type="button" name="remove_date_row" class="btn_frmline">삭제</button>');
     }
 }
 function set_datepicker()

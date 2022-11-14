@@ -1,18 +1,17 @@
 <?php
 $sub_menu = '400920';
 include_once './_common.php';
+require_once G5_PATH . '/bbs/kcp-batch/G5Mysqli.php';
+require_once G5_PATH . '/bbs/kcp-batch/KcpBatch.php';
 
 $w = isset($_REQUEST['w']) ? $_REQUEST['w'] : '';
 auth_check_menu($auth, $sub_menu, "w");
 check_admin_token();
 
-@mkdir(G5_DATA_PATH."/batch", G5_DIR_PERMISSION);
-@chmod(G5_DATA_PATH."/batch", G5_DIR_PERMISSION);
+@mkdir(G5_DATA_PATH . '/batch', G5_DIR_PERMISSION);
+@chmod(G5_DATA_PATH . '/batch', G5_DIR_PERMISSION);
 
-/** @todo add dbconfig.php */
-$g5['batch_service_table']          = G5_TABLE_PREFIX . 'batch_service'; 
-$g5['batch_service_price_table']    = G5_TABLE_PREFIX . 'batch_service_price';
-$g5['batch_service_date_table']     = G5_TABLE_PREFIX . 'batch_service_date';
+$g5Mysqli = new G5Mysqli();
 
 /** Form Data */
 /* 기본정보 */
@@ -61,90 +60,115 @@ foreach($_POST['recurring_count'] as $key => $count) {
 //     }
 // }
 
-$sql_common = " bo_table            = '{$bo_table}',
-                service_name        = '{$service_name}',
-                service_summary     = '{$service_summary}',
-                service_order       = '{$service_order}',
-                service_use         = '{$service_use}',
-                service_url         = '{$service_url}',
-                service_hook        = '{$service_hook}',
-                service_explan          = '{$service_explan}',
-                service_mobile_explan   = '{$service_mobile_explan}',
-                service_expiration      = '{$service_expiration}',
-                service_expiration_unit = '{$service_expiration_unit}'";
+$bind_param = array();
+array_push($bind_param, $bo_table, $service_name, $service_summary, $service_order, $service_use,
+$service_url, $service_hook, $service_explan, $service_mobile_explan, $service_expiration, $service_expiration_unit);
+$sql_common = " bo_table            = ?,
+                service_name        = ?,
+                service_summary     = ?,
+                service_order       = ?,
+                service_use         = ?,
+                service_url         = ?,
+                service_hook        = ?,
+                service_explan          = ?,
+                service_mobile_explan   = ?,
+                service_expiration      = ?,
+                service_expiration_unit = ?";
 if ($w == "") {
     $sql = "INSERT INTO {$g5['batch_service_table']} SET
                 {$sql_common}";
-    sql_query($sql);
+    $g5Mysqli->execSQL($sql, $bind_param, true);
 
-    $service_id = sql_insert_id();
+    $service_id = $g5Mysqli->insertId();
 
     foreach ($price_array as $arr) {
         $sql_price = "INSERT INTO {$g5['batch_service_price_table']} SET
-                        service_id  = '{$service_id}',
-                        price       = '{$arr['price']}',
-                        apply_date  = '{$arr['apply_date']}'";
-        sql_query($sql_price);
+                        service_id  = ?,
+                        price       = ?,
+                        apply_date  = ?";
+        $g5Mysqli->execSQL($sql_price, array($service_id, $arr['price'], $arr['apply_date']), true);
     }
     foreach ($date_array as $arr) {
         $sql_date = "INSERT INTO {$g5['batch_service_date_table']} SET
-                        service_id      = '{$service_id}',
-                        recurring_count = '{$arr['recurring_count']}',
-                        recurring_unit  = '{$arr['recurring_unit']}',
-                        apply_date      = '{$arr['apply_date']}'";
-        sql_query($sql_date);
+                        service_id      = ?,
+                        recurring_count = ?,
+                        recurring_unit  = ?,
+                        apply_date      = ?";
+        $g5Mysqli->execSQL($sql_date, array($service_id, $arr['recurring_count'], $arr['recurring_unit'], $arr['apply_date']), true);
     }
 
 } else if ($w == "u") {
     $sql = "UPDATE {$g5['batch_service_table']} SET
-            {$sql_common}
-            WHERE service_id = '{$service_id}'";
-    sql_query($sql);
+                {$sql_common}
+            WHERE service_id = ?";
+    array_push($bind_param, $service_id);
+    $g5Mysqli->execSQL($sql, $bind_param, true);
+    
+    /* 가격 업데이트 */
+    // delete
+    $price_count = count($price_array);
+    if ($price_count > 0) {
+        $in         = '';
+        $bind_price = array($service_id);
 
-    // 가격,주기 업데이트
-    if (count($_POST['price_id']) > 0) {
-        $sql_delete_price = "DELETE FROM {$g5['batch_service_price_table']} WHERE service_id = '{$service_id}' AND price_id NOT IN (" . implode(",", $_POST['price_id']) . ")";
-        sql_query($sql_delete_price);
-        // echo $sql_delete_price . "<br>";
+        foreach($price_array as $price) {
+            $in .= ($in == '') ? '?' : ',?';
+            array_push($bind_price, $price['price_id']);
+        }
+        $sql_delete_price = "DELETE FROM {$g5['batch_service_price_table']} WHERE service_id = ? AND price_id NOT IN ({$in})";
+        $g5Mysqli->execSQL($sql_delete_price, $bind_price, true);
     }
+    // insert or update
     foreach ($price_array as $arr) {
-        if (isset($arr['price_id'])) {
+        $bind_price = array();
+        if (!empty($arr['price_id'])) {
             $sql_price = "UPDATE {$g5['batch_service_price_table']} SET
-                                price       = '{$arr['price']}',
-                                apply_date  = '{$arr['apply_date']}'
-                        WHERE price_id       = '{$arr['price_id']}'";
+                                price       = ?,
+                                apply_date  = ?
+                        WHERE price_id      = ?";
+            array_push($bind_price, $arr['price'], $arr['apply_date'], $arr['price_id']);
         } else {
             $sql_price = "INSERT INTO {$g5['batch_service_price_table']} SET
-                        service_id  = '{$service_id}',
-                        price       = '{$arr['price']}',
-                        apply_date  = '{$arr['apply_date']}'";
+                        service_id  = ?,
+                        price       = ?,
+                        apply_date  = ?";
+            array_push($bind_price, $service_id, $arr['price'], $arr['apply_date']);
         }
-        // echo $sql_price . "<br>";
-        sql_query($sql_price);
+        $g5Mysqli->execSQL($sql_price, $bind_price, true);
     }
-
+    /* 주기 업데이트 */
     // delete
-    if (count($_POST['date_id']) > 0) {
-        $sql_delete_date = "DELETE FROM {$g5['batch_service_date_table']} WHERE service_id = '{$service_id}' AND date_id NOT IN (" . implode(",", $_POST['date_id']) . ")";
-        sql_query($sql_delete_date);
-        // echo $sql_delete_date . "<br>";
+    $date_count = count($date_array);
+    if ($date_count > 0) {
+        $in         = '';
+        $bind_date = array($service_id);
+
+        foreach($date_array as $date) {
+            $in .= ($in == '') ? '?' : ',?';
+            array_push($bind_date, $date['date_id']);
+        }
+        $sql_delete_date = "DELETE FROM {$g5['batch_service_date_table']} WHERE service_id = ? AND date_id NOT IN ({$in})";
+        $g5Mysqli->execSQL($sql_delete_date, $bind_date, true);
     }
+    // insert or update
     foreach ($date_array as $arr) {
-        if (isset($arr['date_id'])) {
+        $bind_date = array();
+        if (!empty($arr['date_id'])) {
             $sql_date = "UPDATE {$g5['batch_service_date_table']} SET
-                            recurring_count = '{$arr['recurring_count']}',
-                            recurring_unit  = '{$arr['recurring_unit']}',
-                            apply_date      = '{$arr['apply_date']}'
-                        WHERE date_id       = '{$arr['date_id']}'";
+                            recurring_count = ?,
+                            recurring_unit  = ?,
+                            apply_date      = ?
+                        WHERE date_id       = ?";
+            array_push($bind_date, $arr['recurring_count'], $arr['recurring_unit'], $arr['apply_date'], $arr['date_id']);
         } else {
             $sql_date = "INSERT INTO {$g5['batch_service_date_table']} SET
-                        service_id      = '{$service_id}',
-                        recurring_count = '{$arr['recurring_count']}',
-                        recurring_unit  = '{$arr['recurring_unit']}',
-                        apply_date      = '{$arr['apply_date']}'";
+                        service_id      = ?,
+                        recurring_count = ?,
+                        recurring_unit  = ?,
+                        apply_date      = ?";
+            array_push($bind_date, $service_id, $arr['recurring_count'], $arr['recurring_unit'], $arr['apply_date']);
         }
-        // echo $sql_date . "<br>";
-        sql_query($sql_date);
+        $g5Mysqli->execSQL($sql_date, $bind_date, true);
     }
 }
 if ($w == "" || $w == "u") {

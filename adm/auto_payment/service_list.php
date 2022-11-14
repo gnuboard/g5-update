@@ -1,71 +1,93 @@
 <?php
 $sub_menu = '400920';
 include_once './_common.php';
+require_once G5_PATH . '/bbs/kcp-batch/G5Mysqli.php';
+require_once G5_PATH . '/bbs/kcp-batch/KcpBatch.php';
 
 auth_check_menu($auth, $sub_menu, "r");
 
 $g5['title'] = '구독상품 관리';
 include_once G5_ADMIN_PATH . '/admin.head.php';
 
-/** @todo add dbconfig.php */
-$g5['batch_service_table']          = G5_TABLE_PREFIX . 'batch_service';
-$g5['batch_service_price_table']    = G5_TABLE_PREFIX . 'batch_service_price';
-$g5['batch_service_date_table']     = G5_TABLE_PREFIX . 'batch_service_date';
-$unit_array = array("y" => "년", "m" => "개월", "w" => "주", "d" => "일");
-$service_list = array();
+/* 변수 선언 */
+$g5Mysqli = new G5Mysqli();
 
-$sfl        = !empty($sfl) ? clean_xss_tags($sfl) : "service_name";
-$stx        = !empty($stx) ? clean_xss_tags($stx) : "";
-$save_stx   = !empty($save_stx) ? clean_xss_tags($save_stx) : "";
-$sst        = !empty($sst) ? clean_xss_tags($sst) : "service_id";
-$sod        = !empty($sod) ? clean_xss_tags($sod) : "desc";
+$unit_array     = array('y' => '년', 'm' => '개월', 'w' => '주', 'd' => '일');
+$search_list    = array('service_name', 'bo_subject');
+$orderby_list   = array('service_id', 'service_namea', 'price', 'service_order', 'service_use');
+$direction_list = array('desc', 'asc');
+$service_list   = array();
 
-$sql_common = "";
-$sql_search = "";
-$sql_order  = "";
+$sfl        = !empty($sfl) ? clean_xss_tags($sfl) : 'service_name';
+$stx        = !empty($stx) ? clean_xss_tags($stx) : '';
+$save_stx   = !empty($save_stx) ? clean_xss_tags($save_stx) : '';
+$sst        = !empty($sst) ? clean_xss_tags($sst) : 'service_id';
+$sod        = !empty($sod) ? clean_xss_tags($sod) : 'desc';
+
+$search     = $g5Mysqli->whiteList($sfl, $search_list, 'Invalid field name');
+$orderby    = $g5Mysqli->whiteList($sst, $orderby_list, 'Invalid field name');
+$direction  = $g5Mysqli->whiteList($sod, $direction_list, 'Invalid ORDER BY direction');
+
+$sql_common = '';
+$sql_search = '';
+$sql_order  = "ORDER BY {$orderby} {$direction}";
+$bind_param = array();
 
 $rows       = $config['cf_page_rows'];
 $page       = ($page > 1) ? $page : 1;
 
 /* 검색조건 */
-if ($stx != "" && $sfl != "") {
-    $sql_search .= "WHERE {$sfl} LIKE '%{$stx}%' ";
+if ($sfl != '' && $stx != '') {
+    $sql_search .= "WHERE {$search} LIKE ? ";
+    array_push($bind_param, "%{$stx}%");
     if ($save_stx != $stx) {
         $page = 1;
     }
 }
 
+/* 테이블 */
 $sql_common .= "FROM {$g5['batch_service_table']} bs LEFT JOIN g5_board b ON bs.bo_table = b.bo_table ";
 $sql_common .= $sql_search;
-$sql_order  .= "ORDER BY {$sst} {$sod}";
 
-// 검색된 레코드 건수
+/* 검색된 레코드 건수 */
 $sql = "SELECT COUNT(*) as cnt {$sql_common}";
-$row = sql_fetch($sql);
-$total_count    = $row['cnt'] ? $row['cnt'] : 0;// 전체 건수
-$total_page     = ceil($total_count / $rows);   // 전체 페이지
-$from_record    = ($page - 1) * $rows;          // 시작 열
+$result = $g5Mysqli->getOne($sql, $bind_param);
+$total_count    = $result['cnt'] ? $result['cnt'] : 0;  // 전체 건수
+$total_page     = ceil($total_count / $rows);           // 전체 페이지
+$from_record    = ($page - 1) * $rows;                  // 시작 열
 
-// 구독상품 목록 조회
+/* 구독상품 목록 조회 */
 $sql  = "SELECT
             bs.*,
             b.bo_subject,
-            (SELECT CONCAT(recurring_count, recurring_unit) FROM {$g5['batch_service_date_table']} sd WHERE bs.service_id = sd.service_id AND sd.apply_date <= NOW() ORDER BY apply_date DESC LIMIT 1) AS recurring,
-	        (SELECT price FROM {$g5['batch_service_price_table']} sd WHERE bs.service_id = sd.service_id AND sd.apply_date <= NOW() ORDER BY apply_date DESC LIMIT 1) AS price
+            (SELECT 
+                CONCAT(recurring_count, recurring_unit) FROM {$g5['batch_service_date_table']} sd
+            WHERE bs.service_id = sd.service_id 
+                AND sd.apply_date <= NOW()
+            ORDER BY apply_date DESC LIMIT 1) AS recurring,
+	        (SELECT 
+                price
+            FROM {$g5['batch_service_price_table']} sd
+            WHERE bs.service_id = sd.service_id
+                AND sd.apply_date <= NOW()
+            ORDER BY apply_date DESC LIMIT 1) AS price
         {$sql_common}
         {$sql_order}
-        limit {$from_record}, {$rows}";
-$result = sql_query($sql);
-for ($i = 0; $row = sql_fetch_array($result); $i++) {
+        limit ?, ?";
+array_push($bind_param, $from_record, $rows);
+$result = $g5Mysqli->execSQL($sql, $bind_param);
+
+/* 결과처리 */
+foreach($result as $i => $row) {
     $service_list[$i] = $row;
     $service_list[$i]['bg_class'] = 'bg' . ($i % 2);
     // 결제주기
     $service_list[$i]['recurring'] = strtr($row['recurring'], $unit_array);
     // 구독 만료기간
     if ($row['service_expiration'] > 0) {
-        $service_list[$i]['expiration'] = " ~ " . $row['service_expiration'] . $unit_array[$row['service_expiration_unit']];
+        $service_list[$i]['expiration'] = '결제일로부터 ' . $row['service_expiration'] . $unit_array[$row['service_expiration_unit']] . ' 이후';
     } else {
-        $service_list[$i]['expiration'] = "없음";
+        $service_list[$i]['expiration'] = '없음';
     }
 }
 
@@ -104,7 +126,7 @@ $qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
             <caption><?php echo $g5['title']; ?> 목록</caption>
             <thead>
                 <tr>
-                    <th scope="col" rowspan="2">
+                    <th scope="col" rowspan="2" >
                         <label for="chkall" class="sound_only">상품 전체</label>
                         <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
                     </th>
@@ -126,11 +148,12 @@ $qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
                 foreach ($service_list as $key => $service) {
                 ?>
                     <tr class="<?php echo $service['bg_class']; ?>">
-                        <td rowspan="2" class="td_chk">
+                        <td rowspan="2" class="td_chk2">
                             <label for="chk_<?php echo $key; ?>" class="sound_only"><?php echo get_text($service['service_name']); ?></label>
-                            <input type="checkbox" name="chk[]" value="<?php echo $i ?>" id="chk_<?php echo $key; ?>">
+                            <input type="checkbox" name="chk[]" value="<?php echo $key ?>" id="chk_<?php echo $key; ?>">
+                            <input type="hidden" name="service_id[<?php echo $key; ?>]" value="<?php echo $service['service_id']?>">
                         </td>
-                        <td rowspan="2">
+                        <td rowspan="2" class="td_mng_l">
                             <label class="sound_only"><?php echo get_text($service['bo_subject']); ?></label>
                             <?php echo $service['bo_subject']; ?>
                         </td>
@@ -155,12 +178,12 @@ $qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
                             <a href="./service_copy.php?it_id=<?php echo $service['service_id']; ?>" class="itemcopy btn btn_02" target="_blank"><span class="sound_only"><?php echo htmlspecialchars2(cut_str($service['service_name'], 250, "")); ?> </span>복사</a>
                         </td>
                     </tr>
-                    <tr class="<?php echo $service['bg_class']; ?>">
+                    <tr class="td_mng_l <?php echo $service['bg_class']; ?>">
                         <td>
                             <label class="sound_only">결제주기</label>
                             <?php echo $service['recurring'] ?>
                         </td>
-                        <td>
+                        <td class="td_mng_l">
                             <label class="sound_only">구독만료 기간</label>
                             <?php echo $service['expiration'] ?>
                         </td>
@@ -178,9 +201,6 @@ $qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
     <div class="btn_fixed_top">
         <a href="./service_form.php" class="btn btn_01">상품등록</a>
         <input type="submit" name="act_button" value="선택수정" onclick="document.pressed=this.value" class="btn btn_02">
-        <?php if ($is_admin == 'super') { ?>
-            <input type="submit" name="act_button" value="선택 비활성화" onclick="document.pressed=this.value" class="btn btn_02">
-        <?php } ?>
     </div>
 </form>
 
@@ -192,7 +212,6 @@ $qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
             alert(document.pressed + " 하실 항목을 하나 이상 선택하세요.");
             return false;
         }
-
         return true;
     }
 
