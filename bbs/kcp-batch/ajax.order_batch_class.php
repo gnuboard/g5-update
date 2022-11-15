@@ -116,6 +116,7 @@ if ( $res_cd === '0000')
     $app_time = $json_res['app_time'];
     $quota = $json_res['quota'];
     $noinf = $json_res['noinf'];
+    $bSucc = true;
 
 }
 
@@ -124,7 +125,7 @@ if ( $res_cd === '0000')
 /* ============================================================================== */
 // 자동결제 정보 저장
 $start_date = date('Y-m-d H:i:s');
-$end_date = '0000-00-00 00:00:00'; //구독 만료기간이 정해지지않음.
+$end_date = '0000-00-00 00:00:00'; //0 은 구독 만료기간이 정해지지않음.
 
 $g5['batch_info_table'] = 'g5_batch_info';
 $sql_batch_info = "INSERT INTO {$g5['batch_info_table']} SET 
@@ -140,8 +141,8 @@ $sql_batch_info = "INSERT INTO {$g5['batch_info_table']} SET
             ";
 
 $result = sql_query($sql_batch_info);
-if($result && affectedRowCounter() === 1) {
-    $bSucc = true;
+if(!$result || affectedRowCounter() !== 1) {
+    $bSucc = false;
 }
 
 
@@ -161,9 +162,10 @@ $sql_payment = "INSERT INTO {$g5['batch_payment_table']} SET
             ";
 
 $result = sql_query($sql_payment);
-if($result && affectedRowCounter() === 1) {
-    $bSucc = true;
+if(!$result || affectedRowCounter() !== 1) {
+    $bSucc = false;
 }
+
 /*
 ==========================================================================
 승인 결과 DB 처리 실패시 : 자동취소
@@ -172,36 +174,26 @@ if($result && affectedRowCounter() === 1) {
 DB 작업을 실패하여 DB update 가 완료되지 않은 경우, 자동으로
 승인 취소 요청을 하는 프로세스가 구성되어 있습니다.
 
-DB 작업이 실패 한 경우, bSucc 라는 변수의 값을 "false"로 설정해 주시기 바랍니다.
-(DB 작업 성공의 경우에는 "false" 이외의 값을 설정하시면 됩니다.)
+DB 작업이 실패 한 경우, bSucc 라는 변수의 값을 false로 설정해 주시기 바랍니다.
+(DB 작업 성공의 경우에는 bSucc 는 true 입니다. );
 --------------------------------------------------------------------------
 */
+
 //0000 은 성공
-if ( $res_cd == '0000')
+if ( $res_cd === '0000')
 {
     if ( $bSucc === false)
     {
-        // API RES
-        $res_data  = $kcpBatch->cancelBatchPayment($tno);
-
-        // 유효성 검사.
-        if($res_data['kcp_sign_data'] === false){
-            $json_res['res_msg'] = $json_res['res_msg'] . '취소가 실패했습니다. 관리자 문의바랍니다.';
-        }
-
-        // RES JSON DATA Parsing
-        $json_res = json_decode($res_data, true);
-
-        // $json_res["res_cd" ] = "9999";//$json_res["res_cd" ];
-        $json_res['res_msg'] = $json_res['res_msg'] . "(DB 입력오류로 인한 결제취소처리)";//$json_res["res_msg"];
+        paymentCancel($tno, $kcpBatch);
     }
+} else {
+    paymentCancel($tno, $kcpBatch);
 }
 
-// 결과 출력
+// 나머지 결과 출력
 if (PHP_VERSION_ID >= 50400) {
     echo json_encode($json_res, JSON_UNESCAPED_UNICODE);
 } else {
-
     echo to_han(json_encode($json_res));
 }
 
@@ -213,4 +205,30 @@ function affectedRowCounter()
         $affected_row = mysql_affected_rows($GLOBALS['g5']['link']);
     }
     return $affected_row;
+}
+
+/**
+ * 결제 취소 요청후 종료
+ * @param string $tno
+ * @param KcpBatch $kcpBatch
+ * @return void
+ */
+function paymentCancel($tno, $kcpBatch){
+    // API RES
+    $cancle_res  = $kcpBatch->cancelBatchPayment($tno);
+
+    // 유효성 검사.
+    if($cancle_res['kcp_sign_data'] === false){
+        $msg = '결제 취소가 실패했습니다. 관리자 문의바랍니다.';
+        responseJson($msg, 401);
+    }
+
+    // RES JSON DATA Parsing
+    if (PHP_VERSION_ID >= 50400) {
+        echo json_encode($cancle_res, JSON_UNESCAPED_UNICODE);
+    } else {
+        echo to_han(json_encode($cancle_res));
+    }
+
+    exit;
 }
