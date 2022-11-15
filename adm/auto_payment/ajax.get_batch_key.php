@@ -1,9 +1,11 @@
 <?php
-header("Content-type: text/html; charset=utf-8");
-
+// 배치키 재발급
 include_once './_common.php';
+require_once G5_PATH . '/bbs/kcp-batch/G5Mysqli.php';
+require_once G5_PATH . '/bbs/kcp-batch/KcpBatch.php';
 
-include_once G5_PATH . "/bbs/kcp-batch/KcpBatch.php";
+$g5Mysqli = new G5Mysqli();
+$kcpBatch = new KcpBatch();
 
 /* ============================================================================== */
 /* =  요청정보                                                                   = */
@@ -12,7 +14,6 @@ $tran_cd            = $_POST["tran_cd"]; // 요청코드
 $enc_data           = $_POST["enc_data"]; // 암호화 인증데이터
 $enc_info           = $_POST["enc_info"]; // 암호화 인증데이터
 // 인증서 정보(직렬화)
-$kcpBatch           = new KcpBatch();
 $kcp_cert_info      = $kcpBatch->getServiceCertification();
 
 $data = array(
@@ -52,27 +53,28 @@ if ($res_cd == "0000") {
 /* ============================================================================== */
 $od_id = clean_xss_tags($_POST['ordr_idxx']);
 
-$g5['batch_info_table']             = G5_TABLE_PREFIX . 'batch_info';
-$g5['batch_service_table']          = G5_TABLE_PREFIX . 'batch_service';
-$g5['batch_service_price_table']    = G5_TABLE_PREFIX . 'batch_service_price';
-$g5['batch_service_date_table']     = G5_TABLE_PREFIX . 'batch_service_date';
-$g5["kcp_batch_key_log_table"]      = G5_TABLE_PREFIX . "kcp_batch_key_log";
-
 // 로그 테이블 저장
+$bind_param = array(
+    $member["mb_id"],
+    $res_cd,
+    $res_msg,
+    $card_cd,
+    $card_name,
+    $batch_key
+);
 $sql = "INSERT INTO {$g5["kcp_batch_key_log_table"]} SET 
-                mb_id               = '{$member["mb_id"]}',
-                res_cd              = '{$res_cd}',
-                res_msg             = '{$res_msg}',
-                card_cd             = '{$card_cd}',
-                card_name           = '{$card_name}',
-                batch_key           = '{$batch_key}',
-                date                = '" . date("Y-m-d H:i:s") . "'
-            ";
-sql_query($sql);
+                mb_id               = ?,
+                res_cd              = ?,
+                res_msg             = ?,
+                card_cd             = ?,
+                card_name           = ?,
+                batch_key           = ?,
+                date                = now()";
+$g5Mysqli->execSQL($sql, $bind_param, true);
 // 결제정보 배치 키 변경
 if ($res_cd == "0000") {
-    $sql = "UPDATE {$g5['batch_info_table']} SET batch_key = '{$batch_key}' WHERE od_id = '{$od_id}'";
-    sql_query($sql);
+    $sql = "UPDATE {$g5['batch_info_table']} SET batch_key = ? WHERE od_id = ?";
+    $g5Mysqli->execSQL($sql, array($batch_key, $od_id), true);
 
     // 배치키 * 표시
     $offset = 4;

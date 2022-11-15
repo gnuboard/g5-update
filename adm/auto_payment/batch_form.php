@@ -1,31 +1,27 @@
 <?php
 $sub_menu = '400930';
 include_once './_common.php';
+require_once G5_PATH . '/bbs/kcp-batch/G5Mysqli.php';
+require_once G5_PATH . '/bbs/kcp-batch/KcpBatch.php';
 
 auth_check_menu($auth, $sub_menu, "w");
 
 $g5['title'] = "구독결제 수정";
-include_once G5_PATH . "/bbs/kcp-batch/config.php";
-include_once G5_ADMIN_PATH . '/admin.head.php';
-include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
-
-/** @todo add dbconfig.php */
-$g5['batch_info_table']             = G5_TABLE_PREFIX . 'batch_info';
-$g5['batch_payment_table']          = G5_TABLE_PREFIX . 'batch_payment';
-$g5['batch_service_table']          = G5_TABLE_PREFIX . 'batch_service';
-$g5['batch_service_price_table']    = G5_TABLE_PREFIX . 'batch_service_price';
-$g5['batch_service_date_table']     = G5_TABLE_PREFIX . 'batch_service_date';
+$g5Mysqli = new G5Mysqli();
 
 $unit_array     = array("y" => "년", "m" => "개월", "w" => "주", "d" => "일");
-$batch_info     = array();
+$od_id          = isset($_REQUEST['od_id']) ? safe_replace_regex($_REQUEST['od_id'], 'od_id') : '';
+$service_id     = null;
 $offset         = 4;
 $repeat_time    = 8;
 
-$od_id = isset($_REQUEST['od_id']) ? safe_replace_regex($_REQUEST['od_id'], 'od_id') : '';
+/* 구독정보 */
+$batch_info     = array();
 
-// 구독정보 조회
-$sql = "SELECT bi.*, mb_name, mb_email FROM {$g5['batch_info_table']} bi LEFT JOIN {$g5['member_table']} mb ON bi.mb_id = mb.mb_id WHERE od_id = '{$od_id}'";
-$batch_info = sql_fetch($sql);
+// 구독정보 정보 조회
+$sql = "SELECT bi.*, mb_name, mb_email FROM {$g5['batch_info_table']} bi LEFT JOIN {$g5['member_table']} mb ON bi.mb_id = mb.mb_id WHERE od_id = ?";
+$batch_info = $g5Mysqli->getOne($sql, array($od_id));
+// 결과처리
 $batch_info['mb_side_view']         = get_sideview($batch_info['mb_id'], get_text($batch_info['mb_name']), $batch_info['mb_email'], '');
 $batch_info['display_end_date']     = $batch_info['end_date'] != "0000-00-00 00:00:00" ? $batch_info['end_date'] : "없음";
 $batch_info['display_status']       = $batch_info['status'] == "1" ? "진행 중" : "종료";
@@ -39,6 +35,7 @@ switch(strlen($batch_info['od_id'])) {
         break;
 }
 
+/* 구독상품 */
 // 구독상품 정보 조회
 $service_id = $batch_info['service_id'];
 $sql = "SELECT
@@ -48,62 +45,77 @@ $sql = "SELECT
             (SELECT CONCAT(recurring_count, recurring_unit) FROM {$g5['batch_service_date_table']} sd WHERE bs.service_id = sd.service_id AND sd.apply_date <= NOW() ORDER BY apply_date DESC LIMIT 1) AS recurring,
 	        (SELECT price FROM {$g5['batch_service_price_table']} sd WHERE bs.service_id = sd.service_id AND sd.apply_date <= NOW() ORDER BY apply_date DESC LIMIT 1) AS price
         FROM {$g5['batch_service_table']} bs LEFT JOIN g5_board b ON bs.bo_table = b.bo_table
-        WHERE bs.service_id = {$service_id}";
-$service = sql_fetch($sql);
-$service['display_expiration']  = ($service['expiration'] != '') ? '결제일로 부터 ' . strtr($service['expiration'], $unit_array) : '없음';
+        WHERE bs.service_id = ?";
+$service = $g5Mysqli->getOne($sql, array($service_id));
+// 결과처리
+$service['display_expiration']  = ($service['expiration'] != '') ? '결제일로부터 ' . strtr($service['expiration'], $unit_array) : '없음';
 $service['display_recurring']   = strtr($service['recurring'], $unit_array);
 
 // 변경예정 가격 최근 1건 조회
+$price_schedule = array();
 $sql_price_schedule = "SELECT
                             price, apply_date
                         FROM {$g5['batch_service_price_table']}
-                        WHERE service_id = '{$service_id}'
+                        WHERE service_id = ?
                             AND apply_date > now()
                         ORDER BY apply_date ASC 
                         LIMIT 1";
-$price_schedule = sql_fetch($sql_price_schedule);
+$price_schedule = $g5Mysqli->getOne($sql_price_schedule, array($service_id));
 if (isset($price_schedule)) {
     $price_schedule['display_price'] = number_format($price_schedule['price']);
-    $price_schedule['display_apply_date'] = date('Y-m-d', strtotime($price_schedule['apply_date'])) . "부터 적용";
+    $price_schedule['display_apply_date'] = date('Y-m-d', strtotime($price_schedule['apply_date'])) . " 반영";
 }
 
 // 변경예정 결제주기 최근 1건 조회
+$date_schedule  = array();
 $sql_date_schedule = "SELECT 
                             CONCAT(recurring_count, recurring_unit) AS recurring,
                             apply_date
                         FROM {$g5['batch_service_date_table']} 
-                        WHERE service_id = '{$service_id}' 
+                        WHERE service_id = ?
                             AND apply_date > now() 
                         ORDER BY apply_date ASC
                         LIMIT 1";
-$date_schedule = sql_fetch($sql_date_schedule);
+$date_schedule = $g5Mysqli->getOne($sql_date_schedule, array($service_id));
 if (isset($date_schedule)) {
     $date_schedule['recurring'] = strtr($date_schedule['recurring'], $unit_array);
-    $date_schedule['display_apply_date'] = date('Y-m-d', strtotime($date_schedule['apply_date']))  . "부터 적용";
+    $date_schedule['display_apply_date'] = date('Y-m-d', strtotime($date_schedule['apply_date']))  . " 반영";
 }
 
 // 결제내역 조회
 $total_amount = 0;
 $payment_list = array();
-$sql = "SELECT * FROM {$g5['batch_payment_table']} WHERE od_id = '{$od_id}' ORDER BY payment_count DESC, date DESC";
-$result = sql_query($sql);
-for ($i = 0; $row = sql_fetch_array($result); $i++) {
+$payment_success = array();
+$sql = "SELECT * FROM {$g5['batch_payment_table']} WHERE od_id = ? ORDER BY payment_count DESC, date DESC";
+$result = $g5Mysqli->execSQL($sql, array($od_id));
+foreach ($result as $i => $row) {
+    $count = $row['payment_count'];
     $payment_list[$i] = $row;
     $payment_list[$i]['display_payment_count']  = $row['payment_count'] . "회차";
     $payment_list[$i]['display_amount']         = number_format($row['amount']) . "원";
     $payment_list[$i]['display_res_cd']         = ($row['res_cd'] == "0000" ? "성공" : "실패");
     $payment_list[$i]['display_res_cd_color']   = ($row['res_cd'] == "0000" ? "#53C14B" : "#FF0000");
     $payment_list[$i]['display_batch_key']      = substr_replace($row['batch_key'], str_repeat('*', $repeat_time), $offset, $repeat_time); // 배치키 * 표시
+    $payment_list[$i]['is_btn_refund']          = false;
 
+    if (!isset($payment_success[$count])) {
+        $payment_success[$count] = false;
+    }
+    
     if ($row['res_cd'] == "0000") {
+        $payment_list[$i]['is_btn_refund'] = true;
+        $payment_success[$count] = true;
         $total_amount += $row['amount'];
     }
 }
+
+
 // etc
 $pg_anchor = '<ul class="anchor">
 <li><a href="#anc_batch_info">구독결제 정보</a></li>
 <li><a href="#anc_batch_payment">결제내역</a></li>
 </ul>';
+include_once G5_ADMIN_PATH . '/admin.head.php';
 ?>
 <section class="">
     <h2 class="h2_frm">구독결제 정보</h2>
@@ -133,11 +145,15 @@ $pg_anchor = '<ul class="anchor">
                             </tr>
                             <tr>
                                 <th scope="row"><label for="od_refund_price">자동결제 키</label></th>
-                                <td colspan="3">
+                                <td>
                                     <span id="display_batch_key">
                                         <?php echo $batch_info['display_batch_key'] ?>
                                     </span>
                                     <button type="button" id="btn_batch_key" class="btn btn_02">변경</button>
+                                </td>
+                                <th scope="row"><label for="od_refund_price">다음 결제 예정일</label></th>
+                                <td>
+                                    -
                                 </td>
                             </tr>
                             <tr>
@@ -253,10 +269,11 @@ $pg_anchor = '<ul class="anchor">
                     <td><?php echo $payment['res_msg'] ?></td>
                     <td><?php echo $payment['date'] ?></td>
                     <td>
-                    <?php if ($payment['res_cd'] == "0000") { ?>
+                    <?php if (!$payment_success[$payment['payment_count']]) { ?>
+                        <button type="button" name="btn_payment" data-id="<?php echo $payment['id']?>" data-count="<?php echo $payment['payment_count']?>" class="btn btn_02 btn_payment">결제</button>
+                    <?php } ?>
+                    <?php if ($payment['is_btn_refund']) { ?>
                         <button type="button" id="btn_batch_key" class="btn btn_01">환불</button>
-                    <?php } else { ?>
-                        <button type="button" id="btn_batch_key" class="btn btn_02">결제</button>
                     <?php } ?>
                     </td>
                 </tr>
@@ -356,6 +373,7 @@ function m_Completepayment( frm_mpi, closeEvent )
 $(function() {
     let form            = document.querySelector("#form_batch_key");
     let btn_batch_key   = document.querySelector("#btn_batch_key");
+    let btn_payment     = $("button[name=btn_payment]");
 
     /* 표준웹 실행 */
     btn_batch_key.onclick = function(){
@@ -365,55 +383,37 @@ $(function() {
             /* IE 에서 결제 정상종료시 throw로 스크립트 종료 */
         }
     };
-});
-
-function form_submit(f)
-{
-    var check = false;
-    var status = document.pressed;
-
-    for (i=0; i<f.chk_cnt.value; i++) {
-        if (document.getElementById('ct_chk_'+i).checked == true)
-            check = true;
-    }
-
-    if (check == false) {
-        alert("처리할 자료를 하나 이상 선택해 주십시오.");
-        return false;
-    }
-
-    var msg = "";
-
-    <?php if($od['od_settle_case'] == '신용카드' || $od['od_settle_case'] == 'KAKAOPAY' || $od['od_settle_case'] == '간편결제' || ($od['od_pg'] == 'inicis' && is_inicis_order_pay($od['od_settle_case']) )) { ?>
-    if(status == "취소" || status == "반품" || status == "품절") {
-        var $ct_chk = $("input[name^=ct_chk]");
-        var chk_cnt = $ct_chk.length;
-        var chked_cnt = $ct_chk.filter(":checked").length;
-        <?php if($od['od_pg'] == 'KAKAOPAY') { ?>
-        var cancel_pg = "카카오페이";
-        <?php } else { ?>
-        var cancel_pg = "PG사의 <?php echo $od['od_settle_case']; ?>";
-        <?php } ?>
-
-        if(chk_cnt == chked_cnt) {
-            if(confirm(cancel_pg+" 결제를 함께 취소하시겠습니까?\n\n한번 취소한 결제는 다시 복구할 수 없습니다.")) {
-                f.pg_cancel.value = 1;
-                msg = cancel_pg+" 결제 취소와 함께 ";
-            } else {
-                f.pg_cancel.value = 0;
-                msg = "";
-            }
+    /* 실패한 결제이력 결제처리 */
+    btn_payment.on('click', function(){
+        if (confirm(this.dataset.count + "회차 결제를 진행하시겠습니까?")) {
+            $.ajax({
+                url : "./ajax.order_batch.php",
+                type: "POST",
+                data: {"id" : this.dataset.id, "ordr_idxx" : '<?php echo $od_id ?>'},
+                success: function(data) {
+                    if (data) {
+                        console.log(data);
+                        // Set Data
+                        let result = JSON.parse(data);
+                        if (result.res_cd == "0000") {
+                            // 성공
+                            alert(result.res_msg);
+                            location.reload();
+                        } else {
+                            // 실패
+                            alert("[" + result.res_cd + "]" + result.res_msg);
+                        }
+                    } else {
+                        alert("잠시 후에 시도해주세요.");
+                    }
+                },
+                error: function() {
+                    alert("에러 발생");
+                }
+            });
         }
-    }
-    <?php } ?>
-
-    if (confirm(msg+"\'" + status + "\' 상태를 선택하셨습니다.\n\n선택하신대로 처리하시겠습니까?")) {
-        return true;
-    } else {
-        return false;
-    }
-}
+    });
+});
 </script>
-
 <?php
 include_once(G5_ADMIN_PATH.'/admin.tail.php');

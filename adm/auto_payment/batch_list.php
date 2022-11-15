@@ -1,75 +1,85 @@
 <?php
 $sub_menu = '400930';
 include_once './_common.php';
+require_once G5_PATH . '/bbs/kcp-batch/G5Mysqli.php';
+require_once G5_PATH . '/bbs/kcp-batch/KcpBatch.php';
 
 auth_check_menu($auth, $sub_menu, "r");
 
 $g5['title'] = '구독결제 내역';
 include_once G5_ADMIN_PATH . '/admin.head.php';
-include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
 
-/** @todo add dbconfig.php */
-$g5['batch_info_table']             = G5_TABLE_PREFIX . 'batch_info';
-$g5['batch_service_table']          = G5_TABLE_PREFIX . 'batch_service';
-$g5['batch_service_price_table']    = G5_TABLE_PREFIX . 'batch_service_price';
-$g5['batch_service_date_table']     = G5_TABLE_PREFIX . 'batch_service_date';
+/* 변수 선언 */
+$g5Mysqli = new G5Mysqli();
 
-$unit_array = array("y" => "년", "m" => "개월", "w" => "주", "d" => "일");
-$batch_list = array();
+$unit_array     = array('y' => '년', 'm' => '개월', 'w' => '주', 'd' => '일');
+$search_list    = array('service_name', 'mb.mb_id', 'mb.mb_name');
+$orderby_list   = array('service_id', 'service_name', 'price', 'service_order', 'service_use');
+$direction_list = array('desc', 'asc');
+$status_list    = array('', '0', '1', '2');
+$batch_list     = array();
 
-$sfl        = !empty($sfl) ? clean_xss_tags($sfl) : "service_name";
-$stx        = !empty($stx) ? clean_xss_tags($stx) : "";
-$save_stx   = !empty($save_stx) ? clean_xss_tags($save_stx) : "";
-$sst        = !empty($sst) ? clean_xss_tags($sst) : "start_date";
-$sod        = !empty($sod) ? clean_xss_tags($sod) : "desc";
+$sfl        = !empty($sfl) ? clean_xss_tags($sfl) : 'service_name';
+$stx        = !empty($stx) ? clean_xss_tags($stx) : '';
+$save_stx   = !empty($save_stx) ? clean_xss_tags($save_stx) : '';
+$sst        = !empty($sst) ? clean_xss_tags($sst) : 'service_order';
+$sod        = !empty($sod) ? clean_xss_tags($sod) : 'desc';
+$status     = isset($status) ? preg_replace('/[^0-9]/', '',  $status) : '';
 
-$sql_common = "";
-$sql_search = "";
-$sql_order  = "";
+$search     = $g5Mysqli->whiteList($sfl, $search_list, 'Invalid field name');
+$orderby    = $g5Mysqli->whiteList($sst, $orderby_list, 'Invalid field name');
+$direction  = $g5Mysqli->whiteList($sod, $direction_list, 'Invalid ORDER BY direction');
+$status     = $g5Mysqli->whiteList($status, $status_list, 'Invalid status');
+
+$sql_common = '';
+$sql_search = ' WHERE 1=1 ';
+$sql_order  = "ORDER BY {$sst} {$sod}";
+$bind_param = array();
 
 $rows       = $config['cf_page_rows'];
 $page       = ($page > 1) ? $page : 1;
 
 /* 검색조건 */
-if ($stx != "" && $sfl != "") {
-    $sql_search .= "WHERE {$sfl} LIKE '%{$stx}%' ";
+if ($stx != '' && $sfl != '') {
+    $sql_search .= " AND {$search} LIKE ? ";
+    array_push($bind_param, "%{$stx}%");
     if ($save_stx != $stx) {
         $page = 1;
     }
+}
+
+if ($status != '') {
+    $sql_search .= " AND status = ? ";
+    array_push($bind_param, $status);
 }
 
 $sql_common .= "FROM {$g5['batch_info_table']} bi
                 LEFT JOIN {$g5['batch_service_table']} bs ON bi.service_id = bs.service_id
                 LEFT JOIN {$g5['member_table']} mb ON bi.mb_id = mb.mb_id";
 $sql_common .= $sql_search;
-$sql_order  .= "ORDER BY {$sst} {$sod}";
 
 // 검색된 레코드 건수
 $sql = "SELECT COUNT(*) as cnt {$sql_common}";
-$row = sql_fetch($sql);
-$total_count    = $row['cnt'] ? $row['cnt'] : 0;// 전체 건수
-$total_page     = ceil($total_count / $rows);   // 전체 페이지
-$from_record    = ($page - 1) * $rows;          // 시작 열
+$result = $g5Mysqli->getOne($sql, $bind_param);
+$total_count    = $result['cnt'] ? $result['cnt'] : 0;  // 전체 건수
+$total_page     = ceil($total_count / $rows);           // 전체 페이지
+$from_record    = ($page - 1) * $rows;                  // 시작 열
 
 // 결제정보 목록 조회
 $sql  = "SELECT
-            bi.od_id,
-            bi.start_date,
-            bi.end_date,
-            bi.status,
-            mb.mb_id,
-            mb.mb_name,
-            mb.mb_email,
+            bi.od_id, bi.start_date, bi.end_date, bi.status,
+            mb.mb_id, mb.mb_name, mb.mb_email,
             bs.service_name,
             (SELECT COUNT(*) FROM g5_batch_payment bp WHERE bp.od_id = bi.od_id AND res_cd = '0000') as payment_count,
             (SELECT CONCAT(recurring_count, recurring_unit) FROM g5_batch_service_date sd WHERE bs.service_id = sd.service_id AND sd.apply_date <= NOW() ORDER BY apply_date DESC LIMIT 1) AS recurring,
             (SELECT price FROM g5_batch_service_price sd WHERE bs.service_id = sd.service_id AND sd.apply_date <= NOW() ORDER BY apply_date DESC LIMIT 1) AS price
         {$sql_common}
         {$sql_order}
-        limit {$from_record}, {$rows}";
-$result = sql_query($sql);
-
-for ($i = 0; $row = sql_fetch_array($result); $i++) {
+        limit ?, ?";
+array_push($bind_param, $from_record, $rows);
+$result = $g5Mysqli->execSQL($sql, $bind_param);
+/* 결과처리 */
+foreach($result as $i => $row) {
     $batch_list[$i] = $row;
     $batch_list[$i]['bg_class'] = 'bg' . ($i % 2);
     // 결제주기
@@ -86,15 +96,9 @@ for ($i = 0; $row = sql_fetch_array($result); $i++) {
             break;
     }
     // 기간
-    $batch_list[$i]['display_date'] = $row['start_date'] . " ~ " . ($row['end_date'] != null && $row['end_date'] != '0000-00-00 00:00:00' ? $row['end_date'] : "");
+    $batch_list[$i]['display_date'] = $row['start_date'] . ' ~ ' . ($row['end_date'] != null && $row['end_date'] != '0000-00-00 00:00:00' ? $row['end_date'] : '');
     // 상태
-    $batch_list[$i]['display_status'] = $row['status'] == "1" ? "진행 중" : "종료";
-
-    // $td_color = 0;
-    // if($row['od_cancel_price'] > 0) {
-    //     $bg .= 'cancel';
-    //     $td_color = 1;
-    // }
+    $batch_list[$i]['display_status'] = $row['status'] == '1' ? '진행 중' : '종료';   
 }
 
 $qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
@@ -108,29 +112,17 @@ $qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
     </span>
 </div>
 
-<form name="frmorderlist" class="local_sch03 local_sch">
+<form name="form_batch_list" class="local_sch03 local_sch">
     <input type="hidden" name="save_stx" value="<?php echo $stx; ?>">
 
     <div>
-        <strong>주문상태</strong>
-        <input type="radio" name="od_status" value="" id="od_status_all"    <?php echo get_checked($od_status, ''); ?>>
-        <label for="od_status_all">전체</label>
-        <input type="radio" name="od_status" value="주문" id="od_status_odr" <?php echo get_checked($od_status, '주문'); ?>>
-        <label for="od_status_odr">주문</label>
-    </div>
-
-    <div class="sch_last">
-        <strong>주문일자</strong>
-        <input type="text" id="fr_date"  name="fr_date" value="<?php echo $fr_date; ?>" class="frm_input" size="10" maxlength="10"> ~
-        <input type="text" id="to_date"  name="to_date" value="<?php echo $to_date; ?>" class="frm_input" size="10" maxlength="10">
-        <button type="button" onclick="javascript:set_date('오늘');">오늘</button>
-        <button type="button" onclick="javascript:set_date('어제');">어제</button>
-        <button type="button" onclick="javascript:set_date('이번주');">이번주</button>
-        <button type="button" onclick="javascript:set_date('이번달');">이번달</button>
-        <button type="button" onclick="javascript:set_date('지난주');">지난주</button>
-        <button type="button" onclick="javascript:set_date('지난달');">지난달</button>
-        <button type="button" onclick="javascript:set_date('전체');">전체</button>
-        <input type="submit" value="검색" class="btn_submit">
+        <strong>결제상태</strong>
+        <input type="radio" name="status" value="" id="status_all" <?php echo get_checked($status, ''); ?>>
+        <label for="status_all">전체</label>
+        <input type="radio" name="status" value="1" id="status_proceeding" <?php echo get_checked($status, '1'); ?>>
+        <label for="status_proceeding">진행 중</label>
+        <input type="radio" name="status" value="0" id="status_end" <?php echo get_checked($status, '0'); ?>>
+        <label for="status_end">종료</label>
     </div>
 
     <div>
@@ -138,7 +130,8 @@ $qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
         <label for="sfl" class="sound_only">검색대상</label>
         <select name="sfl" id="sfl">
             <option value="service_name" <?php echo get_selected($sfl, 'service_name'); ?>>구독상품 명</option>
-            <option value="bo_subject" <?php echo get_selected($sfl, 'bo_subject'); ?>>게시판 명</option>
+            <option value="mb.mb_id" <?php echo get_selected($sfl, 'mb.mb_id'); ?>>회원 ID</option>
+            <option value="mb.mb_name" <?php echo get_selected($sfl, 'mb.mb_name'); ?>>회원 이름</option>
         </select>
         <label for="stx" class="sound_only">검색어</label>
         <input type="text" name="stx" value="<?php echo $stx; ?>" id="stx" class="frm_input">
@@ -160,7 +153,7 @@ $qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
                 <th scope="col" colspan="3" id="th_service_name">서비스명</th>
                 <th scope="col" rowspan="2" id="th_member">회원</th>
                 <th scope="col" rowspan="2" id="th_date">기간</th>
-                <th scope="col" rowspan="2" id="th_end_date">종료일</th>
+                <th scope="col" rowspan="2" id="th_end_date">결제진행 상태</th>
                 <th scope="col" rowspan="2">보기</th>
             </tr>
             <tr>
@@ -170,9 +163,9 @@ $qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
             </tr>
             </thead>
             <tbody>
-            <?php foreach($batch_list as $key => $batch) { ?>
+            <?php foreach ($batch_list as $key => $batch) { ?>
             <tr class="orderlist <?php echo $batch['bg_class']; ?>">
-                <td rowspan="2" class="td_chk">
+                <td rowspan="2" class="td_chk2">
                     <input type="hidden" name="od_id[<?php echo $key ?>]" value="<?php echo $batch['od_id'] ?>" id="od_id_<?php echo $key ?>">
                     <label for="chk_<?php echo $i; ?>" class="sound_only">주문번호 <?php echo $batch['od_id']; ?></label>
                     <input type="checkbox" name="chk[]" value="<?php echo $key ?>" id="chk_<?php echo $key ?>">
@@ -213,88 +206,7 @@ $qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
 
 <script>
 $(function(){
-    $("#fr_date, #to_date").datepicker({ 
-        changeMonth: true,
-        changeYear: true,
-        dateFormat: "yy-mm-dd",
-        showButtonPanel: true,
-        yearRange: "c-99:c+99",
-        maxDate: "+0d"
-    });
 });
-
-function set_date(today)
-{
-    <?php
-    $date_term = date('w', G5_SERVER_TIME);
-    $week_term = $date_term + 7;
-    $last_term = strtotime(date('Y-m-01', G5_SERVER_TIME));
-    ?>
-    if (today == "오늘") {
-        document.getElementById("fr_date").value = "<?php echo G5_TIME_YMD; ?>";
-        document.getElementById("to_date").value = "<?php echo G5_TIME_YMD; ?>";
-    } else if (today == "어제") {
-        document.getElementById("fr_date").value = "<?php echo date('Y-m-d', G5_SERVER_TIME - 86400); ?>";
-        document.getElementById("to_date").value = "<?php echo date('Y-m-d', G5_SERVER_TIME - 86400); ?>";
-    } else if (today == "이번주") {
-        document.getElementById("fr_date").value = "<?php echo date('Y-m-d', strtotime('-'.$date_term.' days', G5_SERVER_TIME)); ?>";
-        document.getElementById("to_date").value = "<?php echo date('Y-m-d', G5_SERVER_TIME); ?>";
-    } else if (today == "이번달") {
-        document.getElementById("fr_date").value = "<?php echo date('Y-m-01', G5_SERVER_TIME); ?>";
-        document.getElementById("to_date").value = "<?php echo date('Y-m-d', G5_SERVER_TIME); ?>";
-    } else if (today == "지난주") {
-        document.getElementById("fr_date").value = "<?php echo date('Y-m-d', strtotime('-'.$week_term.' days', G5_SERVER_TIME)); ?>";
-        document.getElementById("to_date").value = "<?php echo date('Y-m-d', strtotime('-'.($week_term - 6).' days', G5_SERVER_TIME)); ?>";
-    } else if (today == "지난달") {
-        document.getElementById("fr_date").value = "<?php echo date('Y-m-01', strtotime('-1 Month', $last_term)); ?>";
-        document.getElementById("to_date").value = "<?php echo date('Y-m-t', strtotime('-1 Month', $last_term)); ?>";
-    } else if (today == "전체") {
-        document.getElementById("fr_date").value = "";
-        document.getElementById("to_date").value = "";
-    }
-}
-
-function forderlist_submit(f)
-{
-    if (!is_checked("chk[]")) {
-        alert(document.pressed+" 하실 항목을 하나 이상 선택하세요.");
-        return false;
-    }
-
-    if(document.pressed == "선택삭제") {
-        if(confirm("선택한 자료를 정말 삭제하시겠습니까?")) {
-            f.action = "./orderlistdelete.php";
-            return true;
-        }
-        return false;
-    }
-
-    var change_status = f.od_status.value;
-
-    if (f.od_status.checked == false) {
-        alert("주문상태 변경에 체크하세요.");
-        return false;
-    }
-
-    var chk = document.getElementsByName("chk[]");
-
-    for (var i=0; i<chk.length; i++)
-    {
-        if (chk[i].checked)
-        {
-            var k = chk[i].value;
-            var current_settle_case = f.elements['current_settle_case['+k+']'].value;
-            var current_status = f.elements['current_status['+k+']'].value;
-        }
-    }
-
-    if (!confirm("선택하신 주문서의 주문상태를 '"+change_status+"'상태로 변경하시겠습니까?"))
-        return false;
-
-    f.action = "./orderlistupdate.php";
-    return true;
-}
 </script>
-
 <?php
 include_once (G5_ADMIN_PATH.'/admin.tail.php');
