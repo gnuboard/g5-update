@@ -81,5 +81,8 @@ $sql = "INSERT INTO {$g5['kcp_batch_key_log_table']} SET
 sql_query($sql);
 
 // 결과 출력
-echo $res_data;
-exit;
+if($res_msg === '0000') {
+    responseJson($res_data['res_mes'], 200);
+} else {
+    responseJson($res_data['res_mes'], 400);
+}
