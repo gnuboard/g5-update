@@ -31,19 +31,23 @@ $service_expiration_unit    = isset($_POST['service_expiration_unit']) ? clean_x
 /* 가격 */
 $price_array = array();
 foreach($_POST['price'] as $key => $price) {
-    $price_array[$key]['price_id']    = isset($_POST['price_id'][$key]) ? preg_replace('/[^0-9]/', '', $_POST['price_id'][$key]) : null;
-    $price_array[$key]['price']       = isset($price) ? preg_replace('/[^0-9]/', '', $price) : 0;
-    $price_array[$key]['apply_date']  = isset($_POST['price_apply_date'][$key]) ? clean_xss_tags($_POST['price_apply_date'][$key], 1, 1) : '';
+    if (!empty($price)) {
+        $price_array[$key]['price_id']    = isset($_POST['price_id'][$key]) ? preg_replace('/[^0-9]/', '', $_POST['price_id'][$key]) : null;
+        $price_array[$key]['price']       = isset($price) ? preg_replace('/[^0-9]/', '', $price) : 0;
+        $price_array[$key]['apply_date']  = isset($_POST['price_apply_date'][$key]) ? clean_xss_tags($_POST['price_apply_date'][$key], 1, 1) : '';
+    }
 }
 sort($price_array);
 
 /* 결제주기 */
 $date_array = array();
 foreach($_POST['recurring_count'] as $key => $count) {
-    $date_array[$key]['date_id']          = isset($_POST['date_id'][$key]) ? preg_replace('/[^0-9]/', '', $_POST['date_id'][$key]) : null;
-    $date_array[$key]['recurring_count']  = isset($count) ? preg_replace('/[^0-9]/', '',  $count) : 0;
-    $date_array[$key]['recurring_unit']   = isset($_POST['recurring_unit'][$key]) ? clean_xss_tags($_POST['recurring_unit'][$key], 1, 1) : '';
-    $date_array[$key]['apply_date']       = isset($_POST['recurring_apply_date'][$key]) ? clean_xss_tags($_POST['recurring_apply_date'][$key], 1, 1) : '';
+    if (!empty($count)) {
+        $date_array[$key]['date_id']          = isset($_POST['date_id'][$key]) ? preg_replace('/[^0-9]/', '', $_POST['date_id'][$key]) : null;
+        $date_array[$key]['recurring_count']  = isset($count) ? preg_replace('/[^0-9]/', '',  $count) : 0;
+        $date_array[$key]['recurring_unit']   = isset($_POST['recurring_unit'][$key]) ? clean_xss_tags($_POST['recurring_unit'][$key], 1, 1) : '';
+        $date_array[$key]['apply_date']       = isset($_POST['recurring_apply_date'][$key]) ? clean_xss_tags($_POST['recurring_apply_date'][$key], 1, 1) : '';
+    }
 }
 /* 이미지 (추가예정) */ 
 // $bn_bimg_name = isset($_FILES['bn_bimg']['name']) ? $_FILES['bn_bimg']['name'] : '';
