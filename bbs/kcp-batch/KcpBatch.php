@@ -129,10 +129,10 @@ class KcpBatch
     private function serializeCertification($path)
     {
         $certFile = file_get_contents($path);
-        if($certFile === false){
-           return false ;
+        if ($certFile === false) {
+            return false;
         }
-        return (string)str_replace("\n", '', $certFile);
+        return str_replace(array('\n', '\r', '\r\n', '\n\r'), '', $certFile);
     }
 
     /**
