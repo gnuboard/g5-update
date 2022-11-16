@@ -185,6 +185,30 @@ class KcpBatch
     }
 
     /**
+     * 자동결제 거래 부분 취소
+     * @param string $tno KCP 거래번호
+     * @param int $modMoney 부분취소할 금액
+     * @param int $remainMoney 남은 거래금액
+     * @param string $modDesc 취소사유
+     * @return array|string 취소응답 파라미터
+     */
+    public function partitalCancelBatchPayment($tno, $modMoney, $remainMoney, $modDesc)
+    {
+        $data = array(
+            'site_cd'       => $this->getSiteCd(),
+            'kcp_cert_info' => $this->getServiceCertification(),
+            'kcp_sign_data' => $this->createKcpSignData($tno),
+            'tno'           => $tno,
+            'mod_type'      => 'STPC',
+            'mod_mny'       => $modMoney,
+            'rem_mny'       => $remainMoney,
+            'mod_desc'      => $modDesc
+        );
+
+        return $this->requestApi($this->urlBatchCancel, $data);
+    }
+
+    /**
      * API 요청
      * @param array $data   배치 키 요청데이터
      * @return string | array
