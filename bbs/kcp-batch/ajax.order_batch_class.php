@@ -17,15 +17,12 @@ $site_cd            = $kcpBatch->getSiteCd();
 $bt_batch_key      = isset($_POST['bt_batch_key']) ? $bt_batch_key : '';  // 배치키 정보
 $bt_group_id       = $kcpBatch->getKcpGroupId();  // 배치키 그룹아이디
 $currency          = isset($_POST['currency']) ? $_POST['currency'] : WON;  // 화폐단위
-$amount            = isset($_POST['amount']) ? $amount : null;        // 결제금액 0원을 피하기 위해 null
-$ordr_idxx         = isset($_POST['ordr_idxx']) ? $ordr_idxx : '';  // 주문 정보
+$amount            = isset($_POST['amount']) ? $amount : null;       // 결제금액 0원을 피하기 위해 null
+$od_id             = isset($_POST['od_id']) ? $_POST['od_id'] : '';  // 주문 정보
+$service_id        = empty($service_id) ?  $service_id : '';  // 구독 서비스 ID
 
-if(empty($bt_batch_key) || empty($recurring_count) || !isset($_POST['site_cd']) || empty($amount) || empty($ordr_idxx)){
+if(empty($bt_batch_key) || empty($recurring_count) || empty($amount) || empty($od_id) || $service_id === ''){
     responseJson('필수 파라미터가 없습니다.', 400);
-}
-
-if($site_cd !== trim($_POST['site_cd'])){
-    responseJson('파라미터가 유효하지 않습니다.', 400);
 }
 
 /**
@@ -57,7 +54,7 @@ $data = array(
     'card_mny' => $good_mny,
     'currency' => $currency,
     'quota' => '00',
-    'ordr_idxx' => $ordr_idxx,
+    'ordr_idxx' => $od_id,
     'good_name' => $good_name,
     'buyr_name' => $buyr_name,
     'buyr_mail' => $buyr_mail,
@@ -127,7 +124,7 @@ if ( $res_cd === '0000')
 $start_date = date('Y-m-d H:i:s');
 $end_date = '0000-00-00 00:00:00'; //0 은 구독 만료기간이 정해지지않음.
 
-$g5['batch_info_table'] = 'g5_batch_info';
+$g5['batch_info_table'] = G5_TABLE_PREFIX . 'batch_info';
 $sql_batch_info = "INSERT INTO {$g5['batch_info_table']} SET 
                 od_id               = '{$od_id}',
                 mb_id               = '{$member['mb_id']}',
@@ -147,7 +144,7 @@ if(!$result || affectedRowCounter() !== 1) {
 
 
 // 자동결제 이력 저장
-$g5['batch_payment_table'] = 'g5_batch_payment';
+$g5['batch_payment_table'] = G5_TABLE_PREFIX . 'batch_payment';
 $sql_payment = "INSERT INTO {$g5['batch_payment_table']} SET 
                 od_id               = '{$od_id}',
                 mb_id               = '{$member['mb_id']}',
@@ -158,7 +155,7 @@ $sql_payment = "INSERT INTO {$g5['batch_payment_table']} SET
                 tno                 = '{$tno}',
                 card_name           = '{$card_name}',
                 res_data            = '{$res_data}',
-                date                = '{$start_date}'
+                next_payment_date   = '{$start_date}'
             ";
 
 $result = sql_query($sql_payment);
