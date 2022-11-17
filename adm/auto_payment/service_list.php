@@ -14,7 +14,7 @@ $g5Mysqli = new G5Mysqli();
 
 $unit_array     = array('y' => '년', 'm' => '개월', 'w' => '주', 'd' => '일');
 $search_list    = array('service_name', 'bo_subject');
-$orderby_list   = array('service_id', 'service_namea', 'price', 'service_order', 'service_use');
+$orderby_list   = array('service_id', 'service_name', 'price', 'service_order', 'service_use', 'bs.bo_table');
 $direction_list = array('desc', 'asc');
 $service_list   = array();
 
@@ -24,9 +24,9 @@ $save_stx   = !empty($save_stx) ? clean_xss_tags($save_stx) : '';
 $sst        = !empty($sst) ? clean_xss_tags($sst) : 'service_id';
 $sod        = !empty($sod) ? clean_xss_tags($sod) : 'desc';
 
-$search     = $g5Mysqli->whiteList($sfl, $search_list, 'Invalid field name');
-$orderby    = $g5Mysqli->whiteList($sst, $orderby_list, 'Invalid field name');
-$direction  = $g5Mysqli->whiteList($sod, $direction_list, 'Invalid ORDER BY direction');
+$search     = $g5Mysqli->whiteList($sfl, $search_list, 'Invalid where field name');
+$orderby    = $g5Mysqli->whiteList($sst, $orderby_list, 'Invalid order by field name');
+$direction  = $g5Mysqli->whiteList($sod, $direction_list, 'Invalid order by direction');
 
 $sql_common = '';
 $sql_search = '';
@@ -175,7 +175,6 @@ $qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
                         </td>
                         <td rowspan="2" class="td_mng td_mng_s">
                             <a href="./service_form.php?w=u&amp;service_id=<?php echo $service['service_id']; ?>&amp;<?php echo $qstr; ?>" class="btn btn_03"><span class="sound_only"><?php echo htmlspecialchars2(cut_str($service['service_name'], 250, "")); ?> </span>수정</a>
-                            <a href="./service_copy.php?it_id=<?php echo $service['service_id']; ?>" class="itemcopy btn btn_02" target="_blank"><span class="sound_only"><?php echo htmlspecialchars2(cut_str($service['service_name'], 250, "")); ?> </span>복사</a>
                         </td>
                     </tr>
                     <tr class="td_mng_l <?php echo $service['bg_class']; ?>">
