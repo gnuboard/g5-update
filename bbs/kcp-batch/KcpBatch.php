@@ -45,6 +45,11 @@ class KcpBatch
     public $urlBatchCancel = 'https://spl.kcp.co.kr/gw/mod/v1/cancel'; // 운영서버
 
     /**
+     * @var string 모바일에 쓰이는 거래등록 URL
+     */
+    public $urlTradeRegister = 'https://spl.kcp.co.kr/std/tradeReg/register';
+
+    /**
      * @var string
      */
     private $kcpGroupId;
@@ -60,6 +65,7 @@ class KcpBatch
             $this->urlBatchPayment = 'https://stg-spl.kcp.co.kr/gw/hub/v1/payment';
             $this->urlBatchCancel = 'https://stg-spl.kcp.co.kr/gw/mod/v1/cancel';
             $this->urlDeleteBatchKey = 'https://stg-spl.kcp.co.kr/gw/hub/v1/payment';
+            $this->urlTradeRegister = 'https://stg-spl.kcp.co.kr/std/tradeReg/register';
         }
     }
 
@@ -227,6 +233,33 @@ class KcpBatch
         );
 
         return $this->requestApi($this->urlDeleteBatchKey, $data);
+    }
+
+
+    /**
+     * @param string $od_id
+     * @param string $amount
+     * @param string $goodName 상품명
+     * @param string $returnUrl 응답결과 받을 url
+     * @param string $useEscw  에스크로 사용여부 Y, N
+     * @param string $userAgent 필수아님
+     * @return array|string
+     */
+    public function tradeRegister($od_id, $amount, $goodName, $returnUrl, $useEscw, $userAgent = '')
+    {
+        $data = array(
+            'ordr_idxx'     => $od_id,
+            "site_cd"       => $this->getSiteCd(),
+            'kcp_cert_info' => $this->getServiceCertification(),
+            'good_mny'      => $amount,
+            'pay_method'    => 'AUTH', // 결제수단 (고정)
+            'good_name'     => $goodName,
+            'Ret_URL'       => $returnUrl,
+            'escw_used'     => $useEscw, // 에스크로 사용여부 Y, N
+            'user_agent'    => $userAgent
+        );
+
+        return $this->requestApi($this->urlTradeRegister, $data);
     }
 
     /**
