@@ -1,0 +1,178 @@
+<?php
+/**
+ * 자동결제(빌링) 공통 Class
+ * - 생성자에서 입력받은 PG사의 Class를 선언한다.
+ * - 각각 PG Class는 BillingInterface를 사용해서 구현한다.
+ */
+class Billing
+{
+    /**
+     * @var instance $pg        PG사 Instance
+     */
+    public $pg = null;
+
+    /**
+     * @var \G5Mysqli $mysqli
+     */
+    public $mysqli = null;
+
+    /**
+     * 각 PG사 Class Name : 'G5Billing' + $pgCode
+     * @param string $pgCode    자동결제 PG사 ('kcp', 'toss')
+     */
+    public function __construct($pgCode)
+    {
+        $this->mysqli = new G5Mysqli();
+
+        try {
+            if (!$pgCode) {
+                throw new LogicException("PG사 Code값이 없습니다.");
+            }
+
+            $className = 'G5Billing' . ucfirst(strtolower($pgCode));
+            if (class_exists($className, false)) {
+                $this->setPg(new $className());
+            } else {
+                throw new LogicException("PG사 자동결제 Class를 찾을 수 없습니다 : {$className}");
+            }
+        } catch (LogicException $e) {
+            echo $e->getMessage();
+            exit;
+        }
+    }
+
+    /**
+     * 빌링 키 발급 이력 저장
+     */
+    public function insertIssueBillKeyLog($mb_id, $data = array())
+    {
+        global $g5;
+
+        // 입력 데이터 재 선언
+        $bind_param = array(
+            $mb_id,
+            $data['result_code'],
+            $data['ressult_msg'],
+            $data['card_code'],
+            $data['card_name'],
+            $data['bill_key']
+        );
+        $sql = "INSERT INTO {$g5["kcp_batch_key_log_table"]} SET 
+                    mb_id       = ?,
+                    res_cd      = ?,
+                    res_msg     = ?,
+                    card_cd     = ?,
+                    card_name   = ?,
+                    batch_key   = ?,
+                    date        = now()";
+        return $this->mysqli->execSQL($sql, $bind_param, true);
+    }
+
+    /**
+     * 빌링 키 정보 업데이트
+     */
+    public function updateBillKey($od_id, $billKey)
+    {
+        global $g5;
+
+        $sql = "UPDATE {$g5['batch_info_table']} SET
+                    batch_key = ? 
+                WHERE od_id = ?";
+        $this->mysqli->execSQL($sql, array($billKey, $od_id), true);
+    }
+
+    /**
+     * 자동결제(빌링) 정보 저장
+     */
+    public function insertBillingInfo($data = array()) {
+
+    }
+
+    /**
+     * 자동결제(빌링) 이력 저장
+     */
+    public function insertBillingLog($mb_id, $payment_info, $data = array()) {
+
+        global $g5;
+
+        // 입력 데이터 재 선언        
+        $bindParam = array(
+            $data['od_id'],
+            $mb_id,
+            $payment_info['batch_key'],
+            $payment_info['payment_count'],
+            $payment_info['amount'],
+            $data['result_code'],
+            $data['result_msg'],
+            $data['billing_no'],
+            $data['card_name'],
+            json_encode($data)
+        );
+        // 자동결제 이력 저장
+        $sql = "INSERT INTO {$g5['batch_payment_table']} SET 
+                    od_id           = ?,
+                    mb_id           = ?,
+                    batch_key       = ?,
+                    payment_count   = ?,
+                    amount          = ?,
+                    res_cd          = ?,
+                    res_msg         = ?,
+                    tno             = ?,
+                    card_name       = ?,
+                    res_data        = ?,
+                    date            = now()";
+        return $this->mysqli->execSQL($sql, $bindParam, true);
+    }
+
+    /**
+     * 자동결제(빌링) 환불 이력 저장
+     */
+    public function insertBillingRefund($data = array()) {
+
+    }
+
+    /**
+     * PG사 요청 결과 데이터 명 -> 공용 데이터 명 변환
+     */
+    public function convertPgDataToCommonData($pgData = array())
+    {
+        $convert = $this->pg->convert;
+
+        foreach ($pgData as $key => $val) {
+            if (isset($convert[$key])) {
+                unset($pgData[$key]);
+                $pgData[$convert[$key]] = $val;
+            }
+        }
+
+        return $pgData;
+    }
+
+    /**
+     * 빌링 키 *표 처리
+     */
+    public function displayBillKey($billKey, $offset = 4, $repeat_time = 8)
+    {
+        return substr_replace($billKey, str_repeat('*', $repeat_time), $offset, $repeat_time);
+    }
+
+    /**
+     * Get the value of pg
+     */ 
+    public function getPg()
+    {
+        return $this->pg;
+    }
+
+    /**
+     * Set the value of pg
+     *
+     * @return  self
+     */ 
+    public function setPg($pg)
+    {
+        $this->pg = $pg;
+
+        return $this;
+    }
+}

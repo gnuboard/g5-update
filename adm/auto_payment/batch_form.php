@@ -395,13 +395,13 @@ $(function() {
                         console.log(data);
                         // Set Data
                         let result = JSON.parse(data);
-                        if (result.res_cd == "0000") {
+                        if (result.result_code == "0000") {
                             // 성공
-                            alert(result.res_msg);
+                            alert(result.result_msg);
                             location.reload();
                         } else {
                             // 실패
-                            alert("[" + result.res_cd + "]" + result.res_msg);
+                            alert("[" + result.result_code + "]" + result.result_msg);
                         }
                     } else {
                         alert("잠시 후에 시도해주세요.");
