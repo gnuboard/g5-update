@@ -35,6 +35,11 @@ class KcpBatch
     public $urlBatchPayment = 'https://spl.kcp.co.kr/gw/hub/v1/payment'; //운영서버
 
     /**
+     * @var string 배치키 삭제 URL
+     */
+    private $urlDeleteBatchKey = 'https://spl.kcp.co.kr/gw/hub/v1/payment';
+
+    /**
      * @var string 결제취소 요청 API Reqeust URL
      */
     public $urlBatchCancel = 'https://spl.kcp.co.kr/gw/mod/v1/cancel'; // 운영서버
@@ -54,6 +59,7 @@ class KcpBatch
             $this->urlGetBatchKey = 'https://stg-spl.kcp.co.kr/gw/enc/v1/payment';
             $this->urlBatchPayment = 'https://stg-spl.kcp.co.kr/gw/hub/v1/payment';
             $this->urlBatchCancel = 'https://stg-spl.kcp.co.kr/gw/mod/v1/cancel';
+            $this->urlDeleteBatchKey = 'https://stg-spl.kcp.co.kr/gw/hub/v1/payment';
         }
     }
 
@@ -206,6 +212,21 @@ class KcpBatch
         );
 
         return $this->requestApi($this->urlBatchCancel, $data);
+    }
+
+    public function deleteBatchKey($batch_key)
+    {
+        $data = array(
+            "site_cd"        => $this->getSiteCd(),
+            "site_key" 	     => '',
+            "kcp_cert_info"  => $this->getServiceCertification(),
+            "pay_method"     => 'BATCH',
+            "batch_key"      => $batch_key, // 결제수단 (고정)
+            "group_id"       => $this->getKcpGroupId(),
+            "tx_type"        => '10005010' // 거래요청타입(고정)
+        );
+
+        return $this->requestApi($this->urlDeleteBatchKey, $data);
     }
 
     /**
