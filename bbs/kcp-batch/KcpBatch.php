@@ -138,7 +138,7 @@ class KcpBatch
         if ($certFile === false) {
             return false;
         }
-        return str_replace(array('\n', '\r', '\r\n', '\n\r'), '', $certFile);
+        return preg_replace('/\R/', '', $certFile);
     }
 
     /**
