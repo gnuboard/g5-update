@@ -118,6 +118,7 @@ class Billing
             $resultData['billing_no'],
             $resultData['card_name'],
             json_encode($resultData),
+            $paymentInfo['payment_date'],
             $paymentInfo['expiration_date']
         );
         // 자동결제 이력 저장
@@ -132,9 +133,25 @@ class Billing
                     tno             = ?,
                     card_name       = ?,
                     res_data        = ?,
-                    payment_date    = now(),
+                    payment_date    = ?,
                     expiration_date = ?";
         return $this->mysqli->execSQL($sql, $bindParam, true);
+    }
+
+    /**
+     * 다음 결제 예정일 업데이트
+     * @param string $orderId   주문번호
+     * @param string $date      결제 예정일
+     * @param int
+     */
+    public function updateNextPaymentDate($orderId, $date)
+    {
+        global $g5;
+
+        $sql = "UPDATE {$g5['batch_info_table']} SET
+                    next_payment_date = ?
+                WHERE od_id = ?";
+        return $this->mysqli->execSQL($sql, array($date, $orderId), true);
     }
 
     /**

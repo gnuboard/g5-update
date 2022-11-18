@@ -11,24 +11,27 @@ require_once G5_PATH . '/bbs/kcp-batch/G5BillingToss.php';
 $billing = new Billing('kcp');
 $g5Mysqli = new G5Mysqli();
 
+$unit_array = array('y' => 'year', 'm' => 'month', 'w' => 'week', 'd' => 'day');
 /* ============================================================================== */
 /* =  결제 요청정보 준비                                                         = */
 /* = -------------------------------------------------------------------------- = */
+$od_id      = clean_xss_tags($_POST['ordr_idxx']);
+$payment_id = clean_xss_tags($_POST['id']);
 
 /** 결제정보 / 구독정보 조회 */
 $sql = "SELECT od_id, amount, batch_key, payment_count FROM {$g5['batch_payment_table']} WHERE id = ? AND od_id = ?";
-$payment_info = $g5Mysqli->getOne($sql, array($_POST['id'], $_POST['ordr_idxx']));
+$payment_info = $g5Mysqli->getOne($sql, array($payment_id, $od_id));
 if (!$payment_info) {
     responseJson('이전 결제정보를 찾을 수 없습니다.', 400);
 }
 $sql = "SELECT 
-            bs.service_name,
+            bs.service_name, bs.recurring_count, bs.recurring_unit,
             mb.mb_name, mb.mb_email, mb.mb_tel
         FROM {$g5['batch_info_table']} bi 
         LEFT JOIN {$g5['batch_service_table']} bs on bi.service_id = bs.service_id
         LEFT JOIN {$g5['member_table']} mb on bi.mb_id = mb.mb_id
         WHERE od_id = ?";
-$service_info = $g5Mysqli->getOne($sql, array($_POST['ordr_idxx']));
+$service_info = $g5Mysqli->getOne($sql, array($od_id));
 if (!$service_info) {
     responseJson('구독정보를 찾을 수 없습니다.', 400);
 }
@@ -61,11 +64,18 @@ if (isset($json_res['http_code'])) {
 /* ============================================================================== */
 /* =  결제 결과처리                                                              = */
 /* ============================================================================== */
-/** @todo expiration_date 계산 */
-$payment_info['expiration_date'] = '';
+// 결제일, 구독만료일
+$payment_info['payment_date']       = date('Y-m-d');
+$payment_info['expiration_date']    = date('Y-m-d', strtotime('+' . $service_info['recurring_count'] . " " . $unit_array[$service_info['recurring_unit']]));
+
 $result = $billing->insertBillingLog($member['mb_id'], $payment_info, $json_res);
 if ($result <= 0) {
     $bSucc = false;
+} else {
+    $result = $billing->updateNextPaymentDate($od_id, $payment_info['expiration_date']);
+    if ($result <= 0) {
+        $bSucc = false;
+    }
 }
 /*
 ==========================================================================
