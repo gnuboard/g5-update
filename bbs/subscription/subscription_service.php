@@ -1,7 +1,7 @@
 <?php
 
-require_once(dirname(__FILE__, 3) . '/common.php');
-//require_once(dirname(__FILE__, 1) . '/kcp-batch/G5Mysqli.php');
+require_once(dirname(__FILE__) . '../../../common.php');
+//require_once(dirname(__FILE__) . '/kcp-batch/G5Mysqli.php');
 
 
 /**
@@ -102,6 +102,7 @@ function showServiceList($pageNo, $pagePerCount)
 }
 
 /**
+ * 게시판, url 등 진입 시 권한 체크
  * @param $service_id
  * @return bool
  */
