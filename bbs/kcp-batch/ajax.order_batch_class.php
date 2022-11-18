@@ -19,7 +19,7 @@ $bt_group_id       = $kcpBatch->getKcpGroupId();  // 배치키 그룹아이디
 $currency          = isset($_POST['currency']) ? $_POST['currency'] : WON;  // 화폐단위
 $amount            = isset($_POST['amount']) ? $amount : null;       // 결제금액 0원을 피하기 위해 null
 $od_id             = isset($_POST['od_id']) ? $_POST['od_id'] : '';  // 주문 정보
-$service_id        = empty($service_id) ?  $service_id : '';  // 구독 서비스 ID
+$service_id        = isset($service_id) ?  $service_id : '';  // 구독 서비스 ID
 
 if(empty($bt_batch_key) || empty($recurring_count) || empty($amount) || empty($od_id) || $service_id === ''){
     responseJson('필수 파라미터가 없습니다.', 400);
