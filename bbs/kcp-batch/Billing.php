@@ -18,7 +18,8 @@ class Billing
 
     /**
      * 각 PG사 Class Name : 'G5Billing' + $pgCode
-     * @param string $pgCode    자동결제 PG사 ('kcp', 'toss')
+     * - Ex : G5BillingKcp (KCP) / G5BillingToss (Toss)
+     * @param string $pgCode    자동결제 PG사 ('kcp')
      */
     public function __construct($pgCode)
     {
@@ -43,19 +44,22 @@ class Billing
 
     /**
      * 빌링 키 발급 이력 저장
+     * @param string $mb_id     빌링 키 발급된 회원ID
+     * @param array $resultData 빌링 키 발급 요청 API 결과데이터
+     * @return int
      */
-    public function insertIssueBillKeyLog($mb_id, $data = array())
+    public function insertIssueBillKeyLog($memberId, $resultData = array())
     {
         global $g5;
 
-        // 입력 데이터 재 선언
+        // 입력 데이터 재 선언 (순서)
         $bind_param = array(
-            $mb_id,
-            $data['result_code'],
-            $data['ressult_msg'],
-            $data['card_code'],
-            $data['card_name'],
-            $data['bill_key']
+            $memberId,
+            $resultData['result_code'],
+            $resultData['result_msg'],
+            $resultData['card_code'],
+            $resultData['card_name'],
+            $resultData['bill_key']
         );
         $sql = "INSERT INTO {$g5["kcp_batch_key_log_table"]} SET 
                     mb_id       = ?,
@@ -70,15 +74,18 @@ class Billing
 
     /**
      * 빌링 키 정보 업데이트
+     * @param string $orderId   주문번호
+     * @param string $billKey   자동결제(빌링) 키
+     * @return int
      */
-    public function updateBillKey($od_id, $billKey)
+    public function updateBillKey($orderId, $billKey)
     {
         global $g5;
 
         $sql = "UPDATE {$g5['batch_info_table']} SET
                     batch_key = ? 
                 WHERE od_id = ?";
-        $this->mysqli->execSQL($sql, array($billKey, $od_id), true);
+        return $this->mysqli->execSQL($sql, array($billKey, $orderId), true);
     }
 
     /**
@@ -90,24 +97,28 @@ class Billing
 
     /**
      * 자동결제(빌링) 이력 저장
+     * @param string $memberId      회원ID
+     * @param array $paymenInfo     자동결제 정보
+     * @param array $resultData     자동결제 승인 요청 API 결과데이터
+     * @return int
      */
-    public function insertBillingLog($mb_id, $payment_info, $data = array()) {
+    public function insertBillingLog($memberId, $paymentInfo, $resultData = array()) {
 
         global $g5;
 
         // 입력 데이터 재 선언        
         $bindParam = array(
-            $data['od_id'],
-            $mb_id,
-            $payment_info['batch_key'],
-            $payment_info['payment_count'],
-            $payment_info['amount'],
-            $data['result_code'],
-            $data['result_msg'],
-            $data['billing_no'],
-            $data['card_name'],
-            json_encode($data),
-            $payment_info['expiration_date']
+            $resultData['od_id'],
+            $memberId,
+            $paymentInfo['batch_key'],
+            $paymentInfo['payment_count'],
+            $paymentInfo['amount'],
+            $resultData['result_code'],
+            $resultData['result_msg'],
+            $resultData['billing_no'],
+            $resultData['card_name'],
+            json_encode($resultData),
+            $paymentInfo['expiration_date']
         );
         // 자동결제 이력 저장
         $sql = "INSERT INTO {$g5['batch_payment_table']} SET 
@@ -134,7 +145,10 @@ class Billing
     }
 
     /**
-     * PG사 요청 결과 데이터 명 -> 공용 데이터 명 변환
+     * PG사 요청 결과 데이터 이름 -> 공용 데이터 명 변환
+     * - 각 PG Class의 convert 배열을 사용하여 변환한다.
+     * @param array $pgData     변환할 이름 배열 (KCP변수(Key) => 공통변수(Value))
+     * @return array
      */
     public function convertPgDataToCommonData($pgData = array())
     {
@@ -151,11 +165,16 @@ class Billing
     }
 
     /**
-     * 빌링 키 *표 처리
+     * 빌링 키 문자열 숨김표시
+     * @param string $billKey       빌링 키
+     * @param string $replacement   대체할 문자
+     * @param string $offset        변환 시작위치
+     * @param string $repeat        반복 횟수
+     * @return string 
      */
-    public function displayBillKey($billKey, $offset = 4, $repeat_time = 8)
+    public function displayBillKey($billKey, $replacement = '*', $offset = 4, $repeat = 8)
     {
-        return substr_replace($billKey, str_repeat('*', $repeat_time), $offset, $repeat_time);
+        return substr_replace($billKey, str_repeat($replacement, $repeat), $offset, $repeat);
     }
 
     /**

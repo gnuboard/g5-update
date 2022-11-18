@@ -46,6 +46,8 @@ class G5BillingKcp implements BillingInterface
 
     /**
      * @var array  KCP변수 & 공통변수 배열
+     * - Key : KCP 요청결과 변수명
+     * - Value : 공용 변수명
      */
     public $convert = array(
         'res_cd'    => 'result_code',
@@ -196,8 +198,9 @@ class G5BillingKcp implements BillingInterface
 
     /**
      * API 요청
-     * @param array $data   배치 키 요청데이터
-     * @return string | array
+     * @param string $url       API Request url
+     * @param array $data       API Request Data
+     * @return mixed
      */
     public function requestApi($url, $data)
     {
@@ -230,6 +233,8 @@ class G5BillingKcp implements BillingInterface
 
     /**
      * 빌링 키 발급 요청
+     * @param array $data   Request Data
+     * @return mixed
      */
     public function requestIssueBillKey($data = array())
     {
@@ -247,6 +252,8 @@ class G5BillingKcp implements BillingInterface
 
     /**
      * 자동결제(빌링) 승인 요청
+     * @param array $data   Request Data
+     * @return mixed
      */
     public function requestBilling($data = array())
     {
@@ -276,7 +283,7 @@ class G5BillingKcp implements BillingInterface
      * 자동결제(빌링) 승인취소 요청
      * @param string $no            PG사 거래번호
      * @param string $cancelReason  취소사유
-     * @return array|string
+     * @return mixed
      */
     public function requestCancelBilling($no, $cancelReason = '가맹점 DB 처리 실패(자동취소)')
     {
