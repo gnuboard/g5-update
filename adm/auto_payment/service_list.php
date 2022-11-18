@@ -60,11 +60,7 @@ $from_record    = ($page - 1) * $rows;                  // 시작 열
 $sql  = "SELECT
             bs.*,
             b.bo_subject,
-            (SELECT 
-                CONCAT(recurring_count, recurring_unit) FROM {$g5['batch_service_date_table']} sd
-            WHERE bs.service_id = sd.service_id 
-                AND sd.apply_date <= NOW()
-            ORDER BY apply_date DESC LIMIT 1) AS recurring,
+            CONCAT(recurring_count, recurring_unit) AS recurring,
 	        (SELECT 
                 price
             FROM {$g5['batch_service_price_table']} sd

@@ -106,7 +106,8 @@ class Billing
             $data['result_msg'],
             $data['billing_no'],
             $data['card_name'],
-            json_encode($data)
+            json_encode($data),
+            $payment_info['expiration_date']
         );
         // 자동결제 이력 저장
         $sql = "INSERT INTO {$g5['batch_payment_table']} SET 
@@ -120,7 +121,8 @@ class Billing
                     tno             = ?,
                     card_name       = ?,
                     res_data        = ?,
-                    date            = now()";
+                    payment_date    = now(),
+                    expiration_date = ?";
         return $this->mysqli->execSQL($sql, $bindParam, true);
     }
 

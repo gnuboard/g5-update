@@ -246,21 +246,6 @@ class G5BillingKcp implements BillingInterface
     }
 
     /**
-     * 입력 데이터를 Prepared Statement Query에 맞게 재 선언
-     */
-    public function sortBillKeyLogData($data)
-    {
-        return array(
-            $data['mb_id'],
-            $data['res_cd'],
-            $data['res_msg'],
-            $data['card_cd'],
-            $data['card_name'],
-            $data['batch_key']
-        );
-    }
-
-    /**
      * 자동결제(빌링) 승인 요청
      */
     public function requestBilling($data = array())
@@ -285,25 +270,6 @@ class G5BillingKcp implements BillingInterface
         );
 
         return $this->requestApi($this->urlBatchPayment, $requestData);
-    }
-
-    /**
-     * 입력 데이터를 Prepared Statement Query에 맞게 재 선언
-     */
-    public function sortBillingLogData($data)
-    {
-        return array(
-            $data['od_id'],
-            $data['mb_id'],
-            $data['batch_key'],
-            $data['payment_count'],
-            $data['amount'],
-            $data['res_cd'],
-            $data['res_msg'],
-            $data['tno'],
-            $data['card_name'],
-            json_encode($data)
-        );
     }
 
     /**

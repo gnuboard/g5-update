@@ -16,7 +16,6 @@ $board_list     = array();
 $service_id     = isset($_GET['service_id']) ? $_GET['service_id'] : 0;
 $service        = array();
 $price_count    = 0;
-$date_count     = 0;
 
 if ($w == '') {
     $html_title .= '입력';
@@ -32,11 +31,6 @@ if ($w == '') {
     $sql_price = "SELECT * FROM {$g5['batch_service_price_table']} WHERE service_id = ?";
     $service_price = $g5Mysqli->execSQL($sql_price, array($service_id));
     $price_count = count($service_price);
-
-    // 구독상품 결제 주기
-    $sql_date = "SELECT * FROM {$g5['batch_service_date_table']} WHERE service_id = ?";
-    $service_date = $g5Mysqli->execSQL($sql_date, array($service_id));
-    $date_count = count($service_date);
 } else {
     alert('올바르지 않은 접근입니다.');
 }
@@ -50,7 +44,7 @@ foreach ($res_board as $i => $row) {
 }
 
 // etc
-$unit_array = array('y' => '년', 'm' => '월', 'w' => '주', 'd' => '일');
+$unit_array = array('y' => '년', 'm' => '개월', 'w' => '주', 'd' => '일');
 $qstr = $qstr . '&amp;sca=' . $sca . '&amp;page=' . $page;
 $pg_anchor = '<ul class="anchor">
 <li><a href="#anc_form_board">게시판 설정</a></li>
@@ -186,30 +180,19 @@ include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="price">결제주기 <button type="button" id="create_date_row" class="btn_frmline">결제주기 추가</button></label></th>
-                        <td id="td_date">
-                            <?php echo help("결제주기가 변경되는 일자를 선택할 수 있습니다."); ?>
-                            <?php 
-                                foreach ($service_date as $key => $date) {
-                                    $row = $key + 1;
-                            ?>
-                            <div id="td_date_<?php echo $row ?>">
-                                <input type="hidden" name="date_id[<?php echo $row ?>]" value="<?php echo $date['date_id'] ?>">
-                                <input type="text" name="recurring_count[<?php echo $row ?>]" value="<?php echo $date['recurring_count']; ?>" class="frm_input" size="12">
-                                <select name="recurring_unit[<?php echo $row ?>]">
-                                <?php foreach($unit_array as $key1 => $val) { ?>
-                                    <option value="<?php echo $key1 ?>" <?php echo get_selected($key1, $date['recurring_unit']); ?>><?php echo $val ?></option>
+                        <th scope="row"><label for="price">결제주기</label></th>
+                        <td>
+                            <?php echo help("결제가 진행되는 주기를 설정할 수 있습니다."); ?>
+                            <div>
+                                <input type="text" name="recurring_count" value="<?php echo $service['recurring_count']; ?>" class="frm_input" size="12">
+                                <select name="recurring_unit">
+                                <?php foreach($unit_array as $key => $val) { ?>
+                                    <option value="<?php echo $key ?>" <?php echo get_selected($key, $service['recurring_unit']); ?>><?php echo $val ?></option>
                                 <?php } ?>
                                 </select>
-                                / 
-                                <input type="text" name="recurring_apply_date[<?php echo $row ?>]" id="recurring_apply_date_<?php echo $row ?>" value="<?php echo $date['apply_date']; ?>" class="frm_input date_format" size="20"> 적용
-                                <?php if ($date_count == $row) { ?>
-                                    <button type="button" name="remove_date_row" class="btn_frmline">삭제</button>
-                                <?php } ?>
+                                주기로 결제진행
                             </div>
-                            <?php } ?>
                         </td>
-                        
                     </tr>
                     <tr>
                         <th scope="row"><label for="price">구독만료 기간 설정</label></th>
@@ -247,9 +230,6 @@ $(function() {
     if (price_row == 0) {
         create_price_row();
     }
-    if (date_row == 0) {
-        create_date_row();
-    }
     set_datepicker();
 
     // 가격추가 버튼
@@ -262,17 +242,6 @@ $(function() {
     $(document).on("click", "button[name='remove_price_row']", function(){
         remote_price_row(this);
         add_remove_price_btn();
-    });
-    // 결제주기추가 버튼
-    $(document).on("click", "#create_date_row", function(){
-        create_date_row();
-        add_remove_date_btn();
-        set_datepicker();
-    });
-    // 결제주기삭제 버튼
-    $(document).on("click", "button[name='remove_date_row']", function(){
-        remote_date_row(this);
-        add_remove_date_btn();
     });
 
     $.datepicker.setDefaults({
@@ -308,41 +277,7 @@ function add_remove_price_btn()
         $("#td_price_" + price_row).append(' <button type="button" name="remove_price_row" class="btn_frmline">삭제</button>');
     }
 }
-function create_date_row()
-{
-    date_row += 1;
 
-    // 주기단위 selectbox
-    let unit_array  = JSON.parse('<?php echo json_encode($unit_array)?>');
-    let html_unit   = '';
-    html_unit += '<select name ="recurring_unit[' + date_row + ']">';
-    $.each(unit_array, function(key, val){
-        html_unit += '<option value="' + key + '">' + val + '</option>';
-    })
-    html_unit += '</select>';
-
-    // 입력 칸 추가
-    let html    = '';
-    html += '<div id="td_date_' + date_row + '">';
-    html += '<input type="text" name="recurring_count[' + date_row + ']" value="" class="frm_input" size="12">';
-    html += ' ' + html_unit + ' / ';
-    html += '<input type="text" name="recurring_apply_date[' + date_row + ']" value="" id="recurring_apply_date_' + date_row + '" class="frm_input date_format" size="20"> 적용 ';
-    html += '</div>';
-    
-    $("#td_date").append(html);
-}
-function remote_date_row(obj)
-{
-    date_row   -= 1;
-    $(obj).parent().remove();
-}
-function add_remove_date_btn()
-{
-    $("button[name='remove_date_row']").remove();
-    if (date_row > 1) {
-        $("#td_date_" + date_row).append(' <button type="button" name="remove_date_row" class="btn_frmline">삭제</button>');
-    }
-}
 function set_datepicker()
 {
     $('.date_format').datepicker();

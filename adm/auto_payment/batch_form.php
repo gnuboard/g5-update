@@ -3,11 +3,17 @@ $sub_menu = '400930';
 include_once './_common.php';
 require_once G5_PATH . '/bbs/kcp-batch/G5Mysqli.php';
 require_once G5_PATH . '/bbs/kcp-batch/KcpBatch.php';
+require_once G5_PATH . '/bbs/kcp-batch/Billing.php';
+require_once G5_PATH . '/bbs/kcp-batch/BillingInterface.php';
+require_once G5_PATH . '/bbs/kcp-batch/G5BillingKcp.php';
+require_once G5_PATH . '/bbs/kcp-batch/G5BillingToss.php';
 
 auth_check_menu($auth, $sub_menu, "w");
 
 $g5['title'] = "구독결제 수정";
 $g5Mysqli = new G5Mysqli();
+
+$billing = new Billing('kcp');
 
 $unit_array     = array("y" => "년", "m" => "개월", "w" => "주", "d" => "일");
 $od_id          = isset($_REQUEST['od_id']) ? safe_replace_regex($_REQUEST['od_id'], 'od_id') : '';
@@ -26,6 +32,7 @@ $batch_info['mb_side_view']         = get_sideview($batch_info['mb_id'], get_tex
 $batch_info['display_end_date']     = $batch_info['end_date'] != "0000-00-00 00:00:00" ? $batch_info['end_date'] : "없음";
 $batch_info['display_status']       = $batch_info['status'] == "1" ? "진행 중" : "종료";
 $batch_info['display_batch_key']    = substr_replace($batch_info['batch_key'], str_repeat('*', $repeat_time), $offset, $repeat_time); // 배치키 * 표시
+$batch_info['display_next_payment'] = date('Y-m-d', strtotime($batch_info['next_payment_date']));
 switch(strlen($batch_info['od_id'])) {
     case 16:
         $batch_info['display_od_id'] = substr($batch_info['od_id'] ,0 ,8) . '-' . substr($batch_info['od_id'], 8);
@@ -41,8 +48,8 @@ $service_id = $batch_info['service_id'];
 $sql = "SELECT
             bs.service_id, bs.bo_table, bs.service_name, bs.service_image, bs.service_url, bs.service_hook, bs.service_order, bs.service_use,
             IF(service_expiration != 0, CONCAT(bs.service_expiration, bs.service_expiration_unit), '') AS expiration,
+            CONCAT(recurring_count, recurring_unit) AS recurring,
             b.bo_subject,
-            (SELECT CONCAT(recurring_count, recurring_unit) FROM {$g5['batch_service_date_table']} sd WHERE bs.service_id = sd.service_id AND sd.apply_date <= NOW() ORDER BY apply_date DESC LIMIT 1) AS recurring,
 	        (SELECT price FROM {$g5['batch_service_price_table']} sd WHERE bs.service_id = sd.service_id AND sd.apply_date <= NOW() ORDER BY apply_date DESC LIMIT 1) AS price
         FROM {$g5['batch_service_table']} bs LEFT JOIN g5_board b ON bs.bo_table = b.bo_table
         WHERE bs.service_id = ?";
@@ -66,27 +73,14 @@ if (isset($price_schedule)) {
     $price_schedule['display_apply_date'] = date('Y-m-d', strtotime($price_schedule['apply_date'])) . " 반영";
 }
 
-// 변경예정 결제주기 최근 1건 조회
-$date_schedule  = array();
-$sql_date_schedule = "SELECT 
-                            CONCAT(recurring_count, recurring_unit) AS recurring,
-                            apply_date
-                        FROM {$g5['batch_service_date_table']} 
-                        WHERE service_id = ?
-                            AND apply_date > now() 
-                        ORDER BY apply_date ASC
-                        LIMIT 1";
-$date_schedule = $g5Mysqli->getOne($sql_date_schedule, array($service_id));
-if (isset($date_schedule)) {
-    $date_schedule['recurring'] = strtr($date_schedule['recurring'], $unit_array);
-    $date_schedule['display_apply_date'] = date('Y-m-d', strtotime($date_schedule['apply_date']))  . " 반영";
-}
-
 // 결제내역 조회
 $total_amount = 0;
 $payment_list = array();
 $payment_success = array();
-$sql = "SELECT * FROM {$g5['batch_payment_table']} WHERE od_id = ? ORDER BY payment_count DESC, date DESC";
+$sql = "SELECT 
+            *,
+            CONCAT(DATE_FORMAT(payment_date, '%Y-%m-%d'), ' ~ ', DATE_FORMAT(expiration_date, '%Y-%m-%d')) AS period
+        FROM {$g5['batch_payment_table']} WHERE od_id = ? ORDER BY payment_count DESC, payment_date DESC";
 $result = $g5Mysqli->execSQL($sql, array($od_id));
 foreach ($result as $i => $row) {
     $count = $row['payment_count'];
@@ -95,6 +89,7 @@ foreach ($result as $i => $row) {
     $payment_list[$i]['display_amount']         = number_format($row['amount']) . "원";
     $payment_list[$i]['display_res_cd']         = ($row['res_cd'] == "0000" ? "성공" : "실패");
     $payment_list[$i]['display_res_cd_color']   = ($row['res_cd'] == "0000" ? "#53C14B" : "#FF0000");
+    $payment_list[$i]['display_period']         = ($row['res_cd'] == "0000" ? $row['period'] : '');
     $payment_list[$i]['display_batch_key']      = substr_replace($row['batch_key'], str_repeat('*', $repeat_time), $offset, $repeat_time); // 배치키 * 표시
     $payment_list[$i]['is_btn_refund']          = false;
 
@@ -153,7 +148,7 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
                                 </td>
                                 <th scope="row"><label for="od_refund_price">다음 결제 예정일</label></th>
                                 <td>
-                                    -
+                                    <?php echo $batch_info['display_next_payment'] ?>
                                 </td>
                             </tr>
                             <tr>
@@ -212,15 +207,7 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
                             </tr>
                             <tr>
                                 <th>결제주기</th>
-                                <td <?php echo empty($date_schedule) ? "colspan='3'" : ""?>><?php echo $service['display_recurring'] ?></td>
-                                <?php if (isset($date_schedule)) { ?>
-                                <th>
-                                    변경예정 결제주기
-                                    <br>
-                                    (<?php echo $date_schedule['display_apply_date']?>)
-                                </th>
-                                <td><?php echo $date_schedule['recurring'] ?></td>
-                                <?php } ?>
+                                <td colspan='3'><?php echo $service['display_recurring'] ?></td>
                             </tr>
                         </tbody>
                     </table>
@@ -258,7 +245,10 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
             <tbody>
             <?php foreach ($payment_list as $payment) { ?>
                 <tr>
-                    <td><?php echo $payment['display_payment_count'] ?></td>
+                    <td class="td_mng_l" >
+                        <div><?php echo $payment['display_payment_count'] ?></div>
+                        <div><?php echo $payment['display_period'] ?></div>
+                    </td>
                     <td><?php echo $payment['display_amount'] ?></td>
                     <td><?php echo $payment['tno'] ?></td>
                     <td><?php echo $payment['display_batch_key'] ?></td>
@@ -267,7 +257,9 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
                         <strong><?php echo $payment['display_res_cd'] ?></strong>
                     </td>
                     <td><?php echo $payment['res_msg'] ?></td>
-                    <td><?php echo $payment['date'] ?></td>
+                    <td class="td_mng_l">
+                        <?php echo $payment['payment_date'] ?>
+                    </td>
                     <td>
                     <?php if (!$payment_success[$payment['payment_count']]) { ?>
                         <button type="button" name="btn_payment" data-id="<?php echo $payment['id']?>" data-count="<?php echo $payment['payment_count']?>" class="btn btn_02 btn_payment">결제</button>

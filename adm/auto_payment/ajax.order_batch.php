@@ -61,6 +61,8 @@ if (isset($json_res['http_code'])) {
 /* ============================================================================== */
 /* =  결제 결과처리                                                              = */
 /* ============================================================================== */
+/** @todo expiration_date 계산 */
+$payment_info['expiration_date'] = '';
 $result = $billing->insertBillingLog($member['mb_id'], $payment_info, $json_res);
 if ($result <= 0) {
     $bSucc = false;

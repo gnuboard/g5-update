@@ -70,8 +70,8 @@ $sql  = "SELECT
             bi.od_id, bi.start_date, bi.end_date, bi.status,
             mb.mb_id, mb.mb_name, mb.mb_email,
             bs.service_name,
+            CONCAT(recurring_count, recurring_unit) AS recurring,
             (SELECT COUNT(*) FROM g5_batch_payment bp WHERE bp.od_id = bi.od_id AND res_cd = '0000') as payment_count,
-            (SELECT CONCAT(recurring_count, recurring_unit) FROM g5_batch_service_date sd WHERE bs.service_id = sd.service_id AND sd.apply_date <= NOW() ORDER BY apply_date DESC LIMIT 1) AS recurring,
             (SELECT price FROM g5_batch_service_price sd WHERE bs.service_id = sd.service_id AND sd.apply_date <= NOW() ORDER BY apply_date DESC LIMIT 1) AS price
         {$sql_common}
         {$sql_order}
