@@ -1,8 +1,8 @@
 <?php
 //결제 요청 처리.
 include_once './_common.php';
-require_once G5_PATH . '/bbs/kcp-batch/KcpBatch.php';
-
+require_once G5_BBS_PATH . '/kcp-batch/KcpBatch.php';
+require_once G5_BBS_PATH . '/subscription/subscription_service.php';
 /* ============================================================================== */
 /* =  결제 요청정보 준비                                                           = */
 /* = -------------------------------------------------------------------------- = */
@@ -14,31 +14,34 @@ $kcpBatch           = new KcpBatch();
 $kcp_cert_info      = $kcpBatch->getServiceCertification();
 $site_cd            = $kcpBatch->getSiteCd();
 
-$bt_batch_key      = isset($_POST['bt_batch_key']) ? $bt_batch_key : '';  // 배치키 정보
+$bt_batch_key      = isset($_POST['batch_key']) ? $batch_key : '';  // 배치키 정보
 $bt_group_id       = $kcpBatch->getKcpGroupId();  // 배치키 그룹아이디
 $currency          = isset($_POST['currency']) ? $_POST['currency'] : WON;  // 화폐단위
-$amount            = isset($_POST['amount']) ? $amount : null;       // 결제금액 0원을 피하기 위해 null
 $od_id             = isset($_POST['od_id']) ? $_POST['od_id'] : '';  // 주문 정보
 $service_id        = isset($service_id) ?  $service_id : '';  // 구독 서비스 ID
-
-if(empty($bt_batch_key) || empty($recurring_count) || empty($amount) || empty($od_id) || $service_id === ''){
+if(empty($bt_batch_key) || empty($od_id) || $service_id === ''){
     responseJson('필수 파라미터가 없습니다.', 400);
 }
-
+$serviceInfo = showServiceDetail($service_id);
+if (is_array($serviceInfo) && count($serviceInfo) !== 1) {
+    responseJson('결제정보를 가져오는데 실패했습니다.', 400);
+}
+$serviceInfo = $serviceInfo[0];
+$amount      = $serviceInfo['price'];  // 결제금액
 /**
  * 권장 파라미터
  * @var string $good_name (100byte 이내 약 33글자) 상품명
  *
  */
-$good_name          = isset($_POST['good_name']) ? utf8_strcut($good_name, 33, '') : '';
+$good_name          = utf8_strcut($serviceInfo['service_name'], 33, ''); // 상품명
 
 //선택 파라미터
 $buyr_name          = isset($_POST['buyr_name']) ? $buyr_name : '';
 $buyr_mail          = isset($_POST['buyr_mail']) ? $buyr_mail : '';
 $buyr_tel2          = isset($_POST['buyr_tel2']) ? $buyr_tel2 : '';
 
-$recurring_count    = isset($_POST['recurring_count']) ? $recurring_count : '';  // 정기결제 횟수
-$recurring_unit     = isset($_POST['recurring_unit']) ? $recurring_unit : '';  // 정기결제 주기단위
+$recurring_count    = $serviceInfo['recurring_count'];  // 정기 결제의 주기 몇일, 몇개월, 몇년 등.
+$recurring_unit     = $serviceInfo['recurring_unit']; // 정기결제 주기단위
 
 /**
  * @var bool $bSucc 결제결과 후처리 성공여부 변수 (false일때 결제 취소처리)
@@ -113,8 +116,14 @@ if ( $res_cd === '0000')
     $app_time = $json_res['app_time'];
     $quota = $json_res['quota'];
     $noinf = $json_res['noinf'];
-    $bSucc = true;
 
+    if ($serviceInfo['price'] == $amount) { //결제된 금액과 서비스 금액 같은지 확인.
+        $bSucc = true;
+    }
+
+} else {
+    $bSucc = false;
+    responseJson('결제 승인이 실패했습니다.', 200);
 }
 
 /* ============================================================================== */
@@ -126,13 +135,10 @@ $end_date = '0000-00-00 00:00:00'; //0 은 구독 만료기간이 정해지지�
 
 $g5['batch_info_table'] = G5_TABLE_PREFIX . 'batch_info';
 $sql_batch_info = "INSERT INTO {$g5['batch_info_table']} SET 
+                service_id          = '{$service_id}',
                 od_id               = '{$od_id}',
                 mb_id               = '{$member['mb_id']}',
                 batch_key           = '{$bt_batch_key}',
-                kcpgroup_id         = '{$bt_group_id}',
-                price               = '{$amount}',
-                recurring_count     = '{$recurring_count}',
-                recurring_unit       = '{$recurring_unit}',
                 start_date          = '{$start_date}',
                 end_date            = '{$end_date}'
             ";
@@ -155,7 +161,7 @@ $sql_payment = "INSERT INTO {$g5['batch_payment_table']} SET
                 tno                 = '{$tno}',
                 card_name           = '{$card_name}',
                 res_data            = '{$res_data}',
-                next_payment_date   = '{$start_date}'
+                payment_date   = '{$start_date}'
             ";
 
 $result = sql_query($sql_payment);
@@ -176,7 +182,7 @@ DB 작업이 실패 한 경우, bSucc 라는 변수의 값을 false로 설정해
 --------------------------------------------------------------------------
 */
 
-//0000 은 성공
+//0000 은 결제성공
 if ( $res_cd === '0000')
 {
     if ( $bSucc === false)
@@ -188,18 +194,21 @@ if ( $res_cd === '0000')
 }
 
 // 나머지 결과 출력
+$resData['res_cd'] = $res_cd;
+$resData['msg'] = $res_msg;
+
 if (PHP_VERSION_ID >= 50400) {
-    echo json_encode($json_res, JSON_UNESCAPED_UNICODE);
+    echo json_encode($resData, JSON_UNESCAPED_UNICODE);
 } else {
-    echo to_han(json_encode($json_res));
+    echo to_han(json_encode($resData));
 }
 
 function affectedRowCounter()
 {
     if (PHP_VERSION_ID >= 50400 && G5_MYSQLI_USE) {
-        $affected_row = mysqli_affected_rows($GLOBALS['g5']['link']);
+        $affected_row = mysqli_affected_rows($GLOBALS['g5']['connect_db']);
     } else {
-        $affected_row = mysql_affected_rows($GLOBALS['g5']['link']);
+        $affected_row = mysql_affected_rows($GLOBALS['g5']['connect_db']);
     }
     return $affected_row;
 }

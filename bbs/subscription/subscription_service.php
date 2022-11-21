@@ -33,7 +33,8 @@ function showServiceDetail($serviceId)
     from ' . G5_TABLE_PREFIX . 'batch_service as service
     left join ' . G5_TABLE_PREFIX . 'batch_service_price as price_table
         on service.service_id = price_table.service_id
-    where service.service_id = ' . sql_real_escape_string($serviceId);
+    where service.service_id = ' . sql_real_escape_string($serviceId) . ' and "' . G5_TIME_YMDHIS .'" > price_table.apply_date 
+    order by price_table.apply_date desc limit 1';
 
     $result = sql_query($selectByIdSql);
     $responseItem = array();
@@ -103,7 +104,9 @@ function showServiceList($pageNo, $pagePerCount, $bo_table = '')
     ORDER BY service_order ASC";
     $result = sql_query($selectAllServiceSql);
     $responseItem = array();
+    //정렬된 결과에서 같은 서비스가있으면 그중에서 가장 마지막일인것을 뽑는다. 서비스번호가 같은건 첫번째만 추가한다.
     if ($result) {
+        $serviceId = null;
         while ($row = sql_fetch_array($result)) {
             $responseItem[$row['bo_table']]['subject'] = $row['bo_subject'];
             $responseItem[$row['bo_table']]['service'][] = $row;

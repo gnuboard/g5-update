@@ -1,31 +1,43 @@
 <?php
-include_once './_common.php';
+include_once('./_common.php');
+require_once (G5_BBS_PATH . '/subscription/subscription_service.php');
+include_once(G5_PATH . '/head.php');
 
-include_once G5_PATH . '/head.php';
-include_once G5_PATH . "/bbs/kcp-batch/KcpBatch.php";
+/**
+ * @var string $service_id $_POST['service_id']
+ */
+if($is_guest) {
+    alert('회원만 이용하실 수 있습니다.', G5_BBS_URL . '/login.php');
+}
+ if(isset($service_id) && $service_id === '0'){
+    $serviceId = 0;
+} else {
+    $serviceId = empty($service_id)? null : $service_id;
+    if($serviceId === null){
+        alert('서비스 상품이 없습니다.', G5_URL);
+    }
+}
+
+$serviceResult = showServiceDetail($serviceId);
+$serviceResult = $serviceResult[0];
+if($serviceResult === null){
+    alert('해당 상품이 없습니다.', G5_URL);
+}
+
+$od_id = get_uniqid();
 
 add_stylesheet('<link rel="stylesheet" href="'.$member_skin_url.'/style.css">', 0);
 
-$ordr_idxx      = date('YmdHis') . rand(0, 6);
 ?>
 <form name="form_batch_key" id="form_batch_key" method="post" enctype="multipart/form-data">
-    <input type="hidden" name="ordr_idxx" class="w200" value="<?php echo $ordr_idxx ?>" maxlength="40" />
-
-    <input type="hidden" name="site_cd"         value="<?php echo site_cd ?>" />
-    <input type="hidden" name="kcpgroup_id"     value="<?php echo kcpgroup_id ?>" />
+    <input type="hidden" name="od_id" value="<?php echo $od_id ?>" maxlength="40" />
     <!-- 가맹점 정보 설정-->
-    <input type="hidden" name="site_name"      value="TEST SITE" />
-    <!-- 상품제공기간 설정 -->
-    <input type="hidden" name="good_expr"      value="2:1m"/>
-    <!-- 결제 방법 : 인증키 요청-->
-    <input type="hidden" name="pay_method"     value="AUTH:CARD" />
-    <!-- 인증 방식 : 공동인증-->
-    <input type="hidden" name="card_cert_type" value="BATCH" />
-    <!-- 배치키 발급시 주민번호 입력을 결제창 안에서 진행 -->
-    <input type='hidden' name='batch_soc'      value="Y"/>
-    <!-- 
+    <input type="hidden" name="site_name"  value="<?php echo $g5['title'] ?>" />
+    <input type="hidden" name="site_cd"  value="<?php echo $g5['title'] ?>" />
+
+    <!--
         ※필수 항목
-        표준웹에서 값을 설정하는 부분으로 반드시 포함되어야 합니다값을 설정하지 마십시오
+        표준웹에서 값을 설정하는 부분으로 반드시 포함되어야 합니다 값을 설정하지 마십시오
     -->
     <input type="hidden" name="module_type"     value="01"/>
     <input type="hidden" name="res_cd"          value=""/>
@@ -34,20 +46,17 @@ $ordr_idxx      = date('YmdHis') . rand(0, 6);
     <input type="hidden" name="enc_data"        value=""/>
     <input type="hidden" name="tran_cd"         value=""/>
 
-    <!-- 주민번호 S / 사업자번호 C 픽스 여부 -->
-    <!-- <input type='hidden' name='batch_soc_choice' value='' /> -->
+    <!-- 주민번호 S / 사업자번호 C 선택 -->
+    <input type='hidden' name='batch_soc_choice' value='S' />
 
     <!-- 배치키 발급시 카드번호 리턴 여부 설정 -->
     <!-- Y : 1234-4567-****-8910 형식, L : 8910 형식(카드번호 끝 4자리) -->
-    <!-- <input type='hidden' name='batch_cardno_return_yn'  value='Y'> -->
-
-    <!-- batch_cardno_return_yn 설정시 결제창에서 리턴 -->
-    <!-- <input type='hidden' name='card_mask_no'			  value=''> -->
+    <input type='hidden' name='batch_cardno_return_yn'  value='L'>
 
     <div class="register">
         <div id="register_form" class="form_01">
             <div class="register_form_inner">
-                <h2>자동결제 키 발급</h2>
+                <h2>자동결제 카드정보 입력</h2>
                 <ul>
                     <li>
                         <label for="reg_mb_id">
@@ -56,7 +65,7 @@ $ordr_idxx      = date('YmdHis') . rand(0, 6);
                             <span class="tooltip">회원(주문자) 이름 입니다.</span>
                         </label>
                         <input type="text" name="buyr_name" id="buyr_name" value="<?php echo $member['mb_name']?>" class="frm_input half_input" minlength="3" maxlength="20" placeholder="이름">
-                        <button type="button" id="btn_batch_key" class="btn_frmline" >카드정보 입력</button> 
+                        <button type="button" id="btn_batch_key" class="btn_frmline" >카드정보 입력</button>
                     </li>
                 </ul>
             </div>
@@ -65,31 +74,23 @@ $ordr_idxx      = date('YmdHis') . rand(0, 6);
 </form>
 
 <form id="form_payment" name="form_payment" method="post" enctype="multipart/form-data">
-    <input type="hidden" name="ordr_idxx" class="w200" value="<?php echo $ordr_idxx ?>" maxlength="40" />
+    <input type="hidden" name="od_id" class="w200" value="<?php echo $od_id ?>" maxlength="40" />
     <!-- 필수 항목 : 결제 금액/화폐단위 -->
     <input type="hidden" name="currency" value="410"  />
-
+    <input type="hidden" name="service_id" value="<?php echo $serviceId ?>" />
+    <input type="hidden" name='batch_key' id='input_batch_key' value='' />
     <div class="register">
         <div id="register_form" class="form_01">
             <div class="register_form_inner">
-                <h2>결제 요청</h2>
+                <h2>결제 상품정보</h2>
                 <ul>
-                    <li>
-                        <label for="bt_batch_key">
-                            자동결제 정보
-                            <button type="button" class="tooltip_icon"><i class="fa fa-question-circle-o" aria-hidden="true"></i><span class="sound_only">설명보기</span></button>
-                            <span class="tooltip">상단 '자동결제 키 발급' 란에서 발급해주시기 바랍니다.</span>
-                        </label>
-                        <input type="text" name="bt_batch_key" id="bt_batch_key" value="" class="frm_input full_input" minlength="3" maxlength="20" placeholder="자동결제 배치 키">
-                        <span class="complate_batch_key" style="color:red; display:none;">배치 키 발급 완료</span>
-                    </li>
                     <li class="half_input left_input margin_input">
                         <label for="good_name">
                             상품명
-                            <button type="button" class="tooltip_icon"><i class="fa fa-question-circle-o" aria-hidden="true"></i><span class="sound_only">설명보기</span></button>
+                            <button type="button" class="tooltip_icon"><i class="fa fa-question-circle-o" aria-hidden="true"></i><span class="sound_only"><?= $serviceResult['service_summary'] ?></span></button>
                             <span class="tooltip">주문 정보 입력</span>
                         </label>
-                        <input type="text" name="good_name" id="good_name" value="test" class="frm_input full_input" placeholder="상품명">
+                        <input type="text" readonly name="good_name" id="good_name" value="<?= $serviceResult['service_name'] ?>" class="frm_input full_input" placeholder="<?= $serviceResult['service_name'] ?>">
                     </li>
                     <li class="half_input left_input">
                         <label for="good_mny">
@@ -97,7 +98,7 @@ $ordr_idxx      = date('YmdHis') . rand(0, 6);
                             <button type="button" class="tooltip_icon"><i class="fa fa-question-circle-o" aria-hidden="true"></i><span class="sound_only">설명보기</span></button>
                             <span class="tooltip">주문 정보 입력</span>
                         </label>
-                        <input type="text" name="good_mny" id="good_mny" value="50000" class="frm_input full_input" placeholder="상품금액">
+                        <input type="text" name="good_mny" id="good_mny" value="<?php echo $serviceResult['price']?>" class="frm_input full_input" placeholder="상품금액">
                     </li>
                     <li>
                         <label for="buyr_name">
@@ -105,7 +106,7 @@ $ordr_idxx      = date('YmdHis') . rand(0, 6);
                             <button type="button" class="tooltip_icon"><i class="fa fa-question-circle-o" aria-hidden="true"></i><span class="sound_only">설명보기</span></button>
                             <span class="tooltip">주문 정보 입력</span>
                         </label>
-                        <input type="text" name="buyr_name" id="buyr_name" value="홍길동" class="frm_input half_input" placeholder="주문자명">
+                        <input type="text" name="buyr_name" id="buyr_name" value="<?php echo $member['mb_name']?>" class="frm_input half_input" placeholder="주문자명">
                     </li>
                     <li class="half_input left_input margin_input">
                         <label for="buyr_tel2">
@@ -123,44 +124,50 @@ $ordr_idxx      = date('YmdHis') . rand(0, 6);
                         </label>
                         <input type="text" name="buyr_mail" id="buyr_mail" value="test@test.co.kr" class="frm_input full_input" placeholder="이메일">
                     </li>
-                    <button type="button" id="btn_payment" class="btn_frmline" >결제 요청</button> 
+                    <button type="button" id="btn_payment" class="btn_frmline" >결제 요청</button>
                 </ul>
             </div>
         </div>
     </div>
 </form>
-<script type="text/javascript" src="https://testpay.kcp.co.kr/plugin/payplus_web.jsp"></script>
+
 <script>
-function m_Completepayment( frm_mpi, closeEvent ) 
+/**
+ * KCP pc web 함수이며 함수명 변경금지.
+ * 결제 인증후 리턴받는 재귀함수.
+ * @param returnForm
+ * @param closeEvent
+ */
+
+let site_cd = '';
+
+function m_Completepayment(returnForm, closeEvent)
 {
-    var frm = document.form_batch_key; 
+    if (returnForm.res_cd.value == "0000" ) {
+        const batchForm = document.getElementById('form_batch_key');
+        const od_id = batchForm.od_id.value;
+        const batch_soc_choice = batchForm.batch_soc_choice.value != undefined ? batchForm.batch_soc_choice.value : 'S';
+        const batch_cardno_return_yn = batchForm.batch_cardno_return_yn.value != undefined ? batchForm.batch_cardno_return_yn.value : 'L';
+        let kcpForm = new FormData(returnForm);
+        kcpForm.append('od_id', od_id);
+        kcpForm.append('batch_soc_choice', batch_soc_choice);
+        kcpForm.append('site_cd', site_cd);
 
-    if (frm_mpi.res_cd.value == "0000" )
-    {
-        GetField(frm, frm_mpi); 
-        
-        let data = new FormData(document.getElementById('form_batch_key'));
-        let queryString = new URLSearchParams(data).toString();
-
+        const queryString = new URLSearchParams(kcpForm).toString();
         $.ajax({
-            url : "kcp-batch/ajax.get_batch_key.php",
+            url : "kcp-batch/ajax.get_batch_key_class.php",
             type: "POST",
             data: queryString,
-            success: function(data) {
+            success: function (data) {
                 if (data) {
-                    console.log(data);
-                    // Set Data
-                    let result = JSON.parse(data);
-
+                    const result = JSON.parse(data);
                     if (result.res_cd == "0000") {
-                        document.querySelector("#bt_batch_key").value = result.batch_key;
-                        document.querySelector(".complate_batch_key").style.display = "block";
+                        alert('결제 정보가 정상적으로 입력되었습니다.');
                     } else {
-                        document.querySelector("#bt_batch_key").value = "";
-                        document.querySelector(".complate_batch_key").style.display = "none";
-                        alert("[" + result.res_cd + "]" + result.res_msg);
+                        alert('카드 등록에 실패했습니다.');
+                        console.log("[" + result.res_cd + "]" + result.res_msg);
                     }
-                    
+
                 } else {
                     alert("잠시 후에 시도해주세요.");
                 }
@@ -175,38 +182,85 @@ function m_Completepayment( frm_mpi, closeEvent )
     else
     {
         closeEvent();
-
-        setTimeout("alert( \"[" + frm_mpi.res_cd.value + "]" + frm_mpi.res_msg.value + "\");", 1000);
-        
     }
 }
 
-function order_payment() {
-
-}
 window.onload = function() {
-    let form            = document.querySelector("#form_batch_key");
-    let btn_batch_key   = document.querySelector("#btn_batch_key");
-    let btn_btn_payment = document.querySelector("#btn_payment");
+    const form = document.querySelector("#form_batch_key");
+    const payment_form = document.querySelector("#form_payment");
+    const btn_batch_key = document.querySelector("#btn_batch_key");
+    const btn_payment = document.querySelector("#btn_payment");
 
+    if(payment_form.service_id == '' || payment_form.service_id == undefined) {
+        alert('결제 창이 잘못되었습니다. 새로고침 바랍니다.')
+    }
     /* 표준웹 실행 */
     btn_batch_key.onclick = function(){
-        try {
-            KCP_Pay_Execute(form);
-        } catch (e) {
-            /* IE 에서 결제 정상종료시 throw로 스크립트 종료 */
-        }
+        const serviceId = payment_form.service_id.value;
+        loadSubscriptionInfo(serviceId);
     };
 
-    btn_btn_payment.onclick = function(){
+    function loadSubscriptionInfo(serviceId){
+        const orderId = payment_form.od_id.value;
+        let param = {
+            'w' : 'getBatchInfo',
+            'serviceId' : serviceId,
+            'orderId' : orderId
+        }
+        $.ajax({
+            url : 'kcp-batch/ajax.set_batch_info.php',
+            type: 'POST',
+            data: JSON.stringify(param),
+            dataType : 'json',
+            success: function(data) {
+                if (data) {
+                    let formTag = document.createElement('form');
+                    formTag.setAttribute('method', 'post');
+                    formTag.setAttribute('enctype', 'multipart/form-data');
 
-        if (document.getElementById("bt_batch_key").value == "") {
-            alert("자동결제 배치 키 발급 후 결제해주시기 바랍니다.");
+                    for (let key in data) {
+                        let input_tag = document.createElement('input');
+                        input_tag.setAttribute('type', 'hidden');
+                        input_tag.setAttribute('name', key);
+                        input_tag.setAttribute('value', data[key]);
+                        formTag.appendChild(input_tag);
+                    }
+
+                    //create form tag from data variable
+                    console.log(formTag.site_cd.value);
+                    console.log(formTag.ordr_idxx.value);
+                    console.log(formTag.kcpgroup_id.value);
+                    console.log(formTag.pay_method.value);
+                    console.log(formTag.card_cert_type.value);
+                    console.log(formTag.module_type.value);
+                    console.log(formTag.card_cert_type.value);
+                    console.log(formTag.batch_soc.value);
+                    console.log(formTag.good_expr.value);
+                    site_cd = formTag.site_cd.value;
+
+                    try {
+                        KCP_Pay_Execute(formTag);
+                    } catch (e) {
+                        /* IE 에서 결제 정상종료시 throw로 스크립트 종료 */
+                    }
+                } else {
+                    alert("잠시 후에 시도해주세요.");
+                }
+            },
+            error: function() {
+                alert("결제 에러 발생");
+            }
+        });
+    }
+
+    // 결제 요청
+    btn_payment.onclick = function(){
+        const formData = new FormData(document.getElementById('form_payment'));
+        const queryString = new URLSearchParams(formData).toString();
+        if(formData.get('batch_key') == '' || formData.get('batch_key') == undefined) {
+            alert('카드 등록을 먼저 진행해주세요.');
             return false;
         }
-
-        let data = new FormData(document.getElementById('form_payment'));
-        let queryString = new URLSearchParams(data).toString();
 
         $.ajax({
             url : "kcp-batch/ajax.order_batch.php",
@@ -214,22 +268,22 @@ window.onload = function() {
             data: queryString,
             success: function(data) {
                 if (data) {
-                    console.log(data);
-                    // Set Data
+
                     let result = JSON.parse(data);
                     if (result.res_cd == "0000") {
                         // 성공
-                        alert(result.res_msg);
+                        alert('결제가 완료되었습니다.');
+                        window.location.replace(g5_url); //TODO 구독페이지 연결하기.
                     } else {
                         // 실패
-                        alert("[" + result.res_cd + "]" + result.res_msg);
+                        alert('결제 요청에 실패했습니다.')
                     }
                 } else {
                     alert("잠시 후에 시도해주세요.");
                 }
             },
             error: function() {
-                alert("에러 발생");
+                alert("결제 요청에 실패했습니다.");
             }
         });
     }
@@ -244,6 +298,12 @@ jQuery(function($){
     });
 });
 </script>
-<?php
-include_once(G5_PATH . '/tail.php');
 
+<?php
+
+include_once(G5_PATH . '/tail.php');
+if (G5_DEBUG) {
+    echo '<script type="text/javascript" src="https://testpay.kcp.co.kr/plugin/payplus_web.jsp"></script>';
+} else {
+    echo '<script type="text/javascript" src="https://pay.kcp.co.kr/plugin/payplus_web.jsp"></script>';
+}

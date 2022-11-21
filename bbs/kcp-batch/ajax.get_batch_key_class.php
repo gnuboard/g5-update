@@ -18,7 +18,7 @@ $kcpBatch      = new KcpBatch();
 $site_cd       = $kcpBatch->getSiteCd();
 $kcp_cert_info = $kcpBatch->getServiceCertification();
 
-if (empty($tran_cd) || empty($enc_data) || empty($enc_info) || empty($kcp_cert_info) || empty($site_cd)) {
+if (empty($tran_cd) || empty($enc_data) || empty($enc_info) || empty($kcp_cert_info)) {
     responseJson('필수 파라미터가 없습니다.', 400);
 }
 
@@ -81,8 +81,17 @@ $sql = "INSERT INTO {$g5['kcp_batch_key_log_table']} SET
 sql_query($sql);
 
 // 결과 출력
-if($res_msg === '0000') {
-    responseJson($res_data['res_mes'], 200);
+if($res_cd === '0000') {
+   echo json_encode(
+    array('msg' => $res_msg,
+        'res_cd' => $res_cd,
+        'batch_key' => $batch_key
+        )
+    );
 } else {
-    responseJson($res_data['res_mes'], 400);
+    if(is_array($json_res)){
+        responseJson($res_msg, 400);
+    } else {
+        responseJson($json_res, 400);
+    }
 }

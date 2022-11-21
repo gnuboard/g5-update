@@ -126,9 +126,9 @@ function cancelMyService($od_id)
 function affectedRowCounter()
 {
     if (PHP_VERSION_ID >= 50400 && G5_MYSQLI_USE) {
-        $affected_row = mysqli_affected_rows($GLOBALS['g5']['link']);
+        $affected_row = mysqli_affected_rows($GLOBALS['g5']['connect_db']);
     } else {
-        $affected_row = mysql_affected_rows($GLOBALS['g5']['link']);
+        $affected_row = mysql_affected_rows($GLOBALS['g5']['connect_db']);
     }
     return $affected_row;
 }
