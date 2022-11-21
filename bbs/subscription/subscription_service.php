@@ -88,14 +88,24 @@ function showServiceList($pageNo, $pagePerCount)
     price_table.apply_date as price_apply_date
     from ' . G5_TABLE_PREFIX . 'batch_service as service
     left join ' . G5_TABLE_PREFIX . 'batch_service_price as price_table
-        on service.service_id = price_table.service_id order by service_order asc limit '
+        on service.service_id = price_table.service_id where price_table.apply_date <  "'. G5_TIME_YMDHIS .'" order by service_id desc , price_table.apply_date desc limit '
         . sql_real_escape_string($startPage) . ', ' . sql_real_escape_string($lastPage);
 
     $result = sql_query($selectAllServiceSql);
     $responseItem = array();
+    //정렬된 결과에서 같은 서비스가있으면 그중에서 가장 마지막일인것을 뽑는다. 서비스번호가 같은건 첫번째만 추가한다.
     if ($result) {
+        $serviceId = null;
         while ($row = sql_fetch_array($result)) {
-            $responseItem[] = $row;
+            if($serviceId === null){
+                $serviceId = $row['service_id'];
+                $responseItem[] = $row;
+            }
+
+            if ($serviceId !== $row['service_id']){
+                $serviceId = $row['service_id'];
+                $responseItem[] = $row;
+            }
         }
     }
 
