@@ -10,7 +10,7 @@ if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 
 require_once(dirname(__FILE__) . '../../../common.php');
 require_once(G5_BBS_PATH . '/kcp-batch/G5Mysqli.php');
-require_once (G5_BBS_PATH . '/kcp-batch/KcpBatch.php');
+require_once(G5_BBS_PATH . '/kcp-batch/KcpBatch.php');
 
 $kcpBatch = new KcpBatch();
 
@@ -19,33 +19,37 @@ $kcpBatch = new KcpBatch();
  * 조회성공시 배열, 조회실패시 false 반환
  * @return array|false
  */
-function showMyServiceList () {
+function showMyServiceList()
+{
     $mb_id = getUserId();
-    if($mb_id === false){
+    if ($mb_id === false) {
         return false;
     }
-    $selectAllMyServiceSql = 'select * from ' . G5_TABLE_PREFIX . 'batch_info as info
-    left join '. G5_TABLE_PREFIX . 'batch_service as service
-    on info.service_id = service.service_id
-    left join '. G5_TABLE_PREFIX . 'batch_service_price as price
-    on price.service_id = service.service_id
-    where mb_id =' . "'$mb_id" . "'";
+    $selectAllMyServiceSql = 'SELECT 
+        *,
+        board.bo_subject,
+        (SELECT price FROM g5_batch_service_price sp WHERE service.service_id = sp.service_id AND sp.apply_date <= NOW() ORDER BY apply_date DESC LIMIT 1) AS price
+    FROM ' . G5_TABLE_PREFIX . 'batch_info AS info
+    LEFT JOIN ' . G5_TABLE_PREFIX . 'batch_service AS service ON info.service_id = service.service_id
+    LEFT JOIN g5_board board ON service.bo_table = board.bo_table
+    WHERE mb_id =' . "'$mb_id" . "' AND status != 0";
 
     $result = sql_query($selectAllMyServiceSql);
-    if($result){
+    if ($result) {
         $responseResult = array();
-        $currentTime = strtotime(G5_TIME_YMDHIS);
         while ($row = sql_fetch_array($result)) {
-            $responseResult[] = $row;
+            $responseResult[$row['bo_table']]['subject'] = $row['bo_subject'];
+            $responseResult[$row['bo_table']]['service'][] = $row;
         }
         return $responseResult;
     }
     return false;
 }
 
-function showMyServicePaymentHistory ($od_id) {
+function showMyServicePaymentHistory($od_id)
+{
     $mb_id = getUserId();
-    if($mb_id === false){
+    if ($mb_id === false) {
         return false;
     }
     $selectPaymentHistorySql = 'select * from ' . G5_TABLE_PREFIX . 'batch_payment 
@@ -67,9 +71,10 @@ function showMyServicePaymentHistory ($od_id) {
  * @param string|int $od_id 구독서비스 주문번호
  * @return bool
  */
-function cancelMyService ($od_id) {
+function cancelMyService($od_id)
+{
     $mb_id = getUserId();
-    if($mb_id === false){
+    if ($mb_id === false) {
         return false;
     }
 
@@ -77,7 +82,7 @@ function cancelMyService ($od_id) {
     where mb_id = "' . sql_real_escape_string($mb_id) .  '" and od_id = ' . sql_real_escape_string($od_id);
 
     $result = sql_query($selectPaymentSql);
-    if(!$result) {
+    if (!$result) {
         return false;
     }
 
@@ -92,25 +97,26 @@ function cancelMyService ($od_id) {
      * @var KcpBatch $kcpBatch
      */
     global $kcpBatch;
-
+    /*
+    임시 주석처리
     $batchDelResult = json_decode($kcpBatch->deleteBatchKey($oldBatchKey), true);
-    if($batchDelResult === false || !array_key_exists('res_cd', $batchDelResult)){
+    if ($batchDelResult === false || !array_key_exists('res_cd', $batchDelResult)) {
         return false;
     }
 
-    if($batchDelResult['res_cd'] !== "0000") {
+    if ($batchDelResult['res_cd'] !== "0000") {
         return $batchDelResult;
     }
+    */
 
     $stateChangeSql = 'update ' . G5_TABLE_PREFIX . 'batch_info set status = 0
     where mb_id = "' . sql_real_escape_string($mb_id) .  '" and od_id = ' . sql_real_escape_string($od_id);
     $result = sql_query($stateChangeSql);
-    if($result){
+    if ($result) {
         return true;
     } else {
         return false;
     }
-
 }
 
 /**
@@ -134,16 +140,16 @@ function affectedRowCounter()
 function getUserId()
 {
     global $config, $is_guest, $is_admin;
-    if($is_guest){
+    if ($is_guest) {
         return false;
     }
 
-    if($is_admin === 'super'){
+    if ($is_admin === 'super') {
         return $config['cf_admin'];
     }
 
     $mb_id = get_session('mb_id');
-    if(empty($mb_id)){
+    if (empty($mb_id)) {
         return false;
     }
 

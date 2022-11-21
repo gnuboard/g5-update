@@ -38,9 +38,9 @@ function showServiceDetail($serviceId)
     $result = sql_query($selectByIdSql);
     $responseItem = array();
 
-        while ($row = sql_fetch_array($result)) {
-            $responseItem[] = $row;
-        }
+    while ($row = sql_fetch_array($result)) {
+        $responseItem[] = $row;
+    }
 
 
     return $responseItem;
@@ -52,7 +52,7 @@ function showServiceDetail($serviceId)
  * @param int $pagePerCount 몇개씩 보여줄지
  * @return array 결과 없으면 빈배열 리턴
  */
-function showServiceList($pageNo, $pagePerCount)
+function showServiceList($pageNo, $pagePerCount, $bo_table = '')
 {
     $startPage = $pageNo * $pagePerCount;
     $lastPage = $startPage + $pagePerCount;
@@ -67,34 +67,46 @@ function showServiceList($pageNo, $pagePerCount)
         $lastPage = 0;
     }
 
-    $selectAllServiceSql = 'select
-    service.service_id,
-    bo_table,
-    service_name,
-    service_summary,
-    service_explan,
-    service_mobile_explan,
-    service_image,
-    service_url,
-    service_hook,
-    service_expiration,
-    service_expiration_unit,
-    service_order,
-    service_use,
-    recurring_count,
-    recurring_unit,
-    price,
-    price_table.apply_date as price_apply_date
-    from ' . G5_TABLE_PREFIX . 'batch_service as service
-    left join ' . G5_TABLE_PREFIX . 'batch_service_price as price_table
-        on service.service_id = price_table.service_id order by service_order asc limit '
-        . sql_real_escape_string($startPage) . ', ' . sql_real_escape_string($lastPage);
-
+    // $selectAllServiceSql = 'select
+    // service.service_id,
+    // bo_table,
+    // service_name,
+    // service_summary,
+    // service_explan,
+    // service_mobile_explan,
+    // service_image,
+    // service_url,
+    // service_hook,
+    // service_expiration,
+    // service_expiration_unit,
+    // service_order,
+    // service_use,
+    // recurring_count,
+    // recurring_unit,
+    // price,
+    // price_table.apply_date as price_apply_date
+    // from ' . G5_TABLE_PREFIX . 'batch_service as service
+    // left join ' . G5_TABLE_PREFIX . 'batch_service_price as price_table
+    //     on service.service_id = price_table.service_id order by service_order asc limit '
+    //     . sql_real_escape_string($startPage) . ', ' . sql_real_escape_string($lastPage);
+    $where = ' WHERE 1=1';
+    if ($bo_table != '') {
+        $where .= " AND bs.bo_table = '{$bo_table}'";
+    }
+    $selectAllServiceSql = "SELECT 
+        bs.*,
+	    board.bo_subject,
+        (SELECT price FROM g5_batch_service_price sp WHERE bs.service_id = sp.service_id AND sp.apply_date <= NOW() ORDER BY apply_date DESC LIMIT 1) AS price
+    FROM g5_batch_service bs
+    LEFT JOIN g5_board board ON bs.bo_table = board.bo_table
+    {$where}
+    ORDER BY service_order ASC";
     $result = sql_query($selectAllServiceSql);
     $responseItem = array();
     if ($result) {
         while ($row = sql_fetch_array($result)) {
-            $responseItem[] = $row;
+            $responseItem[$row['bo_table']]['subject'] = $row['bo_subject'];
+            $responseItem[$row['bo_table']]['service'][] = $row;
         }
     }
 
@@ -108,62 +120,74 @@ function showServiceList($pageNo, $pagePerCount)
  */
 function checkAuth($service_id)
 {
-    $mb_id = $GLOBALS['mb_id'];
+    global $member;
+
+    $mb_id = $member['mb_id'];
     if (empty($mb_id)) {
         return false;
     }
 
-    $selectPaymentSql = 'select mb_id, expiration_date, payment_date from letf join '
-        . G5_TABLE_PREFIX . 'batch_payment as batch_payment 
-         ' . G5_TABLE_PREFIX . "batch_info as batch_info
-        batch_info.od_id = batch_payment.od_id
-        where batch_payment.service_id = $service_id and batch_payment.mb_id = $mb_id";
-
-    $result = sql_query($selectPaymentSql);
-    if ($result) {
-        while ($row = sql_fetch_array($result)) {
-            $startDate = $row['payment_date'];
-            $endDate = $row['expiration_date'];
-        }
-
-        $currentTime = strtotime(G5_TIME_YMDHIS);
-
-        return $currentTime > strtotime($startDate) && $currentTime < strtotime($endDate);
+    $sql = "SELECT EXISTS(
+                SELECT bp.id
+                FROM
+                    g5_batch_payment bp
+                LEFT JOIN g5_batch_info bi ON bp.od_id = bi.od_id
+                WHERE
+                    bi.service_id = {$service_id}
+                    AND bp.mb_id = '{$mb_id}'
+                    AND now() BETWEEN payment_date AND expiration_date) as auth";
+    $result = sql_fetch($sql);
+    if ((int)$result['auth'] > 0) {
+        return true;
+    } else {
+        return false;
     }
-
-    return false;
 }
 
 /**
  * 게시판이름이나 url 확인후 인증함수 호출
  * @return void
  */
-function checkRoute($url, $bo_table)
+function checkRoute()
 {
-    $selectAllServiceRoutingSql = 'select bo_table, service_url, service_hook, service_id from ' . G5_TABLE_PREFIX . 'batch_service where service_use = 1';
-    $result = sql_query($selectAllServiceRoutingSql);
+    $bo_table = $_GET['bo_table'];
+    $check = false;
+
+    $sql = "SELECT bo_table, service_url, service_hook, service_id FROM " . G5_TABLE_PREFIX . "batch_service WHERE service_use = 1 AND bo_table = '{$bo_table}'";
+    $result = sql_query($sql);
     if ($result) {
-        $path = parse_url($url, PHP_URL_PATH);
+        /*
+        $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $host = parse_url(G5_URL, PHP_URL_HOST);
+        */
         while ($row = sql_fetch_array($result)) {
             if ($row['bo_table'] === $bo_table) {
                 $isAuth = checkAuth($row['service_id']);
-                if ($isAuth === false) {
-                    alert('결제가 필요합니다.', G5_BBS_URL . '/subscription/service_view?' . $row['service_id']);
+                if ($isAuth) {
+                    $check = true;
                 }
-            } else {
+            }
+            /*
+            else {
                 if (empty($row['service_url'])) {
                     continue;
                 }
 
                 if (parse_url($row['service_url'], PHP_URL_PATH) === $path
-                    && parse_url($row['service_url'], PHP_URL_HOST) === $host) {
+                    && parse_url($row['service_url'], PHP_URL_HOST) === $host
+                ) {
                     $isAuth = checkAuth($row['service_url']);
                     if ($isAuth === false) {
-                        alert('결제가 필요합니다.', G5_BBS_URL . '/subscription/service_view?' . $row['service_id']);
+                        alert('결제가 필요합니다.2', G5_URL . '/skin/subscription/basic/service.skin.php?bo_table=' . $bo_table);
                     }
                 }
             }
+            */
         }
+        if ($check === false) {
+            alert('결제가 필요합니다.', G5_URL . '/skin/subscription/basic/service.skin.php?bo_table=' . $bo_table);
+        }
+    } else {
+        alert('게시판 권한체크 오류입니다.');
     }
 }
