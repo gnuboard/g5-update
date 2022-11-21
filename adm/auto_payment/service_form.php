@@ -224,7 +224,6 @@ include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
 <script>
 var f = document.form_service;
 let price_row   = <?php echo $price_count ?>;
-let date_row    = <?php echo $date_count ?>;
 
 $(function() {
     if (price_row == 0) {

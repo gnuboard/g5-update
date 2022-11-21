@@ -10,16 +10,12 @@ require_once G5_PATH . '/bbs/kcp-batch/G5BillingToss.php';
 
 auth_check_menu($auth, $sub_menu, "w");
 
-$g5['title'] = "구독결제 수정";
-$g5Mysqli = new G5Mysqli();
-
-$billing = new Billing('kcp');
+$g5Mysqli   = new G5Mysqli();
+$billing    = new Billing('kcp');
 
 $unit_array     = array("y" => "년", "m" => "개월", "w" => "주", "d" => "일");
 $od_id          = isset($_REQUEST['od_id']) ? safe_replace_regex($_REQUEST['od_id'], 'od_id') : '';
 $service_id     = null;
-$offset         = 4;
-$repeat_time    = 8;
 
 /* 구독정보 */
 $batch_info     = array();
@@ -31,7 +27,7 @@ $batch_info = $g5Mysqli->getOne($sql, array($od_id));
 $batch_info['mb_side_view']         = get_sideview($batch_info['mb_id'], get_text($batch_info['mb_name']), $batch_info['mb_email'], '');
 $batch_info['display_end_date']     = $batch_info['end_date'] != "0000-00-00 00:00:00" ? $batch_info['end_date'] : "없음";
 $batch_info['display_status']       = $batch_info['status'] == "1" ? "진행 중" : "종료";
-$batch_info['display_batch_key']    = substr_replace($batch_info['batch_key'], str_repeat('*', $repeat_time), $offset, $repeat_time); // 배치키 * 표시
+$batch_info['display_batch_key']    = $billing->displayBillKey($batch_info['batch_key']);
 $batch_info['display_next_payment'] = date('Y-m-d', strtotime($batch_info['next_payment_date']));
 switch(strlen($batch_info['od_id'])) {
     case 16:
@@ -60,14 +56,14 @@ $service['display_recurring']   = strtr($service['recurring'], $unit_array);
 
 // 변경예정 가격 최근 1건 조회
 $price_schedule = array();
-$sql_price_schedule = "SELECT
-                            price, apply_date
-                        FROM {$g5['batch_service_price_table']}
-                        WHERE service_id = ?
-                            AND apply_date > now()
-                        ORDER BY apply_date ASC 
-                        LIMIT 1";
-$price_schedule = $g5Mysqli->getOne($sql_price_schedule, array($service_id));
+$sql = "SELECT
+            price, apply_date
+        FROM {$g5['batch_service_price_table']}
+        WHERE service_id = ?
+            AND apply_date > now()
+        ORDER BY apply_date ASC 
+        LIMIT 1";
+$price_schedule = $g5Mysqli->getOne($sql, array($service_id));
 if (isset($price_schedule)) {
     $price_schedule['display_price'] = number_format($price_schedule['price']);
     $price_schedule['display_apply_date'] = date('Y-m-d', strtotime($price_schedule['apply_date'])) . " 반영";
@@ -90,7 +86,7 @@ foreach ($result as $i => $row) {
     $payment_list[$i]['display_res_cd']         = ($row['res_cd'] == "0000" ? "성공" : "실패");
     $payment_list[$i]['display_res_cd_color']   = ($row['res_cd'] == "0000" ? "#53C14B" : "#FF0000");
     $payment_list[$i]['display_period']         = ($row['res_cd'] == "0000" ? $row['period'] : '');
-    $payment_list[$i]['display_batch_key']      = substr_replace($row['batch_key'], str_repeat('*', $repeat_time), $offset, $repeat_time); // 배치키 * 표시
+    $payment_list[$i]['display_batch_key']      = $billing->displayBillKey($row['batch_key']);
     $payment_list[$i]['is_btn_refund']          = false;
 
     if (!isset($payment_success[$count])) {
@@ -110,6 +106,7 @@ $pg_anchor = '<ul class="anchor">
 <li><a href="#anc_batch_info">구독결제 정보</a></li>
 <li><a href="#anc_batch_payment">결제내역</a></li>
 </ul>';
+$g5['title'] = "구독결제 수정";
 include_once G5_ADMIN_PATH . '/admin.head.php';
 ?>
 <section class="">
@@ -286,7 +283,7 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
     <input type="hidden" name="site_cd"         value="<?php echo site_cd ?>" />
     <input type="hidden" name="kcpgroup_id"     value="<?php echo kcpgroup_id ?>" />
     <!-- 가맹점 정보 설정-->
-    <input type="hidden" name="site_name"      value="TEST SITE" />
+    <input type="hidden" name="site_name"      value="<?php echo $config['cf_title']?>" />
     <!-- 상품제공기간 설정 -->
     <input type="hidden" name="good_expr"      value="2:1m"/>
     <!-- 결제 방법 : 인증키 요청-->
