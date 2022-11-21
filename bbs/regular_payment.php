@@ -90,7 +90,7 @@ add_stylesheet('<link rel="stylesheet" href="'.$member_skin_url.'/style.css">', 
                             <button type="button" class="tooltip_icon"><i class="fa fa-question-circle-o" aria-hidden="true"></i><span class="sound_only"><?= $serviceResult['service_summary'] ?></span></button>
                             <span class="tooltip">주문 정보 입력</span>
                         </label>
-                        <input type="text" name="good_name" id="good_name" value="<?= $serviceResult['service_name'] ?>" class="frm_input full_input" placeholder="<?= $serviceResult['service_name'] ?>">
+                        <input type="text" readonly name="good_name" id="good_name" value="<?= $serviceResult['service_name'] ?>" class="frm_input full_input" placeholder="<?= $serviceResult['service_name'] ?>">
                     </li>
                     <li class="half_input left_input">
                         <label for="good_mny">
@@ -158,14 +158,11 @@ function m_Completepayment(returnForm, closeEvent)
             url : "kcp-batch/ajax.get_batch_key_class.php",
             type: "POST",
             data: queryString,
-            success: function(data) {
-
+            success: function (data) {
                 if (data) {
-
-                    let result = JSON.parse(data);
-                
+                    const result = JSON.parse(data);
                     if (result.res_cd == "0000") {
-                        document.querySelector("#input_batch_key").value = result.batch_key;
+                        alert('결제 정보가 정상적으로 입력되었습니다.');
                     } else {
                         alert('카드 등록에 실패했습니다.');
                         console.log("[" + result.res_cd + "]" + result.res_msg);
