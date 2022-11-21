@@ -32,7 +32,9 @@ class Billing
 
             $className = 'G5Billing' . ucfirst(strtolower($pgCode));
             if (class_exists($className, false)) {
-                $this->setPg(new $className());
+                /* ReflectionClass를 통해 PG사 Class의 instance를 생성한다. */
+                $ref = new ReflectionClass($className);
+                $this->setPg($ref->newInstanceArgs());
             } else {
                 throw new LogicException("PG사 자동결제 Class를 찾을 수 없습니다 : {$className}");
             }
