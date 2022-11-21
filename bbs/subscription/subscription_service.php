@@ -33,14 +33,15 @@ function showServiceDetail($serviceId)
     from ' . G5_TABLE_PREFIX . 'batch_service as service
     left join ' . G5_TABLE_PREFIX . 'batch_service_price as price_table
         on service.service_id = price_table.service_id
-    where service.service_id = ' . sql_real_escape_string($serviceId);
+    where service.service_id = ' . sql_real_escape_string($serviceId) . ' and "' . G5_TIME_YMDHIS .'" > price_table.apply_date 
+    order by price_table.apply_date desc limit 1';
 
     $result = sql_query($selectByIdSql);
     $responseItem = array();
 
-        while ($row = sql_fetch_array($result)) {
-            $responseItem[] = $row;
-        }
+    while ($row = sql_fetch_array($result)) {
+        $responseItem[] = $row;
+    }
 
 
     return $responseItem;
