@@ -119,22 +119,35 @@ function showServiceList($pageNo, $pagePerCount)
  */
 function checkAuth($service_id)
 {
-    $mb_id = $GLOBALS['mb_id'];
-    if (empty($mb_id)) {
+    global $config, $is_guest, $is_admin;
+    if($is_guest){
         return false;
     }
 
-    $selectPaymentSql = 'select mb_id, expiration_date, payment_date from letf join '
-        . G5_TABLE_PREFIX . 'batch_payment as batch_payment 
-         ' . G5_TABLE_PREFIX . "batch_info as batch_info
-        batch_info.od_id = batch_payment.od_id
-        where batch_payment.service_id = $service_id and batch_payment.mb_id = $mb_id";
+    if($is_admin === 'super'){
+        $mb_id =  $config['cf_admin'];
+    } else {
+        $mb_id = get_session('mb_id');
+        if(empty($mb_id)){
+            return false;
+        }
+    }
+
+    $selectPaymentSql = 'select batch_info.mb_id, expiration_date, next_payment_date, payment_date from ' . G5_TABLE_PREFIX . 'batch_payment as batch_payment 
+        left join ' . G5_TABLE_PREFIX . "batch_info as batch_info
+        on batch_info.od_id = batch_payment.od_id
+        where service_id = $service_id and batch_payment.mb_id = '{$mb_id}' order by batch_payment.id desc limit 1";
 
     $result = sql_query($selectPaymentSql);
     if ($result) {
+        $rowCount = sql_num_rows($result);
+        if(empty($rowCount)){
+            return false;
+        }
+
         while ($row = sql_fetch_array($result)) {
             $startDate = $row['payment_date'];
-            $endDate = $row['expiration_date'];
+            $endDate = $row['next_payment_date'];
         }
 
         $currentTime = strtotime(G5_TIME_YMDHIS);
