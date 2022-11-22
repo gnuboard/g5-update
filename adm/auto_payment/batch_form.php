@@ -109,7 +109,7 @@ $pg_anchor = '<ul class="anchor">
 $g5['title'] = "구독결제 수정";
 include_once G5_ADMIN_PATH . '/admin.head.php';
 ?>
-<section class="">
+<section>
     <h2 class="h2_frm">구독결제 정보</h2>
     <?php echo $pg_anchor; ?>
     <div class="local_desc02 local_desc">
@@ -262,7 +262,7 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
                         <button type="button" name="btn_payment" data-id="<?php echo $payment['id']?>" data-count="<?php echo $payment['payment_count']?>" class="btn btn_02 btn_payment">결제</button>
                     <?php } ?>
                     <?php if ($payment['is_btn_refund']) { ?>
-                        <button type="button" id="btn_batch_key" class="btn btn_01">환불</button>
+                        <button type="button" class="btn btn_01">환불</button>
                     <?php } ?>
                     </td>
                 </tr>

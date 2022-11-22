@@ -136,11 +136,11 @@ include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
                     </tr>
                     <tr>
                         <th scope="row">상품설명</th>
-                        <td colspan="2"> <?php echo editor_html('service_explan', get_text(html_purifier($service['service_explan']), 0)); ?></td>
+                        <td colspan="2"> <?php echo editor_html('service_explan', get_text(html_purifier(str_replace('\"', '', $service['service_explan'])), 0)); ?></td>
                     </tr>
                     <tr>
                         <th scope="row">모바일 상품설명</th>
-                        <td colspan="2"> <?php echo editor_html('service_mobile_explan', get_text(html_purifier($service['service_mobile_explan']), 0)); ?></td>
+                        <td colspan="2"> <?php echo editor_html('service_mobile_explan', get_text(html_purifier(str_replace('\"', '', $service['service_mobile_explan'])), 0)); ?></td>
                     </tr>
                 </tbody>
             </table>
