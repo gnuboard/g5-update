@@ -14,11 +14,24 @@ $g5Mysqli = new G5Mysqli();
 $board_list     = array();
 
 $service_id     = isset($_GET['service_id']) ? $_GET['service_id'] : 0;
-$service        = array();
+$service = array(
+    'bo_table' => '',
+    'service_name' => '',
+    'service_order' => '',
+    'service_use' => 1,
+    'service_explan' => '',
+    'service_mobile_explan' => '',
+    'service_summary' => '',
+    'recurring_count' => 1,
+    'recurring_unit' => 'm',
+    'service_expiration' => '0',
+    'service_expiration_unit' => 'm'
+);
 $price_count    = 0;
 
 if ($w == '') {
     $html_title .= '입력';
+    $service_price = array();
 } else if ($w == 'u') {
     $html_title .= '수정';
 
@@ -136,11 +149,11 @@ include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
                     </tr>
                     <tr>
                         <th scope="row">상품설명</th>
-                        <td colspan="2"> <?php echo editor_html('service_explan', get_text(html_purifier($service['service_explan']), 0)); ?></td>
+                        <td colspan="2"> <?php echo editor_html('service_explan', get_text(html_purifier(str_replace('\"', '', $service['service_explan'])), 0)); ?></td>
                     </tr>
                     <tr>
                         <th scope="row">모바일 상품설명</th>
-                        <td colspan="2"> <?php echo editor_html('service_mobile_explan', get_text(html_purifier($service['service_mobile_explan']), 0)); ?></td>
+                        <td colspan="2"> <?php echo editor_html('service_mobile_explan', get_text(html_purifier(str_replace('\"', '', $service['service_mobile_explan'])), 0)); ?></td>
                     </tr>
                 </tbody>
             </table>
