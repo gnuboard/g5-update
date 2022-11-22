@@ -263,7 +263,7 @@ window.onload = function() {
         }
 
         $.ajax({
-            url : "kcp-batch/ajax.order_batch_class.php",
+            url : "kcp-batch/ajax.order_batch.php",
             type: "POST",
             data: queryString,
             success: function(data) {
