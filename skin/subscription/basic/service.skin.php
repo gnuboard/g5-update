@@ -14,7 +14,7 @@ $page_no = isset($page_no) ? $page_no : 0;
 $page_per_count = isset($page_per) ? $page_per : 10;
 $bo_table = isset($_GET['bo_table']) ? clean_xss_tags($_GET['bo_table']) : '';
 
-$board_list = showServiceList($page_no, $page_per_count, $bo_table);
+$board_list = showServiceList($bo_table);
 
 function convertDayWeekUnit($days)
 {

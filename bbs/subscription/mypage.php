@@ -19,22 +19,26 @@ $kcpBatch = new KcpBatch();
  * 조회성공시 배열, 조회실패시 false 반환
  * @return array|false
  */
-function showMyServiceList()
+function showMyServiceList($status = 1)
 {
+    global $g5;
+
+    $status = (int)$status;
     $mb_id = getUserId();
     if ($mb_id === false) {
         return false;
     }
-    $selectAllMyServiceSql = 'SELECT 
+
+    $sql = "SELECT 
         *,
         board.bo_subject,
         (SELECT price FROM g5_batch_service_price sp WHERE service.service_id = sp.service_id AND sp.apply_date <= NOW() ORDER BY apply_date DESC LIMIT 1) AS price
-    FROM ' . G5_TABLE_PREFIX . 'batch_info AS info
-    LEFT JOIN ' . G5_TABLE_PREFIX . 'batch_service AS service ON info.service_id = service.service_id
+    FROM {$g5['batch_info_table']} AS info
+    LEFT JOIN {$g5['batch_service_table']} AS service ON info.service_id = service.service_id
     LEFT JOIN g5_board board ON service.bo_table = board.bo_table
-    WHERE mb_id =' . "'$mb_id" . "' AND status != 0";
+    WHERE mb_id ='{$mb_id}' AND status = {$status}";
 
-    $result = sql_query($selectAllMyServiceSql);
+    $result = sql_query($sql);
     if ($result) {
         $responseResult = array();
         while ($row = sql_fetch_array($result)) {

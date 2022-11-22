@@ -53,63 +53,27 @@ function showServiceDetail($serviceId)
  * @param int $pagePerCount 몇개씩 보여줄지
  * @return array 결과 없으면 빈배열 리턴
  */
-function showServiceList($pageNo, $pagePerCount, $bo_table = '')
+function showServiceList($bo_table = '')
 {
-    $startPage = $pageNo * $pagePerCount;
-    $lastPage = $startPage + $pagePerCount;
-
-    ++$startPage; //예) 1p 일 때   11, 20
-    if ($pageNo == 0) {
-        $startPage = 0;
-    }
-
-    if ($pageNo < 0 || $lastPage < 0) {
-        $startPage = 0;
-        $lastPage = 0;
-    }
-
-    // $selectAllServiceSql = 'select
-    // service.service_id,
-    // bo_table,
-    // service_name,
-    // service_summary,
-    // service_explan,
-    // service_mobile_explan,
-    // service_image,
-    // service_url,
-    // service_hook,
-    // service_expiration,
-    // service_expiration_unit,
-    // service_order,
-    // service_use,
-    // recurring_count,
-    // recurring_unit,
-    // price,
-    // price_table.apply_date as price_apply_date
-    // from ' . G5_TABLE_PREFIX . 'batch_service as service
-    // left join ' . G5_TABLE_PREFIX . 'batch_service_price as price_table
-    //     on service.service_id = price_table.service_id order by service_order asc limit '
-    //     . sql_real_escape_string($startPage) . ', ' . sql_real_escape_string($lastPage);
     $where = ' WHERE 1=1';
     if ($bo_table != '') {
         $where .= " AND bs.bo_table = '{$bo_table}'";
     }
-    $selectAllServiceSql = "SELECT 
-        bs.*,
-	    board.bo_subject,
-        (SELECT price FROM g5_batch_service_price sp WHERE bs.service_id = sp.service_id AND sp.apply_date <= NOW() ORDER BY apply_date DESC LIMIT 1) AS price
-    FROM g5_batch_service bs
-    LEFT JOIN g5_board board ON bs.bo_table = board.bo_table
-    {$where}
-    ORDER BY service_order ASC";
-    $result = sql_query($selectAllServiceSql);
+    $sql = "SELECT 
+                bs.*,
+                board.bo_subject,
+                (SELECT price FROM g5_batch_service_price sp WHERE bs.service_id = sp.service_id AND sp.apply_date <= NOW() ORDER BY apply_date DESC LIMIT 1) AS price
+            FROM g5_batch_service bs
+            LEFT JOIN g5_board board ON bs.bo_table = board.bo_table
+            {$where}
+            ORDER BY service_order ASC";
+    $result = sql_query($sql);
+    
     $responseItem = array();
-    //정렬된 결과에서 같은 서비스가있으면 그중에서 가장 마지막일인것을 뽑는다. 서비스번호가 같은건 첫번째만 추가한다.
-    if ($result) {
-        $serviceId = null;
+    if ($result->num_rows > 0) {
         while ($row = sql_fetch_array($result)) {
-            $responseItem[$row['bo_table']]['subject'] = $row['bo_subject'];
-            $responseItem[$row['bo_table']]['service'][] = $row;
+            $responseItem[$row['bo_table']]['subject']      = $row['bo_subject'];
+            $responseItem[$row['bo_table']]['service'][]    = $row;
         }
     }
 
@@ -158,7 +122,7 @@ function checkRoute()
 
     $sql = "SELECT bo_table, service_url, service_hook, service_id FROM " . G5_TABLE_PREFIX . "batch_service WHERE service_use = 1 AND bo_table = '{$bo_table}'";
     $result = sql_query($sql);
-    if ($result) {
+    if ($result->num_rows > 0) {
         /*
         $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $host = parse_url(G5_URL, PHP_URL_HOST);
@@ -190,7 +154,5 @@ function checkRoute()
         if ($check === false) {
             alert('결제가 필요합니다.', G5_URL . '/skin/subscription/basic/service.skin.php?bo_table=' . $bo_table);
         }
-    } else {
-        alert('게시판 권한체크 오류입니다.');
     }
 }

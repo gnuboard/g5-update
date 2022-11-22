@@ -19,47 +19,7 @@ $page_no = isset($page_no) ? $page_no : 0;
 $page_per_count = isset($page_per) ? $page_per : 10;
 
 $board_list = showMyServiceList();
-
-$title = '구독 중인 서비스 목록';
-function convertYMDUnit($unit)
-{
-    $data = '';
-    switch (strtolower($unit)) {
-        case 'y' :
-            $data = '년';
-            break;
-        case 'm' :
-            $data = '월';
-            break;
-        case 'd' :
-            $data = '일';
-            break;
-    }
-
-    return $data;
-}
-
-function convertDayWeekUnit($days)
-{
-    $data = '';
-    switch ($days) {
-        case 7 :
-            $data = '1주';
-            break;
-        case '14' :
-            $data = '2주';
-            break;
-        case '21' :
-            $data = '3주';
-            break;
-        case '28' :
-            $data = '4주';
-            break;
-    }
-
-    return $data;
-}
-
+$expiration_list = showMyServiceList(0);
 ?>
 
 <style>
@@ -127,8 +87,7 @@ function convertDayWeekUnit($days)
 </style>
 
 <div class="header_title">
-    <h2><?= $title ?></h2>
-    <div class="my_service_btn"><a href="mypage.skin.php">구독 마이페이지</a></div>
+    <h2>구독 중인 서비스 목록</h2>
 </div>
 
 <article class="service_list_wrap">
@@ -139,28 +98,62 @@ function convertDayWeekUnit($days)
     
     <?php foreach($board['service'] as $service) { ?>
     <div class="item_box">
-        <!-- <a href="service_detail.skin.php?service_id=<?php echo $service['service_id'] ?>"> -->
-            <ul>
-                <li class="title_area">
+        <ul>
+            <li class="title_area">
+                <a href="mypage_service_detail.skin.php?od_id=<?php echo $service['od_id'] ?>">
                     <div class="service_name"><?= $service['service_name'] ?></div>
                     <div class="service_summary"><?= $service['service_summary'] ?></div>
-                </li>
-                <li class="price_area">
-                    <div class="price"><?=$convertYMDUnit1[$service['recurring_unit']] ?> <?= number_format($service['price']) ?>원</div>
-                    <div><?=$service['service_expiration']?><?=$convertYMDUnit2[$service['service_expiration_unit']] ?> 동안 이용가능</div>
-                    <div>다음 결제일: <?php echo date('Y-m-d', strtotime($service['next_payment_date'])) ?></div>
-                </li>
-                <li class="button_area">
-                    <button type="button" class="btn_frmline btn_cancel" data-od_id="<?= $service['od_id'] ?>">구독 취소</button>
-                </li>
-
-            </ul>
-        <!-- </a> -->
+                </a>
+            </li>
+            <li class="price_area">
+                <div class="price"><?=$convertYMDUnit1[$service['recurring_unit']] ?> <?= number_format($service['price']) ?>원</div>
+                <div><?=$service['service_expiration']?><?=$convertYMDUnit2[$service['service_expiration_unit']] ?> 동안 이용가능</div>
+                <div>다음 결제일: <?php echo date('Y-m-d', strtotime($service['next_payment_date'])) ?></div>
+            </li>
+            <!--
+            <li class="button_area">
+                <button type="button" class="btn_frmline btn_cancel" data-od_id="<?= $service['od_id'] ?>">구독 취소</button>
+            </li>
+            -->
+        </ul>
     </div>
 <?php 
         }
     }
 ?>
+</article>
+
+<div class="header_title">
+    <h2>종료된 구독 서비스</h2>
+</div>
+<article class="service_list_wrap">
+<?php
+    foreach ($expiration_list as $board) {
+?>
+    <h2 style="font-size:1.4rem;"><?php echo $board['subject'] ?></h2>
+    
+    <?php foreach($board['service'] as $service) { ?>
+    <div class="item_box">
+        <ul>
+            <li class="title_area">
+                <a href="mypage_service_detail.skin.php?od_id=<?php echo $service['od_id'] ?>">
+                    <div class="service_name"><?= $service['service_name'] ?></div>
+                    <div class="service_summary"><?= $service['service_summary'] ?></div>
+                </a>
+            </li>
+            <li class="price_area">
+                <div class="price"><?=$convertYMDUnit1[$service['recurring_unit']] ?> <?= number_format($service['price']) ?>원</div>
+                <div><?=$service['service_expiration']?><?=$convertYMDUnit2[$service['service_expiration_unit']] ?> 동안 이용가능</div>
+                <div>다음 결제일: <?php echo date('Y-m-d', strtotime($service['next_payment_date'])) ?></div>
+            </li>
+        </ul>
+    </div>
+<?php 
+        }
+    }
+?>
+</article>
+
 <script>
 $(function(){
     $('.btn_cancel').on('click', function(){
