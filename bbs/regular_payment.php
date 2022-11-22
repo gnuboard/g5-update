@@ -35,17 +35,6 @@ add_stylesheet('<link rel="stylesheet" href="'.$member_skin_url.'/style.css">', 
     <input type="hidden" name="site_name"  value="<?php echo $g5['title'] ?>" />
     <input type="hidden" name="site_cd"  value="<?php echo $g5['title'] ?>" />
 
-    <!--
-        ※필수 항목
-        표준웹에서 값을 설정하는 부분으로 반드시 포함되어야 합니다 값을 설정하지 마십시오
-    -->
-    <input type="hidden" name="module_type"     value="01"/>
-    <input type="hidden" name="res_cd"          value=""/>
-    <input type="hidden" name="res_msg"         value=""/>
-    <input type="hidden" name="enc_info"        value=""/>
-    <input type="hidden" name="enc_data"        value=""/>
-    <input type="hidden" name="tran_cd"         value=""/>
-
     <!-- 주민번호 S / 사업자번호 C 선택 -->
     <input type='hidden' name='batch_soc_choice' value='S' />
 
@@ -79,10 +68,13 @@ add_stylesheet('<link rel="stylesheet" href="'.$member_skin_url.'/style.css">', 
     <input type="hidden" name="currency" value="410"  />
     <input type="hidden" name="service_id" value="<?php echo $serviceId ?>" />
     <input type="hidden" name='batch_key' id='input_batch_key' value='' />
+    <input type="hidden" name="enc_info" value=""/>
+    <input type="hidden" name="enc_data" value=""/>
+    <input type="hidden" name="tran_cd" value=""/>
     <div class="register">
         <div id="register_form" class="form_01">
             <div class="register_form_inner">
-                <h2>결제 상품정보</h2>
+                <h2>정기구독 상품정보</h2>
                 <ul>
                     <li class="half_input left_input margin_input">
                         <label for="good_name">
@@ -103,8 +95,8 @@ add_stylesheet('<link rel="stylesheet" href="'.$member_skin_url.'/style.css">', 
                     <li>
                         <label for="buyr_name">
                             주문자명
-                            <button type="button" class="tooltip_icon"><i class="fa fa-question-circle-o" aria-hidden="true"></i><span class="sound_only">설명보기</span></button>
-                            <span class="tooltip">주문 정보 입력</span>
+                            <button type="button" class="tooltip_icon"><i class="fa fa-question-circle-o" aria-hidden="true"></i><span class="sound_only">주문자명</span></button>
+                            <span class="tooltip">주문자명</span>
                         </label>
                         <input type="text" name="buyr_name" id="buyr_name" value="<?php echo $member['mb_name']?>" class="frm_input half_input" placeholder="주문자명">
                     </li>
@@ -145,6 +137,7 @@ function m_Completepayment(returnForm, closeEvent)
 {
     if (returnForm.res_cd.value == "0000" ) {
         const batchForm = document.getElementById('form_batch_key');
+        const paymenForm = document.getElementById('form_payment')
         const od_id = batchForm.od_id.value;
         const batch_soc_choice = batchForm.batch_soc_choice.value != undefined ? batchForm.batch_soc_choice.value : 'S';
         const batch_cardno_return_yn = batchForm.batch_cardno_return_yn.value != undefined ? batchForm.batch_cardno_return_yn.value : 'L';
@@ -162,6 +155,9 @@ function m_Completepayment(returnForm, closeEvent)
                 if (data) {
                     const result = JSON.parse(data);
                     if (result.res_cd == "0000") {
+                        paymenForm.batch_key.value = result.batch_key;
+                        paymenForm.enc_info.value = result.enc_info;
+                        paymenForm.tran_cd.vaue = result.tran_cd;
                         alert('결제 정보가 정상적으로 입력되었습니다.');
                     } else {
                         alert('카드 등록에 실패했습니다.');
@@ -263,7 +259,7 @@ window.onload = function() {
         }
 
         $.ajax({
-            url : "kcp-batch/ajax.order_batch.php",
+            url : "kcp-batch/ajax.order_batch_class.php",
             type: "POST",
             data: queryString,
             success: function(data) {
