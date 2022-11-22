@@ -50,6 +50,10 @@ function getBatchKeyInfoKcp($orderId, $serviceId)
 
     $serviceExpiration = $info[0]['service_expiration'];
     $serviceUnit = $info[0]['recurring_unit'];
+    if($serviceUnit === 'w'){
+        $serviceExpiration *= 7;
+        $serviceUnit = 'd';
+    }
     $good_expr =  '2:' . $serviceExpiration . $serviceUnit;
 
     $kcpBatch = new KcpBatch();
