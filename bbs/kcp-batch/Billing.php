@@ -56,6 +56,7 @@ class Billing
 
         // 입력 데이터 재 선언 (순서)
         $bind_param = array(
+            $resultData['od_id'],
             $memberId,
             $resultData['result_code'],
             $resultData['result_msg'],
@@ -63,7 +64,8 @@ class Billing
             $resultData['card_name'],
             $resultData['bill_key']
         );
-        $sql = "INSERT INTO {$g5["kcp_batch_key_log_table"]} SET 
+        $sql = "INSERT INTO {$g5["kcp_batch_key_log_table"]} SET
+                    od_id       = ?,
                     mb_id       = ?,
                     res_cd      = ?,
                     res_msg     = ?,
