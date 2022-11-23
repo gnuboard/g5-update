@@ -11,25 +11,25 @@ class G5Mysqli
      *
      * @var mysqli
      */
-    protected static $_instance;
+    private static $_instance;
 
-    public function __construct($mysqli = null, $charSet = 'utf8mb4')
+    public function __construct($charSet = 'utf8mb4')
     {
         try {
-            if (!$mysqli) {
-                // connection
-                $mysqli = new mysqli(G5_MYSQL_HOST, G5_MYSQL_USER, G5_MYSQL_PASSWORD, G5_MYSQL_DB);
-                if ($mysqli->connect_errno) {
-                    throw new Exception('[' . $mysqli->connect_errno . '] Mysqli Connection Error : ' . $mysqli->connect_error);
-                }
-                /* Set the desired charset after establishing a connection */
-                if (isset($charSet)) {
-                    $mysqli->set_charset($charSet);
-                    if ($mysqli->errno) {
-                        throw new Exception('Mysqli Error: ' . $mysqli->error);
-                    }
+            /* connection */
+            $mysqli = new mysqli(G5_MYSQL_HOST, G5_MYSQL_USER, G5_MYSQL_PASSWORD, G5_MYSQL_DB);
+            if ($mysqli->connect_errno) {
+                throw new Exception('[' . $mysqli->connect_errno . '] Mysqli Connection Error : ' . $mysqli->connect_error);
+            }
+
+            /* Set the desired charset after establishing a connection */
+            if (isset($charSet)) {
+                $mysqli->set_charset($charSet);
+                if ($mysqli->errno) {
+                    throw new Exception('Mysqli Error: ' . $mysqli->error);
                 }
             }
+
             $this->setInstance($mysqli);
         } catch (Exception $e) {
             echo $e->getMessage();
@@ -52,6 +52,7 @@ class G5Mysqli
 
     /**
      * MySQL Prepared Statements
+     * @todo ins/upd/del 영향받는 데이터가 출력되는 함수로 분리
      * @param string $sql       Statement to execute;
      * @param array $params     values of the parameters (if any)
      * @param boolean $close    true to close $stmt (in inserts) false to return an array with the values;   
@@ -82,13 +83,19 @@ class G5Mysqli
                 $stmt->store_result();
                 return $mysqli->affected_rows;
             } else {
-                return $this->execSqlResult($stmt);    
+                return $this->execSqlResult($stmt);
             }
-
         } catch (Exception $e) {
             echo '[Exception] ' . $e->getMessage();
             exit;
         }
+    }
+    /**
+     * @todo 영향받는 행 출력 함수 생성
+     */
+    function affectedRow()
+    {
+        return $this->getInstance()->affected_rows;
     }
 
     /**
@@ -102,7 +109,7 @@ class G5Mysqli
         if (version_compare(PHP_VERSION, '5.4.0', '>=')) {
             $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         } else {
-            
+
             $meta = $stmt->result_metadata();
             while ($field = $meta->fetch_field()) {
                 $parameters[] = &$row[$field->name];
@@ -132,20 +139,21 @@ class G5Mysqli
      * @return string
      * @throws InvalidArgumentException
      */
-    function whiteList(&$value, $allowed, $message) {
+    function whiteList(&$value, $allowed, $message)
+    {
         try {
             if ($value === null || $value === '') {
                 return $allowed[0];
             }
             $key = array_search($value, $allowed, true);
-            if ($key === false) { 
-                throw new InvalidArgumentException($message); 
+            if ($key === false) {
+                throw new InvalidArgumentException($message);
             } else {
                 return $value;
             }
         } catch (InvalidArgumentException $e) {
             echo $e->getMessage();
-        } 
+        }
     }
 
     /**
@@ -158,8 +166,7 @@ class G5Mysqli
         /**
          * @deprecated 버전 체크
          */
-        if (strnatcmp(phpversion(), '5.3') >= 0)
-        {
+        if (strnatcmp(phpversion(), '5.3') >= 0) {
             $refs = array();
             foreach ($arr as $key => $value)
                 $refs[$key] = &$arr[$key];
@@ -182,9 +189,12 @@ class G5Mysqli
      *
      * @return  mysqli
      */
-    public function getInstance()
+    public static function getInstance()
     {
-        return $this->_instance;
+        if (!isset(self::$_instance)) {
+            self::$_instance = new G5Mysqli();
+        }
+        return self::$_instance;
     }
 
     /**
@@ -193,10 +203,10 @@ class G5Mysqli
      * @param  mysqli  $_instance  Static instance of self
      * @return  self
      */
-    public function setInstance(mysqli $_instance)
+    public static function setInstance(mysqli $_instance)
     {
-        $this->_instance = $_instance;
+        self::$_instance = $_instance;
 
-        return $this;
+        return self::class;
     }
 }
