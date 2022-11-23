@@ -14,7 +14,7 @@ $g5Mysqli = new G5Mysqli();
 
 $unit_array     = array('y' => '년', 'm' => '개월', 'w' => '주', 'd' => '일');
 $search_list    = array('service_name', 'mb.mb_id', 'mb.mb_name');
-$orderby_list   = array('service_id', 'service_name', 'price', 'service_order', 'service_use');
+$orderby_list   = array('service_id', 'service_name', 'price', 'service_order', 'service_use', 'start_date');
 $direction_list = array('desc', 'asc');
 $status_list    = array('', '0', '1', '2');
 $batch_list     = array();
@@ -22,7 +22,7 @@ $batch_list     = array();
 $sfl        = !empty($sfl) ? clean_xss_tags($sfl) : 'service_name';
 $stx        = !empty($stx) ? clean_xss_tags($stx) : '';
 $save_stx   = !empty($save_stx) ? clean_xss_tags($save_stx) : '';
-$sst        = !empty($sst) ? clean_xss_tags($sst) : 'service_order';
+$sst        = !empty($sst) ? clean_xss_tags($sst) : 'start_date';
 $sod        = !empty($sod) ? clean_xss_tags($sod) : 'desc';
 $status     = isset($status) ? preg_replace('/[^0-9]/', '',  $status) : '';
 
@@ -72,14 +72,14 @@ $sql  = "SELECT
             bs.service_name,
             CONCAT(recurring_count, recurring_unit) AS recurring,
             (SELECT COUNT(*) FROM g5_batch_payment bp WHERE bp.od_id = bi.od_id AND res_cd = '0000') as payment_count,
-            (SELECT price FROM g5_batch_service_price sd WHERE bs.service_id = sd.service_id AND sd.apply_date <= NOW() ORDER BY apply_date DESC LIMIT 1) AS price
+            (SELECT price FROM g5_batch_service_price sd WHERE bs.service_id = sd.service_id AND (sd.apply_date <= NOW() OR sd.apply_date is null) ORDER BY apply_date DESC LIMIT 1) AS price
         {$sql_common}
         {$sql_order}
         limit ?, ?";
 array_push($bind_param, $from_record, $rows);
 $result = $g5Mysqli->execSQL($sql, $bind_param);
 /* 결과처리 */
-foreach($result as $i => $row) {
+foreach ($result as $i => $row) {
     $batch_list[$i] = $row;
     $batch_list[$i]['bg_class'] = 'bg' . ($i % 2);
     // 결제주기
@@ -87,18 +87,18 @@ foreach($result as $i => $row) {
     // 회원정보
     $batch_list[$i]['mb_side_view'] = get_sideview($row['mb_id'], get_text($row['mb_name']), $row['mb_email'], '');
     // 주문번호에 - 추가
-    switch(strlen($row['od_id'])) {
+    switch (strlen($row['od_id'])) {
         case 16:
-            $batch_list[$i]['display_od_id'] = substr($row['od_id'] ,0 ,8) . '-' . substr($row['od_id'], 8);
+            $batch_list[$i]['display_od_id'] = substr($row['od_id'], 0, 8) . '-' . substr($row['od_id'], 8);
             break;
         default:
-            $batch_list[$i]['display_od_id'] = substr($row['od_id'] , 0, 6) . '-' . substr($row['od_id'], 6);
+            $batch_list[$i]['display_od_id'] = substr($row['od_id'], 0, 6) . '-' . substr($row['od_id'], 6);
             break;
     }
     // 기간
     $batch_list[$i]['display_date'] = $row['start_date'] . ' ~ ' . ($row['end_date'] != null && $row['end_date'] != '0000-00-00 00:00:00' ? $row['end_date'] : '');
     // 상태
-    $batch_list[$i]['display_status'] = $row['status'] == '1' ? '진행 중' : '종료';   
+    $batch_list[$i]['display_status'] = $row['status'] == '1' ? '진행 중' : '종료';
 }
 
 $qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
@@ -144,69 +144,64 @@ $qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
         <table id="sodr_list">
             <caption>주문 내역 목록</caption>
             <thead>
-            <tr>
-                <th scope="col" rowspan="2">
-                    <label for="chkall" class="sound_only">주문 전체</label>
-                    <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
-                </th>
-                <th scope="col" rowspan="2" id="th_od_id">주문번호</th>
-                <th scope="col" colspan="3" id="th_service_name">서비스명</th>
-                <th scope="col" rowspan="2" id="th_member">회원</th>
-                <th scope="col" rowspan="2" id="th_date">기간</th>
-                <th scope="col" rowspan="2" id="th_end_date">결제진행 상태</th>
-                <th scope="col" rowspan="2">보기</th>
-            </tr>
-            <tr>
-                <th scope="col" id="th_price">가격</th>
-                <th scope="col" id="th_recurring">주기</th>
-                <th scope="col" id="th_payment_count">결제횟수</th>
-            </tr>
+                <tr>
+                    <th scope="col" rowspan="2">
+                        <label for="chkall" class="sound_only">주문 전체</label>
+                        <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
+                    </th>
+                    <th scope="col" rowspan="2" id="th_od_id">주문번호</th>
+                    <th scope="col" colspan="3" id="th_service_name">서비스명</th>
+                    <th scope="col" rowspan="2" id="th_member">회원</th>
+                    <th scope="col" rowspan="2" id="th_date">기간</th>
+                    <th scope="col" rowspan="2" id="th_end_date">결제진행 상태</th>
+                    <th scope="col" rowspan="2">보기</th>
+                </tr>
+                <tr>
+                    <th scope="col" id="th_price">가격</th>
+                    <th scope="col" id="th_recurring">주기</th>
+                    <th scope="col" id="th_payment_count">결제횟수</th>
+                </tr>
             </thead>
             <tbody>
-            <?php foreach ($batch_list as $key => $batch) { ?>
-            <tr class="orderlist <?php echo $batch['bg_class']; ?>">
-                <td rowspan="2" class="td_chk2">
-                    <input type="hidden" name="od_id[<?php echo $key ?>]" value="<?php echo $batch['od_id'] ?>" id="od_id_<?php echo $key ?>">
-                    <label for="chk_<?php echo $i; ?>" class="sound_only">주문번호 <?php echo $batch['od_id']; ?></label>
-                    <input type="checkbox" name="chk[]" value="<?php echo $key ?>" id="chk_<?php echo $key ?>">
-                </td>
-                <td headers="th_od_id" rowspan="2">
-                    <a href="<?php echo G5_SHOP_URL; ?>/orderinquiryview.php?od_id=<?php echo $batch['od_id']; ?>" class="orderitem">
-                        <?php echo $batch['display_od_id']; ?>
-                    </a>
-                </td>
-                <td headers="th_service_name" colspan="3"><?php echo $batch['service_name']; ?></td>
-                <td headers="th_member" rowspan="2"><?php echo $batch['mb_side_view']; ?></td>
-                <td headers="th_date" rowspan="2"><?php echo $batch['display_date']; ?></td>
-                <td headers="th_status" rowspan="2"><?php echo $batch['display_status']; ?></td>
-                <td rowspan="2" class="td_mng td_mng_s">
-                    <a href="./batch_form.php?od_id=<?php echo $batch['od_id']; ?>&amp;<?php echo $qstr; ?>" class="mng_mod btn btn_02">
-                        <span class="sound_only"><?php echo $batch['od_id']; ?></span>
-                        보기
-                    </a>
-                </td>
-            </tr>
-            <tr class="<?php echo $batch['bg_class']; ?>">
-                <td><?php echo number_format($batch['price']) ?>원</td>
-                <td><?php echo $batch['recurring'] ?></td>
-                <td><?php echo number_format((float)$batch['payment_count']); ?>회</td>
-            </tr>
-            <?php
-            } 
-            if ($total_count == 0) {
-                echo '<tr><td colspan="9" class="empty_table">자료가 없습니다.</td></tr>';
-            }
-            ?>
+                <?php foreach ($batch_list as $key => $batch) { ?>
+                    <tr class="orderlist <?php echo $batch['bg_class']; ?>">
+                        <td rowspan="2" class="td_chk2">
+                            <input type="hidden" name="od_id[<?php echo $key ?>]" value="<?php echo $batch['od_id'] ?>" id="od_id_<?php echo $key ?>">
+                            <label for="chk_<?php echo $i; ?>" class="sound_only">주문번호 <?php echo $batch['od_id']; ?></label>
+                            <input type="checkbox" name="chk[]" value="<?php echo $key ?>" id="chk_<?php echo $key ?>">
+                        </td>
+                        <td headers="th_od_id" rowspan="2">
+                            <a href="<?php echo G5_SHOP_URL; ?>/orderinquiryview.php?od_id=<?php echo $batch['od_id']; ?>" class="orderitem">
+                                <?php echo $batch['display_od_id']; ?>
+                            </a>
+                        </td>
+                        <td headers="th_service_name" colspan="3"><?php echo $batch['service_name']; ?></td>
+                        <td headers="th_member" rowspan="2"><?php echo $batch['mb_side_view']; ?></td>
+                        <td headers="th_date" rowspan="2"><?php echo $batch['display_date']; ?></td>
+                        <td headers="th_status" rowspan="2"><?php echo $batch['display_status']; ?></td>
+                        <td rowspan="2" class="td_mng td_mng_s">
+                            <a href="./batch_form.php?od_id=<?php echo $batch['od_id']; ?>&amp;<?php echo $qstr; ?>" class="mng_mod btn btn_02">
+                                <span class="sound_only"><?php echo $batch['od_id']; ?></span>
+                                보기
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="<?php echo $batch['bg_class']; ?>">
+                        <td><?php echo number_format($batch['price']) ?>원</td>
+                        <td><?php echo $batch['recurring'] ?></td>
+                        <td><?php echo number_format((float)$batch['payment_count']); ?>회</td>
+                    </tr>
+                <?php
+                }
+
+                if ($total_count == 0) {
+                    echo '<tr><td colspan="9" class="empty_table">자료가 없습니다.</td></tr>';
+                }
+                ?>
             </tbody>
         </table>
     </div>
 </form>
-
 <?php echo get_paging(G5_IS_MOBILE ? $config['cf_mobile_pages'] : $config['cf_write_pages'], $page, $total_page, "{$_SERVER['SCRIPT_NAME']}?$qstr&amp;page="); ?>
-
-<script>
-$(function(){
-});
-</script>
 <?php
-include_once (G5_ADMIN_PATH.'/admin.tail.php');
+include_once G5_ADMIN_PATH . '/admin.tail.php';

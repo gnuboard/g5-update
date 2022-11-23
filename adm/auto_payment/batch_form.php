@@ -26,7 +26,7 @@ $batch_info = $g5Mysqli->getOne($sql, array($od_id));
 // 결과처리
 $batch_info['mb_side_view']         = get_sideview($batch_info['mb_id'], get_text($batch_info['mb_name']), $batch_info['mb_email'], '');
 $batch_info['display_end_date']     = $batch_info['end_date'] != "0000-00-00 00:00:00" ? $batch_info['end_date'] : "없음";
-$batch_info['display_status']       = $batch_info['status'] == "1" ? "진행 중" : "종료";
+$batch_info['display_status']       = $batch_info['status'] == "1" ? "구독 중" : "구독 종료";
 $batch_info['display_batch_key']    = $billing->displayBillKey($batch_info['batch_key']);
 $batch_info['display_next_payment'] = date('Y-m-d', strtotime($batch_info['next_payment_date']));
 switch(strlen($batch_info['od_id'])) {
@@ -46,7 +46,7 @@ $sql = "SELECT
             IF(service_expiration != 0, CONCAT(bs.service_expiration, bs.service_expiration_unit), '') AS expiration,
             CONCAT(recurring_count, recurring_unit) AS recurring,
             b.bo_subject,
-	        (SELECT price FROM {$g5['batch_service_price_table']} sd WHERE bs.service_id = sd.service_id AND sd.apply_date <= NOW() ORDER BY apply_date DESC LIMIT 1) AS price
+	        (SELECT price FROM {$g5['batch_service_price_table']} sd WHERE bs.service_id = sd.service_id AND (sd.apply_date <= NOW() OR sd.apply_date is null) ORDER BY apply_date DESC LIMIT 1) AS price
         FROM {$g5['batch_service_table']} bs LEFT JOIN g5_board b ON bs.bo_table = b.bo_table
         WHERE bs.service_id = ?";
 $service = $g5Mysqli->getOne($sql, array($service_id));
@@ -155,11 +155,11 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
                                 <td><?php echo $batch_info['display_end_date'] ?></td>
                             </tr>
                             <tr>
-                                <th scope="row"><label for="od_refund_price">결제진행 상태</label></th>
+                                <th scope="row"><label for="od_refund_price">구독 상태</label></th>
                                 <td colspan="3">
                                     <select name="status">
-                                        <option value="1" <?php echo $batch_info['status'] == "1" ? "selected" : ""?>>진행 중</option>
-                                        <option value="0" <?php echo $batch_info['status'] == "0" ? "selected" : ""?>>결제종료</option>
+                                        <option value="1" <?php echo $batch_info['status'] == "1" ? "selected" : ""?>>구독 중</option>
+                                        <option value="0" <?php echo $batch_info['status'] == "0" ? "selected" : ""?>>구독 종료</option>
                                     </select>
                                 </td>
                             </tr>
@@ -313,6 +313,8 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
 
     <!-- batch_cardno_return_yn 설정시 결제창에서 리턴 -->
     <!-- <input type='hidden' name='card_mask_no'			  value=''> -->
+
+    <input type="hidden" name="mb_id"       value="<?php echo $batch_info['mb_id'] ?>"/>
 </form>
 
 <script type="text/javascript" src="https://testpay.kcp.co.kr/plugin/payplus_web.jsp"></script>
@@ -338,11 +340,11 @@ function m_Completepayment( frm_mpi, closeEvent )
                     // Set Data
                     let result = JSON.parse(data);
 
-                    if (result.res_cd == "0000") {
+                    if (result.result_code == "0000") {
                         alert("자동결제 키가 변경되었습니다.");
-                        document.querySelector("#display_batch_key").innerHTML = result.display_batch_key;
+                        document.querySelector("#display_batch_key").innerHTML = result.display_bill_key;
                     } else {
-                        alert("[" + result.res_cd + "]" + result.res_msg);
+                        alert("[" + result.result_code + "]" + result.result_msg);
                     }
                     
                 } else {
@@ -396,8 +398,12 @@ $(function() {
                         alert("잠시 후에 시도해주세요.");
                     }
                 },
-                error: function() {
-                    alert("에러 발생");
+                error: function(result) {
+                    if (result.responseJSON.msg) {
+                        alert(result.responseJSON.msg);
+                    } else {
+                        alert("에러 발생");
+                    }
                 }
             });
         }
