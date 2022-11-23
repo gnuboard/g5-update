@@ -87,11 +87,18 @@ function showServiceList($bo_table = '')
  */
 function checkAuth($service_id)
 {
-    global $member;
-
-    $mb_id = $member['mb_id'];
-    if (empty($mb_id)) {
+    global $config, $is_guest, $is_admin;
+    if($is_guest){
         return false;
+    }
+
+    if($is_admin === 'super'){
+        $mb_id =  $config['cf_admin'];
+    } else {
+        $mb_id = get_session('mb_id');
+        if(empty($mb_id)){
+            return false;
+        }
     }
 
     $sql = "SELECT EXISTS(
@@ -139,7 +146,6 @@ function checkRoute()
                 if (empty($row['service_url'])) {
                     continue;
                 }
-
                 if (parse_url($row['service_url'], PHP_URL_PATH) === $path
                     && parse_url($row['service_url'], PHP_URL_HOST) === $host
                 ) {
