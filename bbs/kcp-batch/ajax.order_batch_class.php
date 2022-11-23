@@ -133,6 +133,7 @@ if ( $res_cd === '0000')
 $start_date = date('Y-m-d H:i:s');
 $end_date = '0000-00-00 00:00:00'; //0 은 구독 만료기간이 정해지지않음.
 
+$next_payment_date = nextPaymentDate($start_date, $recurring_count, $recurring_unit);
 $g5['batch_info_table'] = G5_TABLE_PREFIX . 'batch_info';
 $sql_batch_info = "INSERT INTO {$g5['batch_info_table']} SET 
                 service_id          = '{$service_id}',
@@ -140,7 +141,8 @@ $sql_batch_info = "INSERT INTO {$g5['batch_info_table']} SET
                 mb_id               = '{$member['mb_id']}',
                 batch_key           = '{$bt_batch_key}',
                 start_date          = '{$start_date}',
-                end_date            = '{$end_date}'
+                end_date            = '{$end_date}',
+                next_payment_date   = '{$next_payment_date}'
             ";
 
 $result = sql_query($sql_batch_info);
@@ -237,4 +239,32 @@ function paymentCancel($tno, $kcpBatch){
     }
 
     exit;
+}
+
+function nextPaymentDate($start_date, $recurring_count, $recurring_unit)
+{
+    switch (strtolower($recurring_unit)) {
+        case 'y' :
+            $time = "+{$recurring_count} years";
+            return date('Y-m-d', strtotime("$time", strtotime($start_date)));
+            break;
+        case 'm' :
+            //오늘이 말일이면 $recurring_count 달 후 말일을 계산합니다.
+            if($start_date === date('Y-m-t', strtotime($start_date))){
+                $time = "+{$recurring_count} months";
+                return date("Y-m-t", strtotime("$time", strtotime($start_date)));
+            } else {
+                $time = "+{$recurring_count} months";
+                return date('Y-m-d', strtotime("$time", strtotime($start_date)));
+            }
+            break;
+        case 'd' :
+            $time = "+{$recurring_count} days";
+            return date('Y-m-d', strtotime("$time", strtotime($start_date)));
+            break;
+        case 'w' :
+            $recurring_count *= 7;
+            $time = "+{$recurring_count} days";
+            return date('Y-m-d', strtotime("$time", strtotime($start_date)));
+    }
 }
