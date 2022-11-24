@@ -18,8 +18,8 @@ $convertYMDUnit2 = array('y' => '년', 'm' => '개월', 'w' => '주', 'd' => '�
 $page_no = isset($page_no) ? $page_no : 0;
 $page_per_count = isset($page_per) ? $page_per : 10;
 
-$board_list = showMyServiceList();
-$expiration_list = showMyServiceList(0);
+$board_list = get_myservice();
+$expiration_list = get_myservice(0);
 ?>
 
 <style>
@@ -160,7 +160,7 @@ $(function(){
         if(confirm("해당 서비스의 구독을 취소하시겠습니까?")) {
             let od_id = $(this).data('od_id');
             const data = {
-                'w': 'service_cancel',
+                'w': 'cancel',
                 'od_id': od_id
             };
             $.ajax(g5_bbs_url + '/subscription/ajax.mypage.php', {

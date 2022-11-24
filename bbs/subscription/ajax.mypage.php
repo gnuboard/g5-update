@@ -8,19 +8,19 @@ header('Content-type: application/json; charset=utf-8');
  *  마이페이지 ajax API , 컨트롤러.
  */
 
-$resData = json_decode(file_get_contents('php://input'), true);
-$workingMode = $resData['w'];
+$res_data = json_decode(file_get_contents('php://input'), true);
+$work_mode = $res_data['w'];
 if($_SERVER['REQUEST_METHOD'] === 'GET') {
-    switch ($workingMode) {
+    switch ($work_mode) {
         case  'all' : {
-            $result =  showMyServiceList();
+            $result =  get_myservice();
             if($result === false){
-                responseJson('잘못된 요청입니다.', 400);
+                response_json('잘못된 요청입니다.', 400);
             } else {
                 if (PHP_VERSION_ID >= 50400) {
-                    echo json_encode($resData, JSON_UNESCAPED_UNICODE);
+                    echo json_encode($res_data, JSON_UNESCAPED_UNICODE);
                 } else {
-                    echo to_han(json_encode($resData));
+                    echo to_han(json_encode($res_data));
                 }
             }
         }
@@ -35,12 +35,12 @@ if($_SERVER['REQUEST_METHOD'] === 'GET') {
 
 if($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    switch ($workingMode) {
-        case 'service_cancel' : {
-            $od_id = $resData['od_id'];
-            $result = cancelMyService($od_id);
+    switch ($work_mode) {
+        case 'cancel' : {
+            $od_id = $res_data['od_id'];
+            $result = cancel_myservice($od_id);
             if($result === false){
-                responseJson('잘못된 요청입니다.', 400);
+                response_json('잘못된 요청입니다.', 400);
             } else {
                 echo json_encode($result);
             }
@@ -48,10 +48,8 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
         break;
 
         default : {
-            responseJson('요청파라미터가 잘못되었습니다', 400);
+            response_json('요청파라미터가 잘못되었습니다', 400);
         }
-        break;
-
     }
 }
 
@@ -74,19 +72,19 @@ function to_han($str)
 /**
  * json 형식으로 메시지를 출력 후 exit 합니다.
  * @param string $msg
- * @param string $httpStateNo
+ * @param string $http_status_code
  * @return void
  */
-function responseJson($msg, $httpStateNo = 200)
+function response_json($msg, $http_status_code = 200)
 {
-    $resData = array('msg' => $msg);
+    $res_data = array('msg' => $msg);
     if (PHP_VERSION_ID >= 50400) {
-        echo json_encode($resData, JSON_UNESCAPED_UNICODE);
+        echo json_encode($res_data, JSON_UNESCAPED_UNICODE);
     } else {
-        echo to_han(json_encode($resData));
+        echo to_han(json_encode($res_data));
     }
 
-    header('Content-type: application/json; charset=utf-8', true, $httpStateNo);
+    header('Content-type: application/json; charset=utf-8', true, $http_status_code);
     exit;
 }
 

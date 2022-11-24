@@ -19,12 +19,12 @@ $kcpBatch = new KcpBatch();
  * 조회성공시 배열, 조회실패시 false 반환
  * @return array|false
  */
-function showMyServiceList($status = 1)
+function get_myservice($status = 1)
 {
     global $g5;
 
     $status = (int)$status;
-    $mb_id = getUserId();
+    $mb_id = get_user_id();
     if ($mb_id === false) {
         return false;
     }
@@ -32,7 +32,7 @@ function showMyServiceList($status = 1)
     $sql = "SELECT 
         *,
         board.bo_subject,
-        (SELECT price FROM g5_batch_service_price sp WHERE service.service_id = sp.service_id AND sp.apply_date <= NOW() ORDER BY apply_date DESC LIMIT 1) AS price
+        (SELECT price FROM {$g5['batch_service_price_table']} sp WHERE service.service_id = sp.service_id AND sp.apply_date <= NOW() ORDER BY apply_date DESC LIMIT 1) AS price
     FROM {$g5['batch_info_table']} AS info
     LEFT JOIN {$g5['batch_service_table']} AS service ON info.service_id = service.service_id
     LEFT JOIN g5_board board ON service.bo_table = board.bo_table
@@ -40,34 +40,38 @@ function showMyServiceList($status = 1)
 
     $result = sql_query($sql);
     if ($result) {
-        $responseResult = array();
+        $response = array();
         while ($row = sql_fetch_array($result)) {
-            $responseResult[$row['bo_table']]['subject'] = $row['bo_subject'];
-            $responseResult[$row['bo_table']]['service'][] = $row;
+            $response[$row['bo_table']]['subject'] = $row['bo_subject'];
+            $response[$row['bo_table']]['service'][] = $row;
         }
-        return $responseResult;
+        return $response;
     }
     return false;
 }
 
-function showMyServicePaymentHistory($od_id)
+/**
+ * 내 구독 서비스 결제정보
+ * @param $od_id
+ * @return array|false
+ */
+function get_myservice_payments($od_id)
 {
-    $mb_id = getUserId();
+    $mb_id = get_user_id();
     if ($mb_id === false) {
         return false;
     }
-    $selectPaymentHistorySql = 'select * from ' . G5_TABLE_PREFIX . 'batch_payment 
+    $select_payment_history_sql = 'select * from ' . G5_TABLE_PREFIX . 'batch_payment 
     where mb_id = "' . sql_real_escape_string($mb_id) .  '" and od_id = ' . sql_real_escape_string($od_id);
 
-    $result = sql_query($selectPaymentHistorySql);
-    $responseResult = array();
+    $result = sql_query($select_payment_history_sql);
+    $response = array();
 
     while ($row = sql_fetch_array($result)) {
-        $responseResult[] = $row;
+        $response[] = $row;
     }
 
-
-    return $responseResult;
+    return $response;
 }
 
 /**
@@ -75,27 +79,27 @@ function showMyServicePaymentHistory($od_id)
  * @param string|int $od_id 구독서비스 주문번호
  * @return bool
  */
-function cancelMyService($od_id)
+function cancel_myservice($od_id)
 {
-    $mb_id = getUserId();
+    $mb_id = get_user_id();
     if ($mb_id === false) {
         return false;
     }
 
-    $selectPaymentSql = 'select batch_key from ' . G5_TABLE_PREFIX . 'batch_info 
+    $select_payment_sql = 'select batch_key from ' . G5_TABLE_PREFIX . 'batch_info 
     where mb_id = "' . sql_real_escape_string($mb_id) .  '" and od_id = ' . sql_real_escape_string($od_id);
 
-    $result = sql_query($selectPaymentSql);
+    $result = sql_query($select_payment_sql);
     if (!$result) {
         return false;
     }
 
-    $resultRow = array();
+    $result_row = array();
     while ($row = sql_fetch_array($result)) {
-        $resultRow[] = $row;
+        $result_row[] = $row;
     }
 
-    $oldBatchKey = $resultRow[0]['batch_key'];
+    $old_batchkey = $result_row[0]['batch_key'];
 
     /**
      * @var KcpBatch $kcpBatch
@@ -103,7 +107,7 @@ function cancelMyService($od_id)
     global $kcpBatch;
     /*
     임시 주석처리
-    $batchDelResult = json_decode($kcpBatch->deleteBatchKey($oldBatchKey), true);
+    $batchDelResult = json_decode($kcpBatch->deleteBatchKey($old_batchkey), true);
     if ($batchDelResult === false || !array_key_exists('res_cd', $batchDelResult)) {
         return false;
     }
@@ -113,9 +117,9 @@ function cancelMyService($od_id)
     }
     */
 
-    $stateChangeSql = 'update ' . G5_TABLE_PREFIX . 'batch_info set status = 0
+    $state_change_sql = 'update ' . G5_TABLE_PREFIX . 'batch_info set status = 0
     where mb_id = "' . sql_real_escape_string($mb_id) .  '" and od_id = ' . sql_real_escape_string($od_id);
-    $result = sql_query($stateChangeSql);
+    $result = sql_query($state_change_sql);
     if ($result) {
         return true;
     } else {
@@ -127,7 +131,7 @@ function cancelMyService($od_id)
  * 쿼리 실행 후 영향받은 행 갯수 가져오는 함수.
  * @return int|string
  */
-function affectedRowCounter()
+function get_affected_rows()
 {
     if (PHP_VERSION_ID >= 50400 && G5_MYSQLI_USE) {
         $affected_row = mysqli_affected_rows($GLOBALS['g5']['connect_db']);
@@ -141,7 +145,7 @@ function affectedRowCounter()
  * 사용자아이디 가져오는 함수
  * @return false|string
  */
-function getUserId()
+function get_user_id()
 {
     global $config, $is_guest, $is_admin;
     if ($is_guest) {
@@ -152,6 +156,9 @@ function getUserId()
         return $config['cf_admin'];
     }
 
+    /**
+     * @todo 안되는 조건찾기
+     */
     $mb_id = get_session('mb_id');
     if (empty($mb_id)) {
         return false;

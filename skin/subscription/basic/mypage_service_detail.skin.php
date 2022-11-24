@@ -1,7 +1,7 @@
 <?php
 
 //if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
-require_once '../../../common.php';
+require_once dirname(__FILE__) . '/../../../common.php';
 require_once G5_PATH . '/head.php';
 require_once G5_PATH . '/head.sub.php';
 
@@ -219,7 +219,7 @@ $(function(){
         if(confirm("해당 서비스의 구독을 취소하시겠습니까?")) {
             let od_id = $(this).data('od_id');
             const data = {
-                'w': 'service_cancel',
+                'w': 'cancel',
                 'od_id': od_id
             };
             $.ajax(g5_bbs_url + '/subscription/ajax.mypage.php', {
