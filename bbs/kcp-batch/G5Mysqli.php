@@ -41,20 +41,6 @@ class G5Mysqli
      * MySQL Prepared Statements
      * @param string $sql       Statement to execute;
      * @param array $params     values of the parameters (if any)
-     * @param string $types     a string with parameter types in case we'd decide to set them explicitly (almost never needed)
-     * @return array|null
-     */
-    public function getOne($sql, $params = array(), $types = '')
-    {
-        $result = $this->execSQL($sql, $params, false, $types);
-        return isset($result[0]) ? $result[0] : null;
-    }
-
-    /**
-     * MySQL Prepared Statements
-     * @todo ins/upd/del 영향받는 데이터가 출력되는 함수로 분리
-     * @param string $sql       Statement to execute;
-     * @param array $params     values of the parameters (if any)
      * @param boolean $close    true to close $stmt (in inserts) false to return an array with the values;   
      * @param string $types     a string with parameter types in case we'd decide to set them explicitly (almost never needed)
      * @return int|array
@@ -89,13 +75,6 @@ class G5Mysqli
             echo '[Exception] ' . $e->getMessage();
             exit;
         }
-    }
-    /**
-     * @todo 영향받는 행 출력 함수 생성
-     */
-    function affectedRow()
-    {
-        return $this->getInstance()->affected_rows;
     }
 
     /**
@@ -132,6 +111,100 @@ class G5Mysqli
     }
 
     /**
+     * Get 1 row from MySQL Prepared Statements Result
+     * @param string $sql       Statement to execute;
+     * @param array $params     values of the parameters (if any)
+     * @param string $types     a string with parameter types in case we'd decide to set them explicitly (almost never needed)
+     * @return array|null
+     */
+    public function getOne($sql, $params = array(), $types = '')
+    {
+        $result = $this->execSQL($sql, $params, false, $types);
+        return isset($result[0]) ? $result[0] : null;
+    }
+    
+    /**
+     * Insert query using Mysqli Prepared Statements
+     * @param string    $table      Table name in database
+     * @param array     $data       Insert Data
+     * @return bool
+     */
+    public function insertSQL($table, $data)
+    {
+        try {
+            if (count($data) <= 0) {
+                throw new Exception('Data is empty for insert');
+            }
+            $keys = array_keys($data);
+            $keys = array_map(array($this, 'escapeMysqlIdentifier'), $keys);
+    
+            $table          = $this->escapeMysqlIdentifier($table);
+            $fields         = implode(",", $keys);
+            $placeholders   = str_repeat('?,', count($keys) - 1) . '?';
+    
+            $sql = "INSERT INTO {$table} ({$fields}) VALUES ({$placeholders})";
+    
+            $result = $this->execSQL($sql, array_values($data), true);
+    
+            if ($result > 0) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (Exception $e) {
+            echo $e->getMessage();
+        }
+    }
+
+    /**
+     * Update query using Mysqli Prepared Statements
+     * @param string        $table          Table name in database
+     * @param array         $data           Update Data
+     * @param array         $conditional    Conditional for update (Associative Arrays)
+     * @return bool
+     */
+    public function updateSQL($table, $data, $conditional)
+    {
+        try {
+            if (count($data) <= 0) {
+                throw new Exception('Data is empty for update');
+            }
+            if (empty($conditional) || count($conditional) <= 0) {
+                throw new Exception('Conditional is empty for update');
+            }
+
+            $sql = "UPDATE {$this->escapeMysqlIdentifier($table)} SET ";
+        
+            // Add Update Column
+            $column = array();
+            foreach (array_keys($data) as $field) {
+                array_push($column, "{$this->escapeMysqlIdentifier($field)} = ?");
+            }
+            $sql .= implode(', ', $column);
+
+            // Add Conditional 
+            $where = array();
+            foreach ($conditional as $column => $val) {
+                // Column
+                array_push($where, " {$this->escapeMysqlIdentifier($column)} = ?");
+                // Value
+                $data[$column] = $val;
+            }
+            $sql .= " WHERE " . implode(' AND', $where) . "";
+
+            $result = $this->execSQL($sql, array_values($data), true);
+    
+            if ($result > 0) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (Exception $e) {
+            echo $e->getMessage();
+        }
+    }
+
+    /**
      * Adding a field name in the ORDER BY clause based on the user's choice
      * @param string $value     the checked value. It is passed by reference so it won't raise an error in case a variable is not set. It would allow us to assign a default value if no value is provided.
      * @param array $allowed    the list of allowed values. the first one would serve as a default value
@@ -139,7 +212,7 @@ class G5Mysqli
      * @return string
      * @throws InvalidArgumentException
      */
-    function whiteList(&$value, $allowed, $message)
+    public function whiteList(&$value, $allowed, $message)
     {
         try {
             if ($value === null || $value === '') {
@@ -161,11 +234,8 @@ class G5Mysqli
      * @param array $arr
      * @return array
      */
-    function refValues(&$arr)
+    public function refValues(&$arr)
     {
-        /**
-         * @deprecated 버전 체크
-         */
         if (strnatcmp(phpversion(), '5.3') >= 0) {
             $refs = array();
             foreach ($arr as $key => $value)
@@ -176,12 +246,33 @@ class G5Mysqli
     }
 
     /**
+     * escape MySQL identifiers
+     * all identifiers must be quoted and escaped, according to MySQL standards, in order to avoid various syntax issues.
+     * @param string    $field  Query Field
+     * @return string
+     * @link https://phpdelusions.net/mysqli_examples/insert
+     */
+    public function escapeMysqlIdentifier($field)
+    {
+        return "`" . str_replace("`", "``", $field) . "`";
+    }
+
+    /**
      * Returns the value generated for an AUTO_INCREMENT column by the last query
      * @return int|string
      */
-    function insertId()
+    public function insertId()
     {
         return $this->getInstance()->insert_id;
+    }
+
+    /**
+     * Gets the number of affected rows in a previous MySQL operation
+     * @return int -1 indicates that the query returned an error or that mysqli_affected_rows() was called for an unbuffered SELECT query.
+     */
+    public function affectedRow()
+    {
+        return $this->getInstance()->affected_rows;
     }
 
     /**
