@@ -83,14 +83,7 @@ class G5Mysqli
     public function execSQL($sql, $params = array(), $close = false, $types = '')
     {
         global $g5, $is_debug, $g5_debug;
-        /**
-         * DB 쿼리를 수집
-         */
-        if (!defined('G5_COLLECT_QUERY')) {
-            define('G5_COLLECT_QUERY', false);
-        }
-
-        $start_time = ($is_debug || G5_COLLECT_QUERY) ? get_microtime() : 0;
+        $start_time = $is_debug ? get_microtime() : 0;
 
         try {
             $mysqli = self::$connection;
@@ -110,10 +103,10 @@ class G5Mysqli
             }
 
             //그누 디버그바 쿼리저장
-            $end_time = ($is_debug || G5_COLLECT_QUERY) ? get_microtime() : 0;
+            $end_time = $is_debug ? get_microtime() : 0;
             $is_debug = get_permission_debug_show();
 
-            if (G5_COLLECT_QUERY || $is_debug) {
+            if ($is_debug) {
                 $g5_debug['sql'][] = array(
                     'sql' => $sql,
                     'start_time' => $start_time,
