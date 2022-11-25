@@ -9,32 +9,53 @@ class G5Mysqli
     /**
      * Static instance of self
      *
+     * @var self
+     */
+    protected static $_instance;
+
+    /**
+     * Static instance of self
+     *
      * @var mysqli
      */
-    private static $_instance;
+    private static $connection;
 
-    public function __construct($charSet = 'utf8mb4')
+    //TODO $charset 설정옮기기
+    private function __construct($charSet = 'utf8mb4')
     {
-        try {
-            /* connection */
-            $mysqli = new mysqli(G5_MYSQL_HOST, G5_MYSQL_USER, G5_MYSQL_PASSWORD, G5_MYSQL_DB);
-            if ($mysqli->connect_errno) {
-                throw new Exception('[' . $mysqli->connect_errno . '] Mysqli Connection Error : ' . $mysqli->connect_error);
-            }
-
-            /* Set the desired charset after establishing a connection */
-            if (isset($charSet)) {
-                $mysqli->set_charset($charSet);
-                if ($mysqli->errno) {
-                    throw new Exception('Mysqli Error: ' . $mysqli->error);
+        if (isset($GLOBALS['g5']['connect_db'])) {
+            self::setConnection($GLOBALS['g5']['connect_db']);
+        } else {
+            try {
+                /* connection */
+                $mysqli = new mysqli(G5_MYSQL_HOST, G5_MYSQL_USER, G5_MYSQL_PASSWORD, G5_MYSQL_DB);
+                if ($mysqli->connect_errno) {
+                    throw new Exception('[' . $mysqli->connect_errno . '] Mysqli Connection Error : ' . $mysqli->connect_error);
                 }
-            }
 
-            $this->setInstance($mysqli);
-        } catch (Exception $e) {
-            echo $e->getMessage();
-            exit;
+                /* Set the desired charset after establishing a connection */
+                if (isset($charSet)) {
+                    $mysqli->set_charset($charSet);
+                    if ($mysqli->errno) {
+                        throw new Exception('Mysqli Error: ' . $mysqli->error);
+                    }
+                }
+
+                self::setConnection($mysqli);
+            } catch (Exception $e) {
+                echo $e->getMessage();
+                exit;
+            }
         }
+
+    }
+
+    /**
+     * @return void
+     */
+    private function __clone()
+    {
+        // 클론 방지
     }
 
     /**
@@ -48,8 +69,7 @@ class G5Mysqli
     public function execSQL($sql, $params = array(), $close = false, $types = '')
     {
         try {
-            $mysqli = $this->getInstance();
-
+            $mysqli = self::$connection;
             $stmt = $mysqli->prepare($sql);
             if ($mysqli->error) {
                 throw new Exception($mysqli->error);
@@ -263,7 +283,7 @@ class G5Mysqli
      */
     public function insertId()
     {
-        return $this->getInstance()->insert_id;
+        return self::$connection->insert_id;
     }
 
     /**
@@ -272,18 +292,18 @@ class G5Mysqli
      */
     public function affectedRow()
     {
-        return $this->getInstance()->affected_rows;
+        return self::$connection->affected_rows;
     }
 
     /**
      * Get static instance of self
      *
-     * @return  mysqli
+     * @return self
      */
     public static function getInstance()
     {
-        if (!isset(self::$_instance)) {
-            self::$_instance = new G5Mysqli();
+        if (self::$_instance === null) {
+            self::$_instance = new self();
         }
         return self::$_instance;
     }
@@ -291,13 +311,11 @@ class G5Mysqli
     /**
      * Set static instance of self
      *
-     * @param  mysqli  $_instance  Static instance of self
-     * @return  self
+     * @param mysqli $mysqli
+     * @return  void
      */
-    public static function setInstance(mysqli $_instance)
+    public static function setConnection(mysqli $mysqli)
     {
-        self::$_instance = $_instance;
-
-        return self::class;
+        self::$connection = $mysqli;
     }
 }
