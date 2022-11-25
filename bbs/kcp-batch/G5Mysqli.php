@@ -82,9 +82,6 @@ class G5Mysqli
      */
     public function execSQL($sql, $params = array(), $close = false, $types = '')
     {
-        global $g5, $is_debug, $g5_debug;
-        $start_time = $is_debug ? get_microtime() : 0;
-
         try {
             $mysqli = self::$connection;
             $stmt = $mysqli->prepare($sql);
@@ -102,19 +99,6 @@ class G5Mysqli
                 throw new Exception($stmt->error);
             }
 
-            //그누 디버그바 쿼리저장
-            $end_time = $is_debug ? get_microtime() : 0;
-            $is_debug = get_permission_debug_show();
-
-            if ($is_debug) {
-                $g5_debug['sql'][] = array(
-                    'sql' => $sql,
-                    'start_time' => $start_time,
-                    'end_time' => $end_time,
-                    'bind_param' => $params
-                );
-            }
-
             if ($close) {
                 $stmt->store_result();
                 return $mysqli->affected_rows;
@@ -122,22 +106,6 @@ class G5Mysqli
                 return $this->execSqlResult($stmt);
             }
         } catch (Exception $e) {
-
-            if(function_exists('mysqli_error') && G5_MYSQLI_USE) {
-                $error = array(
-                    'error_code' => mysqli_errno($g5['connect_db']),
-                    'error_message' => mysqli_error($g5['connect_db']),
-                );
-            } else {
-                $error = array(
-                    'error_code' => mysql_errno(self::$connection),
-                    'error_message' => mysql_error(self::$connection),
-                );
-            }
-            $g5_debug['sql'][] = array(
-                    'error_code' => $error['error_code'],
-                    'error_message' => $error['error_message']
-            );
             echo '[Exception] ' . $e->getMessage();
             exit;
         }
