@@ -29,15 +29,13 @@ class Billing
             if (!$pgCode) {
                 throw new LogicException("PG사 Code값이 없습니다.");
             }
-
             $className = 'G5Billing' . ucfirst(strtolower($pgCode));
-            if (class_exists($className, false)) {
-                /* ReflectionClass를 통해 PG사 Class의 instance를 생성한다. */
-                $ref = new ReflectionClass($className);
-                $this->setPg($ref->newInstanceArgs());
-            } else {
-                throw new LogicException("PG사 자동결제 Class를 찾을 수 없습니다 : {$className}");
-            }
+            /* ReflectionClass를 통해 PG사 Class의 instance를 생성한다. */
+            $ref = new ReflectionClass($className);
+            $this->setPg($ref->newInstanceArgs());
+        } catch (ReflectionException $e) {
+            echo $e->getMessage() . " - PG사 자동결제 Class를 찾을 수 없습니다.";
+            exit;
         } catch (LogicException $e) {
             echo $e->getMessage();
             exit;

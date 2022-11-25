@@ -18,9 +18,9 @@ class G5AutoLoader
      */
     private $extension = '';
     
-    public function __construct($path = '/bbs/kcp-batch/')
+    public function __construct()
     {
-        $this->setDirectory(G5_PATH . $path);
+        $this->setDirectory(G5_LIB_PATH . '/billing/');
         $this->setExtension('.php');
     }
     
@@ -46,7 +46,23 @@ class G5AutoLoader
      */
     protected function load($class)
     {
-        include $this->getDirectory() . $class . $this->getExtension();
+        $filePath = $this->getDirectory() . $class . $this->getExtension();
+        if (file_exists($filePath)) {
+            include $filePath;
+        } else {
+            // 하위폴더 class load
+            if ($handle = opendir($this->getDirectory())) {
+                while (false !== ($file = readdir($handle))) {
+                    if (($file != '.') && ($file != '..')) {  
+                        if (is_dir($this->getDirectory() . $file)) {
+                            include $this->getDirectory() . $file . '/' . $class . $this->getExtension();
+                            break;
+                        }
+                    }
+                }
+                closedir($handle);
+            }
+        }
     }
 
     /**
