@@ -23,16 +23,16 @@ $service = array(
     'service_table' => '',
     'name' => '',
     'order' => '',
-    'use' => 1,
+    'is_use' => 1,
     'explan' => '',
     'mobile_explan' => '',
     'summary' => '',
-    'recurring_count' => 1,
+    'recurring' => 1,
     'recurring_unit' => 'm',
     'expiration' => '0',
     'expiration_unit' => 'm'
 );
-$price_count    = 0;
+$price_count = 0;
 
 if ($w == '') {
     $html_title .= '입력';
