@@ -80,6 +80,7 @@ if ($w == "") {
     $service_id = $g5Mysqli->insertId();
 
     foreach ($price_array as $arr) {
+        $arr['apply_date'] = !empty($arr['apply_date']) ? $arr['apply_date'] : null;
         $sql_price = "INSERT INTO {$g5['batch_service_price_table']} SET
                         service_id  = ?,
                         price       = ?,
@@ -110,6 +111,7 @@ if ($w == "") {
     // insert or update
     foreach ($price_array as $arr) {
         $bind_price = array();
+        $arr['apply_date'] = !empty($arr['apply_date']) ? $arr['apply_date'] : null;
         if (!empty($arr['price_id'])) {
             $sql_price = "UPDATE {$g5['batch_service_price_table']} SET
                                 price       = ?,

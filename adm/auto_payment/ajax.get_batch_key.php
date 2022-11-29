@@ -14,7 +14,7 @@ $billing = new Billing('kcp');
 /* =  요청정보                                                                   = */
 /* = -------------------------------------------------------------------------- = */
 $od_id = clean_xss_tags($_POST['ordr_idxx']);
-
+$mb_id = clean_xss_tags($_POST['mb_id']);
 /* ============================================================================== */
 /* =  요청                                                                      = */
 /* = -------------------------------------------------------------------------- = */
@@ -26,6 +26,7 @@ $res_data = $billing->convertPgDataToCommonData($res_data);
 /* = -------------------------------------------------------------------------- = */
 $result_code    = $res_data['result_code'];
 $bill_key       = $res_data['bill_key'];
+$res_data['od_id'] = $od_id;
 
 /* ============================================================================== */
 /* =   결과처리 및 반환                                                          = */
@@ -40,5 +41,5 @@ if ($result_code == "0000") {
     $res_data['display_bill_key'] = $billing->displayBillKey($bill_key);
 }
 // 결과 출력
-echo json_decode($res_data);
+echo json_encode($res_data);
 exit;

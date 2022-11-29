@@ -65,7 +65,7 @@ $sql  = "SELECT
                 price
             FROM {$g5['batch_service_price_table']} sd
             WHERE bs.service_id = sd.service_id
-                AND sd.apply_date <= NOW()
+                AND (sd.apply_date <= NOW() OR sd.apply_date is null)
             ORDER BY apply_date DESC LIMIT 1) AS price
         {$sql_common}
         {$sql_order}

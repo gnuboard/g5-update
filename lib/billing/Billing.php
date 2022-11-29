@@ -29,15 +29,13 @@ class Billing
             if (!$pgCode) {
                 throw new LogicException("PG사 Code값이 없습니다.");
             }
-
             $className = 'G5Billing' . ucfirst(strtolower($pgCode));
-            if (class_exists($className, false)) {
-                /* ReflectionClass를 통해 PG사 Class의 instance를 생성한다. */
-                $ref = new ReflectionClass($className);
-                $this->setPg($ref->newInstanceArgs());
-            } else {
-                throw new LogicException("PG사 자동결제 Class를 찾을 수 없습니다 : {$className}");
-            }
+            /* ReflectionClass를 통해 PG사 Class의 instance를 생성한다. */
+            $ref = new ReflectionClass($className);
+            $this->setPg($ref->newInstanceArgs());
+        } catch (ReflectionException $e) {
+            echo $e->getMessage() . " - PG사 자동결제 Class를 찾을 수 없습니다.";
+            exit;
         } catch (LogicException $e) {
             echo $e->getMessage();
             exit;
@@ -56,6 +54,7 @@ class Billing
 
         // 입력 데이터 재 선언 (순서)
         $bind_param = array(
+            $resultData['od_id'],
             $memberId,
             $resultData['result_code'],
             $resultData['result_msg'],
@@ -63,7 +62,8 @@ class Billing
             $resultData['card_name'],
             $resultData['bill_key']
         );
-        $sql = "INSERT INTO {$g5["kcp_batch_key_log_table"]} SET 
+        $sql = "INSERT INTO {$g5["kcp_batch_key_log_table"]} SET
+                    od_id       = ?,
                     mb_id       = ?,
                     res_cd      = ?,
                     res_msg     = ?,

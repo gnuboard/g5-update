@@ -51,11 +51,16 @@ $bSucc = true;
 $data = array_merge($payment_info, $service_info);
 $json_res = $billing->pg->requestBilling($data);
 $json_res = $billing->convertPgDataToCommonData($json_res);
+$json_res['od_id'] = $od_id;
 
 // Res JSON DATA Parsing
 if (isset($json_res['http_code'])) {
     //error 응답.
     responseJson($json_res['result_msg'], $json_res['http_code']);
+}
+if ($json_res['result_code'] != "0000") {
+    //error 응답.
+    responseJson($json_res['result_msg'], 400);
 }
 /* ============================================================================== */
 /* =  로그파일 생성                                                              = */
