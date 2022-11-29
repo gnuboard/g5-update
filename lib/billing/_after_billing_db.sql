@@ -31,9 +31,9 @@ CREATE TABLE `g5_billing_service_price` (
   CONSTRAINT `g5_billing_service_price_FK` FOREIGN KEY (`service_id`) REFERENCES `g5_billing_service` (`service_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
--- gnuboard5.g5_billing_infomation definition
+-- gnuboard5.g5_billing_information definition
 
-CREATE TABLE `g5_billing_infomation` (
+CREATE TABLE `g5_billing_information` (
   `od_id` bigint(20) unsigned NOT NULL,
   `service_id` int(11) NOT NULL,
   `mb_id` varchar(20) NOT NULL,
@@ -43,8 +43,8 @@ CREATE TABLE `g5_billing_infomation` (
   `status` tinyint(1) NOT NULL DEFAULT 1,
   `next_payment_date` datetime DEFAULT NULL,
   PRIMARY KEY (`od_id`),
-  KEY `g5_billing_infomation_FK` (`service_id`),
-  CONSTRAINT `g5_billing_infomation_FK` FOREIGN KEY (`service_id`) REFERENCES `g5_billing_service` (`service_id`)
+  KEY `g5_billing_information_FK` (`service_id`),
+  CONSTRAINT `g5_billing_information_FK` FOREIGN KEY (`service_id`) REFERENCES `g5_billing_service` (`service_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- gnuboard5.g5_billing_history definition
@@ -65,7 +65,7 @@ CREATE TABLE `g5_billing_history` (
   `expiration_date` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `g5_billing_history_FK` (`od_id`),
-  CONSTRAINT `g5_billing_history_FK` FOREIGN KEY (`od_id`) REFERENCES `g5_billing_infomation` (`od_id`)
+  CONSTRAINT `g5_billing_history_FK` FOREIGN KEY (`od_id`) REFERENCES `g5_billing_information` (`od_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- gnuboard5.g5_billing_key_history definition
