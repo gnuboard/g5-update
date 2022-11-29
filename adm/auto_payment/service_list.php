@@ -8,6 +8,13 @@ $autoload->register();
 
 auth_check_menu($auth, $sub_menu, "r");
 
+$g5['title'] = '구독상품 관리';
+include_once G5_ADMIN_PATH . '/admin.head.php';
+
+/* 변수 선언 */
+$service_model  = new BillingServiceModel();
+$price_model    = new BillingServicePriceModel();
+
 $unit_array     = array('y' => '년', 'm' => '개월', 'w' => '주', 'd' => '일');
 $search_list    = array('service_name', 'bo_subject');
 $orderby_list   = array('service_id', 'service_name', 'price', 'service_order', 'service_use', 'bs.bo_table');
@@ -22,13 +29,6 @@ $sod        = !empty($sod) ? clean_xss_tags($sod) : 'desc';
 
 $rows       = $config['cf_page_rows'];
 $page       = ($page > 1) ? $page : 1;
-
-$g5['title'] = '구독상품 관리';
-include_once G5_ADMIN_PATH . '/admin.head.php';
-
-/* 변수 선언 */
-$service_model  = new BillingServiceModel();
-$price_model    = new BillingServicePriceModel();
 
 $request_data = array(
     "sfl"   => $sfl,
@@ -48,8 +48,7 @@ $service_list = $service_model->selectList($request_data);
 foreach ($service_list as $i => $service) {
     $service_list[$i]['bg_class'] = 'bg' . ($i % 2);
     // 가격
-    $result = $price_model->selectCurrentPrice($service['service_id']);
-    $service_list[$i]['price'] = (int)$result['price'];
+    $service_list[$i]['price'] = $price_model->selectCurrentPrice($service['service_id']);
     // 결제주기
     $service_list[$i]['display_recurring'] = $service['recurring'] . strtr($service['recurring_unit'], $unit_array);
     // 구독 만료기간
