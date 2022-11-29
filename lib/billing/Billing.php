@@ -14,7 +14,7 @@ class Billing
     /**
      * @var \G5Mysqli $mysqli
      */
-    public $mysqli = null;
+    public $g5Mysqli = null;
 
     /**
      * 각 PG사 Class Name : 'G5Billing' + $pgCode
@@ -23,7 +23,7 @@ class Billing
      */
     public function __construct($pgCode)
     {
-        $this->mysqli = new G5Mysqli();
+        $this->g5Mysqli = G5Mysqli::getInstance();
 
         try {
             if (!$pgCode) {
@@ -71,7 +71,7 @@ class Billing
                     card_name   = ?,
                     batch_key   = ?,
                     date        = now()";
-        return $this->mysqli->execSQL($sql, $bind_param, true);
+        return $this->g5Mysqli->execSQL($sql, $bind_param, true);
     }
 
     /**
@@ -87,7 +87,7 @@ class Billing
         $sql = "UPDATE {$g5['batch_info_table']} SET
                     batch_key = ? 
                 WHERE od_id = ?";
-        return $this->mysqli->execSQL($sql, array($billKey, $orderId), true);
+        return $this->g5Mysqli->execSQL($sql, array($billKey, $orderId), true);
     }
 
     /**
@@ -137,7 +137,7 @@ class Billing
                     res_data        = ?,
                     payment_date    = ?,
                     expiration_date = ?";
-        return $this->mysqli->execSQL($sql, $bindParam, true);
+        return $this->g5Mysqli->execSQL($sql, $bindParam, true);
     }
 
     /**
@@ -153,7 +153,7 @@ class Billing
         $sql = "UPDATE {$g5['batch_info_table']} SET
                     next_payment_date = ?
                 WHERE od_id = ?";
-        return $this->mysqli->execSQL($sql, array($date, $orderId), true);
+        return $this->g5Mysqli->execSQL($sql, array($date, $orderId), true);
     }
 
     /**
