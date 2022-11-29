@@ -43,61 +43,6 @@ class Billing
     }
 
     /**
-     * 빌링 키 발급 이력 저장
-     * @param string $mb_id     빌링 키 발급된 회원ID
-     * @param array $resultData 빌링 키 발급 요청 API 결과데이터
-     * @return int
-     */
-    public function insertIssueBillKeyLog($memberId, $resultData = array())
-    {
-        global $g5;
-
-        // 입력 데이터 재 선언 (순서)
-        $bind_param = array(
-            $resultData['od_id'],
-            $memberId,
-            $resultData['result_code'],
-            $resultData['result_msg'],
-            $resultData['card_code'],
-            $resultData['card_name'],
-            $resultData['bill_key']
-        );
-        $sql = "INSERT INTO {$g5["kcp_batch_key_log_table"]} SET
-                    od_id       = ?,
-                    mb_id       = ?,
-                    res_cd      = ?,
-                    res_msg     = ?,
-                    card_cd     = ?,
-                    card_name   = ?,
-                    batch_key   = ?,
-                    date        = now()";
-        return $this->g5Mysqli->execSQL($sql, $bind_param, true);
-    }
-
-    /**
-     * 빌링 키 정보 업데이트
-     * @param string $orderId   주문번호
-     * @param string $billKey   자동결제(빌링) 키
-     * @return int
-     */
-    public function updateBillKey($orderId, $billKey)
-    {
-        global $g5;
-
-        $sql = "UPDATE {$g5['batch_info_table']} SET
-                    batch_key = ? 
-                WHERE od_id = ?";
-        return $this->g5Mysqli->execSQL($sql, array($billKey, $orderId), true);
-    }
-
-    /**
-     * 자동결제(빌링) 정보 저장
-     */
-    public function insertBillingInfo($data = array()) {
-
-    }
-
-    /**
      * 자동결제(빌링) 이력 저장
      * @param string $memberId      회원ID
      * @param array $paymenInfo     자동결제 정보

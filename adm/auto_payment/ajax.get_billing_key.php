@@ -1,14 +1,15 @@
 <?php
-// 배치키 재발급
+/** @todo 관리가능 & global로 변경 */
+$pg_code = 'kcp';
 include_once './_common.php';
-require_once G5_PATH . '/bbs/kcp-batch/G5Mysqli.php';
-require_once G5_PATH . '/bbs/kcp-batch/KcpBatch.php';
-require_once G5_PATH . '/bbs/kcp-batch/Billing.php';
-require_once G5_PATH . '/bbs/kcp-batch/BillingInterface.php';
-require_once G5_PATH . '/bbs/kcp-batch/G5BillingKcp.php';
-require_once G5_PATH . '/bbs/kcp-batch/G5BillingToss.php';
+require_once G5_LIB_PATH . "/billing/{$pg_code}/config.php";
+require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
+$autoload = new G5AutoLoader();
+$autoload->register();
 
-$billing = new Billing('kcp');
+$billing = new Billing($pg_code);
+$information_model = new BillingInformationModel();
+$key_history_model = new BillingKeyHistoryModel();
 
 /* ============================================================================== */
 /* =  요청정보                                                                   = */
@@ -18,27 +19,29 @@ $mb_id = clean_xss_tags($_POST['mb_id']);
 /* ============================================================================== */
 /* =  요청                                                                      = */
 /* = -------------------------------------------------------------------------- = */
-// $res_data = $billing->requestIssueBillKey($data);
 $res_data = $billing->pg->requestIssueBillKey($_POST);
 $res_data = $billing->convertPgDataToCommonData($res_data);
 /* ============================================================================== */
 /* =  응답정보                                                                     = */
 /* = -------------------------------------------------------------------------- = */
-$result_code    = $res_data['result_code'];
-$bill_key       = $res_data['bill_key'];
+$res_data['pg_code'] = $pg_code;
 $res_data['od_id'] = $od_id;
+$res_data['mb_id'] = $mb_id;
+
+$result_code    = $res_data['result_code'];
+$billing_key    = $res_data['billing_key'];
 
 /* ============================================================================== */
 /* =   결과처리 및 반환                                                          = */
 /* ============================================================================== */
 // 로그 테이블 저장
-$billing->insertIssueBillKeyLog($mb_id, $res_data);
+$key_history_model->insert($res_data);
 
 // 결제정보 배치 키 변경
 if ($result_code == "0000") {
-    $billing->updateBillKey($od_id, $bill_key);
+    $information_model->updateBillingKey($od_id, $billing_key);
     // 배치키 * 표시
-    $res_data['display_bill_key'] = $billing->displayBillKey($bill_key);
+    $res_data['display_billing_key'] = $billing->displayBillKey($billing_key);
 }
 // 결과 출력
 echo json_encode($res_data);
