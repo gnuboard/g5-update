@@ -41,6 +41,7 @@ class BillingServicePriceModel
         global $g5;
         
         $bindParam = array();
+
         $sql = "SELECT
                     price
                 FROM {$g5["billing_service_price_table"]}
@@ -60,7 +61,32 @@ class BillingServicePriceModel
     }
 
     /**
-     * 
+     * 변경예정 가격 정보 최근 1건 조회
+     * @param int $serviceId    구독서비스(상품) ID
+     * @return array|null
+     */
+    public function selectScheduledChangePriceInfo($serviceId)
+    {
+        global $g5;
+        
+        $bindParam = array();
+
+        $sql = "SELECT
+                    price, application_date
+                FROM {$g5['billing_service_price_table']}
+                WHERE service_id = ?
+                    AND application_date > now()
+                ORDER BY application_date ASC
+                LIMIT 1";
+        array_push($bindParam, $serviceId);
+
+        return $this->g5Mysqli->getOne($sql, $bindParam);
+    }
+
+    /**
+     * 구독서비스 가격정보 등록
+     * @param array $requestData
+     * @return bool
      */
     public function insert($requestData = array())
     {
@@ -76,7 +102,10 @@ class BillingServicePriceModel
     }
 
     /**
-     * 
+     * 구독서비스 가격정보 수정
+     * @param int   $id             가격 ID
+     * @param array $requestData
+     * @return bool
      */
     public function update($id, $requestData = array())
     {
