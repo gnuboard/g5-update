@@ -2,30 +2,35 @@
 $sub_menu = '400920';
 include_once './_common.php';
 include_once G5_EDITOR_LIB;
-require_once G5_PATH . '/bbs/kcp-batch/G5Mysqli.php';
-require_once G5_PATH . '/bbs/kcp-batch/KcpBatch.php';
+require_once G5_LIB_PATH . '/billing/kcp/config.php';
+require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
+$autoload = new G5AutoLoader();
+$autoload->register();
 
 auth_check_menu($auth, $sub_menu, "w");
 
-$html_title = '구독상품 ';
-$g5Mysqli = new G5Mysqli();
+/* 변수 선언 */
+$html_title     = '구독상품 ';
+$g5Mysqli       = G5Mysqli::getInstance();
+$service_model  = new BillingServiceModel();
+$price_model    = new BillingServicePriceModel();
 
 // 구독상품 정보
 $board_list     = array();
 
 $service_id     = isset($_GET['service_id']) ? $_GET['service_id'] : 0;
 $service = array(
-    'bo_table' => '',
-    'service_name' => '',
-    'service_order' => '',
-    'service_use' => 1,
-    'service_explan' => '',
-    'service_mobile_explan' => '',
-    'service_summary' => '',
+    'service_table' => '',
+    'name' => '',
+    'order' => '',
+    'use' => 1,
+    'explan' => '',
+    'mobile_explan' => '',
+    'summary' => '',
     'recurring_count' => 1,
     'recurring_unit' => 'm',
-    'service_expiration' => '0',
-    'service_expiration_unit' => 'm'
+    'expiration' => '0',
+    'expiration_unit' => 'm'
 );
 $price_count    = 0;
 
@@ -34,15 +39,13 @@ if ($w == '') {
     $service_price = array();
 } else if ($w == 'u') {
     $html_title .= '수정';
-
-    $sql = "SELECT * FROM {$g5['batch_service_table']} WHERE service_id = ?";
-    $service = $g5Mysqli->getOne($sql, array($service_id));
+    // 서비스 정보
+    $service = $service_model->selectOneById($service_id);
     if (!$service) {
         alert('상품정보가 존재하지 않습니다.');
     }
-    // 구독상품 가격
-    $sql_price = "SELECT * FROM {$g5['batch_service_price_table']} WHERE service_id = ?";
-    $service_price = $g5Mysqli->execSQL($sql_price, array($service_id));
+    // 구독상품 가격정보
+    $service_price = $price_model->selectListByServiceId($service_id);
     $price_count = count($service_price);
 } else {
     alert('올바르지 않은 접근입니다.');
@@ -53,7 +56,7 @@ $sql = "SELECT bo_table, bo_subject FROM {$g5['board_table']}";
 $res_board = $g5Mysqli->execSQL($sql);
 foreach ($res_board as $i => $row) {
     $board_list[$i] = $row;
-    $board_list[$i]['selected'] = get_selected($row['bo_table'], $service['bo_table']);
+    $board_list[$i]['selected'] = get_selected($row['bo_table'], $service['service_table']);
 }
 
 // etc
@@ -92,10 +95,10 @@ include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
                 </colgroup>
                 <tbody>
                     <tr>
-                        <th scope="row"><label for="bo_table">게시판 선택</label></th>
+                        <th scope="row"><label for="service_table">게시판 선택</label></th>
                         <td>
                             <?php echo help("게시판을 선택하면 해당 구독서비스가 적용됩니다."); ?>
-                            <select name="bo_table" id="bo_table">
+                            <select name="service_table" id="service_table">
                                 <option value="">선택하세요</option>
                                 <?php foreach($board_list as $board) { ?>
                                     <option value="<?php echo $board['bo_table']; ?>" <?php echo $board['selected']; ?>><?php echo $board['bo_subject']; ?></option>
@@ -120,40 +123,40 @@ include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
                 </colgroup>
                 <tbody>
                     <tr>
-                        <th scope="row"><label for="service_name">구독상품명</label></th>
+                        <th scope="row"><label for="name">구독상품명</label></th>
                         <td colspan="2">
                             <?php echo help("HTML 입력이 불가합니다."); ?>
-                            <input type="text" name="service_name" value="<?php echo get_text(cut_str($service['service_name'], 250, "")); ?>" id="service_name" required class="frm_input required" size="95">
+                            <input type="text" name="name" value="<?php echo get_text(cut_str($service['name'], 250, "")); ?>" id="name" required class="frm_input required" size="95">
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="service_summary">기본설명</label></th>
+                        <th scope="row"><label for="summary">기본설명</label></th>
                         <td>
                             <?php echo help("구독상품명 하단에 상품에 대한 추가적인 설명이 필요한 경우에 입력합니다. HTML 입력도 가능합니다."); ?>
-                            <input type="text" name="service_summary" value="<?php echo get_text(html_purifier($service['service_summary'])); ?>" id="it_basic" class="frm_input" size="95">
+                            <input type="text" name="summary" value="<?php echo get_text(html_purifier($service['summary'])); ?>" id="it_basic" class="frm_input" size="95">
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="service_order">출력순서</label></th>
+                        <th scope="row"><label for="order">출력순서</label></th>
                         <td>
                             <?php echo help("숫자가 작을 수록 상위에 출력됩니다. 음수 입력도 가능하며 입력 가능 범위는 -2147483648 부터 2147483647 까지입니다.\n<b>입력하지 않으면 자동으로 출력됩니다.</b>"); ?>
-                            <input type="text" name="service_order" value="<?php echo $service['service_order']; ?>" id="service_order" class="frm_input" size="12">
+                            <input type="text" name="order" value="<?php echo $service['order']; ?>" id="order" class="frm_input" size="12">
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="service_use">판매가능</label></th>
+                        <th scope="row"><label for="is_use">판매가능</label></th>
                         <td>
                             <?php echo help(""); ?>
-                            <input type="checkbox" name="service_use" value="1" id="service_use" <?php echo ($service['service_use']) ? "checked" : ""; ?>> 예
+                            <input type="checkbox" name="is_use" value="1" id="is_use" <?php echo ($service['is_use']) ? "checked" : ""; ?>> 예
                         </td>
                     </tr>
                     <tr>
                         <th scope="row">상품설명</th>
-                        <td colspan="2"> <?php echo editor_html('service_explan', get_text(html_purifier(str_replace('\"', '', $service['service_explan'])), 0)); ?></td>
+                        <td colspan="2"> <?php echo editor_html('explan', get_text(html_purifier(str_replace('\"', '', $service['explan'])), 0)); ?></td>
                     </tr>
                     <tr>
                         <th scope="row">모바일 상품설명</th>
-                        <td colspan="2"> <?php echo editor_html('service_mobile_explan', get_text(html_purifier(str_replace('\"', '', $service['service_mobile_explan'])), 0)); ?></td>
+                        <td colspan="2"> <?php echo editor_html('mobile_explan', get_text(html_purifier(str_replace('\"', '', $service['mobile_explan'])), 0)); ?></td>
                     </tr>
                 </tbody>
             </table>
@@ -178,13 +181,13 @@ include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
                             <?php echo help("가격이 변경되는 일자를 선택할 수 있습니다."); ?>
                             <?php 
                                 foreach ($service_price as $key => $price) {
-                                    $row = $key + 1;
+                                    $row = (int)$key + 1;
                             ?> 
                             <div id="td_price_<?php echo $row ?>">
-                                <input type="hidden" name="price_id[<?php echo $row ?>]" value="<?php echo $price['price_id'] ?>">
+                                <input type="hidden" name="id[<?php echo $row ?>]" value="<?php echo $price['id'] ?>">
                                 <input type="text" name="price[<?php echo $row ?>]" value="<?php echo $price['price']; ?>" class="frm_input" size="12"> 원
                                 / 
-                                <input type="text" name="price_apply_date[<?php echo $row ?>]" id="price_apply_date_<?php echo $row ?>" value="<?php echo $price['apply_date']; ?>" id="apply_date" class="frm_input date_format" size="20"> 적용
+                                <input type="text" name="application_date[<?php echo $row ?>]" id="application_date_<?php echo $row ?>" value="<?php echo $price['application_date']; ?>" class="frm_input date_format" size="20"> 적용
                                 <?php if ($price_count == $row) { ?>
                                     <button type="button" name="remove_price_row" class="btn_frmline">삭제</button>
                                 <?php } ?>
@@ -197,7 +200,7 @@ include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
                         <td>
                             <?php echo help("결제가 진행되는 주기를 설정할 수 있습니다."); ?>
                             <div>
-                                <input type="text" name="recurring_count" value="<?php echo $service['recurring_count']; ?>" class="frm_input" size="12">
+                                <input type="text" name="recurring" value="<?php echo $service['recurring']; ?>" class="frm_input" size="12">
                                 <select name="recurring_unit">
                                 <?php foreach($unit_array as $key => $val) { ?>
                                     <option value="<?php echo $key ?>" <?php echo get_selected($key, $service['recurring_unit']); ?>><?php echo $val ?></option>
@@ -212,10 +215,10 @@ include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
                         <td>
                             <?php echo help("결제일로부터 구독서비스가 종료되는 만기 기간을 설정합니다."); ?>
                             결제일로부터
-                            <input type="text" name="service_expiration" value="<?php echo $service['service_expiration']; ?>" id="service_expiration" class="frm_input" size="8" placeholder="0">
-                            <select name="service_expiration_unit">
+                            <input type="text" name="expiration" value="<?php echo $service['expiration']; ?>" id="expiration" class="frm_input" size="8" placeholder="0">
+                            <select name="expiration_unit">
                             <?php foreach($unit_array as $key => $val) { ?>
-                                <option value="<?php echo $key ?> " <?php echo get_selected($key, $service['service_expiration_unit']); ?>><?php echo $val ?></option>
+                                <option value="<?php echo $key ?> " <?php echo get_selected($key, $service['expiration_unit']); ?>><?php echo $val ?></option>
                             <?php } ?>
                             </select>
                             이후 종료
@@ -273,7 +276,7 @@ function create_price_row()
     let html    = '';
     html += '<div id="td_price_' + price_row + '">';
     html += '<input type="text" name="price[' + price_row + ']" value="" class="frm_input" size="12"> 원 / ';
-    html += '<input type="text" name="price_apply_date[' + price_row + ']" value="" id="price_apply_date_' + price_row + '" class="frm_input date_format" size="20"> 적용';
+    html += '<input type="text" name="application_date[' + price_row + ']" value="" id="application_date_' + price_row + '" class="frm_input date_format" size="20"> 적용';
     html += '</div>';
     $("#td_price").append(html);
 }
@@ -297,14 +300,14 @@ function set_datepicker()
 
 function check_form_service(f)
 {
-    if (!f.bo_table.value) {
+    if (!f.service_table.value) {
         alert("게시판을 선택하십시오.");
-        f.bo_table.focus();
+        f.service_table.focus();
         return false;
     }
 
-    <?php echo get_editor_js('service_explan'); ?>
-    <?php echo get_editor_js('service_mobile_explan'); ?>
+    <?php echo get_editor_js('explan'); ?>
+    <?php echo get_editor_js('mobile_explan'); ?>
 
     return true;
 }
