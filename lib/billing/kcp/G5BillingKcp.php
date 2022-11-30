@@ -51,13 +51,13 @@ class G5BillingKcp implements BillingInterface
      */
     public $convert = array(
         'res_cd'    => 'result_code',
-        'res_msg'   => 'result_msg',
+        'res_msg'   => 'result_message',
         'ordr_idxx' => 'od_id',
         'order_no'  => 'od_id',
-        'batch_key' => 'bill_key',
+        'batch_key' => 'billing_key',
         'card_cd'   => 'card_code',
         'card_name' => 'card_name',
-        'tno'       => 'billing_no',
+        'tno'       => 'payment_no',
         'amount'    => 'amount'
     );
 

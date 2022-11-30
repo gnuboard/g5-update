@@ -1,113 +1,99 @@
 <?php
 $sub_menu = '400930';
 include_once './_common.php';
-require_once G5_PATH . '/bbs/kcp-batch/G5Mysqli.php';
-require_once G5_PATH . '/bbs/kcp-batch/KcpBatch.php';
-require_once G5_PATH . '/bbs/kcp-batch/Billing.php';
-require_once G5_PATH . '/bbs/kcp-batch/BillingInterface.php';
-require_once G5_PATH . '/bbs/kcp-batch/G5BillingKcp.php';
-require_once G5_PATH . '/bbs/kcp-batch/G5BillingToss.php';
+require_once G5_LIB_PATH . '/billing/kcp/config.php';
+require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
+$autoload = new G5AutoLoader();
+$autoload->register();
+
+$g5['title'] = "구독결제 수정";
+include_once G5_ADMIN_PATH . '/admin.head.php';
 
 auth_check_menu($auth, $sub_menu, "w");
 
-$g5Mysqli   = new G5Mysqli();
-$billing    = new Billing('kcp');
+/* 변수 선언 */
+$html_title = '구독상품 ';
+$billing            = new Billing('kcp');
+$service_model      = new BillingServiceModel();
+$information_model  = new BillingInformationModel();
+$price_model        = new BillingServicePriceModel();
+$history_model      = new BillingHistoryModel();
 
-$unit_array     = array("y" => "년", "m" => "개월", "w" => "주", "d" => "일");
-$od_id          = isset($_REQUEST['od_id']) ? safe_replace_regex($_REQUEST['od_id'], 'od_id') : '';
-$service_id     = null;
+$unit_array = array("y" => "년", "m" => "개월", "w" => "주", "d" => "일");
+$od_id      = isset($_REQUEST['od_id']) ? safe_replace_regex($_REQUEST['od_id'], 'od_id') : '';
 
 /* 구독정보 */
-$batch_info     = array();
+// 구독정보 조회
+$billing_info = $information_model->selectOneByOrderId($od_id);
 
-// 구독정보 정보 조회
-$sql = "SELECT bi.*, mb_name, mb_email FROM {$g5['batch_info_table']} bi LEFT JOIN {$g5['member_table']} mb ON bi.mb_id = mb.mb_id WHERE od_id = ?";
-$batch_info = $g5Mysqli->getOne($sql, array($od_id));
 // 결과처리
-$batch_info['mb_side_view']         = get_sideview($batch_info['mb_id'], get_text($batch_info['mb_name']), $batch_info['mb_email'], '');
-$batch_info['display_end_date']     = $batch_info['end_date'] != "0000-00-00 00:00:00" ? $batch_info['end_date'] : "없음";
-$batch_info['display_status']       = $batch_info['status'] == "1" ? "구독 중" : "구독 종료";
-$batch_info['display_batch_key']    = $billing->displayBillKey($batch_info['batch_key']);
-$batch_info['display_next_payment'] = date('Y-m-d', strtotime($batch_info['next_payment_date']));
-switch(strlen($batch_info['od_id'])) {
+$service_id = $billing_info['service_id'];
+
+$billing_info['mb_side_view']         = get_sideview($billing_info['mb_id'], get_text($billing_info['mb_name']), $billing_info['mb_email'], '');
+$billing_info['display_end_date']     = $billing_info['end_date'] != "0000-00-00 00:00:00" ? $billing_info['end_date'] : "없음";
+$billing_info['display_status']       = $billing_info['status'] == "1" ? "구독 중" : "구독 종료";
+$billing_info['display_billing_key']  = $billing->displayBillKey($billing_info['billing_key']);
+$billing_info['display_next_payment'] = date('Y-m-d', strtotime($billing_info['next_payment_date']));
+switch (strlen($billing_info['od_id'])) {
     case 16:
-        $batch_info['display_od_id'] = substr($batch_info['od_id'] ,0 ,8) . '-' . substr($batch_info['od_id'], 8);
+        $billing_info['display_od_id'] = substr($billing_info['od_id'] ,0 ,8) . '-' . substr($billing_info['od_id'], 8);
         break;
     default:
-        $batch_info['display_od_id'] = substr($batch_info['od_id'] , 0, 6) . '-' . substr($batch_info['od_id'], 6);
+        $billing_info['display_od_id'] = substr($billing_info['od_id'] , 0, 6) . '-' . substr($billing_info['od_id'], 6);
         break;
 }
 
 /* 구독상품 */
 // 구독상품 정보 조회
-$service_id = $batch_info['service_id'];
-$sql = "SELECT
-            bs.service_id, bs.bo_table, bs.service_name, bs.service_image, bs.service_url, bs.service_hook, bs.service_order, bs.service_use,
-            IF(service_expiration != 0, CONCAT(bs.service_expiration, bs.service_expiration_unit), '') AS expiration,
-            CONCAT(recurring_count, recurring_unit) AS recurring,
-            b.bo_subject,
-	        (SELECT price FROM {$g5['batch_service_price_table']} sd WHERE bs.service_id = sd.service_id AND (sd.apply_date <= NOW() OR sd.apply_date is null) ORDER BY apply_date DESC LIMIT 1) AS price
-        FROM {$g5['batch_service_table']} bs LEFT JOIN g5_board b ON bs.bo_table = b.bo_table
-        WHERE bs.service_id = ?";
-$service = $g5Mysqli->getOne($sql, array($service_id));
+$service = $service_model->selectOneById($service_id);
+
 // 결과처리
-$service['display_expiration']  = ($service['expiration'] != '') ? '결제일로부터 ' . strtr($service['expiration'], $unit_array) : '없음';
-$service['display_recurring']   = strtr($service['recurring'], $unit_array);
+$service['display_expiration'] = ($service['expiration'] != '0') ? '결제일로부터 ' . $service['expiration'] . strtr($service['expiration_unit'], $unit_array) : '없음';
+$service['display_recurring'] = $service['recurring'] . strtr($service['recurring_unit'], $unit_array);
+$service['price'] = $price_model->selectCurrentPrice($service['service_id']);
 
 // 변경예정 가격 최근 1건 조회
-$price_schedule = array();
-$sql = "SELECT
-            price, apply_date
-        FROM {$g5['batch_service_price_table']}
-        WHERE service_id = ?
-            AND apply_date > now()
-        ORDER BY apply_date ASC 
-        LIMIT 1";
-$price_schedule = $g5Mysqli->getOne($sql, array($service_id));
+$price_schedule = $price_model->selectScheduledChangePriceInfo($service_id);
 if (isset($price_schedule)) {
-    $price_schedule['display_price'] = number_format($price_schedule['price']);
-    $price_schedule['display_apply_date'] = date('Y-m-d', strtotime($price_schedule['apply_date'])) . " 반영";
+    $price_schedule['display_price']    = number_format($price_schedule['price']);
+    $price_schedule['display_date']     = date('Y-m-d', strtotime($price_schedule['application_date'])) . " 반영";
 }
 
-// 결제내역 조회
+/* 결제내역 */
 $total_amount = 0;
-$payment_list = array();
 $payment_success = array();
-$sql = "SELECT 
-            *,
-            CONCAT(DATE_FORMAT(payment_date, '%Y-%m-%d'), ' ~ ', DATE_FORMAT(expiration_date, '%Y-%m-%d')) AS period
-        FROM {$g5['batch_payment_table']} WHERE od_id = ? ORDER BY payment_count DESC, payment_date DESC";
-$result = $g5Mysqli->execSQL($sql, array($od_id));
-foreach ($result as $i => $row) {
-    $count = $row['payment_count'];
-    $payment_list[$i] = $row;
-    $payment_list[$i]['display_payment_count']  = $row['payment_count'] . "회차";
-    $payment_list[$i]['display_amount']         = number_format($row['amount']) . "원";
-    $payment_list[$i]['display_res_cd']         = ($row['res_cd'] == "0000" ? "성공" : "실패");
-    $payment_list[$i]['display_res_cd_color']   = ($row['res_cd'] == "0000" ? "#53C14B" : "#FF0000");
-    $payment_list[$i]['display_period']         = ($row['res_cd'] == "0000" ? $row['period'] : '');
-    $payment_list[$i]['display_batch_key']      = $billing->displayBillKey($row['batch_key']);
-    $payment_list[$i]['is_btn_refund']          = false;
+
+// 결제내역 조회
+$history_list = $history_model->selectListByOrderId($od_id);
+
+// 결과처리
+foreach ($history_list as $i => $history) {
+    $count = $history['payment_count'];
+
+    $history_list[$i]['display_payment_count']  = $count . "회차";
+    $history_list[$i]['display_amount']         = number_format($history['amount']) . "원";
+    $history_list[$i]['display_result']         = ($history['result_code'] == "0000" ? "성공" : "실패");
+    $history_list[$i]['display_result_color']   = ($history['result_code'] == "0000" ? "#53C14B" : "#FF0000");
+    $history_list[$i]['display_period']         = ($history['result_code'] == "0000" ? $history['period'] : '');
+    $history_list[$i]['display_billing_key']    = $billing->displayBillKey($history['billing_key']);
+    $history_list[$i]['is_btn_refund']          = false;
 
     if (!isset($payment_success[$count])) {
         $payment_success[$count] = false;
     }
     
-    if ($row['res_cd'] == "0000") {
-        $payment_list[$i]['is_btn_refund'] = true;
+    if ($history['result_code'] == "0000") {
+        $history_list[$i]['is_btn_refund'] = true;
         $payment_success[$count] = true;
-        $total_amount += $row['amount'];
+        $total_amount += $history['amount'];
     }
 }
 
-
 // etc
 $pg_anchor = '<ul class="anchor">
-<li><a href="#anc_batch_info">구독결제 정보</a></li>
+<li><a href="#anc_billing_info">구독결제 정보</a></li>
 <li><a href="#anc_batch_payment">결제내역</a></li>
 </ul>';
-$g5['title'] = "구독결제 수정";
-include_once G5_ADMIN_PATH . '/admin.head.php';
 ?>
 <section>
     <h2 class="h2_frm">구독결제 정보</h2>
@@ -115,7 +101,7 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
     <div class="local_desc02 local_desc">
         <p>구독서비스 정보는 좌측메뉴 > 구독상품 관리에서 수정할 수 있습니다.</p>
     </div>
-    <form name="form_batch_info" action="./batch_update.php" method="post" autocomplete="off">
+    <form name="form_billing_info" action="./batch_update.php" method="post" autocomplete="off">
         <input type="hidden" name="od_id" value="<?php echo $od_id; ?>">
 
         <div class="compare_wrap">
@@ -131,35 +117,35 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
                         <tbody>
                             <tr>
                                 <th>주문번호</th>
-                                <td><?php echo $batch_info['display_od_id'] ?></td>
+                                <td><?php echo $billing_info['display_od_id'] ?></td>
                                 <th>회원정보</label></th>
-                                <td><?php echo $batch_info['mb_side_view'] ?></td>
+                                <td><?php echo $billing_info['mb_side_view'] ?></td>
                             </tr>
                             <tr>
                                 <th scope="row"><label for="od_refund_price">자동결제 키</label></th>
                                 <td>
-                                    <span id="display_batch_key">
-                                        <?php echo $batch_info['display_batch_key'] ?>
+                                    <span id="display_billing_key">
+                                        <?php echo $billing_info['display_billing_key'] ?>
                                     </span>
-                                    <button type="button" id="btn_batch_key" class="btn btn_02">변경</button>
+                                    <button type="button" id="btn_billing_key" class="btn btn_02">변경</button>
                                 </td>
                                 <th scope="row"><label for="od_refund_price">다음 결제 예정일</label></th>
                                 <td>
-                                    <?php echo $batch_info['display_next_payment'] ?>
+                                    <?php echo $billing_info['display_next_payment'] ?>
                                 </td>
                             </tr>
                             <tr>
                                 <th scope="row"><label for="od_refund_price">결제시작일</label></th>
-                                <td><?php echo $batch_info['start_date'] ?></td>
+                                <td><?php echo $billing_info['start_date'] ?></td>
                                 <th scope="row"><label for="od_refund_price">결제종료일</label></th>
-                                <td><?php echo $batch_info['display_end_date'] ?></td>
+                                <td><?php echo $billing_info['display_end_date'] ?></td>
                             </tr>
                             <tr>
                                 <th scope="row"><label for="od_refund_price">구독 상태</label></th>
                                 <td colspan="3">
                                     <select name="status">
-                                        <option value="1" <?php echo $batch_info['status'] == "1" ? "selected" : ""?>>구독 중</option>
-                                        <option value="0" <?php echo $batch_info['status'] == "0" ? "selected" : ""?>>구독 종료</option>
+                                        <option value="1" <?php echo $billing_info['status'] == "1" ? "selected" : ""?>>구독 중</option>
+                                        <option value="0" <?php echo $billing_info['status'] == "0" ? "selected" : ""?>>구독 종료</option>
                                     </select>
                                 </td>
                             </tr>
@@ -182,7 +168,7 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
                         <tbody>
                             <tr>
                                 <th>서비스명</th>
-                                <td colspan="3"><?php echo $service['service_name'] ?></td>
+                                <td colspan="3"><?php echo $service['name'] ?></td>
                             </tr>
                             <tr>
                                 <th>게시판</th>
@@ -197,7 +183,7 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
                                 <th>
                                     변경예정 가격
                                     <br>
-                                    (<?php echo $price_schedule['display_apply_date']?>)
+                                    (<?php echo $price_schedule['display_date']?>)
                                 </th>
                                 <td><?php echo number_format($price_schedule['price']) ?>원</td>
                                 <?php } ?>
@@ -240,28 +226,28 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
                 </tr>
             </thead>
             <tbody>
-            <?php foreach ($payment_list as $payment) { ?>
+            <?php foreach ($history_list as $history) { ?>
                 <tr>
                     <td class="td_mng_l" >
-                        <div><?php echo $payment['display_payment_count'] ?></div>
-                        <div><?php echo $payment['display_period'] ?></div>
+                        <div><?php echo $history['display_payment_count'] ?></div>
+                        <div><?php echo $history['display_period'] ?></div>
                     </td>
-                    <td><?php echo $payment['display_amount'] ?></td>
-                    <td><?php echo $payment['tno'] ?></td>
-                    <td><?php echo $payment['display_batch_key'] ?></td>
-                    <td><?php echo $payment['card_name'] ?></td>
-                    <td style="color:<?php echo $payment['display_res_cd_color']?>">
-                        <strong><?php echo $payment['display_res_cd'] ?></strong>
+                    <td><?php echo $history['display_amount'] ?></td>
+                    <td><?php echo $history['payment_no'] ?></td>
+                    <td><?php echo $history['display_billing_key'] ?></td>
+                    <td><?php echo $history['card_name'] ?></td>
+                    <td style="color:<?php echo $history['display_result_color']?>">
+                        <strong><?php echo $history['display_result'] ?></strong>
                     </td>
-                    <td><?php echo $payment['res_msg'] ?></td>
+                    <td><?php echo $history['result_message'] ?></td>
                     <td class="td_mng_l">
-                        <?php echo $payment['payment_date'] ?>
+                        <?php echo $history['payment_date'] ?>
                     </td>
                     <td>
-                    <?php if (!$payment_success[$payment['payment_count']]) { ?>
-                        <button type="button" name="btn_payment" data-id="<?php echo $payment['id']?>" data-count="<?php echo $payment['payment_count']?>" class="btn btn_02 btn_payment">결제</button>
+                    <?php if (!$payment_success[$history['payment_count']]) { ?>
+                        <button type="button" name="btn_payment" data-id="<?php echo $history['id']?>" data-count="<?php echo $history['payment_count']?>" class="btn btn_02 btn_payment">결제</button>
                     <?php } ?>
-                    <?php if ($payment['is_btn_refund']) { ?>
+                    <?php if ($history['is_btn_refund']) { ?>
                         <button type="button" class="btn btn_01">환불</button>
                     <?php } ?>
                     </td>
@@ -277,7 +263,7 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
     </div>
 </section>
 
-<form name="form_batch_key" id="form_batch_key" method="post" enctype="multipart/form-data">
+<form name="form_billing_key" id="form_billing_key" method="post" enctype="multipart/form-data">
     <input type="hidden" name="ordr_idxx" class="w200" value="<?php echo $od_id ?>" maxlength="40" />
 
     <input type="hidden" name="site_cd"         value="<?php echo site_cd ?>" />
@@ -302,7 +288,7 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
     <input type="hidden" name="enc_info"        value=""/>
     <input type="hidden" name="enc_data"        value=""/>
     <input type="hidden" name="tran_cd"         value=""/>
-    <input type="hidden" name="buyr_name"       value="<?php echo $batch_info['mb_name']?>"/>
+    <input type="hidden" name="buyr_name"       value="<?php echo $billing_info['mb_name']?>"/>
 
     <!-- 주민번호 S / 사업자번호 C 픽스 여부 -->
     <!-- <input type='hidden' name='batch_soc_choice' value='' /> -->
@@ -314,24 +300,24 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
     <!-- batch_cardno_return_yn 설정시 결제창에서 리턴 -->
     <!-- <input type='hidden' name='card_mask_no'			  value=''> -->
 
-    <input type="hidden" name="mb_id"       value="<?php echo $batch_info['mb_id'] ?>"/>
+    <input type="hidden" name="mb_id"       value="<?php echo $billing_info['mb_id'] ?>"/>
 </form>
 
 <script type="text/javascript" src="https://testpay.kcp.co.kr/plugin/payplus_web.jsp"></script>
 <script>
 function m_Completepayment( frm_mpi, closeEvent ) 
 {
-    var frm = document.form_batch_key; 
+    var frm = document.form_billing_key; 
 
     if (frm_mpi.res_cd.value == "0000" )
     {
         GetField(frm, frm_mpi); 
         
-        let data = new FormData(document.getElementById('form_batch_key'));
+        let data = new FormData(document.getElementById('form_billing_key'));
         let queryString = new URLSearchParams(data).toString();
 
         $.ajax({
-            url : "./ajax.get_batch_key.php",
+            url : "./ajax.get_billing_key.php",
             type: "POST",
             data: queryString,
             success: function(data) {
@@ -342,9 +328,9 @@ function m_Completepayment( frm_mpi, closeEvent )
 
                     if (result.result_code == "0000") {
                         alert("자동결제 키가 변경되었습니다.");
-                        document.querySelector("#display_batch_key").innerHTML = result.display_bill_key;
+                        document.querySelector("#display_billing_key").innerHTML = result.display_billing_key;
                     } else {
-                        alert("[" + result.result_code + "]" + result.result_msg);
+                        alert("[" + result.result_code + "]" + result.result_message);
                     }
                     
                 } else {
@@ -362,12 +348,12 @@ function m_Completepayment( frm_mpi, closeEvent )
 }
 
 $(function() {
-    let form            = document.querySelector("#form_batch_key");
-    let btn_batch_key   = document.querySelector("#btn_batch_key");
+    let form            = document.querySelector("#form_billing_key");
+    let btn_billing_key   = document.querySelector("#btn_billing_key");
     let btn_payment     = $("button[name=btn_payment]");
 
     /* 표준웹 실행 */
-    btn_batch_key.onclick = function(){
+    btn_billing_key.onclick = function(){
         try {
             KCP_Pay_Execute(form);
         } catch (e) {
