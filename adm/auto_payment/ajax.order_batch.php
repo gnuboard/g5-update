@@ -1,84 +1,77 @@
 <?php
-// 결제 요청 처리.
+/** @todo 관리가능 & global로 변경 */
+$pg_code = 'kcp';
 include_once './_common.php';
-require_once G5_PATH . '/bbs/kcp-batch/G5Mysqli.php';
-require_once G5_PATH . '/bbs/kcp-batch/KcpBatch.php';
-require_once G5_PATH . '/bbs/kcp-batch/Billing.php';
-require_once G5_PATH . '/bbs/kcp-batch/BillingInterface.php';
-require_once G5_PATH . '/bbs/kcp-batch/G5BillingKcp.php';
-require_once G5_PATH . '/bbs/kcp-batch/G5BillingToss.php';
+require_once G5_LIB_PATH . "/billing/{$pg_code}/config.php";
+require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
+$autoload = new G5AutoLoader();
+$autoload->register();
 
-$billing = new Billing('kcp');
-$g5Mysqli = new G5Mysqli();
+$billing = new Billing($pg_code);
+$information_model  = new BillingInformationModel();
+$history_model      = new BillingHistoryModel();
 
 $unit_array = array('y' => 'year', 'm' => 'month', 'w' => 'week', 'd' => 'day');
-/* ============================================================================== */
-/* =  결제 요청정보 준비                                                         = */
-/* = -------------------------------------------------------------------------- = */
-$od_id      = clean_xss_tags($_POST['ordr_idxx']);
-$payment_id = clean_xss_tags($_POST['id']);
-
-/** 결제정보 / 구독정보 조회 */
-$sql = "SELECT od_id, amount, batch_key, payment_count FROM {$g5['batch_payment_table']} WHERE id = ? AND od_id = ?";
-$payment_info = $g5Mysqli->getOne($sql, array($payment_id, $od_id));
-if (!$payment_info) {
-    responseJson('이전 결제정보를 찾을 수 없습니다.', 400);
-}
-$sql = "SELECT 
-            bs.service_name, bs.recurring_count, bs.recurring_unit,
-            mb.mb_name, mb.mb_email, mb.mb_tel
-        FROM {$g5['batch_info_table']} bi 
-        LEFT JOIN {$g5['batch_service_table']} bs on bi.service_id = bs.service_id
-        LEFT JOIN {$g5['member_table']} mb on bi.mb_id = mb.mb_id
-        WHERE od_id = ?";
-$service_info = $g5Mysqli->getOne($sql, array($od_id));
-if (!$service_info) {
-    responseJson('구독정보를 찾을 수 없습니다.', 400);
-}
-
-/** 필수 파라미터 체크 */
-if (empty($payment_info['batch_key']) || empty($payment_info['amount']) || empty($payment_info['od_id'])) {
-    responseJson('필수 파라미터가 없습니다.', 400);
-}
 /**
  * @var bool $bSucc 결제결과 후처리 성공여부 변수 (false일때 결제 취소처리)
  */
 $bSucc = true;
+/* ============================================================================== */
+/* =  결제 요청정보 준비                                                         = */
+/* = -------------------------------------------------------------------------- = */
+$od_id      = clean_xss_tags($_POST['od_id']);
+$mb_id      = clean_xss_tags($_POST['mb_id']);
+$history_id = clean_xss_tags($_POST['id']);
 
+/** 결제정보 조회 */
+$billing_info = $information_model->selectOneByOrderId($od_id);
+if (!$billing_info || $mb_id != $billing_info['mb_id']) {
+    responseJson('구독정보를 찾을 수 없습니다.', 400);
+}
+/** 결제이력 조회 */ 
+$history_info = $history_model->selectOneById($history_id);
+if (!$history_info || $mb_id != $history_info['mb_id']) {
+    responseJson('이전 결제정보를 찾을 수 없습니다.', 400);
+}
+/** 필수 파라미터 체크 */
+if (empty($history_info['billing_key']) || empty($history_info['amount']) || empty($history_info['od_id'])) {
+    responseJson('필수 파라미터가 없습니다.', 400);
+}
 /* ============================================================================== */
 /* =  결제 요청                                                                  = */
 /* = -------------------------------------------------------------------------- = */
-$data = array_merge($payment_info, $service_info);
+$data = array_merge($billing_info, $history_info);
 $json_res = $billing->pg->requestBilling($data);
 $json_res = $billing->convertPgDataToCommonData($json_res);
-$json_res['od_id'] = $od_id;
-
+/* ============================================================================== */
+/* =  응답정보                                                                     = */
+/* = -------------------------------------------------------------------------- = */
 // Res JSON DATA Parsing
 if (isset($json_res['http_code'])) {
-    //error 응답.
-    responseJson($json_res['result_msg'], $json_res['http_code']);
+    responseJson($json_res['result_message'], $json_res['http_code']);
 }
 if ($json_res['result_code'] != "0000") {
-    //error 응답.
-    responseJson($json_res['result_msg'], 400);
+    responseJson($json_res['result_message'], 400);
 }
+// 결제일, 구독만료일
+$json_res['payment_date']       = date('Y-m-d');
+$json_res['expiration_date']    = date('Y-m-d 23:59:59 ', strtotime('+' . $billing_info['recurring'] . " " . $unit_array[$billing_info['recurring_unit']]));
+// 결제정보
+$json_res = array_merge($json_res, $history_info);
 /* ============================================================================== */
 /* =  로그파일 생성                                                              = */
 /* = -------------------------------------------------------------------------- = */
+// 작업예정
 
 /* ============================================================================== */
 /* =  결제 결과처리                                                              = */
 /* ============================================================================== */
-// 결제일, 구독만료일
-$payment_info['payment_date']       = date('Y-m-d');
-$payment_info['expiration_date']    = date('Y-m-d', strtotime('+' . $service_info['recurring_count'] . " " . $unit_array[$service_info['recurring_unit']]));
-
-$result = $billing->insertBillingLog($member['mb_id'], $payment_info, $json_res);
-if ($result <= 0) {
+$result = $history_model->insert($json_res);
+if (!$result) {
     $bSucc = false;
 } else {
-    $result = $billing->updateNextPaymentDate($od_id, $payment_info['expiration_date']);
-    if ($result <= 0) {
+    $result = $information_model->updateNextPaymentDate($od_id, date('Y-m-d', strtotime($json_res['expiration_date'])));
+    if (!$result) {
         $bSucc = false;
     }
 }
@@ -95,13 +88,17 @@ DB 작업이 실패 한 경우, bSucc 라는 변수의 값을 false로 설정해
 --------------------------------------------------------------------------
 */
 //0000 은 성공
-if ( $json_res['result_code'] === '0000' && $bSucc === false)
-{
-    $cancle_res = $billing->pg->requestCancelBilling($json_res['billing_no']);
-    if($cancle_res['kcp_sign_data'] === false){
-        responseJson('결제 취소가 실패했습니다. 관리자에게 문의바랍니다.', 401);
+if ($json_res['result_code'] === '0000' && $bSucc === false) {
+    $cancle_res = $billing->pg->requestCancelBilling($json_res['payment_no']);
+    $cancle_res = $billing->convertPgDataToCommonData($cancle_res);
+    /**
+     * @todo 취소요청 결과 저장
+     */
+    if ($cancle_res['result_code'] !== '0000') {
+        responseJson('결제 취소가 실패했습니다.' . $cancle_res['result_message'], 401);
     }
 }
+
 // 나머지 결과 출력
 if (PHP_VERSION_ID >= 50400) {
     echo json_encode($json_res, JSON_UNESCAPED_UNICODE);

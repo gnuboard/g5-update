@@ -267,12 +267,12 @@ class G5BillingKcp implements BillingInterface
             'currency'      => '410',
             'quota'         => '00',
             'ordr_idxx'     => $data['od_id'],
-            'good_name'     => $data['service_name'], /** 권장 @todo 100바이트까지 자르기 */
+            'good_name'     => $data['name'],           /** 권장 @todo 100바이트까지 자르기 */
             'buyr_name'     => $data['mb_name'],        // 선택
             'buyr_mail'     => $data['mb_email'],       // 선택
-            'buyr_tel2'     => $data['mb_tel'],         // 선택
+            'buyr_tel2'     => $data['mb_hp'],          // 선택
             'card_tx_type'  => '11511000',
-            'bt_batch_key'  => $data['batch_key'],
+            'bt_batch_key'  => $data['billing_key'],
             'bt_group_id'   => $this->getKcpGroupId()
         );
 
