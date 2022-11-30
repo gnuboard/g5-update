@@ -31,7 +31,7 @@ class G5AutoLoader
      */
     public function register()
     {
-        if (version_compare(PHP_VERSION, '5.3.0') >= 0) {
+        if (PHP_VERSION_ID  >= 50300) {
             return spl_autoload_register(array($this, 'load'), true, true);
         } else {
             return spl_autoload_register(array($this, 'load'));
@@ -48,20 +48,23 @@ class G5AutoLoader
     {
         $filePath = $this->getDirectory() . $class . $this->getExtension();
         if (file_exists($filePath)) {
-            include $filePath;
+            include_once ($filePath);
         } else {
-            // 하위폴더 class load
-            if ($handle = opendir($this->getDirectory())) {
-                while (false !== ($file = readdir($handle))) {
-                    if (($file != '.') && ($file != '..')) {  
-                        if (is_dir($this->getDirectory() . $file)) {
-                            include $this->getDirectory() . $file . '/' . $class . $this->getExtension();
-                            break;
-                        }
-                    }
-                }
-                closedir($handle);
-            }
+           // 하위폴더 class load
+           if ($handle = opendir($this->getDirectory())) {
+               while (($file = readdir($handle)) !== false) {
+                   if (($file !== '.') && ($file !== '..')) {
+                       if (is_dir($this->getDirectory() . $file)) {
+                           $fileName = $this->getDirectory() . $file . '/' . $class . $this->getExtension();
+                           if(file_exists($fileName)){
+                               include_once $fileName;
+                           }
+                           break;
+                       }
+                   }
+               }
+               closedir($handle);
+           }
         }
     }
 
