@@ -9,8 +9,8 @@
 if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 
 require_once(dirname(__FILE__) . '../../../common.php');
-require_once(G5_BBS_PATH . '/kcp-batch/G5Mysqli.php');
-require_once(G5_BBS_PATH . '/kcp-batch/KcpBatch.php');
+require_once(G5_LIB_PATH . '/billing/G5Mysqli.php');
+require_once(G5_LIB_PATH . '/billing/KcpBatch.php');
 
 $kcpBatch = new KcpBatch();
 
@@ -32,11 +32,11 @@ function get_myservice($status = 1)
     $sql = "SELECT 
         *,
         board.bo_subject,
-        (SELECT price FROM {$g5['batch_service_price_table']} sp WHERE service.service_id = sp.service_id AND sp.apply_date <= NOW() ORDER BY apply_date DESC LIMIT 1) AS price
-    FROM {$g5['batch_info_table']} AS info
-    LEFT JOIN {$g5['batch_service_table']} AS service ON info.service_id = service.service_id
-    LEFT JOIN g5_board board ON service.bo_table = board.bo_table
-    WHERE mb_id ='{$mb_id}' AND status = {$status}";
+        (SELECT price FROM {$g5['billing_service_price_table']} sp WHERE service.service_id = sp.service_id AND sp.application_date <= NOW() ORDER BY application_date DESC LIMIT 1) AS price
+    FROM {$g5['billing_information_table']} AS info
+    LEFT JOIN {$g5['billing_service_table']} AS service ON info.service_id = service.service_id
+    LEFT JOIN g5_board board ON service.service_table = board.bo_table
+    WHERE mb_id ='{$mb_id}' AND status = $status";
 
     $result = sql_query($sql);
     if ($result) {
@@ -61,7 +61,7 @@ function get_myservice_payments($od_id)
     if ($mb_id === false) {
         return false;
     }
-    $select_payment_history_sql = 'select * from ' . G5_TABLE_PREFIX . 'batch_payment 
+    $select_payment_history_sql = 'select * from ' . G5_TABLE_PREFIX . 'billing_history 
     where mb_id = "' . sql_real_escape_string($mb_id) .  '" and od_id = ' . sql_real_escape_string($od_id);
 
     $result = sql_query($select_payment_history_sql);
@@ -86,7 +86,7 @@ function cancel_myservice($od_id)
         return false;
     }
 
-    $select_payment_sql = 'select batch_key from ' . G5_TABLE_PREFIX . 'batch_info 
+    $select_payment_sql = 'select billing_key from ' . G5_TABLE_PREFIX . 'billing_information 
     where mb_id = "' . sql_real_escape_string($mb_id) .  '" and od_id = ' . sql_real_escape_string($od_id);
 
     $result = sql_query($select_payment_sql);
@@ -99,15 +99,14 @@ function cancel_myservice($od_id)
         $result_row[] = $row;
     }
 
-    $old_batchkey = $result_row[0]['batch_key'];
+    $old_billing_key = $result_row[0]['billing_key'];
 
     /**
      * @var KcpBatch $kcpBatch
      */
     global $kcpBatch;
-    /*
-    임시 주석처리
-    $batchDelResult = json_decode($kcpBatch->deleteBatchKey($old_batchkey), true);
+    
+    $batchDelResult = json_decode($kcpBatch->deleteBatchKey($old_billing_key), true);
     if ($batchDelResult === false || !array_key_exists('res_cd', $batchDelResult)) {
         return false;
     }
@@ -115,9 +114,8 @@ function cancel_myservice($od_id)
     if ($batchDelResult['res_cd'] !== "0000") {
         return $batchDelResult;
     }
-    */
 
-    $state_change_sql = 'update ' . G5_TABLE_PREFIX . 'batch_info set status = 0
+    $state_change_sql = 'update ' . G5_TABLE_PREFIX . 'billing_information set status = 0
     where mb_id = "' . sql_real_escape_string($mb_id) .  '" and od_id = ' . sql_real_escape_string($od_id);
     $result = sql_query($state_change_sql);
     if ($result) {

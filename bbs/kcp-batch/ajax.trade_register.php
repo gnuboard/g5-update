@@ -16,7 +16,7 @@ if (empty($service_id) || empty($od_id)) {
 
 $subscribeService = showServiceDetail($service_id);
 $amount = $subscribeService[0]['price'];
-$good_name = $subscribeService[0]['service_name'];
+$good_name = $subscribeService[0]['name'];
 $return_url = G5_BBS_URL . '/kcp-batch/ajax.mobile_redirect.php';
 
 $kcpBatch = new KcpBatch();

@@ -20,12 +20,12 @@ $convertYMDUnit2 = array('y' => '년', 'm' => '개월', 'w' => '주', 'd' => '�
     <div class="item_box remove_border">
         <ul>
             <li class="title_area">
-                <div class="service_name"><?= $serviceInfo['service_name'] ?></div>
-                <div class="service_summary"><?= $serviceInfo['service_summary'] ?></div>
+                <div class="service_name"><?= $serviceInfo['name'] ?></div>
+                <div class="service_summary"><?= $serviceInfo['summary'] ?></div>
             </li>
             <li class="price_area">
                 <div class="price"><?=$convertYMDUnit[$serviceInfo['recurring_unit']] ?> <?= number_format($serviceInfo['price']) ?>원 (부가세 포함)</div>
-                <div><?=$serviceInfo['recurring_count']?><?=$convertYMDUnit2[$serviceInfo['recurring_unit']] ?> 마다 정기 결제</div>
+                <div><?=$serviceInfo['recurring']?><?=$convertYMDUnit2[$serviceInfo['recurring_unit']] ?> 마다 정기 결제</div>
             </li>
             <li class="button_area">
                 <button type="button" class="btn_frmline btn_payment" data-service_id=<?php echo $serviceInfo['service_id']?>>구독</button>
@@ -37,7 +37,7 @@ $convertYMDUnit2 = array('y' => '년', 'm' => '개월', 'w' => '주', 'd' => '�
     <div class="section">
 
         <div>
-            <?php echo $serviceInfo['service_explan'] ?>
+            <?php echo $serviceInfo['explan'] ?>
         </div>
     </div>
     <div>

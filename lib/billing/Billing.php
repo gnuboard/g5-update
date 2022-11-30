@@ -69,7 +69,7 @@ class Billing
             $paymentInfo['expiration_date']
         );
         // 자동결제 이력 저장
-        $sql = "INSERT INTO {$g5['batch_payment_table']} SET 
+        $sql = "INSERT INTO {$g5['billing_history_table']} SET 
                     od_id           = ?,
                     mb_id           = ?,
                     batch_key       = ?,
@@ -95,7 +95,7 @@ class Billing
     {
         global $g5;
 
-        $sql = "UPDATE {$g5['batch_info_table']} SET
+        $sql = "UPDATE {$g5['billing_information_table']} SET
                     next_payment_date = ?
                 WHERE od_id = ?";
         return $this->g5Mysqli->execSQL($sql, array($date, $orderId), true);

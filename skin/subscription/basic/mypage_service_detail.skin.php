@@ -8,12 +8,12 @@ require_once G5_PATH . '/head.sub.php';
 require_once(G5_BBS_PATH . '/subscription/subscription_service.php'); //TODO subscription head
 require_once(G5_BBS_PATH . '/subscription/mypage.php'); //TODO subscription head
 
-require_once G5_PATH . '/bbs/kcp-batch/G5Mysqli.php';
-require_once G5_PATH . '/bbs/kcp-batch/KcpBatch.php';
-require_once G5_PATH . '/bbs/kcp-batch/Billing.php';
-require_once G5_PATH . '/bbs/kcp-batch/BillingInterface.php';
-require_once G5_PATH . '/bbs/kcp-batch/G5BillingKcp.php';
-require_once G5_PATH . '/bbs/kcp-batch/G5BillingToss.php';
+require_once G5_PATH . '/lib/billing/G5Mysqli.php';
+require_once G5_PATH . '/lib/billing/KcpBatch.php';
+require_once G5_PATH . '/lib/billing/Billing.php';
+require_once G5_PATH . '/lib/billing/BillingInterface.php';
+require_once G5_PATH . '/lib/billing/kcp/G5BillingKcp.php';
+require_once G5_PATH . '/lib/billing/toss/G5BillingToss.php';
 
 $billing = new Billing('kcp');
 
@@ -27,24 +27,24 @@ $convertYMDUnit2 = array('y' => '년', 'm' => '개월', 'w' => '주', 'd' => '�
 
 $od_id = isset($_GET['od_id']) ? safe_replace_regex($_GET['od_id'], 'od_id') : '';
 
-$sql = "SELECT
-            bs.service_name,
-            CONCAT(recurring_count, recurring_unit) AS recurring,
-            (SELECT price FROM g5_batch_service_price price WHERE bi.service_id = price.service_id AND price.apply_date <= NOW() ORDER BY apply_date DESC LIMIT 1) AS price,
+echo $sql = "SELECT
+            bs.name,
+            CONCAT(recurring, recurring_unit) AS recurring,
+            (SELECT price FROM g5_billing_service_price price WHERE bi.service_id = price.service_id AND price.application_date <= NOW() ORDER BY application_date DESC LIMIT 1) AS price,
             board.bo_subject,
-            bi.batch_key,
+            bi.billing_key,
             bi.start_date,
             bi.end_date,
             bi.status,
             bi.next_payment_date
-        FROM g5_batch_info bi
-        LEFT JOIN g5_batch_service bs ON bi.service_id = bs.service_id
-        LEFT JOIN g5_board board ON bs.bo_table = board.bo_table
+        FROM g5_billing_information bi
+        LEFT JOIN g5_billing_service bs ON bi.service_id = bs.service_id
+        LEFT JOIN g5_board board ON bs.service_table = board.bo_table
         WHERE
             bi.od_id = '{$od_id}'";
 $info = sql_fetch($sql);
 // 결과처리
-$info['display_bill_key']   = $billing->displayBillKey($info['batch_key']);
+$info['display_bill_key']   = $billing->displayBillKey($info['billing_key']);
 $info['display_next_date']  = date('Y-m-d', strtotime($info['next_payment_date']));
 $info['display_recurring']  = strtr($info['recurring'], $convertYMDUnit2);
 $info['display_period']     = strtotime($info['end_date']) > 0 ? date('Y-m-d', strtotime($info['start_date'])) . ' ~ ' . date('Y-m-d', strtotime($info['end_date'])) : '';
@@ -83,7 +83,7 @@ for ($i = 0; $row = sql_fetch_array($result); $i++) {
                     <tbody>
                         <tr>
                             <th>서비스명</th>
-                            <td><?php echo $info['service_name'] ?></td>
+                            <td><?php echo $info['name'] ?></td>
                             <th>이용가능 게시판</th>
                             <td><?php echo $info['bo_subject'] ?></td>
                         </tr>
@@ -259,7 +259,7 @@ function m_Completepayment( frm_mpi, closeEvent )
         let queryString = new URLSearchParams(data).toString();
 
         $.ajax({
-            url : "<?php echo G5_ADMIN_URL ?>/auto_payment/ajax.get_batch_key.php",
+            url : "<?php echo G5_ADMIN_URL ?>/auto_payment/ajax.get_billing_key.php",
             type: "POST",
             data: queryString,
             success: function(data) {

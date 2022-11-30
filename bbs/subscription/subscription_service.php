@@ -1,7 +1,9 @@
 <?php
 
 require_once(dirname(__FILE__) . '../../../common.php');
-//require_once(dirname(__FILE__) . '/kcp-batch/G5Mysqli.php');
+require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
+$autoload = new G5AutoLoader();
+$autoload->register();
 
 
 /**
@@ -14,27 +16,27 @@ function showServiceDetail($serviceId)
 {
     $selectByIdSql = 'select
        service.service_id,
-       bo_table,
-       service_name,
-       service_summary,
-       service_explan,
-       service_mobile_explan,
-       service_image,
+       service_table,
+       name,
+       summary,
+       explan,
+       mobile_explan,
+       image_path,
        service_url,
-       service_hook,
-       service_expiration,
-       service_expiration_unit,
-       service_order,
-       service_use,
-       recurring_count,
+       service_hook_code,
+       expiration,
+       expiration_unit,
+       `order`,
+       is_use,
+       recurring,
        recurring_unit,
        price,
-       price_table.apply_date as price_apply_date
-    from ' . G5_TABLE_PREFIX . 'batch_service as service
-    left join ' . G5_TABLE_PREFIX . 'batch_service_price as price_table
+       price_table.application_date as price_apply_date
+    from ' . G5_TABLE_PREFIX . 'billing_service as service
+    left join ' . G5_TABLE_PREFIX . 'billing_service_price as price_table
         on service.service_id = price_table.service_id
-    where service.service_id = ' . sql_real_escape_string($serviceId) . ' and "' . G5_TIME_YMDHIS .'" > price_table.apply_date 
-    order by price_table.apply_date desc limit 1';
+    where service.service_id = ' . sql_real_escape_string($serviceId) . ' and "' . G5_TIME_YMDHIS .'" > price_table.application_date 
+    order by price_table.application_date desc limit 1';
 
     $result = sql_query($selectByIdSql);
     $responseItem = array();
@@ -62,11 +64,11 @@ function showServiceList($bo_table = '')
     $sql = "SELECT 
                 bs.*,
                 board.bo_subject,
-                (SELECT price FROM g5_batch_service_price sp WHERE bs.service_id = sp.service_id AND sp.apply_date <= NOW() ORDER BY apply_date DESC LIMIT 1) AS price
+                (SELECT price FROM g5_batch_service_price sp WHERE bs.service_id = sp.service_id AND sp.application_date <= NOW() ORDER BY application_date DESC LIMIT 1) AS price
             FROM g5_batch_service bs
             LEFT JOIN g5_board board ON bs.bo_table = board.bo_table
             {$where}
-            ORDER BY service_order ASC";
+            ORDER BY order ASC";
     $result = sql_query($sql);
     
     $responseItem = array();
@@ -127,7 +129,7 @@ function checkRoute()
     $bo_table = $_GET['bo_table'];
     $check = false;
 
-    $sql = "SELECT bo_table, service_url, service_hook, service_id FROM " . G5_TABLE_PREFIX . "batch_service WHERE service_use = 1 AND bo_table = '{$bo_table}'";
+    $sql = "SELECT service_table, service_url, service_hook_code, service_id FROM " . G5_TABLE_PREFIX . "batch_service WHERE is_use = 1 AND bo_table = '{$bo_table}'";
     $result = sql_query($sql);
     if ($result->num_rows > 0) {
         /*
@@ -135,7 +137,7 @@ function checkRoute()
         $host = parse_url(G5_URL, PHP_URL_HOST);
         */
         while ($row = sql_fetch_array($result)) {
-            if ($row['bo_table'] === $bo_table) {
+            if ($row['service_table'] === $bo_table) {
                 $isAuth = checkAuth($row['service_id']);
                 if ($isAuth) {
                     $check = true;

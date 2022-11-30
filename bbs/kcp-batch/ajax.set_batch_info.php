@@ -1,7 +1,7 @@
 <?php
 require_once './_common.php';
 require_once (G5_BBS_PATH . '/subscription/subscription_service.php');
-require_once (G5_BBS_PATH . '/kcp-batch/KcpBatch.php');
+require_once (G5_LIB_PATH . '/billing/KcpBatch.php');//G5_LIB_PATH . '/billing/KcpBatch.php
 $input_data = json_decode(file_get_contents('php://input'), true);
 
 /**
@@ -57,13 +57,13 @@ function get_batchkey_info_kcp($order_id, $service_id)
 
     $kcp_batch = new KcpBatch();
 
-    $recurring_count = $info[0]['recurring_count'];
+    $recurring = $info[0]['recurring'];
     $recurring_unit = $info[0]['recurring_unit'];
     if($recurring_unit === 'w'){
-        $recurring_count *= 7;
+        $recurring *= 7;
         $recurring_unit = 'd';
     }
-    $good_expr =  '2:' . $recurring_count . $recurring_unit;
+    $good_expr =  '2:' . $recurring . $recurring_unit;
     $sendInfo = array();
     $sendInfo['site_cd'] = $kcp_batch->getSiteCd();
     $sendInfo['ordr_idxx'] = $order_id;

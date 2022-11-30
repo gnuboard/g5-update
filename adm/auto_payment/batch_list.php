@@ -17,12 +17,12 @@ $price_model        = new BillingServicePriceModel();
 $history_model      = new BillingHistoryModel();
 
 $unit_array     = array('y' => '년', 'm' => '개월', 'w' => '주', 'd' => '일');
-$search_list    = array('service_name', 'mb.mb_id', 'mb.mb_name');
-$orderby_list   = array('service_id', 'service_name', 'price', 'service_order', 'service_use', 'start_date');
+$search_list    = array('name', 'mb.mb_id', 'mb.mb_name');
+$orderby_list   = array('service_id', 'name', 'price', 'order', 'is_use', 'start_date');
 $direction_list = array('desc', 'asc');
 $status_list    = array('', '0', '1', '2');
 
-$sfl        = !empty($sfl) ? clean_xss_tags($sfl) : 'service_name';
+$sfl        = !empty($sfl) ? clean_xss_tags($sfl) : 'name';
 $stx        = !empty($stx) ? clean_xss_tags($stx) : '';
 $save_stx   = !empty($save_stx) ? clean_xss_tags($save_stx) : '';
 $sst        = !empty($sst) ? clean_xss_tags($sst) : 'start_date';

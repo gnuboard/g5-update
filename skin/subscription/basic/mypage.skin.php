@@ -101,13 +101,13 @@ $expiration_list = get_myservice(0);
         <ul>
             <li class="title_area">
                 <a href="mypage_service_detail.skin.php?od_id=<?php echo $service['od_id'] ?>">
-                    <div class="service_name"><?= $service['service_name'] ?></div>
-                    <div class="service_summary"><?= $service['service_summary'] ?></div>
+                    <div class="service_name"><?= $service['name'] ?></div>
+                    <div class="service_summary"><?= $service['summary'] ?></div>
                 </a>
             </li>
             <li class="price_area">
                 <div class="price"><?=$convertYMDUnit1[$service['recurring_unit']] ?> <?= number_format($service['price']) ?>원</div>
-                <div><?=$service['service_expiration']?><?=$convertYMDUnit2[$service['service_expiration_unit']] ?> 동안 이용가능</div>
+                <div><?=$service['expiration']?><?=$convertYMDUnit2[$service['expiration_unit']] ?> 동안 이용가능</div>
                 <div>다음 결제일: <?php echo date('Y-m-d', strtotime($service['next_payment_date'])) ?></div>
             </li>
             <!--
@@ -137,13 +137,13 @@ $expiration_list = get_myservice(0);
         <ul>
             <li class="title_area">
                 <a href="mypage_service_detail.skin.php?od_id=<?php echo $service['od_id'] ?>">
-                    <div class="service_name"><?= $service['service_name'] ?></div>
+                    <div class="service_name"><?= $service['name'] ?></div>
                     <div class="service_summary"><?= $service['service_summary'] ?></div>
                 </a>
             </li>
             <li class="price_area">
                 <div class="price"><?=$convertYMDUnit1[$service['recurring_unit']] ?> <?= number_format($service['price']) ?>원</div>
-                <div><?=$service['service_expiration']?><?=$convertYMDUnit2[$service['service_expiration_unit']] ?> 동안 이용가능</div>
+                <div><?=$service['expiration']?><?=$convertYMDUnit2[$service['expiration_unit']] ?> 동안 이용가능</div>
                 <div>다음 결제일: <?php echo date('Y-m-d', strtotime($service['next_payment_date'])) ?></div>
             </li>
         </ul>
