@@ -35,9 +35,19 @@ class G5BillingKcp implements BillingInterface
     public $urlBatchPayment = 'https://spl.kcp.co.kr/gw/hub/v1/payment'; //운영서버
 
     /**
+     * @var string 배치키 삭제 URL
+     */
+    private $urlDeleteBatchKey = 'https://spl.kcp.co.kr/gw/hub/v1/payment';
+
+    /**
      * @var string 결제취소 요청 API Reqeust URL
      */
     public $urlBatchCancel = 'https://spl.kcp.co.kr/gw/mod/v1/cancel'; // 운영서버
+
+    /**
+     * @var string 모바일에 쓰이는 거래등록 URL
+     */
+    public $urlTradeRegister = 'https://spl.kcp.co.kr/std/tradeReg/register';
 
     /**
      * @var string
@@ -75,6 +85,8 @@ class G5BillingKcp implements BillingInterface
             $this->urlGetBatchKey = 'https://stg-spl.kcp.co.kr/gw/enc/v1/payment';
             $this->urlBatchPayment = 'https://stg-spl.kcp.co.kr/gw/hub/v1/payment';
             $this->urlBatchCancel = 'https://stg-spl.kcp.co.kr/gw/mod/v1/cancel';
+            $this->urlDeleteBatchKey = 'https://stg-spl.kcp.co.kr/gw/hub/v1/payment';
+            $this->urlTradeRegister = 'https://stg-spl.kcp.co.kr/std/tradeReg/register';
         }
     }
 
@@ -281,6 +293,53 @@ class G5BillingKcp implements BillingInterface
         );
 
         return $this->requestApi($this->urlBatchPayment, $requestData);
+    }
+
+    /**
+     * 배치키 삭제 요청
+     * @param string $batchKey      삭제할 배치키
+     * @return mixed
+     */
+    public function requestDeleteBillKey($batchKey)
+    {
+        $data = array(
+            "site_cd"        => $this->getSiteCd(),
+            "site_key" 	     => '',
+            "kcp_cert_info"  => $this->getServiceCertification(),
+            "pay_method"     => 'BATCH',
+            "batch_key"      => $batchKey, // 결제수단 (고정)
+            "group_id"       => $this->getKcpGroupId(),
+            "tx_type"        => '10005010' // 거래요청타입(고정)
+        );
+
+        return $this->requestApi($this->urlDeleteBatchKey, $data);
+    }
+
+    /**
+     * 배치키 발급을 위해 NHN KCP 모바일 표준결제창 호출에 필요한 거래등록
+     * @param string $od_id
+     * @param string $amount
+     * @param string $goodName 상품명
+     * @param string $returnUrl 응답결과 받을 url
+     * @param string $useEscw  에스크로 사용여부 Y, N
+     * @param string $userAgent 필수아님
+     * @return array|string
+     */
+    public function requestTradeRegister($od_id, $amount, $goodName, $returnUrl, $useEscw, $userAgent = '')
+    {
+        $data = array(
+            'ordr_idxx'     => $od_id,
+            "site_cd"       => $this->getSiteCd(),
+            'kcp_cert_info' => $this->getServiceCertification(),
+            'good_mny'      => $amount,
+            'pay_method'    => 'AUTH', // 결제수단 (고정)
+            'good_name'     => $goodName,
+            'Ret_URL'       => $returnUrl,
+            'escw_used'     => $useEscw, // 에스크로 사용여부 Y, N
+            'user_agent'    => $userAgent
+        );
+
+        return $this->requestApi($this->urlTradeRegister, $data);
     }
 
     /**
