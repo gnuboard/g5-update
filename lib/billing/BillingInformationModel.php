@@ -24,7 +24,7 @@ class BillingInformationModel
 
         $sql = "SELECT
                     bi.*,
-                    mb.mb_id, mb.mb_name, mb.mb_email,
+                    mb.mb_name, mb.mb_email, mb.mb_hp,
                     bs.name, bs.recurring, bs.recurring_unit
                 FROM {$g5['billing_information_table']} bi
                     LEFT JOIN {$g5['billing_service_table']} bs ON bi.service_id = bs.service_id
@@ -118,16 +118,32 @@ class BillingInformationModel
 
     /**
      * 자동결제(빌링) 정보 저장
+     * @param array $resultData     
+     * @return bool
      */
-    public function insertBillingInfo($requestData = array()) {
-        
+    public function insert($requestData = array())
+    {
+        global $g5;
+
+        $data = array(
+            'od_id'             => $requestData['od_id'],
+            'service_id'        => $requestData['service_id'],
+            'mb_id'             => $requestData['mb_id'],
+            'billing_key'       => $requestData['billing_key'],
+            'start_date'        => $requestData['start_date'],
+            'end_date'          => $requestData['end_date'],
+            'next_payment_date' => $requestData['next_payment_date']
+        );
+
+        return $this->g5Mysqli->insertSQL($g5["billing_information_table"], $data);
+
     }
 
     /**
      * 상태 값 업데이트
      * @param string $orderId   주문번호
      * @param string $billKey   자동결제(빌링) 키
-     * @return int
+     * @return bool
      */
     public function updateStatus($orderId, $status)
     {
@@ -143,7 +159,7 @@ class BillingInformationModel
      * 빌링 키 정보 업데이트
      * @param string $orderId   주문번호
      * @param string $billKey   자동결제(빌링) 키
-     * @return int
+     * @return bool
      */
     public function updateBillingKey($orderId, $billingKey)
     {
@@ -159,14 +175,14 @@ class BillingInformationModel
      * 다음 결제 예정일 업데이트
      * @param string $orderId   주문번호
      * @param string $date      결제 예정일
-     * @param int
+     * @return bool
      */
     public function updateNextPaymentDate($orderId, $date)
     {
         global $g5;
 
-        $bindParam      = array("od_id" => $orderId);
-        $conditional    = array("next_payment_date" => $date);
+        $bindParam      = array("next_payment_date" => $date);
+        $conditional    = array("od_id" => $orderId);
 
         return $this->g5Mysqli->updateSQL($g5['billing_information_table'], $bindParam, $conditional);
     }

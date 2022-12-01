@@ -366,7 +366,11 @@ $(function() {
             $.ajax({
                 url : "./ajax.order_batch.php",
                 type: "POST",
-                data: {"id" : this.dataset.id, "ordr_idxx" : '<?php echo $od_id ?>'},
+                data: {
+                    "id" : this.dataset.id,
+                    "od_id" : '<?php echo $od_id ?>',
+                    "mb_id" : '<?php echo $billing_info['mb_id'] ?>'
+                },
                 success: function(data) {
                     if (data) {
                         console.log(data);

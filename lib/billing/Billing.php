@@ -43,72 +43,6 @@ class Billing
     }
 
     /**
-     * 자동결제(빌링) 이력 저장
-     * @param string $memberId      회원ID
-     * @param array $paymenInfo     자동결제 정보
-     * @param array $resultData     자동결제 승인 요청 API 결과데이터
-     * @return int
-     */
-    public function insertBillingLog($memberId, $paymentInfo, $resultData = array()) {
-
-        global $g5;
-
-        // 입력 데이터 재 선언        
-        $bindParam = array(
-            $resultData['od_id'],
-            $memberId,
-            $paymentInfo['batch_key'],
-            $paymentInfo['payment_count'],
-            $paymentInfo['amount'],
-            $resultData['result_code'],
-            $resultData['result_msg'],
-            $resultData['billing_no'],
-            $resultData['card_name'],
-            json_encode($resultData),
-            $paymentInfo['payment_date'],
-            $paymentInfo['expiration_date']
-        );
-        // 자동결제 이력 저장
-        $sql = "INSERT INTO {$g5['billing_history_table']} SET 
-                    od_id           = ?,
-                    mb_id           = ?,
-                    batch_key       = ?,
-                    payment_count   = ?,
-                    amount          = ?,
-                    res_cd          = ?,
-                    res_msg         = ?,
-                    tno             = ?,
-                    card_name       = ?,
-                    res_data        = ?,
-                    payment_date    = ?,
-                    expiration_date = ?";
-        return $this->g5Mysqli->execSQL($sql, $bindParam, true);
-    }
-
-    /**
-     * 다음 결제 예정일 업데이트
-     * @param string $orderId   주문번호
-     * @param string $date      결제 예정일
-     * @param int
-     */
-    public function updateNextPaymentDate($orderId, $date)
-    {
-        global $g5;
-
-        $sql = "UPDATE {$g5['billing_information_table']} SET
-                    next_payment_date = ?
-                WHERE od_id = ?";
-        return $this->g5Mysqli->execSQL($sql, array($date, $orderId), true);
-    }
-
-    /**
-     * 자동결제(빌링) 환불 이력 저장
-     */
-    public function insertBillingRefund($data = array()) {
-
-    }
-
-    /**
      * PG사 요청 결과 데이터 이름 -> 공용 데이터 명 변환
      * - 각 PG Class의 convert 배열을 사용하여 변환한다.
      * @param array $pgData     변환할 이름 배열 (KCP변수(Key) => 공통변수(Value))
@@ -134,7 +68,7 @@ class Billing
      * @param string $replacement   대체할 문자
      * @param string $offset        변환 시작위치
      * @param string $repeat        반복 횟수
-     * @return string 
+     * @return string
      */
     public function displayBillKey($billKey, $replacement = '*', $offset = 4, $repeat = 8)
     {
@@ -142,8 +76,58 @@ class Billing
     }
 
     /**
+     * 다음 결제일 계산
+     *
+     * @param string    $startDate      최초 결제 시작일 ('Y-m-d')
+     * @param string    $paymentDate    결제일 ('Y-m-d')
+     * @param int       $recurring      반복주기
+     * @param string    $recurringUnit  반복주기 단위 (y:년, m:월, w:주, d:일)
+     * @return string|false
+     */
+    function nextPaymentDate($startDate, $paymentDate, $recurring, $recurringUnit)
+    {
+        switch (strtolower($recurringUnit)) {
+            case 'y' :
+                $time = "+{$recurring} years";
+                return date('Y-m-d', strtotime($time, strtotime($paymentDate)));
+                break;
+            case 'm' :
+                /**
+                 * 월 결제일 경우 아래 경우를 고려해서 계산한다.
+                 * 1. 다음 결제일이 존재하지 않는 날짜일 때, "+{$recurring} months"가 다음 결제월을 초과하게 된다.
+                 *      Ex) 1/31 => 2/31 (2/31은 없는 날짜이다.)
+                 *      date('Y-m-d', strtotime("+1 months", strtotime('2022-01-31'))) 는 '2022-03-03'로 계산된다.
+                 */
+                $startDay       = date('d', strtotime($startDate));
+                $paymentDateYm  = date('Y-m', strtotime($paymentDate));
+                $nextMonthByYm  = date('m', strtotime("+{$recurring} months", strtotime($paymentDateYm)));
+                $nextMonth      = date('m', strtotime("+{$recurring} months", strtotime($paymentDate)));
+
+                // 다음 결제월을 초과할 경우, 다음 결제월 마지막 일자로 처리한다.
+                if ($nextMonthByYm != $nextMonth) {
+                    return date('Y-m-t', strtotime("+{$recurring} months", strtotime($paymentDateYm)));
+                    // 매 월 동일한 일자로 처리되도록 고정한다.
+                } else {
+                    return date('Y-m-' . $startDay, strtotime("+{$recurring} months", strtotime($paymentDate)));
+                }
+                break;
+            case 'w' :
+                $recurring *= 7;
+                $time = "+{$recurring} days";
+                return date('Y-m-d', strtotime($time, strtotime($paymentDate)));
+            case 'd' :
+                $time = "+{$recurring} days";
+                return date('Y-m-d', strtotime($time, strtotime($paymentDate)));
+                break;
+            default :
+                return false;
+                break;
+        }
+    }
+
+    /**
      * Get the value of pg
-     */ 
+     */
     public function getPg()
     {
         return $this->pg;
@@ -153,7 +137,7 @@ class Billing
      * Set the value of pg
      *
      * @return  self
-     */ 
+     */
     public function setPg($pg)
     {
         $this->pg = $pg;

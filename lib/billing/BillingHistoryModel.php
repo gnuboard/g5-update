@@ -12,6 +12,26 @@ class BillingHistoryModel
     }
 
     /**
+     * 결제이력 1건 조회
+     * @param int $id   결제이력 ID
+     * @return array|null
+     */
+    public function selectOneById($id)
+    {
+        global $g5;
+
+        $bindParam = array();
+
+        $sql = "SELECT 
+                    od_id, amount, billing_key, payment_count, mb_id
+                FROM {$g5['billing_history_table']}
+                WHERE id = ?";
+        array_push($bindParam, $id);
+
+        return $this->g5Mysqli->getOne($sql, $bindParam);
+    }
+
+    /**
      * 결제이력 조회
      * @param string $orderId   주문번호
      * @return array
@@ -60,11 +80,28 @@ class BillingHistoryModel
 
     /**
      * 자동결제(빌링) 이력 저장
-     * @param array $requestData    자동결제 승인 요청 API 결과데이터
-     * @return int
+     * @param array $resultData     
+     * @return bool
      */
-    public function insert($resultData = array())
-    {
+    public function insert($resultData = array()) {
+
         global $g5;
+
+        $data = array(
+            'od_id' => $resultData['od_id'],
+            'mb_id' => $resultData['mb_id'],
+            'billing_key' => $resultData['billing_key'],
+            'amount' => $resultData['amount'],
+            'result_code' => $resultData['result_code'],
+            'result_message' => $resultData['result_message'],
+            'result_data' => json_encode($resultData),
+            'card_name' => $resultData['card_name'],
+            'payment_count' => $resultData['payment_count'],
+            'payment_no' => $resultData['payment_no'],
+            'payment_date' => $resultData['payment_date'],
+            'expiration_date' => $resultData['expiration_date'],
+        );
+
+        return $this->g5Mysqli->insertSQL($g5["billing_history_table"], $data);
     }
 }
