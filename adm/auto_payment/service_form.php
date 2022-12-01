@@ -27,6 +27,7 @@ $service = array(
     'explan' => '',
     'mobile_explan' => '',
     'summary' => '',
+    'base_price' => '',
     'recurring_count' => 1,
     'recurring_unit' => 'm',
     'expiration' => '0',
@@ -176,7 +177,16 @@ include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
                 </colgroup>
                 <tbody>
                     <tr>
-                        <th scope="row"><label for="price">가격 <button type="button" id="create_price_row" class="btn_frmline">가격 추가</button></label></th>
+                        <th scope="row"><label for="price">기본 가격</label></th>
+                        <td>
+                            <?php echo help("기본 가격을 설정합니다."); ?>
+                            <div>
+                                <input type="number" name="base_price" value="<?php echo $service['base_price']; ?>" class="frm_input" size="12"> 원
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="price">변경 가격 <button type="button" id="create_price_row" class="btn_frmline">가격 추가</button></label></th>
                         <td id="td_price">
                             <?php echo help("가격이 변경되는 일자를 선택할 수 있습니다."); ?>
                             <?php 
@@ -187,7 +197,8 @@ include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
                                 <input type="hidden" name="id[<?php echo $row ?>]" value="<?php echo $price['id'] ?>">
                                 <input type="text" name="price[<?php echo $row ?>]" value="<?php echo $price['price']; ?>" class="frm_input" size="12"> 원
                                 / 
-                                <input type="text" name="application_date[<?php echo $row ?>]" id="application_date_<?php echo $row ?>" value="<?php echo $price['application_date']; ?>" class="frm_input date_format" size="20"> 적용
+                                <input type="text" name="application_date[<?php echo $row ?>]" id="application_date_<?php echo $row ?>" value="<?php echo $price['application_date']; ?>" class="frm_input date_format" size="20"> ~
+                                <input type="text" name="application_end_date[<?php echo $row ?>]" id="application_end_date_<?php echo $row ?>" value="<?php echo $price['application_end_date']; ?>" class="frm_input date_format" size="20">까지 적용
                                 <?php if ($price_count == $row) { ?>
                                     <button type="button" name="remove_price_row" class="btn_frmline">삭제</button>
                                 <?php } ?>
@@ -242,9 +253,6 @@ var f = document.form_service;
 let price_row   = <?php echo $price_count ?>;
 
 $(function() {
-    if (price_row == 0) {
-        create_price_row();
-    }
     set_datepicker();
 
     // 가격추가 버튼
@@ -265,7 +273,7 @@ $(function() {
         dateFormat: "yy-mm-dd 00:00:00",
         showButtonPanel: true,
         yearRange: "c-99:c+99",
-        maxDate: "+1y"
+        maxDate: "+10y"
     })
 });
 
@@ -276,7 +284,8 @@ function create_price_row()
     let html    = '';
     html += '<div id="td_price_' + price_row + '">';
     html += '<input type="text" name="price[' + price_row + ']" value="" class="frm_input" size="12"> 원 / ';
-    html += '<input type="text" name="application_date[' + price_row + ']" value="" id="application_date_' + price_row + '" class="frm_input date_format" size="20"> 적용';
+    html += '<input type="text" name="application_date[' + price_row + ']" value="" id="application_date_' + price_row + '" class="frm_input date_format" size="20"> ~ ';
+    html += '<input type="text" name="application_end_date[' + price_row + ']" value="" id="application_end_date_' + price_row + '" class="frm_input date_format" size="20">까지 적용';
     html += '</div>';
     $("#td_price").append(html);
 }
@@ -288,7 +297,7 @@ function remote_price_row(obj)
 function add_remove_price_btn()
 {
     $("button[name='remove_price_row']").remove();
-    if (price_row > 1) {
+    if (price_row > 0) {
         $("#td_price_" + price_row).append(' <button type="button" name="remove_price_row" class="btn_frmline">삭제</button>');
     }
 }
@@ -304,6 +313,14 @@ function check_form_service(f)
         alert("게시판을 선택하십시오.");
         f.service_table.focus();
         return false;
+    }
+
+    for (let i = 1; i <= price_row; i++) {
+        if ($("#application_date_" + i).val() === '' || $("#application_end_date_" + i).val() === '') {
+            alert("변경 가격의 시작/종료일시를 입력해주세요.");
+            $("#application_date_" + i).focus();
+            return false;
+        }
     }
 
     <?php echo get_editor_js('explan'); ?>
