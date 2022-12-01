@@ -186,4 +186,39 @@ class BillingInformationModel
 
         return $this->g5Mysqli->updateSQL($g5['billing_information_table'], $bindParam, $conditional);
     }
+
+    /**
+     * 구독서비스 권한 체크
+     * @param string $memberId  회원 ID
+     * @param int $serviceId    구독서비스 ID
+     * @return bool 
+     */
+    public function checkPermission($memberId, $serviceId)
+    {
+        global $g5;
+
+        $bindParam = array();
+
+        if (empty($memberId) || empty($serviceId)) {
+            return false;
+        }
+
+        $sql = "SELECT EXISTS(
+                    SELECT
+                        bh.id
+                    FROM {$g5['billing_history_table']} bh
+                        LEFT JOIN {$g5['billing_information_table']} bi ON bh.od_id = bi.od_id
+                    WHERE bh.mb_id = ?
+                        AND bi.service_id = ?
+                        AND now() BETWEEN payment_date AND expiration_date) as permission";
+        array_push($bindParam, $memberId, $serviceId);
+
+        $result = $this->g5Mysqli->getOne($sql, $bindParam);
+        
+        if ((int)$result['permission'] > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
