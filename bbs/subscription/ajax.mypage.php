@@ -1,7 +1,7 @@
 <?php
 
 require_once '../../common.php';
-require_once 'mypage.php';
+require_once 'mypage_service.php';
 
 header('Content-type: application/json; charset=utf-8');
 /**

@@ -1,19 +1,12 @@
 <?php
 
-//if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
-require_once dirname(__FILE__) . '/../../../common.php';
-require_once G5_PATH . '/head.php';
-require_once G5_PATH . '/head.sub.php';
-
-require_once(G5_BBS_PATH . '/subscription/subscription_service.php'); //TODO subscription head
-require_once(G5_BBS_PATH . '/subscription/mypage.php'); //TODO subscription head
+if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
+require_once dirname(__FILE__) . '/mypage_head.skin.php';
 
 require_once G5_PATH . '/lib/billing/G5Mysqli.php';
 require_once G5_PATH . '/lib/billing/KcpBatch.php';
 require_once G5_PATH . '/lib/billing/Billing.php';
-require_once G5_PATH . '/lib/billing/BillingInterface.php';
-require_once G5_PATH . '/lib/billing/kcp/G5BillingKcp.php';
-require_once G5_PATH . '/lib/billing/toss/G5BillingToss.php';
+//require_once G5_PATH . '/lib/billing/kcp/G5BillingKcp.php';
 
 $billing = new Billing('kcp');
 
@@ -21,13 +14,17 @@ if (empty($is_member)) {
     alert('로그인 하셔야 됩니다.', G5_BBS_URL . '/login.php');
 }
 
+$od_id = isset($_GET['od_id']) ? safe_replace_regex($_GET['od_id'], 'od_id') : '';
+if(empty($od_id)){
+    alert('주문번호가 없습니다.');
+}
+
 $convertYMDUnit1 = array('y' => '연간', 'm' => '월', 'w' => '주', 'd' => '일');
 $convertYMDUnit2 = array('y' => '년', 'm' => '개월', 'w' => '주', 'd' => '일');
 
 
-$od_id = isset($_GET['od_id']) ? safe_replace_regex($_GET['od_id'], 'od_id') : '';
 
-echo $sql = "SELECT
+$sql = "SELECT
             bs.name,
             CONCAT(recurring, recurring_unit) AS recurring,
             (SELECT price FROM g5_billing_service_price price WHERE bi.service_id = price.service_id AND price.application_date <= NOW() ORDER BY application_date DESC LIMIT 1) AS price,
@@ -51,10 +48,10 @@ $info['display_period']     = strtotime($info['end_date']) > 0 ? date('Y-m-d', s
 $info['display_status']     = $info['status'] == '1' ? '구독 중' : '구독 종료';
 
 $payment_list = array();
-$sql = "SELECT 
+echo $sql = "SELECT 
             *,
             CONCAT(DATE_FORMAT(payment_date, '%Y-%m-%d'), ' ~ ', DATE_FORMAT(expiration_date, '%Y-%m-%d')) AS period
-        FROM g5_batch_payment 
+        FROM g5_billing_history
         WHERE od_id = {$od_id} 
         ORDER BY payment_count DESC, payment_date DESC";
 $result = sql_query($sql);
@@ -62,9 +59,9 @@ for ($i = 0; $row = sql_fetch_array($result); $i++) {
     $payment_list[$i] = $row;
     $payment_list[$i]['display_payment_count']  = $row['payment_count'] . "회차";
     $payment_list[$i]['display_amount']         = number_format($row['amount']) . "원";
-    $payment_list[$i]['display_res_cd']         = ($row['res_cd'] == "0000" ? "성공" : "실패");
-    $payment_list[$i]['display_res_cd_color']   = ($row['res_cd'] == "0000" ? "#53C14B" : "#FF0000");
-    $payment_list[$i]['display_period']         = ($row['res_cd'] == "0000" ? $row['period'] : '');
+    $payment_list[$i]['display_res_cd']         = ($row['result_code'] == "0000" ? "성공" : "실패");
+    $payment_list[$i]['display_res_cd_color']   = ($row['result_code'] == "0000" ? "#53C14B" : "#FF0000");
+    $payment_list[$i]['display_period']         = ($row['result_code'] == "0000" ? $row['period'] : '');
 }
 ?>
 <div>
