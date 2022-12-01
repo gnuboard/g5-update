@@ -86,3 +86,20 @@ CREATE TABLE `g5_billing_key_history` (
   `issue_date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- gnuboard5.g5_billing_cancel definition
+
+CREATE TABLE `g5_billing_cancel` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `od_id` bigint(20) unsigned NOT NULL,
+  `payment_no` varchar(100) NOT NULL,
+  `type` varchar(10) NOT NULL DEFAULT 'all' COMMENT '(all : 전체취소, partial: 부분취소)',
+  `result_code` varchar(4) NOT NULL,
+  `result_message` varchar(100) NOT NULL,
+  `cancel_no` varchar(100) DEFAULT NULL,
+  `cancel_reason` varchar(255) DEFAULT NULL,
+  `cancel_amount` int(11) NOT NULL DEFAULT 0,
+  `refundable_amount` int(11) NOT NULL DEFAULT 0,
+  `cancel_time` datetime NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

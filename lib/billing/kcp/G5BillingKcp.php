@@ -58,7 +58,11 @@ class G5BillingKcp implements BillingInterface
         'card_cd'   => 'card_code',
         'card_name' => 'card_name',
         'tno'       => 'payment_no',
-        'amount'    => 'amount'
+        'amount'    => 'amount',
+        'canc_time' => 'cancel_time',
+        'mod_mny'   => 'cancel_amount',
+        'rem_mny'   => 'refundable_amount',
+        'mod_pacn_seq_no' => 'cancel_no'
     );
 
     public function __construct()
@@ -281,18 +285,45 @@ class G5BillingKcp implements BillingInterface
 
     /**
      * 자동결제(빌링) 승인취소 요청
-     * @param string $no            PG사 거래번호
+     * @param string $tno           NHN KCP 거래 고유번호
      * @param string $cancelReason  취소사유
+     * @param string $type          취소 타입 (all : 전체취소, partial: 부분취소)
+     * @param string $mod_mny       부분취소일 경우 부분취소금액
+     * @param string $rem_mny       부분취소일 경우 남은 원거래 금액
      * @return mixed
      */
-    public function requestCancelBilling($no, $cancelReason = '가맹점 DB 처리 실패(자동취소)')
+    public function requestCancelBilling($tno, $cancelReason = '가맹점 DB 처리 실패(자동취소)')
     {
         $requestData = array(
             'site_cd'       => $this->getSiteCd(),
+            'tno'           => $tno,
             'kcp_cert_info' => $this->getServiceCertification(),
-            'kcp_sign_data' => $this->createKcpSignData($no),
-            'tno'           => $no,
+            'kcp_sign_data' => $this->createKcpSignData($tno),
             'mod_type'      => 'STSC',
+            'mod_desc'      => $cancelReason
+        );
+
+        return $this->requestApi($this->urlBatchCancel, $requestData);
+    }
+
+    /**
+     * 자동결제(빌링) 승인 부분취소 요청
+     * @param string $tno           NHN KCP 거래 고유번호
+     * @param string $cancelReason  취소사유
+     * @param string $mod_mny       부분취소금액
+     * @param string $rem_mny       남은 원거래 금액
+     * @return mixed
+     */
+    public function requestPartialCancelBilling($tno, $cancelReason = '가맹점 DB 처리 실패(자동취소)', $mod_mny = 0, $rem_mny = 0)
+    {
+        $requestData = array(
+            'site_cd'       => $this->getSiteCd(),
+            'tno'           => $tno,
+            'kcp_cert_info' => $this->getServiceCertification(),
+            'kcp_sign_data' => $this->createKcpSignData($tno),
+            'mod_type'      => 'STPC',
+            'mod_mny'       => $mod_mny,
+            'rem_mny'       => $rem_mny,
             'mod_desc'      => $cancelReason
         );
 

@@ -10,6 +10,7 @@ $autoload->register();
 $billing = new Billing($pg_code);
 $information_model  = new BillingInformationModel();
 $history_model      = new BillingHistoryModel();
+$cancel_model       = new BillingCancelModel();
 
 $unit_array = array('y' => 'year', 'm' => 'month', 'w' => 'week', 'd' => 'day');
 /**
@@ -89,13 +90,18 @@ DB 작업이 실패 한 경우, bSucc 라는 변수의 값을 false로 설정해
 */
 //0000 은 성공
 if ($json_res['result_code'] === '0000' && $bSucc === false) {
-    $cancle_res = $billing->pg->requestCancelBilling($json_res['payment_no']);
-    $cancle_res = $billing->convertPgDataToCommonData($cancle_res);
-    /**
-     * @todo 취소요청 결과 저장
-     */
-    if ($cancle_res['result_code'] !== '0000') {
-        responseJson('결제 취소가 실패했습니다.' . $cancle_res['result_message'], 401);
+    $reason = '가맹점 DB 처리 실패(자동취소)';
+    $cancel_res = $billing->pg->requestCancelBilling($json_res['payment_no'], $reason);
+    $cancel_res = $billing->convertPgDataToCommonData($cancel_res);
+    
+    // 취소이력 저장
+    $cancel_res['od_id']            = $od_id;
+    $cancel_res['cancel_reason']    = $reason;
+    $cancel_res['cancel_amount']    = $json_res['amount'];
+    $cancel_model->insert($cancel_res);
+    
+    if ($cancel_res['result_code'] !== '0000') {
+        responseJson('결제 취소가 실패했습니다.' . $cancel_res['result_message'], 401);
     }
 }
 
