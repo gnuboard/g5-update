@@ -54,11 +54,12 @@ if (isset($json_res['http_code'])) {
 if ($json_res['result_code'] != "0000") {
     responseJson($json_res['result_message'], 400);
 }
-// 결제일, 구독만료일
-$json_res['payment_date']       = date('Y-m-d');
+
+$json_res['mb_id']              = $history_info['mb_id'];
+$json_res['billing_key']        = $history_info['billing_key'];
+$json_res['payment_count']      = $history_info['payment_count'];
+$json_res['payment_date']       = date('Y-m-d H:i:s'); // @todo 응답받은 시간으로 입력필요
 $json_res['expiration_date']    = date('Y-m-d 23:59:59 ', strtotime('+' . $billing_info['recurring'] . " " . $unit_array[$billing_info['recurring_unit']]));
-// 결제정보
-$json_res = array_merge($json_res, $history_info);
 /* ============================================================================== */
 /* =  로그파일 생성                                                              = */
 /* = -------------------------------------------------------------------------- = */
