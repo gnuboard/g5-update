@@ -7,4 +7,12 @@ require_once G5_PATH . '/head.sub.php';
 if (empty($is_member)) {
     alert('로그인 하셔야 됩니다.', G5_BBS_URL . '/login.php');
 }
-require_once(G5_BBS_PATH . '/subscription/mypage_service.php');
+if (!isset($page) || empty($page)) {
+    $page = 1;
+}
+$page_rows = 10;
+$start_page = $page  * $page_rows;
+if($page == 1){
+    $start_page = 0;
+}
+require_once(G5_BBS_PATH . '/subscription/subscription_service.php');

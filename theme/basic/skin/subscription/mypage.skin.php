@@ -3,14 +3,6 @@
 if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
 require_once dirname(__FILE__) . '/mypage_head.skin.php';
 
-$page_per_count = 10;
-$start_page = $page * $page_per_count;
-$last_page = $start_page + ($page_per_count - 1);
-if($page == 1){
-    $start_page = 0;
-    $last_page = $start_page + ($page_per_count - 1);
-}
-
 $convertYMDUnit1 = array('y' => '연간', 'm' => '월', 'w' => '주', 'd' => '일');
 $convertYMDUnit2 = array('y' => '년', 'm' => '개월', 'w' => '주', 'd' => '일');
 
@@ -22,7 +14,7 @@ $request_data = array(
     'sod' => '',
     'status' => 1,
     'offset' => $start_page,
-    'rows' => $last_page
+    'rows' => $page_rows
 );
 $board_list = get_myservice($request_data);
 $request_data['status'] = 0;

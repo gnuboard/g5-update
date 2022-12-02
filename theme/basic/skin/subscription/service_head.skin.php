@@ -10,6 +10,15 @@ $autoload->register();
 
 global $is_admin;
 
+if (!isset($page) || empty($page)) {
+    $page = 1;
+}
+$page_rows = 10;
+$start_page = $page * $page_rows;
+if($page == 1){
+    $start_page = 0;
+}
+
 add_stylesheet('<link rel="stylesheet" href="'. G5_THEME_CSS_URL .'/subscription/style.css">', 1);
 ?>
 

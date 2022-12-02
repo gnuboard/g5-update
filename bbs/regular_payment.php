@@ -18,8 +18,7 @@ if($is_guest) {
     }
 }
 
-$service_info = showServiceDetail($service_id);
-$service_info = $service_info[0];
+$service_info = get_service_detail($service_id);
 if($service_info === null){
     alert('해당 상품이 없습니다.', G5_URL);
 }
