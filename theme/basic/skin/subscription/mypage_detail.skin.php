@@ -23,7 +23,7 @@ $info['display_recurring']  = strtr($info['recurring'], $convertYMDUnit2);
 $info['display_period']     = strtotime($info['end_date']) > 0 ? date('Y-m-d', strtotime($info['start_date'])) . ' ~ ' . date('Y-m-d', strtotime($info['end_date'])) : '';
 $info['display_status']     = $info['status'] == '1' ? '구독 중' : '구독 종료';
 
-$payment_history = get_myservice_history($od_id);
+$payment_history = get_myservice_history($od_id, $start_page, $page_rows);
 if($payment_history === false){
     $payment_history = array();
 }

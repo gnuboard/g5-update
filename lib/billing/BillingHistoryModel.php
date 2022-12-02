@@ -38,7 +38,7 @@ class BillingHistoryModel
      * @param string $orderId   주문번호
      * @return array
      */
-    public function selectListByOrderId($orderId)
+    public function selectListByOrderId($orderId, $offset, $rows)
     {
         global $g5;
 
@@ -49,8 +49,11 @@ class BillingHistoryModel
                     CONCAT(DATE_FORMAT(payment_date, '%Y-%m-%d'), ' ~ ', DATE_FORMAT(expiration_date, '%Y-%m-%d')) AS period
                 FROM {$g5['billing_history_table']}
                 WHERE od_id = ?
-                ORDER BY payment_count DESC, payment_date DESC";
-        array_push($bindParam, $orderId);
+                ORDER BY payment_count DESC, payment_date DESC
+                LIMIT ?, ?";
+        $bindParam[] = $orderId;
+        $bindParam[] = $offset;
+        $bindParam[] = $rows;
 
         return $this->g5Mysqli->execSQL($sql, $bindParam);
     }
