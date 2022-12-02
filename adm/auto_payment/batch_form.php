@@ -31,7 +31,7 @@ $billing_info = $information_model->selectOneByOrderId($od_id);
 $service_id = $billing_info['service_id'];
 
 $billing_info['mb_side_view']         = get_sideview($billing_info['mb_id'], get_text($billing_info['mb_name']), $billing_info['mb_email'], '');
-$billing_info['display_end_date']     = $billing_info['end_date'] != "0000-00-00 00:00:00" ? date('Y-m-d', strtotime($billing_info['end_date'])) : "없음";
+$billing_info['display_end_date']     = ($billing_info['end_date'] != '0000-00-00 00:00:00') ? date('Y-m-d', strtotime($billing_info['end_date'])) : "";
 $billing_info['display_status']       = $billing_info['status'] == "1" ? "구독 중" : "구독 종료";
 $billing_info['display_billing_key']  = $billing->displayBillKey($billing_info['billing_key']);
 $billing_info['display_next_payment'] = date('Y-m-d', strtotime($billing_info['next_payment_date']));
@@ -77,14 +77,14 @@ foreach ($history_list as $i => $history) {
     $history_list[$i]['display_result_color']   = ($history['result_code'] == "0000" ? "#53C14B" : "#FF0000");
     $history_list[$i]['display_period']         = ($history['result_code'] == "0000" ? $history['period'] : '');
     $history_list[$i]['display_billing_key']    = $billing->displayBillKey($history['billing_key']);
-    $history_list[$i]['is_btn_refund']          = false;
+    $history_list[$i]['is_btn_cancel']          = false;
 
     if (!isset($payment_success[$count])) {
         $payment_success[$count] = false;
     }
     
     if ($history['result_code'] == "0000") {
-        $history_list[$i]['is_btn_refund'] = true;
+        $history_list[$i]['is_btn_cancel'] = true;
         $payment_success[$count] = true;
         $total_amount += $history['amount'];
     }
@@ -250,8 +250,8 @@ $pg_anchor = '<ul class="anchor">
                     <?php if (!$payment_success[$history['payment_count']]) { ?>
                         <button type="button" name="btn_payment" data-id="<?php echo $history['id']?>" data-count="<?php echo $history['payment_count']?>" class="btn btn_02 btn_payment">결제</button>
                     <?php } ?>
-                    <?php if ($history['is_btn_refund']) { ?>
-                        <button type="button" class="btn btn_01">환불</button>
+                    <?php if ($history['is_btn_cancel']) { ?>
+                        <button type="button" class="btn btn_01 btn_cancel" data-id="<?php echo $history['id']?>" data-service_id="<?php echo $service_id?>">환불</button>
                     <?php } ?>
                     </td>
                 </tr>
@@ -411,6 +411,12 @@ $(function() {
         showButtonPanel: true,
         yearRange: "c-99:c+99",
         maxDate: "+10y"
+    })
+
+    $(".btn_cancel").on("click", function(){
+        var url = "./cancel_popup.php?id=" + $(this).data('id') + "&service_id=" + $(this).data('service_id');
+        window.open(url, "cancel billing", "left=100,top=100,width=550,height=650,scrollbars=yes,resizable=yes");
+        return false;
     })
 });
 </script>

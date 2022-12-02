@@ -187,12 +187,13 @@ class G5BillingKcp implements BillingInterface
      * - site_cd(사이트코드) + "^" + tno(거래번호) + "^" + mod_type(취소유형)
      * - NHN KCP로부터 발급받은 개인키(PRIVATE KEY)로 SHA256withRSA 알고리즘을 사용한 문자열 인코딩 값
      * @param string $tno KCP 거래번호
+     * @param string $mod_type 취소유형 (STSC : 전체취소, STPC: 부분취소)
      * @return string | false
      */
-    public function createKcpSignData($tno)
+    public function createKcpSignData($tno, $mod_type = 'STSC')
     {
         // 결제 취소 (cancel) = site_cd^KCP거래번호^취소유형
-        $cancel_target_data = $this->getSiteCd() . '^' . $tno . '^' . 'STSC';
+        $cancel_target_data = $this->getSiteCd() . '^' . $tno . '^' . $mod_type;
 
         // 개인키 읽기 ("splPrikeyPKCS8.pem" 은 인증서 개인키)
         $key_data = file_get_contents($this->getPathCert() . '/' . $this->filenamePrivateKey);
@@ -370,17 +371,17 @@ class G5BillingKcp implements BillingInterface
      * @param string $tno           NHN KCP 거래 고유번호
      * @param string $cancelReason  취소사유
      * @param string $mod_mny       부분취소금액
-     * @param string $rem_mny       남은 원거래 금액
+     * @param string $rem_mny       변경처리 이전 금액 (환불가능 금액)
      * @return mixed
      */
     public function requestPartialCancelBilling($tno, $cancelReason = '가맹점 DB 처리 실패(자동취소)', $mod_mny = 0, $rem_mny = 0)
     {
         $requestData = array(
             'site_cd'       => $this->getSiteCd(),
-            'tno'           => $tno,
             'kcp_cert_info' => $this->getServiceCertification(),
-            'kcp_sign_data' => $this->createKcpSignData($tno),
+            'kcp_sign_data' => $this->createKcpSignData($tno, 'STPC'),
             'mod_type'      => 'STPC',
+            'tno'           => $tno,
             'mod_mny'       => $mod_mny,
             'rem_mny'       => $rem_mny,
             'mod_desc'      => $cancelReason

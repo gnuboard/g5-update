@@ -23,7 +23,7 @@ class BillingHistoryModel
         $bindParam = array();
 
         $sql = "SELECT 
-                    od_id, amount, billing_key, payment_count, mb_id
+                    od_id, amount, billing_key, payment_count, payment_no, mb_id
                 FROM {$g5['billing_history_table']}
                 WHERE id = ?";
         array_push($bindParam, $id);
