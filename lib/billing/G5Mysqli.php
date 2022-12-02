@@ -214,7 +214,7 @@ class G5Mysqli
 
             $result = $this->execSQL($sql, array_values($data), true);
     
-            if ($result > 0) {
+            if ($result >= 0) {
                 return true;
             } else {
                 return false;
