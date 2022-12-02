@@ -1,14 +1,48 @@
 <?php
 if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 
-require_once(G5_BBS_PATH . '/subscription/subscription_service.php');
+require_once G5_LIB_PATH . '/billing/kcp/config.php';
+require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
+$autoload = new G5AutoLoader();
+$autoload->register();
 
-//인증
-/**
- * @todo version.extend.php 보다 먼저 선언되어 alert 함수 내부의 G5_CSS_VER를 사용하지 못해 오류 발생
- */
-//if($is_admin !== 'super' && $is_guest !== false || G5_DEBUG === true){
-//    checkRoute($_SERVER['REQUEST_URI'], $bo_table);
-//}
+// 게시판 진입 시 check
 add_event('header_board', 'checkRoute', 10, 1);
 
+/**
+ * 게시판이름이나 url 확인 후 인증함수 호출
+ * @return void
+ */
+function checkRoute()
+{
+    global $member;
+
+    $check      = false;
+    $bo_table   = $_GET['bo_table'];
+    $service_model      = new BillingServiceModel();
+    $information_model  = new BillingInformationModel();
+
+    // 게시판이 설정된 서비스 목록 조회
+    $request_data = array(
+        "is_use" => 1,
+        "service_table" => $bo_table
+    );
+    $service_list = $service_model->selectList($request_data);
+    
+    if (count($service_list) > 0) {
+        if (empty($member['mb_id'])) {
+            alert('로그인 후 이용하실 수 있습니다.', G5_URL . '/bbs/login.php');
+        }
+
+        foreach($service_list as $service) {
+            if ($information_model->checkPermission($member['mb_id'], $service['service_id'])) {
+                $check = true;
+                break;
+            }
+        }
+        
+        if ($check === false) {
+            alert('결제가 필요합니다.', G5_URL . '/skin/subscription/basic/service.skin.php?bo_table=' . $bo_table);
+        }
+    }
+}

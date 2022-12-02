@@ -35,9 +35,19 @@ class G5BillingKcp implements BillingInterface
     public $urlBatchPayment = 'https://spl.kcp.co.kr/gw/hub/v1/payment'; //운영서버
 
     /**
+     * @var string 배치키 삭제 URL
+     */
+    private $urlDeleteBatchKey = 'https://spl.kcp.co.kr/gw/hub/v1/payment';
+
+    /**
      * @var string 결제취소 요청 API Reqeust URL
      */
     public $urlBatchCancel = 'https://spl.kcp.co.kr/gw/mod/v1/cancel'; // 운영서버
+
+    /**
+     * @var string 모바일에 쓰이는 거래등록 URL
+     */
+    public $urlTradeRegister = 'https://spl.kcp.co.kr/std/tradeReg/register';
 
     /**
      * @var string
@@ -58,7 +68,11 @@ class G5BillingKcp implements BillingInterface
         'card_cd'   => 'card_code',
         'card_name' => 'card_name',
         'tno'       => 'payment_no',
-        'amount'    => 'amount'
+        'amount'    => 'amount',
+        'canc_time' => 'cancel_time',
+        'mod_mny'   => 'cancel_amount',
+        'rem_mny'   => 'refundable_amount',
+        'mod_pacn_seq_no' => 'cancel_no'
     );
 
     public function __construct()
@@ -71,6 +85,8 @@ class G5BillingKcp implements BillingInterface
             $this->urlGetBatchKey = 'https://stg-spl.kcp.co.kr/gw/enc/v1/payment';
             $this->urlBatchPayment = 'https://stg-spl.kcp.co.kr/gw/hub/v1/payment';
             $this->urlBatchCancel = 'https://stg-spl.kcp.co.kr/gw/mod/v1/cancel';
+            $this->urlDeleteBatchKey = 'https://stg-spl.kcp.co.kr/gw/hub/v1/payment';
+            $this->urlTradeRegister = 'https://stg-spl.kcp.co.kr/std/tradeReg/register';
         }
     }
 
@@ -280,19 +296,93 @@ class G5BillingKcp implements BillingInterface
     }
 
     /**
-     * 자동결제(빌링) 승인취소 요청
-     * @param string $no            PG사 거래번호
-     * @param string $cancelReason  취소사유
+     * 배치키 삭제 요청
+     * @param string $batchKey      삭제할 배치키
      * @return mixed
      */
-    public function requestCancelBilling($no, $cancelReason = '가맹점 DB 처리 실패(자동취소)')
+    public function requestDeleteBillKey($batchKey)
+    {
+        $data = array(
+            "site_cd"        => $this->getSiteCd(),
+            "site_key" 	     => '',
+            "kcp_cert_info"  => $this->getServiceCertification(),
+            "pay_method"     => 'BATCH',
+            "batch_key"      => $batchKey, // 결제수단 (고정)
+            "group_id"       => $this->getKcpGroupId(),
+            "tx_type"        => '10005010' // 거래요청타입(고정)
+        );
+
+        return $this->requestApi($this->urlDeleteBatchKey, $data);
+    }
+
+    /**
+     * 배치키 발급을 위해 NHN KCP 모바일 표준결제창 호출에 필요한 거래등록
+     * @param string $od_id
+     * @param string $amount
+     * @param string $goodName 상품명
+     * @param string $returnUrl 응답결과 받을 url
+     * @param string $useEscw  에스크로 사용여부 Y, N
+     * @param string $userAgent 필수아님
+     * @return array|string
+     */
+    public function requestTradeRegister($od_id, $amount, $goodName, $returnUrl, $useEscw, $userAgent = '')
+    {
+        $data = array(
+            'ordr_idxx'     => $od_id,
+            "site_cd"       => $this->getSiteCd(),
+            'kcp_cert_info' => $this->getServiceCertification(),
+            'good_mny'      => $amount,
+            'pay_method'    => 'AUTH', // 결제수단 (고정)
+            'good_name'     => $goodName,
+            'Ret_URL'       => $returnUrl,
+            'escw_used'     => $useEscw, // 에스크로 사용여부 Y, N
+            'user_agent'    => $userAgent
+        );
+
+        return $this->requestApi($this->urlTradeRegister, $data);
+    }
+
+    /**
+     * 자동결제(빌링) 승인취소 요청
+     * @param string $tno           NHN KCP 거래 고유번호
+     * @param string $cancelReason  취소사유
+     * @param string $type          취소 타입 (all : 전체취소, partial: 부분취소)
+     * @param string $mod_mny       부분취소일 경우 부분취소금액
+     * @param string $rem_mny       부분취소일 경우 남은 원거래 금액
+     * @return mixed
+     */
+    public function requestCancelBilling($tno, $cancelReason = '가맹점 DB 처리 실패(자동취소)')
     {
         $requestData = array(
             'site_cd'       => $this->getSiteCd(),
+            'tno'           => $tno,
             'kcp_cert_info' => $this->getServiceCertification(),
-            'kcp_sign_data' => $this->createKcpSignData($no),
-            'tno'           => $no,
+            'kcp_sign_data' => $this->createKcpSignData($tno),
             'mod_type'      => 'STSC',
+            'mod_desc'      => $cancelReason
+        );
+
+        return $this->requestApi($this->urlBatchCancel, $requestData);
+    }
+
+    /**
+     * 자동결제(빌링) 승인 부분취소 요청
+     * @param string $tno           NHN KCP 거래 고유번호
+     * @param string $cancelReason  취소사유
+     * @param string $mod_mny       부분취소금액
+     * @param string $rem_mny       남은 원거래 금액
+     * @return mixed
+     */
+    public function requestPartialCancelBilling($tno, $cancelReason = '가맹점 DB 처리 실패(자동취소)', $mod_mny = 0, $rem_mny = 0)
+    {
+        $requestData = array(
+            'site_cd'       => $this->getSiteCd(),
+            'tno'           => $tno,
+            'kcp_cert_info' => $this->getServiceCertification(),
+            'kcp_sign_data' => $this->createKcpSignData($tno),
+            'mod_type'      => 'STPC',
+            'mod_mny'       => $mod_mny,
+            'rem_mny'       => $rem_mny,
             'mod_desc'      => $cancelReason
         );
 

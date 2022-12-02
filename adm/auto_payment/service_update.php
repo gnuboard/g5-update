@@ -33,19 +33,23 @@ $data = array(
     "recurring_unit"    => isset($_POST['recurring_unit']) ? clean_xss_tags($_POST['recurring_unit'], 1, 1) : '',
     "service_table"     => isset($_POST['service_table']) ? clean_xss_tags($_POST['service_table'], 1, 1) : '',
     "service_url"       => isset($_POST['service_url']) ? strip_tags(clean_xss_attributes($_POST['service_url'])) : '',
-    "service_hook_code" => isset($_POST['service_hook_code']) ? clean_xss_tags($_POST['service_hook_code'], 1, 1) : ''
+    "service_hook_code" => isset($_POST['service_hook_code']) ? clean_xss_tags($_POST['service_hook_code'], 1, 1) : '',
+    "base_price"        => isset($_POST['base_price']) ? preg_replace('/[^0-9]/', '', $_POST['base_price']) : 0
 );
 
 /* 가격 */
 $price_array = array();
-foreach($_POST['price'] as $key => $price) {
-    if (!empty($price)) {
-        $price_array[$key]['id']                = isset($_POST['id'][$key]) ? preg_replace('/[^0-9]/', '', $_POST['id'][$key]) : null;
-        $price_array[$key]['price']             = isset($price) ? preg_replace('/[^0-9]/', '', $price) : 0;
-        $price_array[$key]['application_date']  = isset($_POST['application_date'][$key]) ? clean_xss_tags($_POST['application_date'][$key], 1, 1) : '';
+if (isset($_POST['price'])) {
+    foreach($_POST['price'] as $key => $price) {
+        if (!empty($price)) {
+            $price_array[$key]['id']                = isset($_POST['id'][$key]) ? preg_replace('/[^0-9]/', '', $_POST['id'][$key]) : null;
+            $price_array[$key]['price']             = isset($price) ? preg_replace('/[^0-9]/', '', $price) : 0;
+            $price_array[$key]['application_date']      = !empty($_POST['application_date'][$key]) ? clean_xss_tags($_POST['application_date'][$key], 1, 1) : null;
+            $price_array[$key]['application_end_date']  = !empty($_POST['application_end_date'][$key]) ? clean_xss_tags($_POST['application_end_date'][$key], 1, 1) : null;
+        }
     }
+    sort($price_array);
 }
-sort($price_array);
 
 if ($w == "") {
     $service_model->insert($data);
@@ -56,7 +60,8 @@ if ($w == "") {
         $price_data = array(
             "service_id"    => $service_id,
             "price"         => $price['price'],
-            "application_date" => !empty($price['application_date']) ? $price['application_date'] : null
+            "application_date" => $price['application_date'],
+            "application_end_date" => $price['application_end_date']
         );
         $price_model->insert($price_data);
     }
@@ -65,26 +70,25 @@ if ($w == "") {
 
     /* 가격 업데이트 */
     // delete
-    $price_count = count($price_array);
-    if ($price_count > 0) {
-        $in         = '';
-        $bind_param = array($service_id);
-
-        foreach($price_array as $price) {
-            if (isset($price['id'])) {
-                $in .= ($in == '') ? '?' : ',?';
-                array_push($bind_param, $price['id']);
-            }
+    $in         = '';
+    $bind_param = array($service_id);
+    foreach($price_array as $price) {
+        if (isset($price['id'])) {
+            $in .= ($in == '') ? '?' : ',?';
+            array_push($bind_param, $price['id']);
         }
-        $sql = "DELETE FROM {$g5['billing_service_price_table']} WHERE service_id = ? AND id NOT IN ({$in})";
-        $service_model->g5Mysqli->execSQL($sql, $bind_param, true);
     }
+    $sql = "DELETE FROM {$g5['billing_service_price_table']} WHERE service_id = ?";
+    $sql .= ($in != '') ? " AND id NOT IN ({$in})" : '';
+    $service_model->g5Mysqli->execSQL($sql, $bind_param, true);
+
     // insert or update
     foreach ($price_array as $price) {
         $data = array(
             "service_id"    => $service_id,
             "price"         => $price['price'],
-            "application_date" => !empty($price['application_date']) ? $price['application_date'] : null
+            "application_date" => $price['application_date'],
+            "application_end_date" => $price['application_end_date']
         );
         if (!empty($price['id'])) {
             $price_model->update($price['id'], $data);

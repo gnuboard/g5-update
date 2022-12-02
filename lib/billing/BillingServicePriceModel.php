@@ -43,18 +43,24 @@ class BillingServicePriceModel
         $bindParam = array();
 
         $sql = "SELECT
-                    price
-                FROM {$g5["billing_service_price_table"]}
-                WHERE service_id = ?
-                    AND (application_date <= NOW() OR application_date IS NULL)
-                ORDER BY application_date DESC
-                LIMIT 1";
+                    IFNULL(
+                        (SELECT
+                            price
+                        FROM {$g5["billing_service_price_table"]} bsp
+                        WHERE bsp.service_id = bs.service_id
+                            AND now() BETWEEN application_date AND application_end_date
+                        ORDER BY application_date DESC, price ASC
+                        LIMIT 1), 
+                        base_price
+                    ) AS current_price
+                FROM {$g5["billing_service_table"]} bs
+                WHERE bs.service_id = ?";
         array_push($bindParam, $serviceId);
      
         $result = $this->g5Mysqli->getOne($sql, $bindParam);
 
         if (isset($result)) {
-            return (int)$result['price'];
+            return (int)$result['current_price'];
         } else {
             return 0;
         }
@@ -95,7 +101,8 @@ class BillingServicePriceModel
         $data = array(
             'service_id' => $requestData['service_id'],
             'price' => $requestData['price'],
-            'application_date' => $requestData['application_date']
+            'application_date' => $requestData['application_date'],
+            'application_end_date' => $requestData['application_end_date']
         );
 
         return $this->g5Mysqli->insertSQL($g5["billing_service_price_table"], $data);

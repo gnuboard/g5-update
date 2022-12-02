@@ -28,6 +28,7 @@ $service = array(
     'mobile_explan' => '',
     'summary' => '',
     'recurring' => 1,
+    'base_price' => '',
     'recurring_unit' => 'm',
     'expiration' => '0',
     'expiration_unit' => 'm'
@@ -176,7 +177,16 @@ include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
                 </colgroup>
                 <tbody>
                     <tr>
-                        <th scope="row"><label for="price">가격 <button type="button" id="create_price_row" class="btn_frmline">가격 추가</button></label></th>
+                        <th scope="row"><label for="price">기본 가격</label></th>
+                        <td>
+                            <?php echo help("기본 가격을 설정합니다."); ?>
+                            <div>
+                                <input type="number" name="base_price" value="<?php echo $service['base_price']; ?>" class="frm_input" size="12"> 원
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="price">변경 가격 <button type="button" id="create_price_row" class="btn_frmline">가격 추가</button></label></th>
                         <td id="td_price">
                             <?php echo help("가격이 변경되는 일자를 선택할 수 있습니다."); ?>
                             <?php 
@@ -187,7 +197,8 @@ include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
                                 <input type="hidden" name="id[<?php echo $row ?>]" value="<?php echo $price['id'] ?>">
                                 <input type="text" name="price[<?php echo $row ?>]" value="<?php echo $price['price']; ?>" class="frm_input" size="12"> 원
                                 / 
-                                <input type="text" name="application_date[<?php echo $row ?>]" id="application_date_<?php echo $row ?>" value="<?php echo $price['application_date']; ?>" class="frm_input date_format" size="20"> 적용
+                                <input type="text" name="application_date[<?php echo $row ?>]" id="application_date_<?php echo $row ?>" value="<?php echo $price['application_date']; ?>" class="frm_input date_format" size="20"> ~
+                                <input type="text" name="application_end_date[<?php echo $row ?>]" id="application_end_date_<?php echo $row ?>" value="<?php echo $price['application_end_date']; ?>" class="frm_input date_format" size="20">까지 적용
                                 <?php if ($price_count == $row) { ?>
                                     <button type="button" name="remove_price_row" class="btn_frmline">삭제</button>
                                 <?php } ?>

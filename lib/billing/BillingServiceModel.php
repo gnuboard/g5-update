@@ -134,7 +134,8 @@ class BillingServiceModel
             'recurring_unit' => $requestData['recurring_unit'],
             'service_table' => $requestData['service_table'],
             'service_url' => $requestData['service_url'],
-            'service_hook_code' => $requestData['service_hook_code']
+            'service_hook_code' => $requestData['service_hook_code'],
+            'base_price' => $requestData['base_price']
         );
 
         return $this->g5Mysqli->insertSQL($g5["billing_service_table"], $data);
