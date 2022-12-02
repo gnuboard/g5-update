@@ -34,23 +34,23 @@ $services = get_service_list($request);
 <?php
     foreach ($services as $board) {
 ?>
-    <h2 style="font-size:1.4rem;"><?= $board['subject'] ?> </h2>
+    <h2 style="font-size:1.4rem;"><?php echo  $board['subject'] ?> </h2>
     
     <?php foreach($board['service'] as $service) { ?>
     <div class="item_box">
         <ul>
             <li class="title_area">
-                <a href="view.php?service_id=<?= $service['service_id'] ?>">
-                    <div class="service_name"><?= $service['name'] ?></div>
-                    <div class="service_summary"><?= $service['summary'] ?></div>
+                <a href="view.php?service_id=<?php echo  $service['service_id'] ?>">
+                    <div class="service_name"><?php echo  $service['name'] ?></div>
+                    <div class="service_summary"><?php echo  $service['summary'] ?></div>
                 </a>
             </li>
             <li class="price_area">
-                <div class="price"><?= $convertYMDUnit1[$service['recurring_unit']] ?> <?= number_format($service['price']) ?>원</div>
-                <div><?= $service['expiration'] ?><?= $convertYMDUnit2[$service['expiration_unit']] ?> 동안 이용가능</div>
+                <div class="price"><?php echo  $convertYMDUnit1[$service['recurring_unit']] ?> <?php echo  number_format($service['price']) ?>원</div>
+                <div><?php echo  $service['expiration'] ?><?php echo  $convertYMDUnit2[$service['expiration_unit']] ?> 동안 이용가능</div>
             </li>
             <li class="button_area">
-                <button type="button" class="btn_frmline btn_payment" data-service_id=<?= $service['service_id'] ?>>구매</button>
+                <button type="button" class="btn_frmline btn_payment" data-service_id=<?php echo  $service['service_id'] ?>>구매</button>
             </li>
         </ul>
     </div>

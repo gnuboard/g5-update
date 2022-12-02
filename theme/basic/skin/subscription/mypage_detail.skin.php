@@ -64,7 +64,7 @@ foreach($payment_history as $row) {
                             <td>
                                 <span style="line-height: 2.6rem;"><?php echo $info['display_status'] ?></span>
                                 <?php if ($info['status'] !== '0') { ?>
-                                <button type="button" class="btn_frmline btn_cancel" data-od_id="<?=$od_id?>">구독 취소</button>
+                                <button type="button" class="btn_frmline btn_cancel" data-od_id="<?php echo $od_id?>">구독 취소</button>
                                 <?php } ?>
                             </td>
                         </tr>
