@@ -20,21 +20,10 @@ $request = array(
 );
 
 $request['service_table'] = $bo_table;
-$request['offset'] = $startPage;
-$request['rows'] = $page_per_count;
+$request['offset'] = $start_page;
+$request['rows'] = $page_rows;
 
-$billing_service = new BillingServiceModel();
-$billing_price = new BillingServicePriceModel();
-$service_list = $billing_service->selectList($request);
-
-$services = array();
-foreach ($service_list as $row) {
-    $services[$row['service_table']]['subject'] = $row['bo_subject'];
-    $price_result = $billing_price->selectCurrentPrice($row['service_id']);
-    $row['price'] = $price_result;
-    $services[$row['service_table']]['service'][] = $row;
-}
-
+$services = get_service_list($request);
 ?>
 
 <div class="event_banner">

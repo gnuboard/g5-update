@@ -22,11 +22,10 @@ $service_id        = isset($service_id) ?  $service_id : '';  // 구독 서비�
 if(empty($bt_batch_key) || empty($od_id) || $service_id === ''){
     responseJson('필수 파라미터가 없습니다.', 400);
 }
-$serviceInfo = showServiceDetail($service_id);
+$serviceInfo = get_service_detail($service_id);
 if (is_array($serviceInfo) && count($serviceInfo) !== 1) {
     responseJson('결제정보를 가져오는데 실패했습니다.', 400);
 }
-$serviceInfo = $serviceInfo[0];
 $amount      = $serviceInfo['price'];  // 결제금액
 /**
  * 권장 파라미터

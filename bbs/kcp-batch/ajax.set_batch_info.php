@@ -50,15 +50,15 @@ function send_batch_info($order_id, $service_id)
  */
 function get_batchkey_info_kcp($order_id, $service_id)
 {
-    $info = showServiceDetail($service_id);
+    $info = get_service_detail($service_id);
     if (is_array($info) && count($info) !== 1) {
         return false;
     }
 
     $kcp_batch = new KcpBatch();
 
-    $recurring = $info[0]['recurring'];
-    $recurring_unit = $info[0]['recurring_unit'];
+    $recurring = $info['recurring'];
+    $recurring_unit = $info['recurring_unit'];
     if($recurring_unit === 'w'){
         $recurring *= 7;
         $recurring_unit = 'd';
