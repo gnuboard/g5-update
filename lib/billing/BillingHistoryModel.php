@@ -25,8 +25,10 @@ class BillingHistoryModel
         $sql = "SELECT 
                     od_id, amount, billing_key, payment_count, mb_id
                 FROM {$g5['billing_history_table']}
-                WHERE id = ?";
-        array_push($bindParam, $id);
+                WHERE od_id = ?
+                ORDER BY payment_count DESC
+                LIMIT 1";
+        $bindParam[] = $id;
 
         return $this->g5Mysqli->getOne($sql, $bindParam);
     }

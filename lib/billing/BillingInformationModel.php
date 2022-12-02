@@ -40,14 +40,14 @@ class BillingInformationModel
      * @param array $requestData
      * @return array
      */
-    public function selectList($requestData = array())
+    public function selectList($requestData)
     {
         global $g5;
 
         $bindParam = array();
 
         $sql = "SELECT
-                    bi.od_id, bi.start_date, bi.end_date, bi.status, bi.service_id,
+                    bi.od_id, bi.start_date, bi.end_date, bi.status, bi.service_id, bi.next_payment_date,
                     mb.mb_id, mb.mb_name, mb.mb_email,
                     bs.name, bs.recurring, bs.recurring_unit
                 FROM {$g5['billing_information_table']} bi
@@ -55,18 +55,21 @@ class BillingInformationModel
                     LEFT JOIN {$g5['member_table']} mb ON bi.mb_id = mb.mb_id
                 WHERE 1=1";
         /* 검색조건 */
+        if (isset($requestData['mb_id']) && !empty($requestData['mb_id'])) {
+            $sql .= " AND bi.mb_id = ?";
+            array_push($bindParam, $requestData['mb_id']);
+        }
+
+        if (($requestData['status']) == 1 || $requestData['status'] == 0) {
+            $sql .= " AND status = ?";
+            array_push($bindParam, $requestData['status']);
+        }
+
         if (!empty($requestData['sfl']) && !empty($requestData['stx'])) {
             $sql .= " AND {$requestData['sfl']} LIKE ? ";
             array_push($bindParam, "%{$requestData['stx']}%");
         }
-        if (!empty($requestData['status']) || $requestData['status'] === '0') {
-            $sql .= " AND status = ?";
-            array_push($bindParam, $requestData['status']);
-        }
-        if (!empty($requestData['mb_id'])) {
-            $sql .= " AND mb_id = ?";
-            array_push($bindParam, $requestData['mb_id']);
-        }
+
         /* 정렬 */
         if (!empty($requestData['sst'])) {
             $sql .= " ORDER BY {$requestData['sst']} {$requestData['sod']} ";
