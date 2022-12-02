@@ -48,7 +48,7 @@ class BillingServicePriceModel
                             price
                         FROM {$g5["billing_service_price_table"]} bsp
                         WHERE bsp.service_id = bs.service_id
-                            AND now() BETWEEN application_date AND application_end_date
+                            AND now() BETWEEN application_date AND bsp.application_end_date
                         ORDER BY application_date DESC, price ASC
                         LIMIT 1), 
                         base_price
