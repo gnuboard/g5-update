@@ -9,69 +9,105 @@
 if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 
 require_once(dirname(__FILE__) . '../../../common.php');
-require_once(G5_LIB_PATH . '/billing/G5Mysqli.php');
-require_once(G5_LIB_PATH . '/billing/KcpBatch.php');
+require_once(G5_LIB_PATH . '/billing/G5AutoLoader.php');
 
-$kcpBatch = new KcpBatch();
+$pg_code = 'kcp';
+$billing = new Billing($pg_code);
+$billing_history = new BillingHistoryModel();
+$service_price = new BillingServicePriceModel();
+$billing_info = new BillingInformationModel();
+$billing_service = new BillingServiceModel();
 
 /**
- * 내 구독 목록
+ *  내 구독 목록
  * 조회성공시 배열, 조회실패시 false 반환
+ * @param $request_data
  * @return array|false
  */
-function get_myservice($status = 1)
+function get_myservice($request_data)
 {
-    global $g5;
+    if(!is_array($request_data)){
+        return false;
+    }
 
-    $status = (int)$status;
+    global $service_price, $billing_info, $billing_service;
+
     $mb_id = get_user_id();
     if ($mb_id === false) {
         return false;
     }
 
-    $sql = "SELECT 
-        *,
-        board.bo_subject,
-        (SELECT price FROM {$g5['billing_service_price_table']} sp WHERE service.service_id = sp.service_id AND sp.application_date <= NOW() ORDER BY application_date DESC LIMIT 1) AS price
-    FROM {$g5['billing_information_table']} AS info
-    LEFT JOIN {$g5['billing_service_table']} AS service ON info.service_id = service.service_id
-    LEFT JOIN g5_board board ON service.service_table = board.bo_table
-    WHERE mb_id ='{$mb_id}' AND status = $status";
-
-    $result = sql_query($sql);
-    if ($result) {
-        $response = array();
-        while ($row = sql_fetch_array($result)) {
-            $response[$row['bo_table']]['subject'] = $row['bo_subject'];
-            $response[$row['bo_table']]['service'][] = $row;
-        }
-        return $response;
+    $request_data['mb_id'] = $mb_id;
+    $billing_info_result = $billing_info->selectList($request_data);
+    if(empty($billing_info_result)){
+        return false;
     }
-    return false;
+
+    $results = array();
+    foreach($billing_info_result as $row => $key){
+        $service_id = $key['service_id'];
+        $service_info = $billing_service->selectOneById($service_id);
+        $current_price = array('price' =>$service_price->selectCurrentPrice($service_id));
+        $results[$row]['bo_table'] = $service_info['bo_table'];
+        $results[$row]['subject'] = $service_info['bo_subject'];
+        $results[$row]['service'][] = $key + $service_info + $current_price;
+    }
+
+    return $results;
 }
 
+/**
+ * 한 주문번호의 구독 정보를 가져옴
+ * @param $od_id
+ * @return array | false
+ */
+function get_myservice_info($od_id)
+{
+    global $billing_history, $billing_info, $billing_service;
+
+    $mb_id = get_user_id();
+    if ($mb_id === false) {
+        return false;
+    }
+
+    $payment_history = $billing_history->selectOneById($od_id);
+    if($payment_history['mb_id'] !== $mb_id){
+        return false;
+    }
+
+    $billing_info_result = $billing_info->selectOneByOrderId($od_id);
+
+    //가격
+    $last_payemnt = $payment_history; //마지막이 첫번째로 오게되어있음.
+    $billing_info_result['price'] = $last_payemnt['amount'];
+
+    //게시판 정보 가져오기
+    $service_id = $billing_info_result['service_id'];
+    $service_info = $billing_service->selectOneById($service_id);
+    $billing_info_result['bo_subject'] = $service_info['bo_subject'];
+
+    return $billing_info_result;
+
+}
 /**
  * 내 구독 서비스 결제정보
  * @param $od_id
  * @return array|false
  */
-function get_myservice_payments($od_id)
+function get_myservice_history($od_id)
 {
+    global $billing_history, $service_price, $billing_info, $billing_service;
     $mb_id = get_user_id();
     if ($mb_id === false) {
         return false;
     }
-    $select_payment_history_sql = 'select * from ' . G5_TABLE_PREFIX . 'billing_history 
-    where mb_id = "' . sql_real_escape_string($mb_id) .  '" and od_id = ' . sql_real_escape_string($od_id);
 
-    $result = sql_query($select_payment_history_sql);
-    $response = array();
-
-    while ($row = sql_fetch_array($result)) {
-        $response[] = $row;
+    $payments = $billing_history->selectListByOrderId($od_id); //TODO 페이지 필요.
+    if(empty($payments)){
+        return false;
     }
 
-    return $response;
+    return $payments;
 }
 
 /**
@@ -81,62 +117,35 @@ function get_myservice_payments($od_id)
  */
 function cancel_myservice($od_id)
 {
+    global $billing, $billing_info;
+
     $mb_id = get_user_id();
     if ($mb_id === false) {
         return false;
     }
 
-    $select_payment_sql = 'select billing_key from ' . G5_TABLE_PREFIX . 'billing_information 
-    where mb_id = "' . sql_real_escape_string($mb_id) .  '" and od_id = ' . sql_real_escape_string($od_id);
+    $bill_info = $billing_info->selectOneByOrderId($od_id);
 
-    $result = sql_query($select_payment_sql);
-    if (!$result) {
+    if(empty($bill_info) || $bill_info['mb_id'] !== $mb_id){
         return false;
     }
 
-    $result_row = array();
-    while ($row = sql_fetch_array($result)) {
-        $result_row[] = $row;
-    }
-
-    $old_billing_key = $result_row[0]['billing_key'];
-
-    /**
-     * @var KcpBatch $kcpBatch
-     */
-    global $kcpBatch;
-    
-    $batchDelResult = json_decode($kcpBatch->deleteBatchKey($old_billing_key), true);
-    if ($batchDelResult === false || !array_key_exists('res_cd', $batchDelResult)) {
+    $old_billing_key =$bill_info['billing_key'];
+        $batchDelResult = json_decode($billing->pg->requestDeleteBillKey($old_billing_key), true);
+    if ($batchDelResult === false || !array_key_exists('result_code', $batchDelResult)) {
         return false;
     }
 
-    if ($batchDelResult['res_cd'] !== "0000") {
+    if ($batchDelResult['result_code'] !== "0000") {
         return $batchDelResult;
     }
 
-    $state_change_sql = 'update ' . G5_TABLE_PREFIX . 'billing_information set status = 0
-    where mb_id = "' . sql_real_escape_string($mb_id) .  '" and od_id = ' . sql_real_escape_string($od_id);
-    $result = sql_query($state_change_sql);
+    $result = $billing_info->updateStatus($od_id, (int)false);
     if ($result) {
         return true;
-    } else {
-        return false;
     }
-}
 
-/**
- * 쿼리 실행 후 영향받은 행 갯수 가져오는 함수.
- * @return int|string
- */
-function get_affected_rows()
-{
-    if (PHP_VERSION_ID >= 50400 && G5_MYSQLI_USE) {
-        $affected_row = mysqli_affected_rows($GLOBALS['g5']['connect_db']);
-    } else {
-        $affected_row = mysql_affected_rows($GLOBALS['g5']['connect_db']);
-    }
-    return $affected_row;
+    return false;
 }
 
 /**

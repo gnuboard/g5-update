@@ -5,7 +5,6 @@ require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
 $autoload = new G5AutoLoader();
 $autoload->register();
 
-
 /**
  * 서비스 선택 후 상세 보기
  * @return array
@@ -51,11 +50,11 @@ function showServiceDetail($serviceId)
 
 /**
  * 모든 구독 서비스 목록
- * @param int $pageNo 몇 쪽 0쪽 부터 시작.
- * @param int $pagePerCount 몇개씩 보여줄지
+ * @param int $page 몇 쪽 1쪽 부터 시작.
+ * @param int $page_rows 몇개씩 보여줄지
  * @return array 결과 없으면 빈배열 리턴
  */
-function showServiceList($bo_table = '')
+function showServiceList($page, $page_rows, $bo_table = '')
 {
     $where = ' WHERE 1=1';
     if ($bo_table != '') {
