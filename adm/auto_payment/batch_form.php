@@ -8,6 +8,7 @@ $autoload->register();
 
 $g5['title'] = "구독결제 수정";
 include_once G5_ADMIN_PATH . '/admin.head.php';
+include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
 
 auth_check_menu($auth, $sub_menu, "w");
 
@@ -30,7 +31,7 @@ $billing_info = $information_model->selectOneByOrderId($od_id);
 $service_id = $billing_info['service_id'];
 
 $billing_info['mb_side_view']         = get_sideview($billing_info['mb_id'], get_text($billing_info['mb_name']), $billing_info['mb_email'], '');
-$billing_info['display_end_date']     = $billing_info['end_date'] != "0000-00-00 00:00:00" ? $billing_info['end_date'] : "없음";
+$billing_info['display_end_date']     = $billing_info['end_date'] != "0000-00-00 00:00:00" ? date('Y-m-d', strtotime($billing_info['end_date'])) : "없음";
 $billing_info['display_status']       = $billing_info['status'] == "1" ? "구독 중" : "구독 종료";
 $billing_info['display_billing_key']  = $billing->displayBillKey($billing_info['billing_key']);
 $billing_info['display_next_payment'] = date('Y-m-d', strtotime($billing_info['next_payment_date']));
@@ -131,14 +132,16 @@ $pg_anchor = '<ul class="anchor">
                                 </td>
                                 <th scope="row"><label for="od_refund_price">다음 결제 예정일</label></th>
                                 <td>
-                                    <?php echo $billing_info['display_next_payment'] ?>
+                                    <input type="text" class="frm_input date_format" name="next_payment_date" value="<?php echo $billing_info['display_next_payment'] ?>">
                                 </td>
                             </tr>
                             <tr>
                                 <th scope="row"><label for="od_refund_price">결제시작일</label></th>
                                 <td><?php echo $billing_info['start_date'] ?></td>
                                 <th scope="row"><label for="od_refund_price">결제종료일</label></th>
-                                <td><?php echo $billing_info['display_end_date'] ?></td>
+                                <td>
+                                    <input type="text" class="frm_input date_format" name="end_date" value="<?php echo $billing_info['display_end_date'] ?>">
+                                </td>
                             </tr>
                             <tr>
                                 <th scope="row"><label for="od_refund_price">구독 상태</label></th>
@@ -398,6 +401,17 @@ $(function() {
             });
         }
     });
+
+    $('.date_format').datepicker();
+
+    $.datepicker.setDefaults({
+        changeMonth: true,
+        changeYear: true,
+        dateFormat: "yy-mm-dd",
+        showButtonPanel: true,
+        yearRange: "c-99:c+99",
+        maxDate: "+10y"
+    })
 });
 </script>
 <?php

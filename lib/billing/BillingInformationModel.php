@@ -136,7 +136,23 @@ class BillingInformationModel
         );
 
         return $this->g5Mysqli->insertSQL($g5["billing_information_table"], $data);
+    }
 
+    /**
+     * 자동결제(빌링) 정보 수정
+     * @param int   $orderId        결제정보 ID
+     * @param array $requestData
+     * @return bool
+     */
+    public function update($orderId, $requestData = array())
+    {
+        global $g5;
+
+        $conditional = array(
+            "od_id" => $orderId
+        );
+
+        return $this->g5Mysqli->updateSQL($g5["billing_information_table"], $requestData, $conditional);
     }
 
     /**

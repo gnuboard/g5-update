@@ -11,9 +11,13 @@ check_admin_token();
 
 $information_model  = new BillingInformationModel();
 
-$status = isset($_POST['status']) ? preg_replace('/[^0-9]/', '', $_POST['status']) : 0;
-$od_id  = isset($_POST['od_id']) ? safe_replace_regex($_POST['od_id'], 'od_id') : '';
+$od_id  = isset($_REQUEST['od_id']) ? safe_replace_regex($_REQUEST['od_id'], 'od_id') : '';
+$data = array(
+    'status'            => isset($_POST['status']) ? preg_replace('/[^0-9]/', '', $_POST['status']) : 0,
+    'next_payment_date' => isset($_POST['next_payment_date']) ? $_POST['next_payment_date'] : null,
+    'end_date'          => isset($_POST['end_date']) ? $_POST['end_date'] : null
+);
 
-$information_model->updateStatus($od_id, $status);
+$information_model->update($od_id, $data);
 
 goto_url("./batch_form.php?w=u&amp;od_id={$od_id}");
