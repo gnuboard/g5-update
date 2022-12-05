@@ -44,7 +44,7 @@ $convertYMDUnit2 = array('y' => '년', 'm' => '개월', 'w' => '주', 'd' => '�
         서비스 이미지영역
         <?php
         if(empty($service_info)) {
-            echo "<img src='{$service_info['service_image']}' class='service_info_image'>";
+            echo "<img src='{$service_info['image_path']}' class='service_info_image'>";
         }
         ?>
     </div>
