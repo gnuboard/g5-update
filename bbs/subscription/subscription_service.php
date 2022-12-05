@@ -121,8 +121,7 @@ function get_myservice_info($od_id)
     $billing_info_result = $billing_info->selectOneByOrderId($od_id);
 
     //가격
-    $last_payemnt = $payment_history; //마지막이 첫번째로 오게되어있음.
-    $billing_info_result['price'] = $last_payemnt['amount'];
+    $billing_info_result['price'] = $payment_history['amount'];
 
     //게시판 정보 가져오기
     $service_id = $billing_info_result['service_id'];
