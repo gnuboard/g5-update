@@ -12,8 +12,29 @@ class BillingCancelModel
     }
 
     /**
+     * 환불내역 조회
+     * @param int $paymentNo    PG 결제번호
+     * @return array
+     */
+    public function selectList($paymentNo)
+    {
+        global $g5;
+
+        $bindParam = array();
+
+        $sql = "SELECT
+                    *
+                FROM {$g5['billing_cancel_table']} 
+                WHERE result_code = '0000'
+                    AND payment_no = ?";
+        array_push($bindParam, $paymentNo);
+
+        return $this->g5Mysqli->execSQL($sql, $bindParam);
+    }
+
+    /**
      * 결제 건에 대한 환불가능금액 조회
-     * @param string $orderId   주문번호
+     * @param string $paymentNo   주문번호
      * @return int
      */
     public function selectRefundableAmountByPaymentNo($paymentNo)
@@ -39,10 +60,10 @@ class BillingCancelModel
 
     /**
      * 결제에 대한 총 부분취소 금액 조회
-     * @param string $orderId   주문번호
+     * @param string $paymentNo     PG 결제번호
      * @return int
      */
-    public function selectTotalPartialCancelAmount($orderId)
+    public function selectTotalCancelAmount($paymentNo)
     {
         global $g5;
 
@@ -51,10 +72,9 @@ class BillingCancelModel
         $sql = "SELECT
                     IFNULL(sum(cancel_amount), 0) as total_cancel_amount
                 FROM {$g5['billing_cancel_table']} 
-                WHERE type = 'partial'
-                    AND result_code = '0000'
-                    AND od_id = ?";
-        array_push($bindParam, $orderId);
+                WHERE result_code = '0000'
+                    AND payment_no = ?";
+        array_push($bindParam, $paymentNo);
 
         $result = $this->g5Mysqli->getOne($sql, $bindParam);
 

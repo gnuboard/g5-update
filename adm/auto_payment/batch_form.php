@@ -73,18 +73,31 @@ foreach ($history_list as $i => $history) {
 
     $history_list[$i]['display_payment_count']  = $count . "회차";
     $history_list[$i]['display_amount']         = number_format($history['amount']) . "원";
-    $history_list[$i]['display_result']         = ($history['result_code'] == "0000" ? "성공" : "실패");
-    $history_list[$i]['display_result_color']   = ($history['result_code'] == "0000" ? "#53C14B" : "#FF0000");
     $history_list[$i]['display_period']         = ($history['result_code'] == "0000" ? $history['period'] : '');
-    $history_list[$i]['display_billing_key']    = $billing->displayBillKey($history['billing_key']);
     $history_list[$i]['is_btn_cancel']          = false;
+    
+    if ($history['total_cancel'] == $history['amount']) {
+        $history_list[$i]['display_result'] = "환불";
+        $history_list[$i]['display_result_color']   = "#AAAAAA";
+    } else if ($history['total_cancel'] != null) {
+        $history_list[$i]['display_result'] = "부분 취소";
+        $history_list[$i]['display_result_color']   = "#AAAAAA";
+        $history_list[$i]['is_btn_cancel'] = true;
+    } else if ($history['result_code'] == "0000"){
+        $history_list[$i]['display_result'] = "성공";
+        $history_list[$i]['display_result_color']   = "#53C14B";
+        $history_list[$i]['is_btn_cancel'] = true;
+    } else {
+        $history_list[$i]['display_result'] = "실패";
+        $history_list[$i]['display_result_color']   = "#FF0000";
+    }
+    
 
     if (!isset($payment_success[$count])) {
         $payment_success[$count] = false;
     }
     
     if ($history['result_code'] == "0000") {
-        $history_list[$i]['is_btn_cancel'] = true;
         $payment_success[$count] = true;
         $total_amount += $history['amount'];
     }
@@ -217,34 +230,37 @@ $pg_anchor = '<ul class="anchor">
             <caption>주문결제 내역</caption>
             <thead>
                 <tr>
-                    <th scope="col">회차</th>
-                    <th scope="col">결제금액</th>
-                    <th scope="col">결제번호</th>
-                    <th scope="col">결제 배치키</th>
-                    <th scope="col">카드명</th>
-                    <th scope="col">결과</th>
-                    <th scope="col">결과메시지</th>
-                    <th scope="col">결제일</th>
-                    <th scope="col">관리</th>
+                    <th scope="col" style="width:10%;">회차</th>
+                    <th scope="col" style="width:15%;">결제번호</th>
+                    <th scope="col" style="width:10%;">결제금액</th>
+                    <th scope="col" style="width:10%;">카드명</th>
+                    <th scope="col" style="width:10%;">결제상태</th>
+                    <th scope="col" style="width:15%;">결제일</th>
+                    <th scope="col" style="width:15%;">유효기간</th>
+                    <th scope="col" style="width:10%;">관리</th>
                 </tr>
             </thead>
             <tbody>
             <?php foreach ($history_list as $history) { ?>
                 <tr>
-                    <td class="td_mng_l" >
+                    <td class="td_mng_l">
                         <div><?php echo $history['display_payment_count'] ?></div>
-                        <div><?php echo $history['display_period'] ?></div>
+                    </td>
+                    <td>
+                        <span class="payment_no" style="text-decoration: underline; cursor: pointer;" data-id="<?php echo $history['id']?>">
+                            <?php echo $history['payment_no'] ?>
+                        </span>
                     </td>
                     <td><?php echo $history['display_amount'] ?></td>
-                    <td><?php echo $history['payment_no'] ?></td>
-                    <td><?php echo $history['display_billing_key'] ?></td>
                     <td><?php echo $history['card_name'] ?></td>
                     <td style="color:<?php echo $history['display_result_color']?>">
                         <strong><?php echo $history['display_result'] ?></strong>
                     </td>
-                    <td><?php echo $history['result_message'] ?></td>
                     <td class="td_mng_l">
                         <?php echo $history['payment_date'] ?>
+                    </td>
+                    <td class="td_mng_l">
+                        <?php echo $history['display_period'] ?>
                     </td>
                     <td>
                     <?php if (!$payment_success[$history['payment_count']]) { ?>
@@ -415,6 +431,12 @@ $(function() {
 
     $(".btn_cancel").on("click", function(){
         var url = "./cancel_popup.php?id=" + $(this).data('id') + "&service_id=" + $(this).data('service_id');
+        window.open(url, "cancel billing", "left=100,top=100,width=550,height=650,scrollbars=yes,resizable=yes");
+        return false;
+    })
+
+    $(".payment_no").on("click", function(){
+        var url = "./payment_detail.php?id=" + $(this).data('id');
         window.open(url, "cancel billing", "left=100,top=100,width=550,height=650,scrollbars=yes,resizable=yes");
         return false;
     })

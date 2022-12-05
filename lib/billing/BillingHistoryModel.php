@@ -23,7 +23,7 @@ class BillingHistoryModel
         $bindParam = array();
 
         $sql = "SELECT 
-                    od_id, amount, billing_key, payment_count, payment_no, mb_id
+                    *
                 FROM {$g5['billing_history_table']}
                 WHERE id = ?";
         array_push($bindParam, $id);
@@ -44,8 +44,9 @@ class BillingHistoryModel
 
         $sql = "SELECT 
                     *,
-                    CONCAT(DATE_FORMAT(payment_date, '%Y-%m-%d'), ' ~ ', DATE_FORMAT(expiration_date, '%Y-%m-%d')) AS period
-                FROM {$g5['billing_history_table']}
+                    CONCAT(DATE_FORMAT(payment_date, '%Y-%m-%d'), ' ~ ', DATE_FORMAT(expiration_date, '%Y-%m-%d')) AS period,
+                    (SELECT SUM(cancel_amount) FROM {$g5["billing_cancel_table"]} bc WHERE bc.payment_no = bh.payment_no AND bc.result_code = '0000') AS total_cancel
+                FROM {$g5['billing_history_table']} bh
                 WHERE od_id = ?
                 ORDER BY payment_count DESC, payment_date DESC";
         array_push($bindParam, $orderId);

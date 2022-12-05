@@ -23,8 +23,7 @@ $cancel_model       = new BillingCancelModel();
 
 $service = $service_model->selectOneById($service_id);
 $history = $history_model->selectOneById($id);
-// $refundable_amount = $cancel_model->selectRefundableAmountByPaymentNo($history['payment_no']);
-$cancel_amount = $cancel_model->selectTotalPartialCancelAmount($history['od_id']);
+$cancel_amount = $cancel_model->selectTotalCancelAmount($history['payment_no']);
 $refundable_amount = (int)$history['amount'] - (int)$cancel_amount;
 ?>
 

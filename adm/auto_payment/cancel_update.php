@@ -20,7 +20,7 @@ $od_id          = isset($_POST['od_id']) ? clean_xss_tags($_POST['od_id']) : '';
 $id             = isset($_POST['id']) ? preg_replace('/[^0-9]/', '', $_POST['id']) : 0;
 
 $history                = $history_model->selectOneById($id);
-$total_cancel_amount    = $cancel_model->selectTotalPartialCancelAmount($od_id);
+$total_cancel_amount    = $cancel_model->selectTotalCancelAmount($od_id);
 $refundable_amount      = (int)$history['amount'] - (int)$total_cancel_amount;
 
 if ($refundable_amount == $cancel_amount) {
