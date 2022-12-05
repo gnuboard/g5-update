@@ -31,7 +31,7 @@ function curl_request_async($url, $params)
     curl_exec($ch);
     $curlError = curl_error($ch);
     $curlInfo = curl_getinfo($ch);
-    if(define(CURLINFO_HTTP_CODE)){
+    if(defined(CURLINFO_HTTP_CODE)){
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     }
     curl_close($ch);
