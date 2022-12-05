@@ -245,7 +245,6 @@ window.onload = function() {
     btn_payment.onclick = function () {
         const form_data = new FormData(document.querySelector("#form_payment"));
         if (form_data.get('batch_key') == '' || form_data.get('batch_key') == undefined) {
-            alert('카드 등록을 먼저 진행해주세요.');
             const service_id = payment_form.service_id.value;
             get_subscription_info(service_id);
         }

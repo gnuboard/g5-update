@@ -19,6 +19,7 @@ $request = array(
     'rows' => ''
 );
 
+$request['is_use'] = true;
 $request['service_table'] = $bo_table;
 $request['offset'] = $start_page;
 $request['rows'] = $page_rows;
@@ -47,7 +48,13 @@ $services = get_service_list($request);
             </li>
             <li class="price_area">
                 <div class="price"><?php echo  $convertYMDUnit1[$service['recurring_unit']] ?> <?php echo  number_format($service['price']) ?>원</div>
-                <div><?php echo  $service['expiration'] ?><?php echo  $convertYMDUnit2[$service['expiration_unit']] ?> 동안 이용가능</div>
+                <div>
+                    <?php
+                    if($service['expiration'] !== 0) {
+                        echo $service['expiration'] . $convertYMDUnit2[$service['expiration_unit']] . ' 동안 이용가능';
+                    }
+                    ?>
+                </div>
             </li>
             <li class="button_area">
                 <button type="button" class="btn_frmline btn_payment" data-service_id=<?php echo  $service['service_id'] ?>>구매</button>
