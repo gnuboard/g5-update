@@ -47,8 +47,8 @@ class BillingInformationModel
         $bindParam = array();
 
         $sql = "SELECT
-                    bi.od_id, bi.start_date, bi.end_date, bi.status, bi.service_id, bi.next_payment_date,
-                    mb.mb_id, mb.mb_name, mb.mb_email,
+                    bi.od_id, bi.start_date, bi.end_date, bi.status, bi.service_id, bi.next_payment_date,bi.billing_key,
+                    mb.mb_id, mb.mb_name, mb.mb_email, mb.mb_hp,
                     bs.name, bs.recurring, bs.recurring_unit
                 FROM {$g5['billing_information_table']} bi
                     LEFT JOIN {$g5['billing_service_table']} bs ON bi.service_id = bs.service_id
@@ -68,6 +68,11 @@ class BillingInformationModel
         if (!empty($requestData['sfl']) && !empty($requestData['stx'])) {
             $sql .= " AND {$requestData['sfl']} LIKE ? ";
             array_push($bindParam, "%{$requestData['stx']}%");
+        }
+
+        if (isset($requestData['date']) && !empty($requestData['date'])) {
+            $sql .= ' AND date_format(bi.next_payment_date, "%Y-%m-%d") = ? ';
+            array_push($bindParam, "{$requestData['date']}");
         }
 
         /* 정렬 */
