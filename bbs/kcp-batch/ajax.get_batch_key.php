@@ -1,7 +1,7 @@
 <?php
 header("Content-type: text/html; charset=utf-8");
 
-include_once './_common.php';
+include_once dirname(__FILE__) . '/_common.php';
 include_once G5_PATH . "/bbs/kcp-batch/KcpBatch.php";
 
 /* ============================================================================== */

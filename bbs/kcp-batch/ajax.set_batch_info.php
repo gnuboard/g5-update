@@ -1,5 +1,5 @@
 <?php
-require_once './_common.php';
+require_once dirname(__FILE__) . './_common.php';
 require_once (G5_BBS_PATH . '/subscription/subscription_service.php');
 require_once (G5_LIB_PATH . '/billing/KcpBatch.php');//G5_LIB_PATH . '/billing/KcpBatch.php
 $input_data = json_decode(file_get_contents('php://input'), true);
