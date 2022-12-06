@@ -15,7 +15,7 @@ function add_admin_menu_auto_payment($menu)
     array_push($menu['menu400'], array('400900', '====자동결제====', ''));
     array_push($menu['menu400'], array('400910', '구독 현황', G5_ADMIN_URL.'/auto_payment/index.php', 'auto_payment_statistics'));
     array_push($menu['menu400'], array('400920', '구독상품 관리', G5_ADMIN_URL.'/auto_payment/service_list.php', 'auto_payment_service'));
-    array_push($menu['menu400'], array('400930', '구독결제 관리', G5_ADMIN_URL.'/auto_payment/batch_list.php', 'auto_payment_list'));
+    array_push($menu['menu400'], array('400930', '구독결제 관리', G5_ADMIN_URL.'/auto_payment/billing_list.php', 'auto_payment_list'));
 
     return $menu;
 }

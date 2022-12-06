@@ -135,7 +135,7 @@ $qstr = $qstr . '&amp;page=' . $page;
                     <td headers="th_date" rowspan="2"><?php echo $billing['display_date']; ?></td>
                     <td headers="th_status" rowspan="2"><?php echo $billing['display_status']; ?></td>
                     <td class="td_mng td_mng_s" rowspan="2">
-                        <a href="./batch_form.php?od_id=<?php echo $billing['od_id']; ?>&amp;<?php echo $qstr; ?>" class="mng_mod btn btn_02">
+                        <a href="./billing_form.php?od_id=<?php echo $billing['od_id']; ?>&amp;<?php echo $qstr; ?>" class="mng_mod btn btn_02">
                             <span class="sound_only"><?php echo $billing['od_id']; ?></span>
                             보기
                         </a>

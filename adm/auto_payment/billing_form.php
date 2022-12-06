@@ -113,7 +113,7 @@ $pg_anchor = '<ul class="anchor">
         <p>구독서비스 정보는 좌측메뉴 > 구독상품 관리에서 수정할 수 있습니다.</p>
     </div>
 
-    <form name="form_billing_info" action="./batch_update.php" method="post" autocomplete="off">
+    <form name="form_billing_info" action="./billing_update.php" method="post" autocomplete="off">
         <input type="hidden" name="od_id" value="<?php echo $od_id; ?>">
 
         <div class="compare_wrap">
@@ -216,7 +216,7 @@ $pg_anchor = '<ul class="anchor">
         
         <div class="btn_confirm01 btn_confirm">
             <input type="submit" value="결제정보 수정" class="btn_submit btn">
-            <a href="./batch_list.php?<?php echo $qstr; ?>" class="btn btn_02">목록</a>
+            <a href="./billing_list.php?<?php echo $qstr; ?>" class="btn btn_02">목록</a>
         </div>
     </form>
 </section>
@@ -391,7 +391,7 @@ $(function() {
     btn_payment.on('click', function(){
         if (confirm(this.dataset.count + "회차 결제를 진행하시겠습니까?")) {
             $.ajax({
-                url : "./ajax.order_batch.php",
+                url : "./ajax.request_billing.php",
                 type: "POST",
                 data: {
                     "id" : this.dataset.id,

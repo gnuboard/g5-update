@@ -21,4 +21,4 @@ $data   = array(
 
 $information_model->update($od_id, $data);
 
-goto_url("./batch_form.php?w=u&amp;od_id={$od_id}");
+goto_url("./billing_form.php?w=u&amp;od_id={$od_id}");
