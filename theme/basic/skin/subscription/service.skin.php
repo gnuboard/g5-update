@@ -8,8 +8,22 @@ $convertYMDUnit2 = array('y' => '년', 'm' => '개월', 'w' => '주', 'd' => '�
 
 $bo_table = isset($_GET['bo_table']) ? clean_xss_tags($_GET['bo_table']) : '';
 
-$board_list = showServiceList($bo_table);
+$request = array(
+    'is_use' => '',
+    'service_table' => '',
+    'stx' => '',
+    'sfl' => '',
+    'sst' => '',
+    'sod' => '',
+    'offset' => '',
+    'rows' => ''
+);
 
+$request['service_table'] = $bo_table;
+$request['offset'] = $start_page;
+$request['rows'] = $page_rows;
+
+$services = get_service_list($request);
 ?>
 
 <div class="event_banner">
@@ -18,25 +32,25 @@ $board_list = showServiceList($bo_table);
 
 <article class="service_list_wrap">
 <?php
-    foreach ($board_list as $board) {
+    foreach ($services as $board) {
 ?>
-    <h2 style="font-size:1.4rem;"><?= $board['subject'] ?> </h2>
+    <h2 style="font-size:1.4rem;"><?php echo  $board['subject'] ?> </h2>
     
     <?php foreach($board['service'] as $service) { ?>
     <div class="item_box">
         <ul>
             <li class="title_area">
-                <a href="view.php?service_id=<?= $service['service_id'] ?>">
-                    <div class="service_name"><?= $service['service_name'] ?></div>
-                    <div class="service_summary"><?= $service['service_summary'] ?></div>
+                <a href="view.php?service_id=<?php echo  $service['service_id'] ?>">
+                    <div class="service_name"><?php echo  $service['name'] ?></div>
+                    <div class="service_summary"><?php echo  $service['summary'] ?></div>
                 </a>
             </li>
             <li class="price_area">
-                <div class="price"><?= $convertYMDUnit1[$service['recurring_unit']] ?> <?= number_format($service['price']) ?>원</div>
-                <div><?= $service['service_expiration'] ?><?= $convertYMDUnit2[$service['service_expiration_unit']] ?> 동안 이용가능</div>
+                <div class="price"><?php echo  $convertYMDUnit1[$service['recurring_unit']] ?> <?php echo  number_format($service['price']) ?>원</div>
+                <div><?php echo  $service['expiration'] ?><?php echo  $convertYMDUnit2[$service['expiration_unit']] ?> 동안 이용가능</div>
             </li>
             <li class="button_area">
-                <button type="button" class="btn_frmline btn_payment" data-service_id=<?= $service['service_id'] ?>>구매</button>
+                <button type="button" class="btn_frmline btn_payment" data-service_id=<?php echo  $service['service_id'] ?>>구매</button>
             </li>
         </ul>
     </div>

@@ -1,10 +1,7 @@
 <?php
 //서비스와 서비스 상세 view 를 담당.
 require_once dirname(__FILE__) . '/_common.php';
-
-if (!isset($page) || $page === 0) {
-    $page = 1;
-}
+include_once G5_LIB_PATH . '/billing/config.php';
 
 //테마기준
 

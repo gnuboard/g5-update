@@ -1,25 +1,31 @@
 <?php
 
-//if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
-require_once '../../../common.php';
-require_once G5_PATH . '/head.php';
-require_once G5_PATH . '/head.sub.php';
-
-require_once(G5_BBS_PATH . '/subscription/subscription_service.php'); //TODO subscription head
-require_once(G5_BBS_PATH . '/subscription/mypage.php'); //TODO subscription head
-
-if (empty($is_member)) {
-    alert('로그인 하셔야 됩니다.', G5_BBS_URL . '/login.php');
-}
+if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
+require_once dirname(__FILE__) . '/mypage_head.skin.php';
 
 $convertYMDUnit1 = array('y' => '연간', 'm' => '월', 'w' => '주', 'd' => '일');
 $convertYMDUnit2 = array('y' => '년', 'm' => '개월', 'w' => '주', 'd' => '일');
 
-$page_no = isset($page_no) ? $page_no : 0;
-$page_per_count = isset($page_per) ? $page_per : 10;
+$request_data = array(
+    'mb_id' => '',
+    'sfl' => '',
+    'stx' => '',
+    'sst' => '',
+    'sod' => '',
+    'status' => 1,
+    'offset' => $start_page,
+    'rows' => $page_rows
+);
+$board_list = get_myservice($request_data);
+$request_data['status'] = 0;
+$expiration_list = get_myservice($request_data);
 
-$board_list = get_myservice();
-$expiration_list = get_myservice(0);
+if(empty($board_list)){
+    $board_list = array();
+}
+if(empty($expiration_list)){
+    $expiration_list = array();
+}
 ?>
 
 <style>
@@ -100,21 +106,19 @@ $expiration_list = get_myservice(0);
     <div class="item_box">
         <ul>
             <li class="title_area">
-                <a href="mypage_service_detail.skin.php?od_id=<?php echo $service['od_id'] ?>">
-                    <div class="service_name"><?= $service['service_name'] ?></div>
-                    <div class="service_summary"><?= $service['service_summary'] ?></div>
+                <a href="mypage.php?od_id=<?php echo $service['od_id'] ?>">
+                    <div class="service_name"><?php echo  $service['name'] ?></div>
+                    <div class="service_summary"><?php echo  $service['summary'] ?></div>
                 </a>
             </li>
             <li class="price_area">
-                <div class="price"><?=$convertYMDUnit1[$service['recurring_unit']] ?> <?= number_format($service['price']) ?>원</div>
-                <div><?=$service['service_expiration']?><?=$convertYMDUnit2[$service['service_expiration_unit']] ?> 동안 이용가능</div>
+                <div class="price"><?php echo $convertYMDUnit1[$service['recurring_unit']] ?> <?php echo  number_format($service['price']) ?>원</div>
+                <div><?php echo $service['expiration']?><?php echo $convertYMDUnit2[$service['expiration_unit']] ?> 동안 이용가능</div>
                 <div>다음 결제일: <?php echo date('Y-m-d', strtotime($service['next_payment_date'])) ?></div>
             </li>
-            <!--
             <li class="button_area">
-                <button type="button" class="btn_frmline btn_cancel" data-od_id="<?= $service['od_id'] ?>">구독 취소</button>
+                <button type="button" class="btn_frmline btn_cancel" data-od_id="<?php echo  $service['od_id'] ?>">구독 취소</button>
             </li>
-            -->
         </ul>
     </div>
 <?php 
@@ -136,14 +140,14 @@ $expiration_list = get_myservice(0);
     <div class="item_box">
         <ul>
             <li class="title_area">
-                <a href="mypage_service_detail.skin.php?od_id=<?php echo $service['od_id'] ?>">
-                    <div class="service_name"><?= $service['service_name'] ?></div>
-                    <div class="service_summary"><?= $service['service_summary'] ?></div>
+                <a href="mypage.php?od_id=<?php echo $service['od_id'] ?>">
+                    <div class="service_name"><?php echo  $service['name'] ?></div>
+                    <div class="service_summary"><?php echo  $service['summary'] ?></div>
                 </a>
             </li>
             <li class="price_area">
-                <div class="price"><?=$convertYMDUnit1[$service['recurring_unit']] ?> <?= number_format($service['price']) ?>원</div>
-                <div><?=$service['service_expiration']?><?=$convertYMDUnit2[$service['service_expiration_unit']] ?> 동안 이용가능</div>
+                <div class="price"><?php echo $convertYMDUnit1[$service['recurring_unit']] ?> <?php echo  number_format($service['price']) ?>원</div>
+                <div><?php echo $service['expiration']?><?php echo $convertYMDUnit2[$service['expiration_unit']] ?> 동안 이용가능</div>
                 <div>다음 결제일: <?php echo date('Y-m-d', strtotime($service['next_payment_date'])) ?></div>
             </li>
         </ul>

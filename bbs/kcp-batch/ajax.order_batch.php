@@ -24,7 +24,7 @@ $buyr_tel2          = $_POST[ "buyr_tel2" ];
 $bt_batch_key       = $_POST[ "bt_batch_key" ]; // 배치키 정보
 $bt_group_id        = $kcpgroup_id;             // 배치키 그룹아이디
 
-$recurring_count    = '1';//$_POST["recurring_count"];
+$recurring    = '1';//$_POST["recurring"];
 $interval_unit      = 'm';//$_POST["interval_unit"];
 // 결제결과 후처리 성공여부 (false일때 결제 취소처리)
 $bSucc = "";
@@ -109,7 +109,7 @@ $sql_batch_info = "INSERT INTO {$g5["batch_info_table"]} SET
                 batch_key           = '{$bt_batch_key}',
                 kcpgroup_id         = '{$bt_group_id}',
                 price               = '{$amount}',
-                recurring_count     = '{$recurring_count}',
+                recurring           = '{$recurring}',
                 interval_unit       = '{$interval_unit}',
                 start_date          = '{$start_date}',
                 end_date            = '{$end_date}'

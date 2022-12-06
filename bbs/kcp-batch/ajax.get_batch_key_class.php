@@ -2,7 +2,7 @@
 header('Content-type: application/json; charset=utf-8');
 
 include_once './_common.php';
-include_once G5_BBS_PATH . '/kcp-batch/KcpBatch.php';
+include_once G5_LIB_PATH . '/billing/KcpBatch.php';
 
 /* ===================================================== */
 /* =  요청정보                                          = */
@@ -66,8 +66,8 @@ if ($res_cd == '0000') {
 /* =   결과처리 및 반환                                 = */
 /* = ------------------------------------------------- = */
 // 로그 테이블 저장
-$g5['kcp_batch_key_log_table'] = G5_TABLE_PREFIX . 'kcp_batch_key_log';
-$sql = "INSERT INTO {$g5['kcp_batch_key_log_table']} SET 
+$g5['billing_key_history_table'] = G5_TABLE_PREFIX . 'billing_key_history';
+$sql = "INSERT INTO {$g5['billing_key_history_table']} SET 
     od_id               = '$od_id',
     mb_id               = '{$member['mb_id']}',
     res_cd              = '{$res_cd}',

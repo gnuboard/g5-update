@@ -1,7 +1,7 @@
 <?php
 
 require_once '../../common.php';
-require_once 'mypage.php';
+require_once 'subscription/subscription_service';
 
 header('Content-type: application/json; charset=utf-8');
 /**
@@ -13,7 +13,7 @@ $work_mode = $res_data['w'];
 if($_SERVER['REQUEST_METHOD'] === 'GET') {
     switch ($work_mode) {
         case  'all' : {
-            $result =  get_myservice();
+            $result =  get_myservice(1);//TODO 페이징
             if($result === false){
                 response_json('잘못된 요청입니다.', 400);
             } else {

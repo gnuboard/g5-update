@@ -24,7 +24,7 @@ class BillingServiceModel
 
         $sql = "SELECT 
                     bs.*,
-                    b.bo_subject
+                    b.bo_subject, b.bo_table
                 FROM {$g5["billing_service_table"]} bs
                 LEFT JOIN g5_board b ON bs.service_table = b.bo_table
                 WHERE service_id = ?";

@@ -1,7 +1,7 @@
 <?php
 //결제 요청 처리.
 include_once './_common.php';
-require_once G5_BBS_PATH . '/kcp-batch/KcpBatch.php';
+require_once G5_LIB_PATH . '/billing/KcpBatch.php';
 require_once G5_BBS_PATH . '/subscription/subscription_service.php';
 /* ============================================================================== */
 /* =  결제 요청정보 준비                                                           = */
@@ -22,25 +22,24 @@ $service_id        = isset($service_id) ?  $service_id : '';  // 구독 서비�
 if(empty($bt_batch_key) || empty($od_id) || $service_id === ''){
     responseJson('필수 파라미터가 없습니다.', 400);
 }
-$serviceInfo = showServiceDetail($service_id);
+$serviceInfo = get_service_detail($service_id);
 if (is_array($serviceInfo) && count($serviceInfo) !== 1) {
     responseJson('결제정보를 가져오는데 실패했습니다.', 400);
 }
-$serviceInfo = $serviceInfo[0];
 $amount      = $serviceInfo['price'];  // 결제금액
 /**
  * 권장 파라미터
  * @var string $good_name (100byte 이내 약 33글자) 상품명
  *
  */
-$good_name          = utf8_strcut($serviceInfo['service_name'], 33, ''); // 상품명
+$good_name          = utf8_strcut($serviceInfo['name'], 33, ''); // 상품명
 
 //선택 파라미터
 $buyr_name          = isset($_POST['buyr_name']) ? $buyr_name : '';
 $buyr_mail          = isset($_POST['buyr_mail']) ? $buyr_mail : '';
 $buyr_tel2          = isset($_POST['buyr_tel2']) ? $buyr_tel2 : '';
 
-$recurring_count    = $serviceInfo['recurring_count'];  // 정기 결제의 주기 몇일, 몇개월, 몇년 등.
+$recurring    = $serviceInfo['recurring'];  // 정기 결제의 주기 몇일, 몇개월, 몇년 등.
 $recurring_unit     = $serviceInfo['recurring_unit']; // 정기결제 주기단위
 
 /**
@@ -133,13 +132,13 @@ if ( $res_cd === '0000')
 $start_date = date('Y-m-d H:i:s');
 $end_date = '0000-00-00 00:00:00'; //0 은 구독 만료기간이 정해지지않음.
 
-$next_payment_date = nextPaymentDate($start_date, $recurring_count, $recurring_unit);
-$g5['batch_info_table'] = G5_TABLE_PREFIX . 'batch_info';
-$sql_batch_info = "INSERT INTO {$g5['batch_info_table']} SET 
+$next_payment_date = nextPaymentDate($start_date, $recurring, $recurring_unit);
+$g5['billing_information_table'] = G5_TABLE_PREFIX . 'billing_information';
+$sql_batch_info = "INSERT INTO {$g5['billing_information_table']} SET 
                 service_id          = '{$service_id}',
                 od_id               = '{$od_id}',
                 mb_id               = '{$member['mb_id']}',
-                batch_key           = '{$bt_batch_key}',
+                billing_key           = '{$bt_batch_key}',
                 start_date          = '{$start_date}',
                 end_date            = '{$end_date}',
                 next_payment_date   = '{$next_payment_date}'
@@ -152,18 +151,18 @@ if(!$result || affectedRowCounter() !== 1) {
 
 
 // 자동결제 이력 저장
-$g5['batch_payment_table'] = G5_TABLE_PREFIX . 'batch_payment';
-$sql_payment = "INSERT INTO {$g5['batch_payment_table']} SET 
-                od_id               = '{$od_id}',
-                mb_id               = '{$member['mb_id']}',
-                batch_key           = '{$bt_batch_key}',
-                amount              = '{$amount}',
-                res_cd              = '{$res_cd}',
-                res_msg             = '{$res_msg}',
-                tno                 = '{$tno}',
-                card_name           = '{$card_name}',
-                res_data            = '{$res_data}',
-                payment_date   = '{$start_date}'
+$g5['billing_history_table'] = G5_TABLE_PREFIX . 'billing_history';
+$sql_payment = "INSERT INTO {$g5['billing_history_table']} SET 
+                od_id           = '{$od_id}',
+                mb_id           = '{$member['mb_id']}',
+                billing_key     = '{$bt_batch_key}',
+                amount          = '{$amount}',
+                result_code     = '{$res_cd}',
+                result_message  = '{$res_msg}',
+                payment_no      = '{$tno}',
+                card_name       = '{$card_name}',
+                result_data     = '{$res_data}',
+                payment_date    = '{$start_date}'
             ";
 
 $result = sql_query($sql_payment);
@@ -226,7 +225,7 @@ function paymentCancel($tno, $kcpBatch){
     $cancle_res  = $kcpBatch->cancelBatchPayment($tno);
 
     // 유효성 검사.
-    if($cancle_res['kcp_sign_data'] === false){
+    if(isset($cancle_res['res_cd']) && $cancle_res['res_cd'] !== '0000'){
         $msg = '결제 취소가 실패했습니다. 관리자 문의바랍니다.';
         responseJson($msg, 401);
     }

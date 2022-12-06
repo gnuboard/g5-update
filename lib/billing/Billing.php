@@ -42,7 +42,7 @@ class Billing
         }
     }
 
-     /**
+    /**
      * PG사 요청 결과 데이터 이름 -> 공용 데이터 명 변환
      * - 각 PG Class의 convert 배열을 사용하여 변환한다.
      * @param array $pgData     변환할 이름 배열 (KCP변수(Key) => 공통변수(Value))
@@ -68,7 +68,7 @@ class Billing
      * @param string $replacement   대체할 문자
      * @param string $offset        변환 시작위치
      * @param string $repeat        반복 횟수
-     * @return string 
+     * @return string
      */
     public function displayBillKey($billKey, $replacement = '*', $offset = 4, $repeat = 8)
     {
@@ -77,7 +77,7 @@ class Billing
 
     /**
      * 다음 결제일 계산
-     * 
+     *
      * @param string    $startDate      최초 결제 시작일 ('Y-m-d')
      * @param string    $paymentDate    결제일 ('Y-m-d')
      * @param int       $recurring      반복주기
@@ -106,7 +106,7 @@ class Billing
                 // 다음 결제월을 초과할 경우, 다음 결제월 마지막 일자로 처리한다.
                 if ($nextMonthByYm != $nextMonth) {
                     return date('Y-m-t', strtotime("+{$recurring} months", strtotime($paymentDateYm)));
-                // 매 월 동일한 일자로 처리되도록 고정한다.
+                    // 매 월 동일한 일자로 처리되도록 고정한다.
                 } else {
                     return date('Y-m-' . $startDay, strtotime("+{$recurring} months", strtotime($paymentDate)));
                 }
@@ -127,7 +127,7 @@ class Billing
 
     /**
      * Get the value of pg
-     */ 
+     */
     public function getPg()
     {
         return $this->pg;
@@ -137,7 +137,7 @@ class Billing
      * Set the value of pg
      *
      * @return  self
-     */ 
+     */
     public function setPg($pg)
     {
         $this->pg = $pg;

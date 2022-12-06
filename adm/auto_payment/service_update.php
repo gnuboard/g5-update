@@ -26,6 +26,7 @@ $data = array(
     "is_use"            => isset($_POST['is_use']) ? preg_replace('/[^0-9]/', '', $_POST['is_use']) : 0,
     "explan"            => isset($_POST['explan']) ? $_POST['explan'] : '',
     "mobile_explan"     => isset($_POST['mobile_explan']) ? $_POST['mobile_explan'] : '',
+    "image_path"        => isset($_POST['image_path']) ? clean_xss_tags($_POST['image_path']) : '',
     "expiration"        => isset($_POST['expiration']) ? clean_xss_tags($_POST['expiration'], 1, 1) : '',
     "expiration_unit"   => isset($_POST['expiration_unit']) ? clean_xss_tags($_POST['expiration_unit'], 1, 1) : '',
     "recurring"         => isset($_POST['recurring']) ? preg_replace('/[^0-9]/', '', $_POST['recurring']) : 0,

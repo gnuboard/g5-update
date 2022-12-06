@@ -14,9 +14,9 @@ if (empty($service_id) || empty($od_id)) {
     responseJson('필수 파라미터가 없습니다.', 400);
 }
 
-$subscribeService = showServiceDetail($service_id);
-$amount = $subscribeService[0]['price'];
-$good_name = $subscribeService[0]['service_name'];
+$subscribeService = get_service_detail($service_id);
+$amount = $subscribeService['price'];
+$good_name = $subscribeService['name'];
 $return_url = G5_BBS_URL . '/kcp-batch/ajax.mobile_redirect.php';
 
 $kcpBatch = new KcpBatch();

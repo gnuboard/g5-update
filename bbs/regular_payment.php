@@ -18,8 +18,7 @@ if($is_guest) {
     }
 }
 
-$service_info = showServiceDetail($service_id);
-$service_info = $service_info[0];
+$service_info = get_service_detail($service_id);
 if($service_info === null){
     alert('해당 상품이 없습니다.', G5_URL);
 }
@@ -79,10 +78,10 @@ add_stylesheet('<link rel="stylesheet" href="'.$member_skin_url.'/style.css">', 
                     <li class="half_input left_input margin_input">
                         <label for="good_name">
                             상품명
-                            <button type="button" class="tooltip_icon"><i class="fa fa-question-circle-o" aria-hidden="true"></i><span class="sound_only"><?= $service_info['service_summary'] ?></span></button>
+                            <button type="button" class="tooltip_icon"><i class="fa fa-question-circle-o" aria-hidden="true"></i><span class="sound_only"><?php echo  $service_info['summary'] ?></span></button>
                             <span class="tooltip">주문 정보 입력</span>
                         </label>
-                        <input type="text" readonly name="good_name" id="good_name" value="<?= $service_info['service_name'] ?>" class="frm_input full_input" placeholder="<?= $service_info['service_name'] ?>">
+                        <input type="text" readonly name="good_name" id="good_name" value="<?php echo  $service_info['name'] ?>" class="frm_input full_input" placeholder="<?php echo  $service_info['name'] ?>">
                     </li>
                     <li class="half_input left_input">
                         <label for="good_mny">

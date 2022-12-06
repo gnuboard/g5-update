@@ -36,7 +36,7 @@ class BillingHistoryModel
      * @param string $orderId   주문번호
      * @return array
      */
-    public function selectListByOrderId($orderId)
+    public function selectListByOrderId($orderId, $offset, $rows)
     {
         global $g5;
 
@@ -48,8 +48,11 @@ class BillingHistoryModel
                     (SELECT SUM(cancel_amount) FROM {$g5["billing_cancel_table"]} bc WHERE bc.payment_no = bh.payment_no AND bc.result_code = '0000') AS total_cancel
                 FROM {$g5['billing_history_table']} bh
                 WHERE od_id = ?
-                ORDER BY payment_count DESC, payment_date DESC";
-        array_push($bindParam, $orderId);
+                ORDER BY payment_count DESC, payment_date DESC
+                LIMIT ?, ?";
+        $bindParam[] = $orderId;
+        $bindParam[] = $offset;
+        $bindParam[] = $rows;
 
         return $this->g5Mysqli->execSQL($sql, $bindParam);
     }
