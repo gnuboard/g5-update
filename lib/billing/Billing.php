@@ -17,6 +17,15 @@ class Billing
     public $g5Mysqli = null;
 
     /**
+     * @var array $unitArray    주기 단위 배열
+     */
+    public $unitArray = array(
+        'default'   => array('y' => '년', 'm' => '월', 'w' => '주', 'd' => '일'),
+        'period'    => array('y' => '년', 'm' => '개월', 'w' => '주', 'd' => '일'),
+        'prefix'    => array('y' => '연간', 'm' => '월', 'w' => '주', 'd' => '일')
+    );
+
+    /**
      * 각 PG사 Class Name : 'G5Billing' + $pgCode
      * - Ex : G5BillingKcp (KCP) / G5BillingToss (Toss)
      * @param string $pgCode    자동결제 PG사 ('kcp')
@@ -126,6 +135,49 @@ class Billing
     }
 
     /**
+     * 주기 단위를 문자로 변환
+     * @param string $string    입력 문자열
+     * @param string $type      단위 형식 (default, period, prefix)
+     * @return string
+     */
+    function convertDateUnitToText($string, $type = 'default')
+    {
+        if (isset($this->unitArray[$type])) {
+            $string = strtr($string, $this->unitArray[$type]);
+        }
+
+        return $string;
+    }
+
+    /**
+     * 주기 단위를 기간 형식에 맞게 텍스트 표시
+     * @param array $service    구독상품 정보
+     * @return string|false
+     */
+    function displayRecurring($service = array(), $type = 'period')
+    {
+        if (isset($service['recurring']) && (int)$service['recurring'] > 0) {
+            return $service['recurring'] . $this->convertDateUnitToText($service['recurring_unit'], $type);
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * 주기 단위를 구독만료
+     * @param array $service    구독상품 정보
+     * @return string|false
+     */
+    function displayExpiration($service = array(), $type = 'period')
+    {
+        if (isset($service['expiration']) && (int)$service['expiration'] > 0) {
+            return $service['expiration'] . $this->convertDateUnitToText($service['expiration_unit'], $type);
+        } else {
+            return false;
+        }
+    }
+
+    /**
      * Get the value of pg
      */
     public function getPg()
@@ -143,5 +195,19 @@ class Billing
         $this->pg = $pg;
 
         return $this;
+    }
+
+    /**
+     * Get the value of unitArray
+     * @param $type     단위 형식 (default, period, prefix)
+     * @return array
+     */ 
+    public function getUnitArray($type = 'default')
+    {
+        if (isset($this->unitArray[$type])) {
+            return $this->unitArray[$type];
+        } else {
+            return $this->unitArray['default'];
+        }
     }
 }
