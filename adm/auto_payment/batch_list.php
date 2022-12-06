@@ -1,30 +1,26 @@
 <?php
 $sub_menu = '400930';
+$pg_code = 'kcp';
 include_once './_common.php';
-require_once G5_LIB_PATH . '/billing/kcp/config.php';
+require_once G5_LIB_PATH . "/billing/{$pg_code}/config.php";
 require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
 $autoload = new G5AutoLoader();
 $autoload->register();
 
-auth_check_menu($auth, $sub_menu, "r");
+auth_check_menu($auth, $sub_menu, 'r');
 
 $g5['title'] = '구독결제 내역';
 include_once G5_ADMIN_PATH . '/admin.head.php';
 
 /* 변수 선언 */
+$billing            = new Billing($pg_code);
 $information_model  = new BillingInformationModel();
 $price_model        = new BillingServicePriceModel();
 $history_model      = new BillingHistoryModel();
 
-$unit_array     = array('y' => '년', 'm' => '개월', 'w' => '주', 'd' => '일');
-$search_list    = array('name', 'mb.mb_id', 'mb.mb_name');
-$orderby_list   = array('service_id', 'name', 'price', 'order', 'is_use', 'start_date');
-$direction_list = array('desc', 'asc');
-$status_list    = array('', '0', '1', '2');
-
+$billing_list = array();
 $sfl        = !empty($sfl) ? clean_xss_tags($sfl) : 'name';
 $stx        = !empty($stx) ? clean_xss_tags($stx) : '';
-$save_stx   = !empty($save_stx) ? clean_xss_tags($save_stx) : '';
 $sst        = !empty($sst) ? clean_xss_tags($sst) : 'start_date';
 $sod        = !empty($sod) ? clean_xss_tags($sod) : 'desc';
 $status     = isset($status) ? preg_replace('/[^0-9]/', '',  $status) : '';
@@ -40,42 +36,29 @@ $request_data = array(
     "status"=> $status
 );
 
-$total_count    = $information_model->selectTotalCount($request_data);   // 전체 건수
-$total_page     = ceil($total_count / $rows);           // 전체 페이지
-$offset         = ($page - 1) * $rows;                  // 시작 열
-$request_data['offset'] = $offset;
+/* 데이터 출력 */
+// 전체 건수
+$total_count    = $information_model->selectTotalCount($request_data);
+$total_page     = ceil($total_count / $rows);   // 전체 페이지
+$request_data['offset'] = ($page - 1) * $rows;  // 시작 열
 $request_data['rows']   = $rows;
 
+// 목록 조회
 $billing_list = $information_model->selectList($request_data);
 
-/* 결과처리 */
 foreach ($billing_list as $i => $row) {
     $billing_list[$i] = $row;
-    $billing_list[$i]['bg_class'] = 'bg' . ($i % 2);
-    // 가격
-    $billing_list[$i]['price'] = $price_model->selectCurrentPrice($row['service_id']);
-    // 결제주기
-    $billing_list[$i]['display_recurring'] = $row['recurring'] . strtr($row['recurring_unit'], $unit_array);
-    // 회원정보
-    $billing_list[$i]['mb_side_view'] = get_sideview($row['mb_id'], get_text($row['mb_name']), $row['mb_email'], '');
-    // 주문번호에 - 추가
-    switch (strlen($row['od_id'])) {
-        case 16:
-            $billing_list[$i]['display_od_id'] = substr($row['od_id'], 0, 8) . '-' . substr($row['od_id'], 8);
-            break;
-        default:
-            $billing_list[$i]['display_od_id'] = substr($row['od_id'], 0, 6) . '-' . substr($row['od_id'], 6);
-            break;
-    }
-    // 기간
-    $billing_list[$i]['display_date'] = $row['start_date'] . ' ~ ' . ($row['end_date'] != null && $row['end_date'] != '0000-00-00 00:00:00' ? $row['end_date'] : '');
-    // 상태
-    $billing_list[$i]['display_status'] = $row['status'] == '1' ? '진행 중' : '종료';
-    // 결제회차
-    $billing_list[$i]['payment_count'] = $history_model->selectPaymentCount($row['od_id']);
+    $billing_list[$i]['bg_class']           = 'bg' . ($i % 2);
+    $billing_list[$i]['mb_side_view']       = get_sideview($row['mb_id'], get_text($row['mb_name']), $row['mb_email'], '');
+    $billing_list[$i]['price']              = $price_model->selectCurrentPrice($row['service_id']);
+    $billing_list[$i]['display_recurring']  = ($dsRec = $billing->displayRecurring($service)) ? $dsRec : '없음';
+    $billing_list[$i]['display_od_id']      = $row['od_id'];
+    $billing_list[$i]['display_date']       = $row['start_date'] . ' ~ ' . ($row['end_date'] != null && $row['end_date'] != '0000-00-00 00:00:00' ? $row['end_date'] : '');
+    $billing_list[$i]['display_status']     = $row['status'] == '1' ? '진행 중' : '종료';
+    $billing_list[$i]['payment_count']      = $history_model->selectPaymentCount($row['od_id']);
 }
 
-$qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
+$qstr = $qstr . '&amp;page=' . $page;
 ?>
 
 <div class="local_ov01 local_ov">
@@ -86,9 +69,7 @@ $qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
     </span>
 </div>
 
-<form name="form_batch_list" class="local_sch03 local_sch">
-    <input type="hidden" name="save_stx" value="<?php echo $stx; ?>">
-
+<form name="flist" class="local_sch03 local_sch">
     <div>
         <strong>결제상태</strong>
         <input type="radio" name="status" value="" id="status_all" <?php echo get_checked($status, ''); ?>>
@@ -113,9 +94,9 @@ $qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
     </div>
 </form>
 
-<form name="form_batch_list" id="form_batch_list" onsubmit="return forderlist_submit(this);" method="post" autocomplete="off">
+<form name="form_billing_list" id="form_billing_list" autocomplete="off">
     <div class="tbl_head01 tbl_wrap">
-        <table id="sodr_list">
+        <table>
             <caption>주문 내역 목록</caption>
             <thead>
                 <tr>
@@ -137,41 +118,40 @@ $qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($billing_list as $key => $billing) { ?>
-                    <tr class="orderlist <?php echo $billing['bg_class']; ?>">
-                        <td rowspan="2" class="td_chk2">
-                            <input type="hidden" name="od_id[<?php echo $key ?>]" value="<?php echo $billing['od_id'] ?>" id="od_id_<?php echo $key ?>">
-                            <label for="chk_<?php echo $i; ?>" class="sound_only">주문번호 <?php echo $billing['od_id']; ?></label>
-                            <input type="checkbox" name="chk[]" value="<?php echo $key ?>" id="chk_<?php echo $key ?>">
-                        </td>
-                        <td headers="th_od_id" rowspan="2">
-                            <a href="<?php echo G5_SHOP_URL; ?>/orderinquiryview.php?od_id=<?php echo $billing['od_id']; ?>" class="orderitem">
-                                <?php echo $billing['display_od_id']; ?>
-                            </a>
-                        </td>
-                        <td headers="th_service_name" colspan="3"><?php echo $billing['name']; ?></td>
-                        <td headers="th_member" rowspan="2"><?php echo $billing['mb_side_view']; ?></td>
-                        <td headers="th_date" rowspan="2"><?php echo $billing['display_date']; ?></td>
-                        <td headers="th_status" rowspan="2"><?php echo $billing['display_status']; ?></td>
-                        <td rowspan="2" class="td_mng td_mng_s">
-                            <a href="./batch_form.php?od_id=<?php echo $billing['od_id']; ?>&amp;<?php echo $qstr; ?>" class="mng_mod btn btn_02">
-                                <span class="sound_only"><?php echo $billing['od_id']; ?></span>
-                                보기
-                            </a>
-                        </td>
-                    </tr>
-                    <tr class="<?php echo $billing['bg_class']; ?>">
-                        <td><?php echo number_format($billing['price']) ?>원</td>
-                        <td><?php echo $billing['display_recurring'] ?></td>
-                        <td><?php echo number_format((float)$billing['payment_count']); ?>회</td>
-                    </tr>
-                <?php
-                }
-
-                if ($total_count == 0) {
-                    echo '<tr><td colspan="9" class="empty_table">자료가 없습니다.</td></tr>';
-                }
-                ?>
+            <?php foreach ($billing_list as $key => $billing) { ?>
+                <tr class="<?php echo $billing['bg_class']; ?>">
+                    <td rowspan="2" class="td_chk2">
+                        <input type="hidden" name="od_id[<?php echo $key ?>]" value="<?php echo $billing['od_id'] ?>" id="od_id_<?php echo $key ?>">
+                        <label for="chk_<?php echo $key; ?>" class="sound_only">주문번호 <?php echo $billing['od_id']; ?></label>
+                        <input type="checkbox" name="chk[]" value="<?php echo $key ?>" id="chk_<?php echo $key ?>">
+                    </td>
+                    <td headers="th_od_id" rowspan="2">
+                        <a href="<?php echo G5_SHOP_URL; ?>/orderinquiryview.php?od_id=<?php echo $billing['od_id']; ?>" class="orderitem">
+                            <?php echo $billing['display_od_id']; ?>
+                        </a>
+                    </td>
+                    <td headers="th_service_name" colspan="3"><?php echo $billing['name']; ?></td>
+                    <td headers="th_member" rowspan="2"><?php echo $billing['mb_side_view']; ?></td>
+                    <td headers="th_date" rowspan="2"><?php echo $billing['display_date']; ?></td>
+                    <td headers="th_status" rowspan="2"><?php echo $billing['display_status']; ?></td>
+                    <td class="td_mng td_mng_s" rowspan="2">
+                        <a href="./batch_form.php?od_id=<?php echo $billing['od_id']; ?>&amp;<?php echo $qstr; ?>" class="mng_mod btn btn_02">
+                            <span class="sound_only"><?php echo $billing['od_id']; ?></span>
+                            보기
+                        </a>
+                    </td>
+                </tr>
+                <tr class="<?php echo $billing['bg_class']; ?>">
+                    <td><?php echo number_format($billing['price']) ?>원</td>
+                    <td><?php echo $billing['display_recurring'] ?></td>
+                    <td><?php echo number_format($billing['payment_count']) ?>회</td>
+                </tr>
+            <?php
+            }
+            if ($total_count == 0) {
+                echo '<tr><td colspan="9" class="empty_table">자료가 없습니다.</td></tr>';
+            }
+            ?>
             </tbody>
         </table>
     </div>
