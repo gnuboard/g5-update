@@ -1,5 +1,5 @@
 <?php
-/** @todo 관리가능 & global로 변경 */
+$sub_menu = '400930';
 $pg_code = 'kcp';
 include_once './_common.php';
 require_once G5_LIB_PATH . "/billing/{$pg_code}/config.php";
@@ -7,12 +7,11 @@ require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
 $autoload = new G5AutoLoader();
 $autoload->register();
 
-$billing = new Billing($pg_code);
+$billing            = new Billing($pg_code);
 $information_model  = new BillingInformationModel();
 $history_model      = new BillingHistoryModel();
 $cancel_model       = new BillingCancelModel();
 
-$unit_array = array('y' => 'year', 'm' => 'month', 'w' => 'week', 'd' => 'day');
 /**
  * @var bool $bSucc 결제결과 후처리 성공여부 변수 (false일때 결제 취소처리)
  */
@@ -51,15 +50,13 @@ $json_res = $billing->convertPgDataToCommonData($json_res);
 if (isset($json_res['http_code'])) {
     responseJson($json_res['result_message'], $json_res['http_code']);
 }
-if ($json_res['result_code'] != "0000") {
-    responseJson($json_res['result_message'], 400);
-}
 
 $json_res['mb_id']              = $history_info['mb_id'];
 $json_res['billing_key']        = $history_info['billing_key'];
 $json_res['payment_count']      = $history_info['payment_count'];
 $json_res['payment_date']       = date('Y-m-d H:i:s'); // @todo 응답받은 시간으로 입력필요
-$json_res['expiration_date']    = date('Y-m-d 23:59:59 ', strtotime('+' . $billing_info['recurring'] . " " . $unit_array[$billing_info['recurring_unit']]));
+$json_res['expiration_date']    = $billing->nextPaymentDate($billing_info['start_date'], $json_res['payment_date'], $billing_info['recurring'], $billing_info['recurring_unit']);
+// $json_res['expiration_date']    = date('Y-m-d 23:59:59 ', strtotime('+' . $billing_info['recurring'] . " " . $unit_array[$billing_info['recurring_unit']]));
 /* ============================================================================== */
 /* =  로그파일 생성                                                              = */
 /* = -------------------------------------------------------------------------- = */
@@ -69,12 +66,14 @@ $json_res['expiration_date']    = date('Y-m-d 23:59:59 ', strtotime('+' . $billi
 /* =  결제 결과처리                                                              = */
 /* ============================================================================== */
 $result = $history_model->insert($json_res);
-if (!$result) {
-    $bSucc = false;
-} else {
-    $result = $information_model->updateNextPaymentDate($od_id, date('Y-m-d', strtotime($json_res['expiration_date'])));
+if ($result_code == "0000") {
     if (!$result) {
         $bSucc = false;
+    } else {
+        $result = $information_model->updateNextPaymentDate($od_id, date('Y-m-d', strtotime($json_res['expiration_date'])));
+        if (!$result) {
+            $bSucc = false;
+        }
     }
 }
 /*
@@ -111,39 +110,4 @@ if (PHP_VERSION_ID >= 50400) {
     echo json_encode($json_res, JSON_UNESCAPED_UNICODE);
 } else {
     echo to_han(json_encode($json_res));
-}
-
-function han($s)
-{
-    $result = json_decode('{"s":"' . $s . '"}');
-    return reset($result);
-}
-
-/**
- * PHP 5.3 이하에서 json_encode JSON_UNESCAPED_UNICODE 구현
- * @param $str
- * @return array|string|string[]|null
- */
-function to_han($str)
-{
-    return preg_replace('/(\\\u[a-f0-9]+)+/e', 'han("$0")', $str);
-}
-
-/**
- * json 형식으로 메시지를 출력 후 exit 합니다.
- * @param string $msg
- * @param string $httpStateNo
- * @return void
- */
-function responseJson($msg, $httpStateNo = 200)
-{
-    $resData = array('msg' => $msg);
-    if (PHP_VERSION_ID >= 50400) {
-        echo json_encode($resData, JSON_UNESCAPED_UNICODE);
-    } else {
-        echo to_han(json_encode($resData));
-    }
-
-    header('Content-type: application/json; charset=utf-8', true, $httpStateNo);
-    exit;
 }
