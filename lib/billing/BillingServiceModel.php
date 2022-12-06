@@ -48,7 +48,7 @@ class BillingServiceModel
                     bs.*,
                     b.bo_subject
                 FROM {$g5["billing_service_table"]} bs 
-                LEFT JOIN g5_board b ON bs.service_table = b.bo_table
+                LEFT JOIN {$g5["board_table"]} b ON bs.service_table = b.bo_table
                 WHERE 1=1";
         /* 검색조건 */
         if (!empty($requestData['is_use'])) {
@@ -65,7 +65,7 @@ class BillingServiceModel
         }
         /* 정렬 */
         if (!empty($requestData['sst'])) {
-            $sql .= " ORDER BY {$requestData['sst']} {$requestData['sod']} ";
+            $sql .= " ORDER BY `{$requestData['sst']}` {$requestData['sod']} ";
         }
         /* 반환 결과 수 */
         if (!empty($requestData['offset']) && !empty($requestData['rows'])) {
