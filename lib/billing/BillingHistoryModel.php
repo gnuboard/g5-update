@@ -30,13 +30,36 @@ class BillingHistoryModel
 
         return $this->g5Mysqli->getOne($sql, $bindParam);
     }
+    /**
+     * 결제이력 1건 조회
+     * @param int $od_id   주문번호
+     * @return array|null
+     */
+    public function selectOneByOdId($od_id)
+    {
+        global $g5;
+
+        $bindParam = array();
+
+        $sql = "SELECT 
+                    *
+                FROM {$g5['billing_history_table']}
+                WHERE od_id = ?
+                ORDER BY payment_count DESC
+                LIMIT 1";
+        $bindParam[] = $od_id;
+
+        return $this->g5Mysqli->getOne($sql, $bindParam);
+    }
 
     /**
      * 결제이력 조회
-     * @param string $orderId   주문번호
+     * @param string    $orderId    주문번호
+     * @param int       $offset     시작위치
+     * @param int       $rows       출력 갯수
      * @return array
      */
-    public function selectListByOrderId($orderId, $offset, $rows)
+    public function selectListByOrderId($orderId, $offset = null, $rows = null)
     {
         global $g5;
 
@@ -48,11 +71,14 @@ class BillingHistoryModel
                     (SELECT SUM(cancel_amount) FROM {$g5["billing_cancel_table"]} bc WHERE bc.payment_no = bh.payment_no AND bc.result_code = '0000') AS total_cancel
                 FROM {$g5['billing_history_table']} bh
                 WHERE od_id = ?
-                ORDER BY payment_count DESC, payment_date DESC
-                LIMIT ?, ?";
+                ORDER BY payment_count DESC, payment_date DESC";
         $bindParam[] = $orderId;
-        $bindParam[] = $offset;
-        $bindParam[] = $rows;
+        
+        if (isset($offset) && isset($rows)) {
+            $sql .= " LIMIT ?, ?";
+            $bindParam[] = $offset;
+            $bindParam[] = $rows;
+        }
 
         return $this->g5Mysqli->execSQL($sql, $bindParam);
     }

@@ -23,15 +23,6 @@ $history_model      = new BillingHistoryModel();
 $unit_array = array("y" => "년", "m" => "개월", "w" => "주", "d" => "일");
 $od_id      = isset($_REQUEST['od_id']) ? safe_replace_regex($_REQUEST['od_id'], 'od_id') : '';
 
-if (!isset($page) || empty($page)) {
-    $page = 1;
-}
-$page_rows = 10;
-$start_page = $page * $page_rows;
-if($page == 1){
-    $start_page = 0;
-}
-
 /* 구독정보 */
 // 구독정보 조회
 $billing_info = $information_model->selectOneByOrderId($od_id);
@@ -74,7 +65,7 @@ $total_amount = 0;
 $payment_success = array();
 
 // 결제내역 조회
-$history_list = $history_model->selectListByOrderId($od_id, $offset, $rows);
+$history_list = $history_model->selectListByOrderId($od_id);
 
 // 결과처리
 foreach ($history_list as $i => $history) {

@@ -113,7 +113,7 @@ function get_myservice_info($od_id)
         return false;
     }
 
-    $payment_history = $billing_history->selectOneById($od_id);
+    $payment_history = $billing_history->selectOneByOdId($od_id);
     if($payment_history['mb_id'] !== $mb_id){
         return false;
     }
