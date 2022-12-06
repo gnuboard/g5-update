@@ -1,29 +1,25 @@
 <?php
 $sub_menu = '400920';
+$pg_code = 'kcp';
 include_once './_common.php';
-require_once G5_LIB_PATH . '/billing/kcp/config.php';
+require_once G5_LIB_PATH . "/billing/{$pg_code}/config.php";
 require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
 $autoload = new G5AutoLoader();
 $autoload->register();
 
-auth_check_menu($auth, $sub_menu, "r");
+auth_check_menu($auth, $sub_menu, 'r');
 
 $g5['title'] = '구독상품 관리';
 include_once G5_ADMIN_PATH . '/admin.head.php';
 
 /* 변수 선언 */
+$billing        = new Billing($pg_code);
 $service_model  = new BillingServiceModel();
 $price_model    = new BillingServicePriceModel();
 
-$unit_array     = array('y' => '년', 'm' => '개월', 'w' => '주', 'd' => '일');
-$search_list    = array('name', 'bo_subject');
-$orderby_list   = array('service_id', 'name', 'price', 'order', 'is_use', 'bs.bo_table');
-$direction_list = array('desc', 'asc');
 $service_list   = array();
-
 $sfl        = !empty($sfl) ? clean_xss_tags($sfl) : 'name';
 $stx        = !empty($stx) ? clean_xss_tags($stx) : '';
-$save_stx   = !empty($save_stx) ? clean_xss_tags($save_stx) : '';
 $sst        = !empty($sst) ? clean_xss_tags($sst) : 'service_id';
 $sod        = !empty($sod) ? clean_xss_tags($sod) : 'desc';
 
@@ -37,29 +33,24 @@ $request_data = array(
     "sod"   => $sod
 );
 
-$total_count    = $service_model->selectTotalCount($request_data);   // 전체 건수
-$total_page     = ceil($total_count / $rows);           // 전체 페이지
-$offset         = ($page - 1) * $rows;                  // 시작 열
-$request_data['offset'] = $offset;
+/* 데이터 출력 */
+// 전체 건수
+$total_count    = $service_model->selectTotalCount($request_data);   
+$total_page     = ceil($total_count / $rows);   // 전체 페이지
+$request_data['offset'] = ($page - 1) * $rows;  // 시작 열
 $request_data['rows']   = $rows;
 
+// 목록 조회
 $service_list = $service_model->selectList($request_data);
 
 foreach ($service_list as $i => $service) {
-    $service_list[$i]['bg_class'] = 'bg' . ($i % 2);
-    // 가격
-    $service_list[$i]['price'] = $price_model->selectCurrentPrice($service['service_id']);
-    // 결제주기
-    $service_list[$i]['display_recurring'] = $service['recurring'] . strtr($service['recurring_unit'], $unit_array);
-    // 구독 만료기간
-    if ($service['expiration'] > 0) {
-        $service_list[$i]['display_expiration'] = '결제일로부터 ' . $service['expiration'] . $unit_array[$service['expiration_unit']] . ' 이후';
-    } else {
-        $service_list[$i]['display_expiration'] = '없음';
-    }
+    $service_list[$i]['bg_class']           = 'bg' . ($i % 2);
+    $service_list[$i]['price']              = $price_model->selectCurrentPrice($service['service_id']);
+    $service_list[$i]['display_recurring']  = ($dsRec = $billing->displayRecurring($service)) ? $dsRec : '없음';
+    $service_list[$i]['display_expiration'] = ($dsExp = $billing->displayExpiration($service)) ? '결제일로부터 ' . $dsExp . ' 이후' : '없음';
 }
 
-$qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
+$qstr = $qstr . '&amp;page=' . $page;
 ?>
 
 <div class="local_ov01 local_ov">
@@ -68,8 +59,6 @@ $qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
 </div>
 
 <form name="flist" class="local_sch01 local_sch">
-    <input type="hidden" name="save_stx" value="<?php echo $stx; ?>">
-
     <label for="sfl" class="sound_only">검색대상</label>
     <select name="sfl" id="sfl">
         <option value="name" <?php echo get_selected($sfl, 'name'); ?>>구독상품 명</option>
@@ -81,7 +70,7 @@ $qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
     <input type="submit" value="검색" class="btn_submit">
 </form>
 
-<form id="form_service_list" name="form_service_list" method="post" action="./service_list_update.php" onsubmit="return item_list_submit(this);" autocomplete="off">
+<form id="form_service_list" name="form_service_list" method="post" action="./service_list_update.php" onsubmit="return service_list_submit(this);" autocomplete="off">
     <input type="hidden" name="sca" value="<?php echo $sca; ?>">
     <input type="hidden" name="sst" value="<?php echo $sst; ?>">
     <input type="hidden" name="sod" value="<?php echo $sod; ?>">
@@ -98,10 +87,10 @@ $qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
                         <label for="chkall" class="sound_only">상품 전체</label>
                         <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
                     </th>
-                    <th scope="col" rowspan="2"><?php echo subject_sort_link('bs.bo_table', 'sca=' . $sca); ?>게시판</a></th>
+                    <th scope="col" rowspan="2"><?php echo subject_sort_link('service_table', 'sca=' . $sca); ?>게시판</a></th>
                     <th scope="col" rowspan="2"><?php echo subject_sort_link('name', 'sca=' . $sca); ?>구독상품명</a></th>
                     <th scope="col" rowspan="2">이미지</th>
-                    <th scope="col" colspan="2"><?php echo subject_sort_link('price', 'sca=' . $sca); ?>가격</a></th>
+                    <th scope="col" colspan="2">가격</th>
                     <th scope="col" rowspan="2"><?php echo subject_sort_link('order', 'sca=' . $sca); ?>순서</a></th>
                     <th scope="col" rowspan="2"><?php echo subject_sort_link('is_use', 'sca=' . $sca, 1); ?>판매</a></th>
                     <th scope="col" rowspan="2">관리</th>
@@ -112,55 +101,57 @@ $qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
                 </tr>
             </thead>
             <tbody>
-                <?php
-                foreach ($service_list as $key => $service) {
-                ?>
-                    <tr class="<?php echo $service['bg_class']; ?>">
-                        <td rowspan="2" class="td_chk2">
-                            <label for="chk_<?php echo $key; ?>" class="sound_only"><?php echo get_text($service['name']); ?></label>
-                            <input type="checkbox" name="chk[]" value="<?php echo $key ?>" id="chk_<?php echo $key; ?>">
-                            <input type="hidden" name="service_id[<?php echo $key; ?>]" value="<?php echo $service['service_id']?>">
-                        </td>
-                        <td rowspan="2" class="td_mng_l">
-                            <label class="sound_only"><?php echo get_text($service['bo_subject']); ?></label>
-                            <?php echo $service['bo_subject']; ?>
-                        </td>
-                        <td rowspan="2">
-                            <input type="text" name="name[<?php echo $key; ?>]" value="<?php echo $service['name']; ?>" class="tbl_input required" required="" size="30">
-                        </td>
-                        <td rowspan="2" class="td_img"><?php echo get_it_image($service['image_path'], 50, 50); ?></td>
-
-                        <td colspan="2">
-                            <?php echo number_format($service['price']); ?>원
-                        </td>
-                        <td rowspan="2" class="td_num">
-                            <label for="order_<?php echo $key; ?>" class="sound_only">순서</label>
-                            <input type="text" name="order[<?php echo $key; ?>]" value="<?php echo $service['order']; ?>" id="order_<?php echo $key; ?>" class="tbl_input" size="3">
-                        </td>
-                        <td rowspan="2">
-                            <label for="use_<?php echo $key; ?>" class="sound_only">판매여부</label>
-                            <input type="checkbox" name="is_use[<?php echo $key; ?>]" <?php echo ($service['is_use'] ? 'checked' : ''); ?> value="1" id="use_<?php echo $key; ?>">
-                        </td>
-                        <td rowspan="2" class="td_mng td_mng_s">
-                            <a href="./service_form.php?w=u&amp;service_id=<?php echo $service['service_id']; ?>&amp;<?php echo $qstr; ?>" class="btn btn_03"><span class="sound_only"><?php echo htmlspecialchars2(cut_str($service['name'], 250, "")); ?> </span>수정</a>
-                        </td>
-                    </tr>
-                    <tr class="td_mng_l <?php echo $service['bg_class']; ?>">
-                        <td>
-                            <label class="sound_only">결제주기</label>
-                            <?php echo $service['display_recurring'] ?>
-                        </td>
-                        <td class="td_mng_l">
-                            <label class="sound_only">구독만료 기간</label>
-                            <?php echo $service['display_expiration'] ?>
-                        </td>
-                    </tr>
-                <?php
+            <?php foreach ($service_list as $key => $service) { ?>
+                <tr class="<?php echo $service['bg_class']; ?>">
+                    <td rowspan="2" class="td_chk2">
+                        <label for="chk_<?php echo $key; ?>" class="sound_only"><?php echo get_text($service['name']); ?></label>
+                        <input type="checkbox" name="chk[]" value="<?php echo $key ?>" id="chk_<?php echo $key; ?>">
+                        <input type="hidden" name="service_id[<?php echo $key; ?>]" value="<?php echo $service['service_id']?>">
+                    </td>
+                    <td rowspan="2" class="td_mng_l">
+                        <label class="sound_only"><?php echo get_text($service['bo_subject']); ?></label>
+                        <?php echo $service['bo_subject']; ?>
+                    </td>
+                    <td rowspan="2">
+                        <input type="text" name="name[<?php echo $key; ?>]" value="<?php echo $service['name']; ?>" class="tbl_input required" required="" size="30">
+                    </td>
+                    <td rowspan="2" class="td_img">
+                        <?php echo get_it_image($service['image_path'], 50, 50); ?>
+                    </td>
+                    <td colspan="2">
+                        <?php echo number_format($service['price']); ?>원
+                    </td>
+                    <td rowspan="2" class="td_num">
+                        <label for="order_<?php echo $key; ?>" class="sound_only">순서</label>
+                        <input type="text" name="order[<?php echo $key; ?>]" value="<?php echo $service['order']; ?>" id="order_<?php echo $key; ?>" class="tbl_input" size="3">
+                    </td>
+                    <td rowspan="2">
+                        <label for="use_<?php echo $key; ?>" class="sound_only">판매여부</label>
+                        <input type="checkbox" name="is_use[<?php echo $key; ?>]" <?php echo ($service['is_use'] ? 'checked' : ''); ?> value="1" id="use_<?php echo $key; ?>">
+                    </td>
+                    <td rowspan="2" class="td_mng td_mng_s">
+                        <a href="./service_form.php?w=u&amp;service_id=<?php echo $service['service_id']; ?>&amp;<?php echo $qstr; ?>" class="btn btn_03">
+                            <span class="sound_only"><?php echo htmlspecialchars2(cut_str($service['name'], 250, "")); ?> </span>
+                            수정
+                        </a>
+                    </td>
+                </tr>
+                <tr class="td_mng_l <?php echo $service['bg_class']; ?>">
+                    <td>
+                        <label class="sound_only">결제주기</label>
+                        <?php echo $service['display_recurring'] ?>
+                    </td>
+                    <td class="td_mng_l">
+                        <label class="sound_only">구독만료 기간</label>
+                        <?php echo $service['display_expiration'] ?>
+                    </td>
+                </tr>
+            <?php
                 }
                 if ($total_count == 0) {
                     echo '<tr><td colspan="9" class="empty_table">자료가 없습니다.</td></tr>';
                 }
-                ?>
+            ?>
             </tbody>
         </table>
     </div>
@@ -174,21 +165,13 @@ $qstr = $qstr . '&amp;page=' . $page . '&amp;save_stx=' . $stx;
 <?php echo get_paging(G5_IS_MOBILE ? $config['cf_mobile_pages'] : $config['cf_write_pages'], $page, $total_page, "{$_SERVER['SCRIPT_NAME']}?$qstr&amp;page="); ?>
 
 <script>
-    function item_list_submit(f) {
+    function service_list_submit(f) {
         if (!is_checked("chk[]")) {
             alert(document.pressed + " 하실 항목을 하나 이상 선택하세요.");
             return false;
         }
         return true;
     }
-
-    $(function() {
-        $(".itemcopy").click(function() {
-            var href = $(this).attr("href");
-            window.open(href, "copywin", "left=100, top=100, width=300, height=200, scrollbars=0");
-            return false;
-        });
-    });
 </script>
 
 <?php
