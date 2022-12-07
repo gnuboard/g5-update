@@ -113,7 +113,12 @@ if(empty($expiration_list)){
             </li>
             <li class="price_area">
                 <div class="price"><?php echo $convertYMDUnit1[$service['recurring_unit']] ?> <?php echo  number_format($service['price']) ?>원</div>
-                <div><?php echo $service['expiration']?><?php echo $convertYMDUnit2[$service['expiration_unit']] ?> 동안 이용가능</div>
+                <div><?php
+                        if($service['expiration'] !== 0) {
+                            echo $service['expiration'] . $convertYMDUnit2[$service['expiration_unit']] . ' 동안 이용가능';
+                        }
+                    ?>
+                </div>
                 <div>다음 결제일: <?php echo date('Y-m-d', strtotime($service['next_payment_date'])) ?></div>
             </li>
             <li class="button_area">
@@ -147,7 +152,13 @@ if(empty($expiration_list)){
             </li>
             <li class="price_area">
                 <div class="price"><?php echo $convertYMDUnit1[$service['recurring_unit']] ?> <?php echo  number_format($service['price']) ?>원</div>
-                <div><?php echo $service['expiration']?><?php echo $convertYMDUnit2[$service['expiration_unit']] ?> 동안 이용가능</div>
+                <div>
+                    <?php
+                        if($service['expiration'] !== 0) {
+                            echo $service['expiration'] . $convertYMDUnit2[$service['expiration_unit']] . ' 동안 이용가능';
+                        }
+                    ?>
+                </div>
                 <div>다음 결제일: <?php echo date('Y-m-d', strtotime($service['next_payment_date'])) ?></div>
             </li>
         </ul>
