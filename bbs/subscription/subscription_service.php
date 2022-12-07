@@ -4,7 +4,7 @@
  * json이나 html 은 반환하지 않습니다.
  * 마이페이지 비동기 요청은 ajax.myapge.php 참고.
  */
-require_once(dirname(__FILE__) . '../../../common.php');
+require_once(dirname(__FILE__) . '/../../common.php');
 require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
 $autoload = new G5AutoLoader();
 $autoload->register();

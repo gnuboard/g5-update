@@ -1,7 +1,7 @@
 <?php
 header('Content-type: application/json; charset=utf-8');
 
-require_once dirname(__FILE__) . './_common.php';
+require_once dirname(__FILE__) . '/_common.php';
 include_once G5_LIB_PATH . '/billing/KcpBatch.php';
 
 /* ===================================================== */

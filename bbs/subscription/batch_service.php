@@ -1,6 +1,6 @@
 <?php
 
-require_once(dirname(__FILE__) . '../../../common.php');
+require_once(dirname(__FILE__) . '/../../common.php');
 require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
 $autoload = new G5AutoLoader();
 $autoload->register();
@@ -36,7 +36,7 @@ $start_page = 0;
 $page_rows = 1000;
 $billing_total_page_length = ceil($billing_list_length / $page_rows);
 $currency = 410; //TODO kcp 원화 코드
-for ($idx = 0; $idx < $billing_list_count; $idx++) {
+for ($idx = 0; $idx < $billing_total_page_length; $idx++) {
     $request_data['rows'] = $page_rows;
     $request_data['offset'] = $idx;
 
