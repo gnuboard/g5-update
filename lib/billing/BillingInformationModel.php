@@ -65,14 +65,14 @@ class BillingInformationModel
             array_push($bindParam, $requestData['status']);
         }
 
-        if (!empty($requestData['sfl']) && !empty($requestData['stx'])) {
-            $sql .= " AND {$requestData['sfl']} LIKE ? ";
-            array_push($bindParam, "%{$requestData['stx']}%");
-        }
-
         if (isset($requestData['date']) && !empty($requestData['date'])) {
             $sql .= ' AND date_format(bi.next_payment_date, "%Y-%m-%d") = ? ';
             array_push($bindParam, "{$requestData['date']}");
+        }
+
+        if (!empty($requestData['sfl']) && !empty($requestData['stx'])) {
+            $sql .= " AND {$requestData['sfl']} LIKE ? ";
+            array_push($bindParam, "%{$requestData['stx']}%");
         }
 
         /* 정렬 */
@@ -106,17 +106,24 @@ class BillingInformationModel
                     LEFT JOIN {$g5['member_table']} mb ON bi.mb_id = mb.mb_id
                 WHERE 1=1";
         /* 검색조건 */
-        if (!empty($requestData['sfl']) && !empty($requestData['stx'])) {
-            $sql .= " AND {$requestData['sfl']} LIKE ? ";
-            array_push($bindParam, "%{$requestData['stx']}%");
-        }
         if (!empty($requestData['status']) || $requestData['status'] === '0') {
             $sql .= " AND status = ?";
             array_push($bindParam, $requestData['status']);
         }
+
+        if (isset($requestData['date']) && !empty($requestData['date'])) {
+            $sql .= ' AND date_format(bi.next_payment_date, "%Y-%m-%d") = ? ';
+            array_push($bindParam, "{$requestData['date']}");
+        }
+
         if (!empty($requestData['mb_id'])) {
             $sql .= " AND mb_id = ?";
             array_push($bindParam, $requestData['mb_id']);
+        }
+
+        if (!empty($requestData['sfl']) && !empty($requestData['stx'])) {
+            $sql .= " AND {$requestData['sfl']} LIKE ? ";
+            array_push($bindParam, "%{$requestData['stx']}%");
         }
         
         $result = $this->g5Mysqli->getOne($sql, $bindParam);
