@@ -54,6 +54,70 @@ class BillingHistoryModel
 
     /**
      * 결제이력 조회
+     * @param int       $offset     시작위치
+     * @param int       $rows       출력 갯수
+     * @return array
+     */
+    public function selectListByAdmin($requestData = array())
+    {
+        global $g5;
+
+        $bindParam = array();
+
+        $sql = "SELECT 
+                    bh.*,
+                    mb.mb_name, mb.mb_email, 
+                    CONCAT(DATE_FORMAT(payment_date, '%Y-%m-%d'), ' ~ ', DATE_FORMAT(expiration_date, '%Y-%m-%d')) AS period,
+                    (SELECT SUM(cancel_amount) FROM {$g5["billing_cancel_table"]} bc WHERE bc.payment_no = bh.payment_no AND bc.result_code = '0000') AS total_cancel
+                FROM {$g5['billing_history_table']} bh
+                    LEFT JOIN {$g5['member_table']} mb ON bh.mb_id = mb.mb_id
+                WHERE 1 = 1";
+
+        /* 검색조건 */
+        if ((isset($requestData['date']) && !empty($requestData['date']))) {
+            $sql .= ' AND DATE_FORMAT(payment_date, "%Y-%m-%d") = DATE_FORMAT(?, "%Y-%m-%d")';
+            array_push($bindParam, $requestData['date']);
+        }
+
+        /* 반환 결과 수 */
+        if (!empty($requestData['offset']) && !empty($requestData['rows'])) {
+            $sql .= " LIMIT ?, ?";
+            array_push($bindParam, $requestData['offset'], $requestData['rows']);
+        }
+
+        return $this->g5Mysqli->execSQL($sql, $bindParam);
+    }
+
+    /**
+     * 결제이력 조회
+     * @param int       $offset     시작위치
+     * @param int       $rows       출력 갯수
+     * @return int
+     */
+    public function selectTotalCountByAdmin($requestData = array())
+    {
+        global $g5;
+
+        $bindParam = array();
+
+        $sql = "SELECT 
+                    COUNT(*) as cnt
+                FROM {$g5['billing_history_table']} bh
+                WHERE 1 = 1";
+
+        /* 검색조건 */
+        if ((isset($requestData['date']) && !empty($requestData['date']))) {
+            $sql .= ' AND DATE_FORMAT(payment_date, "%Y-%m-%d") = DATE_FORMAT(?, "%Y-%m-%d")';
+            array_push($bindParam, $requestData['date']);
+        }
+
+        $result = $this->g5Mysqli->getOne($sql, $bindParam);
+
+        return (int)$result['cnt'];
+    }
+
+    /**
+     * 결제이력 조회
      * @param string    $orderId    주문번호
      * @param int       $offset     시작위치
      * @param int       $rows       출력 갯수

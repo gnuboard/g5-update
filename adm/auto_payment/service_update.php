@@ -1,14 +1,15 @@
 <?php
 $sub_menu = '400920';
+$pg_code = 'kcp';
 include_once './_common.php';
-require_once G5_LIB_PATH . '/billing/kcp/config.php';
+require_once G5_LIB_PATH . "/billing/{$pg_code}/config.php";
 require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
 $autoload = new G5AutoLoader();
 $autoload->register();
 
 $w = isset($_REQUEST['w']) ? $_REQUEST['w'] : '';
-// auth_check_menu($auth, $sub_menu, "w");
-// check_admin_token();
+auth_check_menu($auth, $sub_menu, 'w');
+check_admin_token();
 
 @mkdir(G5_DATA_PATH . '/billing', G5_DIR_PERMISSION);
 @chmod(G5_DATA_PATH . '/billing', G5_DIR_PERMISSION);
@@ -18,7 +19,7 @@ $price_model    = new BillingServicePriceModel();
 
 /** Form Data */
 /* 기본정보 */
-$service_id     = isset($_POST['service_id']) ? preg_replace('/[^0-9]/', '', $_POST['service_id']) : 0;
+$service_id = isset($_POST['service_id']) ? preg_replace('/[^0-9]/', '', $_POST['service_id']) : 0;
 $data = array(
     "name"              => isset($_POST['name']) ? clean_xss_tags($_POST['name'], 1, 1) : '',
     "summary"           => isset($_POST['summary']) ? clean_xss_tags($_POST['summary'], 1, 1) : '',

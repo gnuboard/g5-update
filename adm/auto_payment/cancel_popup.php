@@ -25,6 +25,35 @@ $service = $service_model->selectOneById($service_id);
 $history = $history_model->selectOneById($id);
 $cancel_amount = $cancel_model->selectTotalCancelAmount($history['payment_no']);
 $refundable_amount = (int)$history['amount'] - (int)$cancel_amount;
+
+
+// test
+$refund_amount = calcurateRefundAmount($history, $service['base_price']);
+function calcurateRefundAmount($history, $base_price) {
+
+    $sTime = strtotime($history['payment_date']);       // 결제시작일
+    $eTime = strtotime($history['expiration_date']);    // 유효기간 만료일
+    $todayTime = strtotime(date('Y-m-d H:i:s'));        // 오늘
+
+    // 만료일이 지났을 경우 
+    if ($todayTime > strtotime($history['expiration_date'])) {
+        return 0;
+    }
+    $diff_day   = ceil(($todayTime - $sTime) / (60 * 60 * 24)); // 사용 일수
+    $exp_day    = floor(($eTime - $sTime) / (60 * 60 * 24));    // 유효기간 일수
+
+    // echo "<br>시작날짜 : {$history['payment_date']}<br>";
+    // echo "<br>마감날짜 : {$history['expiration_date']}<br>";
+    // echo "<br>오늘날짜 : ".date('Y-m-d')."<br>";
+    // echo "<br>사용일수 : {$diff_day}<br>";
+    // echo "<br>유효일수 : {$exp_day}<br>";
+    // echo "<br>기본가격 : {$base_price}<br>";
+    // echo "<br>결제가격 : {$history['amount']}<br>";
+    // echo "<br><br>환불 금액<br>";
+
+    // 결제금액 - (사용일수 * (기본가격 / 유효일수))
+    return $history['amount'] - $diff_day * round($base_price / $exp_day);
+}
 ?>
 
 <div id="menu_frm" class="new_win">
@@ -85,7 +114,10 @@ $refundable_amount = (int)$history['amount'] - (int)$cancel_amount;
                         </tr>
                         <tr>
                             <th scope="row"><label for="me_link">환불금액 <strong class="sound_only"> 필수</strong></label></th>
-                            <td><input type="number" class="frm_input" name="cancel_amount" data-max="<?php echo $refundable_amount ?>"></td>
+                            <td>
+                                <input type="number" class="frm_input" name="cancel_amount" data-max="<?php echo $refundable_amount ?>">
+                                <button type="button" class="btn_02 btn" onclick="input_cancel_amount()">환불금액 계산</button>
+                            </td>
                         </tr>
                         <tr>
                             <th scope="row"><label for="me_link">최종 금액<strong class="sound_only"> 필수</strong></label></th>
@@ -136,6 +168,12 @@ $refundable_amount = (int)$history['amount'] - (int)$cancel_amount;
         } else {
             return false;
         }
+    }
+
+    function input_cancel_amount()
+    {
+        let amount = '<?php echo $refund_amount ?>';
+        $("input[name=cancel_amount]").val(amount);
     }
 </script>
 

@@ -1,25 +1,26 @@
 <?php
 $sub_menu = '400920';
+$pg_code = 'kcp';
 include_once './_common.php';
 include_once G5_EDITOR_LIB;
-require_once G5_LIB_PATH . '/billing/kcp/config.php';
+require_once G5_LIB_PATH . "/billing/{$pg_code}/config.php";
 require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
 $autoload = new G5AutoLoader();
 $autoload->register();
 
-auth_check_menu($auth, $sub_menu, "w");
+auth_check_menu($auth, $sub_menu, 'w');
 
 /* 변수 선언 */
 $html_title     = '구독상품 ';
 $g5Mysqli       = G5Mysqli::getInstance();
+$billing        = new Billing($pg_code);
 $service_model  = new BillingServiceModel();
 $price_model    = new BillingServicePriceModel();
 
-// 구독상품 정보
-$board_list     = array();
-
+$unit_array     = $billing->getUnitArray();
 $service_id     = isset($_GET['service_id']) ? $_GET['service_id'] : 0;
-$service = array(
+$board_list     = array();
+$service        = array(
     'service_table' => '',
     'name' => '',
     'order' => '',
@@ -33,39 +34,38 @@ $service = array(
     'expiration' => '0',
     'expiration_unit' => 'm'
 );
+$service_price  = array();
 $price_count = 0;
 
+/* 데이터 출력 */
 if ($w == '') {
-    $html_title .= '입력';
-    $service_price = array();
+    $html_title .= ' 입력';
 } else if ($w == 'u') {
-    $html_title .= '수정';
-    // 서비스 정보
+    $html_title .= ' 수정';
+    // 구독상품 정보
     $service = $service_model->selectOneById($service_id);
     if (!$service) {
-        alert('상품정보가 존재하지 않습니다.');
+        alert('구독상품 정보가 존재하지 않습니다.');
     }
     // 구독상품 가격정보
-    $service_price = $price_model->selectListByServiceId($service_id);
-    $price_count = count($service_price);
+    $service_price  = $price_model->selectListByServiceId($service_id);
+    $price_count    = count($service_price);
 } else {
     alert('올바르지 않은 접근입니다.');
 }
 
 // 게시판 리스트
-$sql = "SELECT bo_table, bo_subject FROM {$g5['board_table']}";
-$res_board = $g5Mysqli->execSQL($sql);
-foreach ($res_board as $i => $row) {
+$result = $g5Mysqli->execSQL("SELECT bo_table, bo_subject FROM {$g5['board_table']} ORDER BY bo_order ASC");
+foreach ($result as $i => $row) {
     $board_list[$i] = $row;
     $board_list[$i]['selected'] = get_selected($row['bo_table'], $service['service_table']);
 }
 
 // etc
-$unit_array = array('y' => '년', 'm' => '개월', 'w' => '주', 'd' => '일');
 $qstr = $qstr . '&amp;sca=' . $sca . '&amp;page=' . $page;
 $pg_anchor = '<ul class="anchor">
 <li><a href="#anc_form_board">게시판 설정</a></li>
-<li><a href="#anc_form_ini">기본정보</a></li>
+<li><a href="#anc_form_info">기본정보</a></li>
 <li><a href="#anc_form_cost">가격 및 결제주기</a></li>
 </ul>';
 $g5['title'] = $html_title;
@@ -111,7 +111,7 @@ include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
             </table>
         </div>
     </section>
-    <section id="anc_form_ini">
+    <section id="anc_form_info">
         <h2 class="h2_frm">기본정보</h2>
         <?php echo $pg_anchor; ?>
         <div class="tbl_frm01 tbl_wrap">
@@ -120,7 +120,6 @@ include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
                 <colgroup>
                     <col class="grid_4">
                     <col>
-                    <col class="grid_3">
                 </colgroup>
                 <tbody>
                     <tr>
@@ -173,11 +172,10 @@ include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
                 <colgroup>
                     <col class="grid_4">
                     <col>
-                    <col class="grid_3">
                 </colgroup>
                 <tbody>
                     <tr>
-                        <th scope="row"><label for="price">기본 가격</label></th>
+                        <th scope="row"><label for="base_price">기본 가격</label></th>
                         <td>
                             <?php echo help("기본 가격을 설정합니다."); ?>
                             <div>
@@ -186,13 +184,17 @@ include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="price">변경 가격 <button type="button" id="create_price_row" class="btn_frmline">가격 추가</button></label></th>
+                        <th scope="row">
+                            <label for="price">변경 가격 
+                                <button type="button" id="create_price_row" class="btn_frmline">가격 추가</button>
+                            </label>
+                        </th>
                         <td id="td_price">
                             <?php echo help("가격이 변경되는 일자를 선택할 수 있습니다."); ?>
-                            <?php 
-                                foreach ($service_price as $key => $price) {
-                                    $row = (int)$key + 1;
-                            ?> 
+                        <?php 
+                            foreach ($service_price as $key => $price) {
+                                $row = (int)$key + 1;
+                        ?> 
                             <div id="td_price_<?php echo $row ?>">
                                 <input type="hidden" name="id[<?php echo $row ?>]" value="<?php echo $price['id'] ?>">
                                 <input type="text" name="price[<?php echo $row ?>]" value="<?php echo $price['price']; ?>" class="frm_input" size="12"> 원
@@ -242,14 +244,13 @@ include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
 
     <div class="btn_fixed_top">
         <a href="./service_list.php?<?php echo $qstr; ?>" class="btn btn_02">목록</a>
-        <a href="#" class="btn_02 btn">구독상품 보기</a>
+        <a href="<?php echo G5_URL . '/bbs/subscription/view.php?service_id=' . $service['service_id'] ?>" target="_blank" class="btn_02 btn">구독상품 보기</a>
         <input type="submit" value="확인" class="btn_submit btn" accesskey="s">
     </div>
 </form>
 
 
 <script>
-var f = document.form_service;
 let price_row   = <?php echo $price_count ?>;
 
 $(function() {

@@ -1,5 +1,5 @@
 <?php
-/** @todo 관리가능 & global로 변경 */
+$sub_menu = '400930';
 $pg_code = 'kcp';
 include_once './_common.php';
 require_once G5_LIB_PATH . "/billing/{$pg_code}/config.php";
@@ -24,6 +24,11 @@ $res_data = $billing->convertPgDataToCommonData($res_data);
 /* ============================================================================== */
 /* =  응답정보                                                                     = */
 /* = -------------------------------------------------------------------------- = */
+// Res JSON DATA Parsing
+if (isset($json_res['http_code'])) {
+    responseJson($json_res['result_message'], $json_res['http_code']);
+}
+
 $res_data['pg_code'] = $pg_code;
 $res_data['od_id'] = $od_id;
 $res_data['mb_id'] = $mb_id;
@@ -40,9 +45,11 @@ $key_history_model->insert($res_data);
 // 결제정보 배치 키 변경
 if ($result_code == "0000") {
     $information_model->updateBillingKey($od_id, $billing_key);
-    // 배치키 * 표시
     $res_data['display_billing_key'] = $billing->displayBillKey($billing_key);
 }
-// 결과 출력
-echo json_encode($res_data);
-exit;
+// 나머지 결과 출력
+if (PHP_VERSION_ID >= 50400) {
+    echo json_encode($json_res, JSON_UNESCAPED_UNICODE);
+} else {
+    echo to_han(json_encode($json_res));
+}

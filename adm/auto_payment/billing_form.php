@@ -1,7 +1,8 @@
 <?php
 $sub_menu = '400930';
+$pg_code = 'kcp';
 include_once './_common.php';
-require_once G5_LIB_PATH . '/billing/kcp/config.php';
+require_once G5_LIB_PATH . "/billing/{$pg_code}/config.php";
 require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
 $autoload = new G5AutoLoader();
 $autoload->register();
@@ -10,19 +11,18 @@ $g5['title'] = "구독결제 수정";
 include_once G5_ADMIN_PATH . '/admin.head.php';
 include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
 
-auth_check_menu($auth, $sub_menu, "w");
+auth_check_menu($auth, $sub_menu, 'w');
 
-/* 변수 선언 */
-$html_title = '구독상품 ';
-$billing            = new Billing('kcp');
+/** 변수 선언 */
+$billing            = new Billing($pg_code);
 $service_model      = new BillingServiceModel();
 $information_model  = new BillingInformationModel();
 $price_model        = new BillingServicePriceModel();
 $history_model      = new BillingHistoryModel();
 
-$unit_array = array("y" => "년", "m" => "개월", "w" => "주", "d" => "일");
-$od_id      = isset($_REQUEST['od_id']) ? safe_replace_regex($_REQUEST['od_id'], 'od_id') : '';
+$od_id = isset($_REQUEST['od_id']) ? safe_replace_regex($_REQUEST['od_id'], 'od_id') : '';
 
+/** 데이터 출력 */
 /* 구독정보 */
 // 구독정보 조회
 $billing_info = $information_model->selectOneByOrderId($od_id);
@@ -31,27 +31,20 @@ $billing_info = $information_model->selectOneByOrderId($od_id);
 $service_id = $billing_info['service_id'];
 
 $billing_info['mb_side_view']         = get_sideview($billing_info['mb_id'], get_text($billing_info['mb_name']), $billing_info['mb_email'], '');
-$billing_info['display_end_date']     = ($billing_info['end_date'] != '0000-00-00 00:00:00') ? date('Y-m-d', strtotime($billing_info['end_date'])) : "";
+$billing_info['display_end_date']     = (!is_null($billing_info['end_date']) && $billing_info['end_date'] != '0000-00-00 00:00:00') ? date('Y-m-d', strtotime($billing_info['end_date'])) : "";
 $billing_info['display_status']       = $billing_info['status'] == "1" ? "구독 중" : "구독 종료";
 $billing_info['display_billing_key']  = $billing->displayBillKey($billing_info['billing_key']);
 $billing_info['display_next_payment'] = date('Y-m-d', strtotime($billing_info['next_payment_date']));
-switch (strlen($billing_info['od_id'])) {
-    case 16:
-        $billing_info['display_od_id'] = substr($billing_info['od_id'] ,0 ,8) . '-' . substr($billing_info['od_id'], 8);
-        break;
-    default:
-        $billing_info['display_od_id'] = substr($billing_info['od_id'] , 0, 6) . '-' . substr($billing_info['od_id'], 6);
-        break;
-}
+$billing_info['display_od_id']        = $billing_info['od_id'];
 
 /* 구독상품 */
 // 구독상품 정보 조회
 $service = $service_model->selectOneById($service_id);
 
 // 결과처리
-$service['display_expiration'] = ($service['expiration'] != '0') ? '결제일로부터 ' . $service['expiration'] . strtr($service['expiration_unit'], $unit_array) : '없음';
-$service['display_recurring'] = $service['recurring'] . strtr($service['recurring_unit'], $unit_array);
-$service['price'] = $price_model->selectCurrentPrice($service['service_id']);
+$service['display_expiration']  = ($dsExp = $billing->displayExpiration($service)) ? '결제일로부터 ' . $dsExp . ' 이후' : '없음';
+$service['display_recurring']   = ($dsRec = $billing->displayRecurring($service)) ? $dsRec : '없음';
+$service['price']               = $price_model->selectCurrentPrice($service_id);
 
 // 변경예정 가격 최근 1건 조회
 $price_schedule = $price_model->selectScheduledChangePriceInfo($service_id);
@@ -61,8 +54,8 @@ if (isset($price_schedule)) {
 }
 
 /* 결제내역 */
-$total_amount = 0;
-$payment_success = array();
+$total_amount = 0;          // 총 결제금액
+$payment_success = array(); // 회차별 결제성공여부
 
 // 결제내역 조회
 $history_list = $history_model->selectListByOrderId($od_id);
@@ -91,7 +84,6 @@ foreach ($history_list as $i => $history) {
         $history_list[$i]['display_result'] = "실패";
         $history_list[$i]['display_result_color']   = "#FF0000";
     }
-    
 
     if (!isset($payment_success[$count])) {
         $payment_success[$count] = false;
@@ -104,29 +96,37 @@ foreach ($history_list as $i => $history) {
 }
 
 // etc
+$qstr = $qstr . '&amp;sca=' . $sca . '&amp;page=' . $page;
 $pg_anchor = '<ul class="anchor">
 <li><a href="#anc_billing_info">구독결제 정보</a></li>
-<li><a href="#anc_batch_payment">결제내역</a></li>
+<li><a href="#anc_billing_history">결제내역</a></li>
 </ul>';
 ?>
-<section>
+<style>
+.tbl_frm01 th {width:100px;}
+</style>
+<section id="anc_billing_info">
     <h2 class="h2_frm">구독결제 정보</h2>
     <?php echo $pg_anchor; ?>
+
     <div class="local_desc02 local_desc">
         <p>구독서비스 정보는 좌측메뉴 > 구독상품 관리에서 수정할 수 있습니다.</p>
     </div>
-    <form name="form_billing_info" action="./batch_update.php" method="post" autocomplete="off">
+
+    <form name="form_billing_info" action="./billing_update.php" method="post" autocomplete="off">
         <input type="hidden" name="od_id" value="<?php echo $od_id; ?>">
 
         <div class="compare_wrap">
-            <section id="anc_sodr_paymo" class="compare_left">
+            <section class="compare_left">
                 <h3>구독결제 정보</h3>
                 <div class="tbl_frm01">
                     <table>
                         <caption>구독결제 상세정보 수정</caption>
                         <colgroup>
+                            <col class="grid_1">
                             <col class="grid_3">
-                            <col>
+                            <col class="grid_1">
+                            <col class="grid_3">
                         </colgroup>
                         <tbody>
                             <tr>
@@ -136,28 +136,28 @@ $pg_anchor = '<ul class="anchor">
                                 <td><?php echo $billing_info['mb_side_view'] ?></td>
                             </tr>
                             <tr>
-                                <th scope="row"><label for="od_refund_price">자동결제 키</label></th>
+                                <th scope="row">자동결제 키</th>
                                 <td>
                                     <span id="display_billing_key">
                                         <?php echo $billing_info['display_billing_key'] ?>
                                     </span>
                                     <button type="button" id="btn_billing_key" class="btn btn_02">변경</button>
                                 </td>
-                                <th scope="row"><label for="od_refund_price">다음 결제 예정일</label></th>
+                                <th scope="row"><label for="next_payment_date">다음 결제 예정일</label></th>
                                 <td>
                                     <input type="text" class="frm_input date_format" name="next_payment_date" value="<?php echo $billing_info['display_next_payment'] ?>">
                                 </td>
                             </tr>
                             <tr>
-                                <th scope="row"><label for="od_refund_price">결제시작일</label></th>
+                                <th scope="row">결제시작일</th>
                                 <td><?php echo $billing_info['start_date'] ?></td>
-                                <th scope="row"><label for="od_refund_price">결제종료일</label></th>
+                                <th scope="row"><label for="end_date">결제종료일</label></th>
                                 <td>
                                     <input type="text" class="frm_input date_format" name="end_date" value="<?php echo $billing_info['display_end_date'] ?>">
                                 </td>
                             </tr>
                             <tr>
-                                <th scope="row"><label for="od_refund_price">구독 상태</label></th>
+                                <th scope="row"><label for="status">구독 상태</label></th>
                                 <td colspan="3">
                                     <select name="status">
                                         <option value="1" <?php echo $billing_info['status'] == "1" ? "selected" : ""?>>구독 중</option>
@@ -170,7 +170,7 @@ $pg_anchor = '<ul class="anchor">
                 </div>
             </section>
 
-            <section id="anc_sodr_chk" class="compare_right">
+            <section class="compare_right">
                 <h3>구독서비스 정보</h3>
                 <div class="tbl_frm01">
                     <table>
@@ -194,7 +194,7 @@ $pg_anchor = '<ul class="anchor">
                             </tr>
                             <tr>
                                 <th>가격</th>
-                                <td <?php echo empty($price_schedule) ? "colspan='3'" : ""?>><?php echo number_format($service['price']); ?>원</td>
+                                <td <?php echo (!isset($price_schedule)) ? "colspan='3'" : ""?>><?php echo number_format($service['price']); ?>원</td>
                                 <?php if (isset($price_schedule)) { ?>
                                 <th>
                                     변경예정 가격
@@ -206,7 +206,7 @@ $pg_anchor = '<ul class="anchor">
                             </tr>
                             <tr>
                                 <th>결제주기</th>
-                                <td colspan='3'><?php echo $service['display_recurring'] ?></td>
+                                <td colspan="3"><?php echo $service['display_recurring'] ?></td>
                             </tr>
                         </tbody>
                     </table>
@@ -216,12 +216,12 @@ $pg_anchor = '<ul class="anchor">
         
         <div class="btn_confirm01 btn_confirm">
             <input type="submit" value="결제정보 수정" class="btn_submit btn">
-            <a href="./batch_list.php?<?php echo $qstr; ?>" class="btn btn_02">목록</a>
+            <a href="./billing_list.php?<?php echo $qstr; ?>" class="btn btn_02">목록</a>
         </div>
     </form>
 </section>
 
-<section id="anc_sodr_pay">
+<section id="anc_billing_history">
     <h2 class="h2_frm">결제내역</h2>
     <?php echo $pg_anchor; ?>
 
@@ -314,10 +314,10 @@ $pg_anchor = '<ul class="anchor">
 
     <!-- 배치키 발급시 카드번호 리턴 여부 설정 -->
     <!-- Y : 1234-4567-****-8910 형식, L : 8910 형식(카드번호 끝 4자리) -->
-    <!-- <input type='hidden' name='batch_cardno_return_yn'  value='Y'> -->
+    <input type='hidden' name='batch_cardno_return_yn'  value='L'>
 
     <!-- batch_cardno_return_yn 설정시 결제창에서 리턴 -->
-    <!-- <input type='hidden' name='card_mask_no'			  value=''> -->
+    <input type='hidden' name='card_mask_no'			value=''>
 
     <input type="hidden" name="mb_id"       value="<?php echo $billing_info['mb_id'] ?>"/>
 </form>
@@ -341,8 +341,6 @@ function m_Completepayment( frm_mpi, closeEvent )
             data: queryString,
             success: function(data) {
                 if (data) {
-                    console.log(data);
-                    // Set Data
                     let result = JSON.parse(data);
 
                     if (result.result_code == "0000") {
@@ -351,7 +349,6 @@ function m_Completepayment( frm_mpi, closeEvent )
                     } else {
                         alert("[" + result.result_code + "]" + result.result_message);
                     }
-                    
                 } else {
                     alert("잠시 후에 시도해주세요.");
                 }
@@ -368,8 +365,19 @@ function m_Completepayment( frm_mpi, closeEvent )
 
 $(function() {
     let form            = document.querySelector("#form_billing_key");
-    let btn_billing_key   = document.querySelector("#btn_billing_key");
+    let btn_billing_key = document.querySelector("#btn_billing_key");
     let btn_payment     = $("button[name=btn_payment]");
+
+    $('.date_format').datepicker();
+
+    $.datepicker.setDefaults({
+        changeMonth: true,
+        changeYear: true,
+        dateFormat: "yy-mm-dd",
+        showButtonPanel: true,
+        yearRange: "c-99:c+99",
+        maxDate: "+10y"
+    })
 
     /* 표준웹 실행 */
     btn_billing_key.onclick = function(){
@@ -383,7 +391,7 @@ $(function() {
     btn_payment.on('click', function(){
         if (confirm(this.dataset.count + "회차 결제를 진행하시겠습니까?")) {
             $.ajax({
-                url : "./ajax.order_batch.php",
+                url : "./ajax.request_billing.php",
                 type: "POST",
                 data: {
                     "id" : this.dataset.id,
@@ -392,15 +400,12 @@ $(function() {
                 },
                 success: function(data) {
                     if (data) {
-                        console.log(data);
-                        // Set Data
                         let result = JSON.parse(data);
+
                         if (result.result_code == "0000") {
-                            // 성공
                             alert(result.result_message);
                             location.reload();
                         } else {
-                            // 실패
                             alert("[" + result.result_code + "]" + result.result_message);
                         }
                     } else {
@@ -418,26 +423,15 @@ $(function() {
         }
     });
 
-    $('.date_format').datepicker();
-
-    $.datepicker.setDefaults({
-        changeMonth: true,
-        changeYear: true,
-        dateFormat: "yy-mm-dd",
-        showButtonPanel: true,
-        yearRange: "c-99:c+99",
-        maxDate: "+10y"
-    })
-
     $(".btn_cancel").on("click", function(){
         var url = "./cancel_popup.php?id=" + $(this).data('id') + "&service_id=" + $(this).data('service_id');
-        window.open(url, "cancel billing", "left=100,top=100,width=550,height=650,scrollbars=yes,resizable=yes");
+        window.open(url, "cancel_billing", "left=100,top=100,width=550,height=650,scrollbars=yes,resizable=yes");
         return false;
     })
 
     $(".payment_no").on("click", function(){
         var url = "./payment_detail.php?id=" + $(this).data('id');
-        window.open(url, "cancel billing", "left=100,top=100,width=550,height=650,scrollbars=yes,resizable=yes");
+        window.open(url, "billing_history_Detail", "left=100,top=100,width=550,height=650,scrollbars=yes,resizable=yes");
         return false;
     })
 });
