@@ -1,4 +1,5 @@
 <?php
+
 /**
  * 구독 서비스에 필요한 함수모음
  * json이나 html 은 반환하지 않습니다.
@@ -28,12 +29,12 @@ function get_service_detail($service_id)
 
     $result_list = array();
     $service = $billing_service->selectOneById($service_id);
-    if(empty($service)){
+    if (empty($service)) {
         return $result_list;
     }
 
     $price = $service_price->selectCurrentPrice($service_id);
-    if(empty($price)){
+    if (empty($price)) {
         return $result_list;
     }
 
@@ -44,8 +45,8 @@ function get_service_detail($service_id)
  * @param $request
  * @return array 결과 없으면 빈배열 리턴
  */
-function get_service_list($request){
-
+function get_service_list($request)
+{
     global $service_price, $billing_service;
     $service_list = $billing_service->selectList($request);
 
@@ -69,7 +70,7 @@ function get_service_list($request){
  */
 function get_myservice($request_data)
 {
-    if(!is_array($request_data)){
+    if (!is_array($request_data)) {
         return false;
     }
 
@@ -82,15 +83,15 @@ function get_myservice($request_data)
 
     $request_data['mb_id'] = $mb_id;
     $billing_info_result = $billing_info->selectList($request_data);
-    if(empty($billing_info_result)){
+    if (empty($billing_info_result)) {
         return false;
     }
 
     $results = array();
-    foreach($billing_info_result as $row => $key){
+    foreach ($billing_info_result as $row => $key) {
         $service_id = $key['service_id'];
         $service_info = $billing_service->selectOneById($service_id);
-        $current_price = array('price' =>$service_price->selectCurrentPrice($service_id));
+        $current_price = array('price' => $service_price->selectCurrentPrice($service_id));
         $results[$row]['bo_table'] = $service_info['bo_table'];
         $results[$row]['subject'] = $service_info['bo_subject'];
         $results[$row]['service'][] = $key + $service_info + $current_price;
@@ -114,7 +115,7 @@ function get_myservice_info($od_id)
     }
 
     $payment_history = $billing_history->selectOneByOdId($od_id);
-    if($payment_history['mb_id'] !== $mb_id){
+    if ($payment_history['mb_id'] !== $mb_id) {
         return false;
     }
 
@@ -129,7 +130,6 @@ function get_myservice_info($od_id)
     $billing_info_result['bo_subject'] = $service_info['bo_subject'];
 
     return $billing_info_result;
-
 }
 
 /**
@@ -148,7 +148,7 @@ function get_myservice_history($od_id, $offset, $rows)
     }
 
     $payments = $billing_history->selectListByOrderId($od_id, $offset, $rows);
-    if(empty($payments)){
+    if (empty($payments)) {
         return false;
     }
 
@@ -171,18 +171,18 @@ function cancel_myservice($od_id)
 
     $bill_info = $billing_info->selectOneByOrderId($od_id);
 
-    if(empty($bill_info) || $bill_info['mb_id'] !== $mb_id){
+    if (empty($bill_info) || $bill_info['mb_id'] !== $mb_id) {
         return false;
     }
 
-    $old_billing_key =$bill_info['billing_key'];
-    $batchDelResult = json_decode($billing->pg->requestDeleteBillKey($old_billing_key), true);
-    if ($batchDelResult === false || !array_key_exists('result_code', $batchDelResult)) {
+    $batch_del_result = $billing->pg->requestDeleteBillKey($bill_info['billing_key']);
+    $batch_del_result = $billing->convertPgDataToCommonData($batch_del_result);
+    if ($batch_del_result === false || !array_key_exists('result_code', $batch_del_result)) {
         return false;
     }
 
-    if ($batchDelResult['result_code'] !== "0000") {
-        return $batchDelResult;
+    if ($batch_del_result['result_code'] !== "0000") {
+        return json_encode($batch_del_result);
     }
 
     $result = $billing_info->updateStatus($od_id, (int)false);
