@@ -103,3 +103,14 @@ CREATE TABLE `g5_billing_cancel` (
   `cancel_time` datetime NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- gnuboard5.g5_billing_scheduler_history definition
+
+CREATE TABLE `g5_billing_scheduler_history` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `success_count` int(11) NOT NULL DEFAULT 0,
+  `fail_count` int(11) NOT NULL DEFAULT 0,
+  `state` int(1) NOT NULL DEFAULT 0 COMMENT '1: 성공, 0: 실패, -1:부분성공',
+  `start_time` datetime NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
