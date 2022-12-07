@@ -1,59 +1,83 @@
 <?php
-header("Content-type: text/html; charset=utf-8");
-
+//결제 요청 처리.
 require_once dirname(__FILE__) . '/_common.php';
-include_once G5_PATH . "/bbs/kcp-batch/KcpBatch.php";
 
+$pg_code = 'kcp';
+require_once G5_LIB_PATH . "/billing/G5Autoloader.php";
+require_once G5_BBS_PATH . '/subscription/subscription_service.php';
 /* ============================================================================== */
-/* =  요청정보                                                                   = */
+/* =  결제 요청정보 준비                                                           = */
 /* = -------------------------------------------------------------------------- = */
-// 인증서 정보(직렬화)
-$kcpBatch           = new KcpBatch();
-$kcp_cert_info      = $kcpBatch->getServiceCertification();
-$site_cd            = $kcpBatch->getSiteCd();
-$cust_ip            = '';
-$currency           = $_POST[ "currency" ];
-$quota              = '';
 
-$ordr_idxx          = $_POST[ "ordr_idxx" ];
-$good_name          = $_POST[ "good_name" ];
-$buyr_name          = $_POST[ "buyr_name" ];
-$buyr_mail          = $_POST[ "buyr_mail" ];
-$buyr_tel2          = $_POST[ "buyr_tel2" ];
+define('WON', '410'); // 원화
 
-$bt_batch_key       = $_POST[ "bt_batch_key" ]; // 배치키 정보
-$bt_group_id        = $kcpgroup_id;             // 배치키 그룹아이디
+$billing = new Billing($pg_code);
+$information_model  = new BillingInformationModel();
+$history_model      = new BillingHistoryModel();
+$cancel_model       = new BillingCancelModel();
 
-$recurring    = '1';//$_POST["recurring"];
-$interval_unit      = 'm';//$_POST["interval_unit"];
-// 결제결과 후처리 성공여부 (false일때 결제 취소처리)
-$bSucc = "";
+$unit_array = array('y' => 'year', 'm' => 'month', 'w' => 'week', 'd' => 'day');
+//필수 파라미터
 
-$data = array(
-    "site_cd"        => $site_cd,
-    "kcp_cert_info"  => $kcp_cert_info,
-    "pay_method"     => "CARD",
-    "cust_ip"        => "",
-    "amount"         => $_POST[ "good_mny" ],
-    "card_mny"       => $_POST[ "good_mny" ],
-    "currency"       => $currency,
-    "quota"          => "00",
-    "ordr_idxx"      => $ordr_idxx,
-    "good_name"      => $good_name,
-    "buyr_name"      => $buyr_name,
-    "buyr_mail"      => $buyr_mail,
-    "buyr_tel2"      => $buyr_tel2,
-    "card_tx_type"   => "11511000",
-    "bt_batch_key"   => $bt_batch_key,
-    "bt_group_id"    => $bt_group_id
+$od_id       = isset($_POST['od_id']) ? clean_xss_tags($_POST['od_id']) : '';
+$billing_key = isset($_POST['billing_key']) ? $billing_key : '';  // 배치키 정보
+$currency    = isset($_POST['currency']) ? $_POST['currency'] : WON;  // 화폐단위
+$od_id       = isset($_POST['od_id']) ? $_POST['od_id'] : '';  // 주문 정보
+$service_id  = isset($service_id) ?  $service_id : '';  // 구독 서비스 ID
+if (empty($od_id) || $service_id === '' || empty($billing_key)) {
+    responseJson('필수 파라미터가 없습니다.', 400);
+}
+$service_info = get_service_detail($service_id);
+if (!is_array($service_info) || empty($service_info)) {
+    responseJson('구독 정보를 가져오는데 실패했습니다.', 400);
+}
+$amount = $service_info['price'];  // 결제금액
+/**
+ * 권장 파라미터
+ * @var string $good_name (100byte 이내 약 33글자) 상품명
+ *
+ */
+$service_name = utf8_strcut($service_info['name'], 33, ''); // 상품명
+
+//선택 파라미터
+$mb_name = isset($_POST['buyr_name']) ? $buyr_name : '';
+$mb_email = isset($_POST['buyr_mail']) ? $buyr_mail : '';
+$mb_hp = isset($_POST['buyr_tel2']) ? $buyr_tel2 : '';
+$customer_ip = ''; //TODO
+
+$recurring = $service_info['recurring'];  // 정기 결제의 주기 몇일, 몇개월, 몇년 등.
+$recurring_unit = $service_info['recurring_unit']; // 정기결제 주기단위
+
+/**
+ * @var bool $bSucc 결제결과 후처리 성공여부 변수 (false일때 결제 취소처리)
+ */
+$bSucc = false;
+
+$reqest_billing_data = array(
+    'cust_ip' => $customer_ip,
+    'amount' => $amount,
+    'currency' => $currency,
+    'od_id' => $od_id,
+    'name' => $service_name,
+    'mb_name' => $mb_name,
+    'mb_email' => $mb_email,
+    'mb_hp' => $mb_hp,
+    'billing_key' => $billing_key
 );
 
 /* ============================================================================== */
-/* =  요청                                                                      = */
+/* =  결제 요청                                                                  = */
 /* = -------------------------------------------------------------------------- = */
-$res_data = $kcpBatch->requestApi($kcpBatch->urlBatchPayment, $data);
+$res_data = $billing->pg->requestBilling($reqest_billing_data);
+$res_data = $billing->convertPgDataToCommonData($res_data);
+if (isset($res_data['http_code'])) {
+    //error 응답.
+    responseJson($res_data['result_message'], $res_data['http_code']);
+}
 
-
+if ($res_data['result_code'] !== "0000") {
+    responseJson($res_data['result_message'], 400);
+}
 /* ============================================================================== */
 /* =  로그파일 생성                                                              = */
 /* = -------------------------------------------------------------------------- = */
@@ -62,80 +86,29 @@ $res_data = $kcpBatch->requestApi($kcpBatch->urlBatchPayment, $data);
 /* ============================================================================== */
 /* =  응답정보                                                                   = */
 /* = -------------------------------------------------------------------------- = */
-// 공통
-$res_cd = "";
-$res_msg = "";
-$tno = "";
-$amount = "";
-$order_no = "";
-// 카드
-$card_cd = "";
-$card_name = "";
-$app_no = "";
-$app_time ="";
-$quota ="";
-$noinf ="";
+// 결제일, 구독만료일
+$res_data['payment_date'] = date('Y-m-d');
+$res_data['expiration_date'] = date(
+    'Y-m-d 23:59:59 ',
+    strtotime('+' . $service_info['recurring'] . " " . $unit_array[$service_info['recurring_unit']])
+);
 
-// RES JSON DATA Parsing
-$json_res = json_decode($res_data, true);
+$payment_insert_data = $billing->convertPgDataToCommonData($res_data);
+$result_code = $payment_insert_data['result_code'];
+$result_message = $payment_insert_data['result_message'];
 
-$res_cd = $json_res["res_cd"];
-$res_msg = $json_res["res_msg"];
-
-if ( $res_cd == "0000" )
-{
-    $tno = $json_res["tno"];
-    $amount = $json_res["amount"];
-    $card_cd = $json_res["card_cd"];
-    $card_name = $json_res["card_name"];
-    $app_no = $json_res["app_no"];
-    $order_no = $json_res["order_no"];
-    $app_time = $json_res["app_time"];
-    $quota = $json_res["quota"];
-    $noinf = $json_res["noinf"];
+if ($result_code === '0000') {
+    if ($service_info['price'] === $payment_insert_data['amount']) { //결제된 금액과 서비스 금액 같은지 확인.
+        $bSucc = true;
+    }
+} else {
+    responseJson('결제 승인이 실패했습니다.', 200);
 }
 
-/* ============================================================================== */
-/* =  결제 결과처리                                                              = */
-/* ============================================================================== */
-// 자동결제 정보 저장
-$start_date = date("Y-m-d H:i:s");
-$end_date = "0000-00-00 00:00:00";
+/* ==============================================================================
+ 결제 결과처리
+ 자동결제 정보 저장
 
-$g5["batch_info_table"] = "g5_batch_info";
-$sql_batch_info = "INSERT INTO {$g5["batch_info_table"]} SET 
-                od_id               = '{$ordr_idxx}',
-                mb_id               = '{$member['mb_id']}',
-                batch_key           = '{$bt_batch_key}',
-                kcpgroup_id         = '{$bt_group_id}',
-                price               = '{$amount}',
-                recurring           = '{$recurring}',
-                interval_unit       = '{$interval_unit}',
-                start_date          = '{$start_date}',
-                end_date            = '{$end_date}'
-            ";
-if (!sql_query($sql_batch_info)) {
-    $bSucc = "false";
-}
-
-// 자동결제 이력 저장
-$g5["batch_payment_table"] = "g5_batch_payment";
-$sql_payment = "INSERT INTO {$g5["batch_payment_table"]} SET 
-                od_id               = '{$ordr_idxx}',
-                mb_id               = '{$member["mb_id"]}',
-                batch_key           = '{$bt_batch_key}',
-                amount              = '{$amount}',
-                res_cd              = '{$res_cd}',
-                res_msg             = '{$res_msg}',
-                tno                 = '{$tno}',
-                card_name           = '{$card_name}',
-                res_data            = '{$res_data}',
-                date                = '{$start_date}'
-            ";
-if (!sql_query($sql_payment)) {
-    $bSucc = "false";
-}
-/* 
 ==========================================================================
 승인 결과 DB 처리 실패시 : 자동취소
 --------------------------------------------------------------------------
@@ -143,33 +116,79 @@ if (!sql_query($sql_payment)) {
 DB 작업을 실패하여 DB update 가 완료되지 않은 경우, 자동으로
 승인 취소 요청을 하는 프로세스가 구성되어 있습니다.
 
-DB 작업이 실패 한 경우, bSucc 라는 변수의 값을 "false"로 설정해 주시기 바랍니다.
-(DB 작업 성공의 경우에는 "false" 이외의 값을 설정하시면 됩니다.)
+DB 작업이 실패 한 경우, bSucc 라는 변수의 값을 false로 설정해 주시기 바랍니다.
+(DB 작업 성공의 경우에는 bSucc 는 true 입니다. );
 --------------------------------------------------------------------------
 */
-
-if ( $res_cd == "0000" )
-{
-    if ( $bSucc == "false")
-    {        
-        // API RES
-        $res_data  = $kcpBatch->cancelBatchPayment($tno);
-        
-        // RES JSON DATA Parsing
-        $json_res = json_decode($res_data, true);
-        
-        // $json_res["res_cd" ] = "9999";//$json_res["res_cd" ];
-        $json_res["res_msg"] = $json_res["res_msg"] . "(DB 입력오류로 인한 결제취소처리)";//$json_res["res_msg"];
-    }
-}
-
-// 결과 출력
-if (version_compare(phpversion(), "5.4", ">=")) {
-    echo json_encode($json_res, JSON_UNESCAPED_UNICODE);
+$start_date = date('Y-m-d H:i:s');
+if (empty($service_info['expiration'])) {
+    $end_date = '0000-00-00 00:00:00';//구독 만료기간이 정해지지않음.
 } else {
-    function han ($s) { return reset(json_decode('{"s":"'.$s.'"}')); }
-    function to_han ($str) { return preg_replace('/(\\\u[a-f0-9]+)+/e', 'han("$0")', $str); }
-
-    echo to_han(json_encode($json_res));
+    $end_date = $billing->nextPaymentDate($start_date, $start_date, $service_info['expiration'], $service_info['expiration_unit']);
 }
-exit;
+
+$next_payment_date = $billing->nextPaymentDate($start_date, $start_date, $recurring, $recurring_unit);
+
+if ($next_payment_date !== false) {
+    $payment_insert_data['mb_id'] = get_user_id();
+    $payment_insert_data['service_id'] = $service_id;
+    $payment_insert_data['billing_key'] = $billing_key;
+    $payment_insert_data['start_date'] = $start_date;
+    $payment_insert_data['end_date'] = $end_date;
+    $payment_insert_data['next_payment_date'] = $next_payment_date;
+
+    $is_insert = $information_model->insert($payment_insert_data);
+    $bSucc = $is_insert;
+} else {
+    $bSucc = false;
+}
+
+// 자동결제 이력 저장
+$payment_insert_data['payment_count'] = 0; //첫결제
+$history_model->insert($payment_insert_data);
+
+//0000 은 결제성공
+if ($result_code === '0000') {
+    if ($bSucc === false) {
+        payment_cancel($payment_insert_data['payment_no'], $billing);
+    }
+} else {
+    payment_cancel($payment_insert_data['payment_no'], $billing);
+}
+
+// 나머지 결과 출력
+$res_data = array();
+$res_data['result_code'] = $result_code;
+$res_data['result_message'] = $result_message;
+
+if (PHP_VERSION_ID >= 50400) {
+    echo json_encode($res_data, JSON_UNESCAPED_UNICODE);
+} else {
+    echo to_han(json_encode($res_data));
+}
+
+/**
+ * 결제 취소 요청후 종료
+ * @param $payment_no
+ * @param Billing $billing
+ * @return void
+ */
+function payment_cancel($payment_no, $billing)
+{
+    // API RES
+    $cancle_res = $billing->pg->requestCancelBilling($payment_no);
+
+    // 유효성 검사.
+    if (isset($cancle_res['result_code']) && $cancle_res['result_code'] !== '0000') {
+        $msg = '결제 취소가 실패했습니다. 관리자 문의바랍니다.';
+        responseJson($msg, 401);
+    }
+
+    if (PHP_VERSION_ID >= 50400) {
+        echo json_encode($cancle_res, JSON_UNESCAPED_UNICODE);
+    } else {
+        echo to_han(json_encode($cancle_res));
+    }
+
+    exit;
+}
