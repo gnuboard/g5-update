@@ -1,5 +1,5 @@
 <?php
-require_once dirname(__FILE__) . './_common.php';
+require_once dirname(__FILE__) . '/_common.php';
 require_once (G5_BBS_PATH . '/subscription/subscription_service.php');
 require_once (G5_LIB_PATH . '/billing/KcpBatch.php');//G5_LIB_PATH . '/billing/KcpBatch.php
 $input_data = json_decode(file_get_contents('php://input'), true);
@@ -51,7 +51,7 @@ function send_batch_info($order_id, $service_id)
 function get_batchkey_info_kcp($order_id, $service_id)
 {
     $info = get_service_detail($service_id);
-    if (is_array($info) && count($info) !== 1) {
+    if (!is_array($info) || empty($info)) {
         return false;
     }
 
