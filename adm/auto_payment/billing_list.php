@@ -51,7 +51,7 @@ foreach ($billing_list as $i => $row) {
     $billing_list[$i]['bg_class']           = 'bg' . ($i % 2);
     $billing_list[$i]['mb_side_view']       = get_sideview($row['mb_id'], get_text($row['mb_name']), $row['mb_email'], '');
     $billing_list[$i]['price']              = $price_model->selectCurrentPrice($row['service_id']);
-    $billing_list[$i]['display_recurring']  = ($dsRec = $billing->displayRecurring($service)) ? $dsRec : '없음';
+    $billing_list[$i]['display_recurring']  = ($dsRec = $billing->displayRecurring($row)) ? $dsRec : '없음';
     $billing_list[$i]['display_od_id']      = $row['od_id'];
     $billing_list[$i]['display_date']       = $row['start_date'] . ' ~ ' . ($row['end_date'] != null && $row['end_date'] != '0000-00-00 00:00:00' ? $row['end_date'] : '');
     $billing_list[$i]['display_status']     = $row['status'] == '1' ? '진행 중' : '종료';
@@ -125,11 +125,7 @@ $qstr = $qstr . '&amp;page=' . $page;
                         <label for="chk_<?php echo $key; ?>" class="sound_only">주문번호 <?php echo $billing['od_id']; ?></label>
                         <input type="checkbox" name="chk[]" value="<?php echo $key ?>" id="chk_<?php echo $key ?>">
                     </td>
-                    <td headers="th_od_id" rowspan="2">
-                        <a href="<?php echo G5_SHOP_URL; ?>/orderinquiryview.php?od_id=<?php echo $billing['od_id']; ?>" class="orderitem">
-                            <?php echo $billing['display_od_id']; ?>
-                        </a>
-                    </td>
+                    <td headers="th_od_id" rowspan="2"><?php echo $billing['display_od_id']; ?></td>
                     <td headers="th_service_name" colspan="3"><?php echo $billing['name']; ?></td>
                     <td headers="th_member" rowspan="2"><?php echo $billing['mb_side_view']; ?></td>
                     <td headers="th_date" rowspan="2"><?php echo $billing['display_date']; ?></td>
