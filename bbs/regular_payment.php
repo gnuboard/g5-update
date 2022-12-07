@@ -256,7 +256,7 @@ function order_payment(){
     const form_data = new FormData(document.querySelector("#form_payment"));
     const data = new URLSearchParams(form_data).toString();
     $.ajax({
-        url: "kcp-batch/ajax.order_batch.php",
+        url: "kcp-batch/ajax.order_billing.php",
         type: 'post',
         data: data,
         success: function (data) {
