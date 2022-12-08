@@ -48,7 +48,7 @@ class BillingInformationModel
         $bindParam = array();
 
         $sql = "SELECT
-                    bi.od_id, bi.start_date, bi.end_date, bi.status, bi.service_id, bi.next_payment_date,bi.billing_key,
+                    bi.*,
                     mb.mb_id, mb.mb_name, mb.mb_email, mb.mb_hp,
                     bs.name, bs.recurring, bs.recurring_unit
                 FROM {$g5['billing_information_table']} bi

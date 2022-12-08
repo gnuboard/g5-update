@@ -52,26 +52,19 @@ for ($idx = 0; $idx < $billing_total_page; $idx++) {
             ++$fail_count;
             continue;
         }
-        //구독만료기간이 있는 상품.
-        if ($billing->isNullByDate($today_payment['end_date'])) {
-            $payment_end_date = date('Y-m-d', strtotime($today_payment['end_date']));
 
-            //배치실행일이 구독 만료일이면 결제하지 않는다.
-            if (G5_TIME_YMD === $payment_end_date) {
-                ++$success_count;
-                continue;
+        //이벤트 기간 체크
+        if (!$billing->isNullByDate($today_payment['event_expiration_date']) &&
+            strtotime($today_payment['event_expiration_date']) > strtotime(G5_TIME_YMD)) {
+            $price = $today_payment['event_price'];
+        } else {
+            //구독만료기간이 있는 상품.
+            if (!$billing->isNullByDate($today_payment['end_date'])) {
+                $price = $today_payment['price'];
+            } //만료기간이 설정되지 않음 상품, 변동된 가격을 따라 결제한다.
+            else {
+                $price = $service_price->selectCurrentPrice($today_payment['service_id']);
             }
-            else { //구독기간만료가 되지않아서 이벤트 기간 체크
-                if (strtotime($today_payment['event_expiration_date']) > strtotime(G5_TIME_YMD)) {
-                    $price = $today_payment['event_price'];
-                } else {
-                    $price = $today_payment['price'];
-                }
-            }
-        }
-        else { //만료기간이 설정되지 않음 상품, 변동된 가격을 따라 결제한다.
-            $price = $service_price->selectCurrentPrice($today_payment['service_id']);
-            $price = empty($price) ? $price : 0;
         }
 
         $pg_req = array(
