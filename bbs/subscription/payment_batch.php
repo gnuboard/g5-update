@@ -41,18 +41,14 @@ $payment_success_code = '0000'; // kcp 결제 성공코드
 $billing_list_length = $billing_info->selectTotalCount($query_data);
 $billing_total_page = (int)ceil($billing_list_length / $query_data['rows']); //DB 부하, 배열 메모리 줄이기위한 페이징
 for ($idx = 0; $idx < $billing_total_page; $idx++) {
-    $query_data['offset'] = ($idx - 1) * $query_data['rows'];
+    $query_data['offset'] = $idx === 0 ? 0 :$idx * $query_data['rows'];
+
     $billing_list = $billing_info->selectList($query_data);
     if (!is_array($billing_list) || count($billing_list) === 0) {
         continue;
     }
 
     foreach ($billing_list as $today_payment) {
-        $history_data = $billing_history->selectOneLastSuccessByOdId($today_payment['od_id'], $payment_success_code); //지난 결제성공 기록불러오기
-        if (empty($history_data)) {
-            ++$fail_count;
-            continue;
-        }
 
         //이벤트 기간 체크
         if (!$billing->isNullByDate($today_payment['event_expiration_date']) &&
@@ -84,6 +80,14 @@ for ($idx = 0; $idx < $billing_total_page; $idx++) {
         $pg_response = $billing->pg->requestBilling($pg_req);
         $pg_response = $billing->convertPgDataToCommonData($pg_response);
 
+        //지난 결제성공 기록불러오기
+        //결제 카운트, 실패시 이전 결제만기 날짜등 필요.
+        $history_data = $billing_history->selectOneLastSuccessByOdId($today_payment['od_id'], $payment_success_code);
+        if (empty($history_data)) {
+            ++$fail_count;
+            continue;
+        }
+
         if (isset($pg_response['result_code']) && $pg_response['result_code'] === '0000') {
             ++$success_count;
 
@@ -94,28 +98,21 @@ for ($idx = 0; $idx < $billing_total_page; $idx++) {
                 $today_payment['recurring_unit']
             );
 
-            $history_data['amount'] = $price;
-            $history_data['result_data'] = json_encode($pg_response);
-            $history_data['result_code'] = $pg_response['result_code'];
-            $history_data['result_message'] = $pg_response['result_message'];
-            $history_data['payment_count'] += 1;
-            $history_data['payment_date'] = G5_TIME_YMD;
-            $history_data['card_name'] = $pg_response['card_name'];
             $history_data['expiration_date'] = $next_payment_date;
             $billing_info->updateNextPaymentDate($history_data['od_id'], $next_payment_date);
         } else {
             //pg 사 빌링오류 또는 http 통신 실패 기록
             ++$fail_count;
-
-            $history_data['amount'] = $price;
-            $error_http_code = isset($pg_response['http_code']) ? $pg_response['http_code'] : 0;
-            $history_data['result_code'] = isset($pg_response['result_code']) ? $pg_response['result_code'] : $error_http_code;
-            $history_data['result_message'] = isset($pg_response['result_message']) ? $pg_response['result_message'] : 'pg사 연결 실패';
-            $history_data['result_data'] = json_encode($pg_response);
-            $history_data['payment_count'] += 1;
-            $history_data['payment_date'] = G5_TIME_YMD;
-            $history_data['card_name'] = isset($pg_response['card_name']) ? $pg_response['card_name'] : '';
         }
+
+        $error_http_code = isset($pg_response['http_code']) ? $pg_response['http_code'] : 0;
+        $history_data['result_code'] = isset($pg_response['result_code']) ? $pg_response['result_code'] : $error_http_code;
+        $history_data['result_message'] = isset($pg_response['result_message']) ? $pg_response['result_message'] : 'pg사 연결 실패';
+        $history_data['result_data'] = json_encode($pg_response);
+        $history_data['amount'] = $price;
+        $history_data['payment_date'] = G5_TIME_YMD;
+        $history_data['card_name'] = isset($pg_response['card_name']) ? $pg_response['card_name'] : '';
+        $history_data['payment_count'] += 1;
 
         // 성공, 실패 모두 기록
         $billing_history->insert($history_data);
