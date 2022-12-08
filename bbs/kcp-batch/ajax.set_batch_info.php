@@ -1,7 +1,9 @@
 <?php
 require_once dirname(__FILE__) . '/_common.php';
 require_once (G5_BBS_PATH . '/subscription/subscription_service.php');
-require_once (G5_LIB_PATH . '/billing/KcpBatch.php');//G5_LIB_PATH . '/billing/KcpBatch.php
+require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
+$autoload = new G5AutoLoader();
+$autoload->register();
 $input_data = json_decode(file_get_contents('php://input'), true);
 
 /**
@@ -54,8 +56,8 @@ function get_batchkey_info_kcp($order_id, $service_id)
     if (!is_array($info) || empty($info)) {
         return false;
     }
-
-    $kcp_batch = new KcpBatch();
+    $pg_code = 'kcp';
+    $billing = new Billing($pg_code);
 
     $recurring = $info['recurring'];
     $recurring_unit = $info['recurring_unit'];
@@ -65,9 +67,9 @@ function get_batchkey_info_kcp($order_id, $service_id)
     }
     $good_expr =  '2:' . $recurring . $recurring_unit;
     $sendInfo = array();
-    $sendInfo['site_cd'] = $kcp_batch->getSiteCd();
+    $sendInfo['site_cd'] = $billing->pg->getSiteCd();
     $sendInfo['ordr_idxx'] = $order_id;
-    $sendInfo['kcpgroup_id'] = $kcp_batch->getKcpGroupId();
+    $sendInfo['kcpgroup_id'] = $billing->pg->getKcpGroupId();
     $sendInfo['pay_method'] = 'AUTH:CARD';
     $sendInfo['card_cert_type'] = 'BATCH';
     $sendInfo['batch_soc'] = 'Y';

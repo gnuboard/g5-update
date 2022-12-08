@@ -66,7 +66,7 @@ add_stylesheet('<link rel="stylesheet" href="'.$member_skin_url.'/style.css">', 
     <!-- 필수 항목 : 결제 금액/화폐단위 -->
     <input type="hidden" name="currency" value="410"  />
     <input type="hidden" name="service_id" value="<?php echo $service_id ?>" />
-    <input type="hidden" name='batch_key' id='input_batch_key' value='' />
+    <input type="hidden" name='billing_key' value='' />
     <input type="hidden" name="enc_info" value=""/>
     <input type="hidden" name="enc_data" value=""/>
     <input type="hidden" name="tran_cd" value=""/>
@@ -146,20 +146,20 @@ function m_Completepayment(return_form, close_event)
 
         const data = new URLSearchParams(kcp_form).toString();
         $.ajax({
-            url : "kcp-batch/ajax.get_batch_key_class.php",
+            url : "kcp-batch/ajax.get_billing_key.php",
             type: 'post',
             data: data,
             success: function (data) {
                 if (data) {
-                    const result = JSON.parse(data);
-                    if (result.res_cd == "0000") {
-                        paymen_form.batch_key.value = result.batch_key;
-                        paymen_form.enc_info.value = result.enc_info;
-                        paymen_form.tran_cd.vaue = result.tran_cd;
+                    const res = JSON.parse(data);
+                    if (res.result_code == "0000") {
+                        paymen_form.billing_key.value = res.billing_key;
+                        paymen_form.enc_info.value = res.enc_info;
+                        paymen_form.tran_cd.vaue = res.tran_cd;
                         order_payment();
                     } else {
                         alert('카드 등록에 실패했습니다.');
-                        console.log("[" + result.res_cd + "]" + result.res_msg);
+                        console.log("[" + res.result_code + "]" + res.result_message);
                     }
 
                 } else {
@@ -256,16 +256,16 @@ function order_payment(){
     const form_data = new FormData(document.querySelector("#form_payment"));
     const data = new URLSearchParams(form_data).toString();
     $.ajax({
-        url: "kcp-batch/ajax.order_batch_class.php",
+        url: "kcp-batch/ajax.order_billing.php",
         type: 'post',
         data: data,
         success: function (data) {
             if (data) {
                 const result = JSON.parse(data);
-                if (result.res_cd == "0000") {
+                if (result.result_code == "0000") {
                     // 성공
                     alert('결제가 완료되었습니다.');
-                    window.location.replace(g5_url); //TODO 구독페이지 연결하기.
+                    window.location.replace(g5_bbs_url');
                 } else {
                     // 실패
                     alert('결제 요청에 실패했습니다.')

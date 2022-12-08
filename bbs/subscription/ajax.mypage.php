@@ -1,7 +1,7 @@
 <?php
 
-require_once '../../common.php';
-require_once 'subscription/subscription_service';
+require_once(dirname(__FILE__) . '/../../common.php');
+require_once G5_BBS_PATH . '/subscription/subscription_service.php';
 
 header('Content-type: application/json; charset=utf-8');
 /**
@@ -9,7 +9,11 @@ header('Content-type: application/json; charset=utf-8');
  */
 
 $res_data = json_decode(file_get_contents('php://input'), true);
-$work_mode = $res_data['w'];
+$work_mode = isset($res_data['w']) ? $res_data['w'] : '';
+if(empty($work_mode)){
+    response_json('잘못된 요청입니다.', 400);
+}
+
 if($_SERVER['REQUEST_METHOD'] === 'GET') {
     switch ($work_mode) {
         case  'all' : {
