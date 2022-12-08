@@ -21,6 +21,7 @@ $unit_array     = $billing->getUnitArray();
 $service_id     = isset($_GET['service_id']) ? $_GET['service_id'] : 0;
 $board_list     = array();
 $service        = array(
+    'service_id' => '',
     'service_table' => '',
     'name' => '',
     'order' => '',
