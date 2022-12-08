@@ -1,5 +1,5 @@
 <?php
-$sub_menu = '400940';
+$sub_menu = '800950';
 $pg_code = 'kcp';
 include_once './_common.php';
 require_once G5_LIB_PATH . '/billing/kcp/config.php';

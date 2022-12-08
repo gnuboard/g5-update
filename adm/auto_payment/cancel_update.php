@@ -1,6 +1,6 @@
 <?php
 $pg_code = 'kcp';
-$sub_menu = '400930';
+$sub_menu = '800940';
 include_once './_common.php';
 require_once G5_LIB_PATH . "/billing/{$pg_code}/config.php";
 require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';

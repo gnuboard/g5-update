@@ -1,5 +1,5 @@
 <?php
-$sub_menu = '400920';
+$sub_menu = '800930';
 $pg_code = 'kcp';
 include_once './_common.php';
 include_once G5_EDITOR_LIB;
