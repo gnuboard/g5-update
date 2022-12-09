@@ -1,7 +1,7 @@
 <?php
-
-include_once(dirname(__FILE__) . '/config.php' );
-
+/**
+ * 자동결제 공통 Class
+ */
 class G5BillingKcp implements BillingInterface
 {
     /**
