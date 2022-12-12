@@ -8,37 +8,34 @@ check_admin_token();
 /* 변수 선언 */
 $config_model  = new BillingConfigModel();
 
-$kcp_cert_path      = G5_DATA_PATH . '/billing/kcp/certificate/';
-$kcp_certification  = 'splCert.pem';
-$kcp_private_key    = 'splPrikeyPKCS8.pem';
-$bc_kcp_cert        = isset($_POST['bc_kcp_cert']) ? $_POST['bc_kcp_cert'] : null;
-$bc_kcp_prikey      = isset($_POST['bc_kcp_prikey']) ? $_POST['bc_kcp_prikey'] : null;
+$bc_kcp_cert   = isset($_POST['bc_kcp_cert']) ? $_POST['bc_kcp_cert'] : null;
+$bc_kcp_prikey = isset($_POST['bc_kcp_prikey']) ? $_POST['bc_kcp_prikey'] : null;
 
 /* kcp 인증서 경로 체크 & 생성 */
 if ($_POST['bc_pg_code'] == 'kcp') {
-    if (!is_dir($kcp_cert_path)) {
-        @mkdir($kcp_cert_path, G5_DIR_PERMISSION, true);
-        @chmod($kcp_cert_path, G5_DIR_PERMISSION);
+    if (!is_dir(kcp_cert_path)) {
+        @mkdir(kcp_cert_path, G5_DIR_PERMISSION, true);
+        @chmod(kcp_cert_path, G5_DIR_PERMISSION);
     }
 }
 
-/* 인증서 & 개인키 파일 업로드 */
-if (!empty($_POST['bc_kcp_cert_del'])) {
-    @unlink($kcp_cert_path . $kcp_certification);
-}
-if (!empty($_POST['bc_kcp_prikey_del'])) {
-    @unlink($kcp_cert_path . $kcp_private_key);
-}
+/* 인증서 & 개인키 파일처리 */
+// if (!empty($_POST['bc_kcp_cert_del'])) {
+//     @unlink(G5_PATH . $billing_conf['bc_kcp_cert']);
+// }
+// if (!empty($_POST['bc_kcp_prikey_del'])) {
+//     @unlink(G5_PATH . $billing_conf['bc_kcp_prikey']);
+// }
 if ($_FILES['bc_kcp_cert_file']['name']) {
-    $result = upload_file($_FILES['bc_kcp_cert_file']['tmp_name'], $kcp_certification, $kcp_cert_path);
+    $result = upload_file($_FILES['bc_kcp_cert_file']['tmp_name'], $_FILES['bc_kcp_cert_file']['name'], kcp_cert_path);
     if ($result) {
-        $bc_kcp_cert = $kcp_certification;
+        $bc_kcp_cert = $_FILES['bc_kcp_cert_file']['name'];
     }
 }
 if ($_FILES['bc_kcp_prikey_file']['name']) {
-    $result = upload_file($_FILES['bc_kcp_prikey_file']['tmp_name'], $kcp_private_key, $kcp_cert_path);
+    $result = upload_file($_FILES['bc_kcp_prikey_file']['tmp_name'], $_FILES['bc_kcp_prikey_file']['name'], kcp_cert_path);
     if ($result) {
-        $bc_kcp_prikey = $kcp_private_key;
+        $bc_kcp_prikey = $_FILES['bc_kcp_prikey_file']['name'];
     }
 }
 

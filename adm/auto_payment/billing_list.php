@@ -1,11 +1,6 @@
 <?php
 $sub_menu = '800940';
-$pg_code = 'kcp';
 include_once './_common.php';
-require_once G5_LIB_PATH . "/billing/{$pg_code}/config.php";
-require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
-$autoload = new G5AutoLoader();
-$autoload->register();
 
 auth_check_menu($auth, $sub_menu, 'r');
 
@@ -13,7 +8,7 @@ $g5['title'] = '구독결제 내역';
 include_once G5_ADMIN_PATH . '/admin.head.php';
 
 /* 변수 선언 */
-$billing            = new Billing($pg_code);
+$billing            = new Billing($billing_conf['bc_pg_code']);
 $information_model  = new BillingInformationModel();
 $price_model        = new BillingServicePriceModel();
 $history_model      = new BillingHistoryModel();

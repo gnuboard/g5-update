@@ -1,11 +1,6 @@
 <?php
 $sub_menu = '800940';
-$pg_code = 'kcp';
 include_once './_common.php';
-require_once G5_LIB_PATH . "/billing/{$pg_code}/config.php";
-require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
-$autoload = new G5AutoLoader();
-$autoload->register();
 
 $g5['title'] = "구독결제 수정";
 include_once G5_ADMIN_PATH . '/admin.head.php';
@@ -14,7 +9,7 @@ include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
 auth_check_menu($auth, $sub_menu, 'w');
 
 /** 변수 선언 */
-$billing            = new Billing($pg_code);
+$billing            = new Billing($billing_conf['bc_pg_code']);
 $service_model      = new BillingServiceModel();
 $information_model  = new BillingInformationModel();
 $price_model        = new BillingServicePriceModel();
@@ -327,7 +322,13 @@ $pg_anchor = '<ul class="anchor">
     <input type="hidden" name="mb_id"       value="<?php echo $billing_info['mb_id'] ?>"/>
 </form>
 
-<script type="text/javascript" src="https://testpay.kcp.co.kr/plugin/payplus_web.jsp"></script>
+<?php
+if ($billing_conf['bc_kcp_is_test'] == "0") {
+    echo '<script type="text/javascript" src="https://pay.kcp.co.kr/plugin/payplus_web.jsp"></script>';
+} else {
+    echo '<script type="text/javascript" src="https://testpay.kcp.co.kr/plugin/payplus_web.jsp"></script>';
+}
+?>
 <script>
 function m_Completepayment( frm_mpi, closeEvent ) 
 {

@@ -1,11 +1,6 @@
 <?php
 $sub_menu = '800930';
-$pg_code = 'kcp';
 include_once './_common.php';
-require_once G5_LIB_PATH . "/billing/{$pg_code}/config.php";
-require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
-$autoload = new G5AutoLoader();
-$autoload->register();
 
 $w = isset($_REQUEST['w']) ? $_REQUEST['w'] : '';
 auth_check_menu($auth, $sub_menu, 'w');

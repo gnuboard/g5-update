@@ -17,12 +17,12 @@ class G5BillingKcp implements BillingInterface
     /**
      * @var string 서비스인증서 파일이름
      */
-    public $filenameServiceCertification = "splCert.pem";
+    public $filenameServiceCertification = '';
 
     /**
      * @var string 개인키 파일이름
      */
-    public $filenamePrivateKey           = "splPrikeyPKCS8.pem";
+    public $filenamePrivateKey           = '';
 
     /**
      * @var string 배치 키 발급 API Reqeust URL
@@ -77,11 +77,16 @@ class G5BillingKcp implements BillingInterface
 
     public function __construct()
     {
+        global $billing_conf;
+        
         $this->setSiteCd(site_cd);
-        $this->setPathCert(path_cert);
+        $this->setPathCert(kcp_cert_path);
         $this->setKcpGroupId(kcpgroup_id);
 
-        if (G5_DEBUG) { // 개발 서버설정.
+        $this->filenameServiceCertification = $billing_conf['bc_kcp_cert'];
+        $this->filenamePrivateKey = $billing_conf['bc_kcp_prikey'];
+
+        if ($billing_conf['bc_kcp_is_test'] == "1") {
             $this->urlGetBatchKey = 'https://stg-spl.kcp.co.kr/gw/enc/v1/payment';
             $this->urlBatchPayment = 'https://stg-spl.kcp.co.kr/gw/hub/v1/payment';
             $this->urlBatchCancel = 'https://stg-spl.kcp.co.kr/gw/mod/v1/cancel';

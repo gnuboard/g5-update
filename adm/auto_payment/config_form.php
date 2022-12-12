@@ -8,8 +8,6 @@ auth_check_menu($auth, $sub_menu, "r");
 $g5['title'] = '정기결제 설정';
 require_once G5_ADMIN_PATH . '/admin.head.php';
 
-$config_model  = new BillingConfigModel();
-$billing_conf = $config_model->selectOne();
 if (empty($billing_conf)) {
     $column_list = $config_model->selectColumnList();
     foreach ($column_list as $column) {
@@ -19,15 +17,15 @@ if (empty($billing_conf)) {
 
 // kcp의 경우 인증서 디렉토리 체크
 if ($billing_conf['bc_pg_code'] == 'kcp') {
-    $cert_path = G5_DATA_PATH . '/billing/kcp/certificate';
+    if (!is_dir(kcp_cert_path)) {
+        @mkdir(kcp_cert_path, G5_DIR_PERMISSION, true);
+        @chmod(kcp_cert_path, G5_DIR_PERMISSION);
 
-    if (!is_dir($cert_path)) {
-        @mkdir($cert_path, G5_DIR_PERMISSION, true);
-        @chmod($cert_path, G5_DIR_PERMISSION);
+        $directory = str_replace(G5_DATA_PATH, '', kcp_cert_path);
 
-        if (!is_dir($cert_path)) {
+        if (!is_dir(kcp_cert_path)) {
             echo '<script>' . PHP_EOL;
-            echo 'alert("' . str_replace(G5_PATH . '/', '', G5_DATA_PATH) . ' 폴더 안에 /billing/kcp/certificate 폴더를 생성하신 후 쓰기권한을 부여해 주십시오.\n> mkdir /billing/kcp/certificate\n> chmod 707 /billing/kcp/certificate");' . PHP_EOL;
+            echo "alert('" . str_replace(G5_PATH . '/', '', G5_DATA_PATH) . " 폴더 안에 {$directory} 폴더를 생성하신 후 쓰기권한을 부여해 주십시오.\n> mkdir {$directory}\n> chmod 707 {$directory}');" . PHP_EOL;
             echo '</script>' . PHP_EOL;
         }
     }
@@ -132,7 +130,7 @@ $pg_anchor = '<ul class="anchor">
                                             ※ 서비스 인증서 & 개인 키 생성 방법
                                             <a href='https://admin8.kcp.co.kr/assist/login.LoginAction.do' target='_blank'>NHN KCP 상점관리자 페이지 접속</a> → 고객센터 → 인증센터 → KCP PG-API → 발급하기 경로에서 개인키 + 인증서 발급이 가능합니다.
                                             ※ 테스트 서비스 인증서 값은 <a href='https://developer.kcp.co.kr/page/download' target='_blank'>다운로드 자료실</a>을 참고해주시기 바랍니다."); ?>
-                            <input type="file" name="bc_kcp_cert">
+                            <input type="file" name="bc_kcp_cert_file">
                             <?php if (!empty($billing_conf['bc_kcp_cert'])) { ?>
                             <input type="hidden" name="bc_kcp_cert" value="<?php echo $billing_conf['bc_kcp_cert'] ?>">
                             <span class="kcp_billing_file"><?php echo $billing_conf['bc_kcp_cert'] ?> 업로드 완료</span>
@@ -146,7 +144,7 @@ $pg_anchor = '<ul class="anchor">
                                             ※ 서비스 인증서 & 개인 키 생성 방법
                                             <a href='https://admin8.kcp.co.kr/assist/login.LoginAction.do' target='_blank'>NHN KCP 상점관리자 페이지 접속</a> → 고객센터 → 인증센터 → KCP PG-API → 발급하기 경로에서 개인키 + 인증서 발급이 가능합니다.
                                             ※ 테스트 개인키는 <a href='https://developer.kcp.co.kr/page/download' target='_blank'>다운로드 자료실</a>을 확인해주세요."); ?>
-                            <input type="file" name="bc_kcp_prikey">
+                            <input type="file" name="bc_kcp_prikey_file">
                             <?php if (!empty($billing_conf['bc_kcp_prikey'])) { ?>
                             <input type="hidden" name="bc_kcp_prikey" value="<?php echo $billing_conf['bc_kcp_prikey'] ?>">
                             <span class="kcp_billing_file"><?php echo $billing_conf['bc_kcp_prikey'] ?> 업로드 완료</span>

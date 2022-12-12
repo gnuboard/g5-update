@@ -1,19 +1,14 @@
 <?php
 $sub_menu = '800930';
-$pg_code = 'kcp';
 include_once './_common.php';
 include_once G5_EDITOR_LIB;
-require_once G5_LIB_PATH . "/billing/{$pg_code}/config.php";
-require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
-$autoload = new G5AutoLoader();
-$autoload->register();
 
 auth_check_menu($auth, $sub_menu, 'w');
 
 /* 변수 선언 */
 $html_title     = '구독상품 ';
 $g5Mysqli       = G5Mysqli::getInstance();
-$billing        = new Billing($pg_code);
+$billing        = new Billing($billing_conf['bc_pg_code']);
 $service_model  = new BillingServiceModel();
 $price_model    = new BillingServicePriceModel();
 

@@ -1,10 +1,6 @@
 <?php
 $sub_menu = '800940';
 include_once './_common.php';
-require_once G5_LIB_PATH . '/billing/kcp/config.php';
-require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
-$autoload = new G5AutoLoader();
-$autoload->register();
 
 $g5['title'] = '결제내역 환불';
 require_once G5_PATH . '/head.sub.php';
@@ -16,10 +12,10 @@ $id         = isset($_GET['id']) ? preg_replace('/[^0-9]/', '', $_GET['id']) : 0
 $service_id = isset($_GET['service_id']) ? preg_replace('/[^0-9]/', '', $_GET['service_id']) : 0;
 
 $html_title = '구독상품 ';
-$billing            = new Billing('kcp');
-$service_model      = new BillingServiceModel();
-$history_model      = new BillingHistoryModel();
-$cancel_model       = new BillingCancelModel();
+$billing        = new Billing($billing_conf['bc_pg_code']);
+$service_model  = new BillingServiceModel();
+$history_model  = new BillingHistoryModel();
+$cancel_model   = new BillingCancelModel();
 
 $service = $service_model->selectOneById($service_id);
 $history = $history_model->selectOneById($id);

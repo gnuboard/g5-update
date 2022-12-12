@@ -1,28 +1,33 @@
 <?php
-/**
- * @deprecated /adm/admin.menu800.php로 추가되어서 해당 extend 삭제 예정
- */
 // 개별 페이지 접근 불가
 if (!defined('_GNUBOARD_')) {
     exit;
 }
+/* Database Table 선언 */
+$g5['billing_information_table']        = G5_TABLE_PREFIX . 'billing_information';
+$g5['billing_history_table']            = G5_TABLE_PREFIX . 'billing_history';
+$g5['billing_service_table']            = G5_TABLE_PREFIX . 'billing_service';
+$g5['billing_service_price_table']      = G5_TABLE_PREFIX . 'billing_service_price';
+$g5["billing_key_history_table"]        = G5_TABLE_PREFIX . "billing_key_history";
+$g5["billing_cancel_table"]             = G5_TABLE_PREFIX . "billing_cancel";
+$g5['billing_scheduler_history_table']  = G5_TABLE_PREFIX . "billing_scheduler_history";
+$g5['billing_config_table']             = G5_TABLE_PREFIX . "billing_config";
 
-add_replace('admin_menu', 'add_admin_menu_auto_payment', 1, 1);
+/* Autoloader */
+require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
+$autoload = new G5AutoLoader();
+$autoload->register();
 
-function add_admin_menu_auto_payment($menu)
-{
-    
-    if (isset($menu['menu800'])) {
-        return $menu;
-    }
+/* 자동결제 설정 조회 */
+$config_model = new BillingConfigModel();
+$billing_conf = $config_model->selectOne();
 
-    $menu['menu800'] = array();
-    array_push($menu['menu800'], array('800900', '정기결제 관리', G5_ADMIN_URL.'/auto_payment/index.php', 'auto_payment_statistics'));
-    array_push($menu['menu800'], array('800910', '정기결제 현황&통계', G5_ADMIN_URL.'/auto_payment/index.php', 'auto_payment_statistics'));
-    array_push($menu['menu800'], array('800920', '정기결제 설정', G5_ADMIN_URL.'/auto_payment/config_form.php', 'auto_payment_config'));
-    array_push($menu['menu800'], array('800930', '구독상품 관리', G5_ADMIN_URL.'/auto_payment/service_list.php', 'auto_payment_service'));
-    array_push($menu['menu800'], array('800940', '구독정보&결제 관리', G5_ADMIN_URL.'/auto_payment/billing_list.php', 'auto_payment_list'));
-    array_push($menu['menu800'], array('800950', '자동결제 실행기록 ', G5_ADMIN_URL.'/auto_payment/billing_scheduler_history_list.php', 'auto_payment_scheduler'));
-
-    return $menu;
-}
+/* 상수 선언 */
+// 인증서 경로
+define('kcp_cert_path', G5_DATA_PATH . "/billing/kcp/certificate/");
+// 사이트코드
+define('site_cd', (isset($billing_conf['bc_kcp_site_cd']) && !empty($billing_conf['bc_kcp_site_cd'])) ? $billing_conf['bc_kcp_site_cd'] : '');
+// 그룹 ID
+define('kcpgroup_id', (isset($billing_conf['bc_kcp_group_id']) && !empty($billing_conf['bc_kcp_group_id'])) ? $billing_conf['bc_kcp_group_id'] : '');
+// Priavate Key Password
+define('PRIVATE_PW', (isset($billing_conf['bc_kcp_prikey_password']) && !empty($billing_conf['bc_kcp_prikey_password'])) ? $billing_conf['bc_kcp_prikey_password'] : '');
