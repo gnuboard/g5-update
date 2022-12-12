@@ -18,7 +18,11 @@ $history                = $history_model->selectOneById($id);
 $total_cancel_amount    = $cancel_model->selectTotalCancelAmount($od_id);
 $refundable_amount      = (int)$history['amount'] - (int)$total_cancel_amount;
 
-if ($refundable_amount == $cancel_amount) {
+if ($cancel_amount >= $refundable_amount) {
+    $cancel_amount = $refundable_amount;
+}
+
+if ($total_cancel_amount === 0 && $cancel_amount == $refundable_amount) {
     $cancel_res = $billing->pg->requestCancelBilling($payment_no, $cancel_reason);
     $cancel_res['type'] = 'all';
 } else {
