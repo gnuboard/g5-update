@@ -4,7 +4,7 @@
  */
 class BillingSchedulerHistoryModel
 {
-    public $g5Mysqli;
+    private $g5Mysqli;
 
     public function __construct()
     {
@@ -16,7 +16,7 @@ class BillingSchedulerHistoryModel
      * @param array $requestData
      * @return array
      */
-    public function selectList($requestData = array())
+    public function selectList($requestData)
     {
         global $g5;
 
@@ -28,8 +28,7 @@ class BillingSchedulerHistoryModel
                 WHERE 1 = 1";
 
         /* 검색조건 */
-        if ((isset($requestData['sdate']) && !empty($requestData['sdate']))
-            && (isset($requestData['edate']) && !empty($requestData['edate']))) {
+        if (isset($requestData['sdate'], $requestData['edate']) && !empty($requestData['sdate']) && !empty($requestData['edate'])) {
             $sql .= ' AND DATE_FORMAT(start_time, "%Y-%m-%d") BETWEEN ? AND ? ';
             array_push($bindParam, $requestData['sdate'], $requestData['edate']);
         }
@@ -51,7 +50,7 @@ class BillingSchedulerHistoryModel
      * @param array $requestData
      * @return int
      */
-    public function selectTotalCount($requestData = array())
+    public function selectTotalCount($requestData)
     {
         global $g5;
 
@@ -63,8 +62,7 @@ class BillingSchedulerHistoryModel
                 WHERE 1 = 1";
 
         /* 검색조건 */
-        if (isset($requestData['sdate']) && !empty($requestData['sdate'])
-            && isset($requestData['edate']) && !empty($requestData['edate'])) {
+        if (isset($requestData['sdate'], $requestData['edate']) && !empty($requestData['sdate']) && !empty($requestData['edate'])) {
             $sql .= ' AND start_time BETWEEN ? AND ? ';
             array_push($bindParam, $requestData['sdate'], $requestData['edate']);
         }
@@ -81,7 +79,7 @@ class BillingSchedulerHistoryModel
      * @param array $requestData
      * @return bool
      */
-    public function insert($requestData = array())
+    public function insert($requestData)
     {
         global $g5;
 
@@ -89,7 +87,8 @@ class BillingSchedulerHistoryModel
             'success_count' => $requestData['success_count'],
             'fail_count' => $requestData['fail_count'],
             'state' => $requestData['state'],
-            'start_time' => $requestData['start_time']
+            'start_time' => $requestData['start_time'],
+            'ip' => $requestData['ip']
         );
 
         return $this->g5Mysqli->insertSQL($g5["billing_scheduler_history_table"], $data);
