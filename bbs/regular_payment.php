@@ -265,7 +265,7 @@ function order_payment(){
                 if (result.result_code == "0000") {
                     // 성공
                     alert('결제가 완료되었습니다.');
-                    window.location.replace(g5_bbs_url');
+                    window.location.replace(g5_url);
                 } else {
                     // 실패
                     alert('결제 요청에 실패했습니다.')
