@@ -80,11 +80,10 @@ class BillingInformationModel
             $sql .= " ORDER BY {$requestData['sst']} {$requestData['sod']} ";
         }
         /* 반환 결과 수 */
-        if (!empty($requestData['offset']) && !empty($requestData['rows'])) {
+        if (isset($requestData['offset']) && isset($requestData['rows'])) {
             $sql .= " LIMIT ?, ?";
             array_push($bindParam, $requestData['offset'], $requestData['rows']);
         }
-        
         return $this->g5Mysqli->execSQL($sql, $bindParam);
     }
 
