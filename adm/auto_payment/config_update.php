@@ -1,9 +1,6 @@
 <?php
 $sub_menu = '800940';
 include_once './_common.php';
-require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
-$autoload = new G5AutoLoader();
-$autoload->register();
 
 auth_check_menu($auth, $sub_menu, 'w');
 check_admin_token();
@@ -14,8 +11,8 @@ $config_model  = new BillingConfigModel();
 $kcp_cert_path      = G5_DATA_PATH . '/billing/kcp/certificate/';
 $kcp_certification  = 'splCert.pem';
 $kcp_private_key    = 'splPrikeyPKCS8.pem';
-$bc_kcp_cert_path   = isset($_POST['bc_kcp_cert_path']) ? $_POST['bc_kcp_cert_path'] : null;
-$bc_kcp_prikey_path = isset($_POST['bc_kcp_prikey_path']) ? $_POST['bc_kcp_prikey_path'] : null;
+$bc_kcp_cert        = isset($_POST['bc_kcp_cert']) ? $_POST['bc_kcp_cert'] : null;
+$bc_kcp_prikey      = isset($_POST['bc_kcp_prikey']) ? $_POST['bc_kcp_prikey'] : null;
 
 /* kcp 인증서 경로 체크 & 생성 */
 if ($_POST['bc_pg_code'] == 'kcp') {
@@ -32,16 +29,16 @@ if (!empty($_POST['bc_kcp_cert_del'])) {
 if (!empty($_POST['bc_kcp_prikey_del'])) {
     @unlink($kcp_cert_path . $kcp_private_key);
 }
-if ($_FILES['bc_kcp_cert']['name']) {
-    $result = upload_file($_FILES['bc_kcp_cert']['tmp_name'], $kcp_certification, $kcp_cert_path);
+if ($_FILES['bc_kcp_cert_file']['name']) {
+    $result = upload_file($_FILES['bc_kcp_cert_file']['tmp_name'], $kcp_certification, $kcp_cert_path);
     if ($result) {
-        $bc_kcp_cert_path = str_replace(G5_PATH . '/', '', $kcp_cert_path) . $kcp_certification;
+        $bc_kcp_cert = $kcp_certification;
     }
 }
-if ($_FILES['bc_kcp_prikey']['name']) {
-    $result = upload_file($_FILES['bc_kcp_prikey']['tmp_name'], $kcp_private_key, $kcp_cert_path);
+if ($_FILES['bc_kcp_prikey_file']['name']) {
+    $result = upload_file($_FILES['bc_kcp_prikey_file']['tmp_name'], $kcp_private_key, $kcp_cert_path);
     if ($result) {
-        $bc_kcp_prikey_path = str_replace(G5_PATH . '/', '', $kcp_cert_path) . $kcp_private_key;
+        $bc_kcp_prikey = $kcp_private_key;
     }
 }
 
@@ -52,8 +49,8 @@ $data   = array(
     'bc_pg_code'            => isset($_POST['bc_pg_code']) ? $_POST['bc_pg_code'] : '',
     'bc_kcp_site_cd'        => isset($_POST['bc_kcp_site_cd']) ? $_POST['bc_kcp_site_cd'] : null,
     'bc_kcp_group_id'       => isset($_POST['bc_kcp_group_id']) ? $_POST['bc_kcp_group_id'] : null,
-    'bc_kcp_cert_path'      => $bc_kcp_cert_path,
-    'bc_kcp_prikey_path'    => $bc_kcp_prikey_path,
+    'bc_kcp_cert'           => $bc_kcp_cert,
+    'bc_kcp_prikey'         => $bc_kcp_prikey,
     'bc_kcp_prikey_password' => isset($_POST['bc_kcp_prikey_password']) ? $_POST['bc_kcp_prikey_password'] : null,
     'bc_kcp_is_test'        => isset($_POST['bc_kcp_is_test']) ? preg_replace('/[^0-9]/', '', $_POST['bc_kcp_is_test']) : 0,
     'bc_kcp_curruncy'       => isset($_POST['bc_kcp_curruncy']) ? $_POST['bc_kcp_curruncy'] : 410,

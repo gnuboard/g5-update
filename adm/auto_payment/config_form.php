@@ -40,7 +40,7 @@ $pg_anchor = '<ul class="anchor">
 
 ?>
 <style>
-.kcp_billing_file_path { display: inline-block; padding: 0px 10px; background: #226C8B; color: #fff; font-weight: normal; text-decoration: none; border-radius: 10px; }
+.kcp_billing_file { display: inline-block; padding: 0px 10px; background: #226C8B; color: #fff; font-weight: normal; text-decoration: none; border-radius: 10px; }
 </style>
 
 <form name="fconfig" id="fconfig" action="./config_update.php" onsubmit="return fconfig_check(this)" method="post" enctype="multipart/form-data">
@@ -126,30 +126,30 @@ $pg_anchor = '<ul class="anchor">
                         </td>
                     </tr>
                     <tr class="pg_info_fld kcp_info_fld">
-                        <th scope="row"><label for="bc_kcp_cert_path">NHN KCP 서비스 인증서 파일</label></th>
+                        <th scope="row"><label for="bc_kcp_cert">NHN KCP 서비스 인증서 파일</label></th>
                         <td>
                             <?php echo help("KCP-API 결제시 필요하고 각 상점에 맞는 인증서가 필요합니다.
                                             ※ 서비스 인증서 & 개인 키 생성 방법
                                             <a href='https://admin8.kcp.co.kr/assist/login.LoginAction.do' target='_blank'>NHN KCP 상점관리자 페이지 접속</a> → 고객센터 → 인증센터 → KCP PG-API → 발급하기 경로에서 개인키 + 인증서 발급이 가능합니다.
                                             ※ 테스트 서비스 인증서 값은 <a href='https://developer.kcp.co.kr/page/download' target='_blank'>다운로드 자료실</a>을 참고해주시기 바랍니다."); ?>
                             <input type="file" name="bc_kcp_cert">
-                            <?php if (!empty($billing_conf['bc_kcp_cert_path'])) { ?>
-                            <input type="hidden" name="bc_kcp_cert_path" value="<?php echo $billing_conf['bc_kcp_cert_path'] ?>">
-                            <span class="kcp_billing_file_path"><?php echo $billing_conf['bc_kcp_cert_path'] ?> 업로드 완료</span>
+                            <?php if (!empty($billing_conf['bc_kcp_cert'])) { ?>
+                            <input type="hidden" name="bc_kcp_cert" value="<?php echo $billing_conf['bc_kcp_cert'] ?>">
+                            <span class="kcp_billing_file"><?php echo $billing_conf['bc_kcp_cert'] ?> 업로드 완료</span>
                             <?php } ?>
                         </td>
                     </tr>
                     <tr class="pg_info_fld kcp_info_fld">
-                        <th scope="row"><label for="bc_kcp_prikey_path">NHN KCP 개인 키 파일</label></th>
+                        <th scope="row"><label for="bc_kcp_prikey">NHN KCP 개인 키 파일</label></th>
                         <td>
                             <?php echo help("가맹점 부인방지와 요청 데이터의 무결성 검증을 위한 데이터 파일입니다.
                                             ※ 서비스 인증서 & 개인 키 생성 방법
                                             <a href='https://admin8.kcp.co.kr/assist/login.LoginAction.do' target='_blank'>NHN KCP 상점관리자 페이지 접속</a> → 고객센터 → 인증센터 → KCP PG-API → 발급하기 경로에서 개인키 + 인증서 발급이 가능합니다.
                                             ※ 테스트 개인키는 <a href='https://developer.kcp.co.kr/page/download' target='_blank'>다운로드 자료실</a>을 확인해주세요."); ?>
                             <input type="file" name="bc_kcp_prikey">
-                            <?php if (!empty($billing_conf['bc_kcp_prikey_path'])) { ?>
-                            <input type="hidden" name="bc_kcp_prikey_path" value="<?php echo $billing_conf['bc_kcp_prikey_path'] ?>">
-                            <span class="kcp_billing_file_path"><?php echo $billing_conf['bc_kcp_prikey_path'] ?> 업로드 완료</span>
+                            <?php if (!empty($billing_conf['bc_kcp_prikey'])) { ?>
+                            <input type="hidden" name="bc_kcp_prikey" value="<?php echo $billing_conf['bc_kcp_prikey'] ?>">
+                            <span class="kcp_billing_file"><?php echo $billing_conf['bc_kcp_prikey'] ?> 업로드 완료</span>
                             <?php } ?>
                         </td>
                     </tr>
