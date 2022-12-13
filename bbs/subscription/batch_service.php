@@ -7,6 +7,7 @@ require_once(dirname(__FILE__) . '/_common.php');
 require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
 $autoload = new G5AutoLoader();
 $autoload->register();
+ignore_user_abort(true); // http 커넥션이 끊어져도 동작하게 설정.
 
 $pg_code = 'kcp';
 $billing = new Billing($pg_code);
