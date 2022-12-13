@@ -80,7 +80,7 @@ class BillingInformationModel
             $sql .= " ORDER BY {$requestData['sst']} {$requestData['sod']} ";
         }
         /* 반환 결과 수 */
-        if (isset($requestData['offset']) && isset($requestData['rows'])) {
+        if (isset($requestData['offset'], $requestData['rows'])) {
             $sql .= " LIMIT ?, ?";
             array_push($bindParam, $requestData['offset'], $requestData['rows']);
         }
