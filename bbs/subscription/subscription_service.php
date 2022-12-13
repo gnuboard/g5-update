@@ -203,15 +203,12 @@ function get_user_id()
     if ($is_guest) {
         return false;
     }
-
+    
     if ($is_admin === 'super') {
         return $config['cf_admin'];
     }
 
-    /**
-     * @todo 안되는 조건찾기
-     */
-    $mb_id = get_session('mb_id');
+    $mb_id = get_session('ss_mb_id');
     if (empty($mb_id)) {
         return false;
     }
