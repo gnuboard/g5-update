@@ -6,16 +6,17 @@
  * 마이페이지 비동기 요청은 ajax.myapge.php 참고.
  */
 require_once(dirname(__FILE__) . '/../../common.php');
-require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
-$autoload = new G5AutoLoader();
-$autoload->register();
+// require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
+// $autoload = new G5AutoLoader();
+// $autoload->register();
 
-$pg_code = 'kcp';
-$billing = new Billing($pg_code);
+// $pg_code = 'kcp';
+$billing = new Billing($billing_conf['bc_pg_code']);
 $billing_history = new BillingHistoryModel();
 $service_price = new BillingServicePriceModel();
 $billing_info = new BillingInformationModel();
 $billing_service = new BillingServiceModel();
+$billing_cancel = new BillingCancelModel();
 
 /**
  * 서비스 선택 후 상세 보기
@@ -162,7 +163,7 @@ function get_myservice_history($od_id, $offset, $rows)
  */
 function cancel_myservice($od_id)
 {
-    global $billing, $billing_info;
+    global $billing, $billing_info, $billing_service, $billing_cancel, $billing_history, $billing_conf;
 
     $mb_id = get_user_id();
     if ($mb_id === false) {
@@ -173,6 +174,35 @@ function cancel_myservice($od_id)
 
     if (empty($bill_info) || $bill_info['mb_id'] !== $mb_id) {
         return false;
+    }
+
+    // 환불처리
+    if ($billing_conf['bc_use_cancel_refund'] == "1") {
+        
+        $history                = $billing_history->selectOneByOdId($od_id);
+        $total_cancel_amount    = $billing_cancel->selectTotalCancelAmount($history['payment_no']);
+        $service                = $billing_service->selectOneById($bill_info['service_id']);
+        $cancel_reason          = "사용자 구독취소";
+        $cancel_amount          = $billing->calcurateRefundAmount($history, $service['base_price']);
+        $refundable_amount      = (int)$history['amount'] - (int)$total_cancel_amount;
+
+        if ($cancel_amount >= $refundable_amount) {
+            $cancel_amount = $refundable_amount;
+        }
+        $cancel_res = $billing->pg->requestPartialCancelBilling($history['payment_no'], $cancel_reason, $cancel_amount, $refundable_amount);
+        $cancel_res['type'] = 'partial';
+        $cancel_res = $billing->convertPgDataToCommonData($cancel_res);
+
+        // 취소이력 저장
+        $cancel_res['od_id']            = $od_id;
+        $cancel_res['payment_no']       = $history['payment_no'];
+        $cancel_res['cancel_reason']    = $cancel_reason;
+        $cancel_res['cancel_amount']    = $cancel_amount;
+        $billing_cancel->insert($cancel_res);
+
+        if ($cancel_res['result_code'] != '0000') {
+            return json_encode($cancel_res);
+        }
     }
 
     $batch_del_result = $billing->pg->requestDeleteBillKey($bill_info['billing_key']);
@@ -203,15 +233,12 @@ function get_user_id()
     if ($is_guest) {
         return false;
     }
-
+    
     if ($is_admin === 'super') {
         return $config['cf_admin'];
     }
 
-    /**
-     * @todo 안되는 조건찾기
-     */
-    $mb_id = get_session('mb_id');
+    $mb_id = get_session('ss_mb_id');
     if (empty($mb_id)) {
         return false;
     }

@@ -1,15 +1,10 @@
 <?php
-$pg_code = 'kcp';
-$sub_menu = '400930';
+$sub_menu = '800940';
 include_once './_common.php';
-require_once G5_LIB_PATH . "/billing/{$pg_code}/config.php";
-require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
-$autoload = new G5AutoLoader();
-$autoload->register();
 
-// auth_check_menu($auth, $sub_menu, "w");
+auth_check_menu($auth, $sub_menu, "w");
 
-$billing        = new Billing($pg_code);
+$billing        = new Billing($billing_conf['bc_pg_code']);
 $history_model  = new BillingHistoryModel();
 $cancel_model   = new BillingCancelModel();
 
@@ -23,7 +18,11 @@ $history                = $history_model->selectOneById($id);
 $total_cancel_amount    = $cancel_model->selectTotalCancelAmount($od_id);
 $refundable_amount      = (int)$history['amount'] - (int)$total_cancel_amount;
 
-if ($refundable_amount == $cancel_amount) {
+if ($cancel_amount >= $refundable_amount) {
+    $cancel_amount = $refundable_amount;
+}
+
+if ($total_cancel_amount === 0 && $cancel_amount == $refundable_amount) {
     $cancel_res = $billing->pg->requestCancelBilling($payment_no, $cancel_reason);
     $cancel_res['type'] = 'all';
 } else {

@@ -1,10 +1,6 @@
 <?php
-$sub_menu = '400930';
+$sub_menu = '800940';
 include_once './_common.php';
-require_once G5_LIB_PATH . '/billing/kcp/config.php';
-require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
-$autoload = new G5AutoLoader();
-$autoload->register();
 
 $g5['title'] = '결제내역 환불';
 require_once G5_PATH . '/head.sub.php';
@@ -16,44 +12,18 @@ $id         = isset($_GET['id']) ? preg_replace('/[^0-9]/', '', $_GET['id']) : 0
 $service_id = isset($_GET['service_id']) ? preg_replace('/[^0-9]/', '', $_GET['service_id']) : 0;
 
 $html_title = '구독상품 ';
-$billing            = new Billing('kcp');
-$service_model      = new BillingServiceModel();
-$history_model      = new BillingHistoryModel();
-$cancel_model       = new BillingCancelModel();
+$billing        = new Billing($billing_conf['bc_pg_code']);
+$service_model  = new BillingServiceModel();
+$history_model  = new BillingHistoryModel();
+$cancel_model   = new BillingCancelModel();
 
 $service = $service_model->selectOneById($service_id);
 $history = $history_model->selectOneById($id);
 $cancel_amount = $cancel_model->selectTotalCancelAmount($history['payment_no']);
 $refundable_amount = (int)$history['amount'] - (int)$cancel_amount;
 
-
 // test
-$refund_amount = calcurateRefundAmount($history, $service['base_price']);
-function calcurateRefundAmount($history, $base_price) {
-
-    $sTime = strtotime($history['payment_date']);       // 결제시작일
-    $eTime = strtotime($history['expiration_date']);    // 유효기간 만료일
-    $todayTime = strtotime(date('Y-m-d H:i:s'));        // 오늘
-
-    // 만료일이 지났을 경우 
-    if ($todayTime > strtotime($history['expiration_date'])) {
-        return 0;
-    }
-    $diff_day   = ceil(($todayTime - $sTime) / (60 * 60 * 24)); // 사용 일수
-    $exp_day    = floor(($eTime - $sTime) / (60 * 60 * 24));    // 유효기간 일수
-
-    // echo "<br>시작날짜 : {$history['payment_date']}<br>";
-    // echo "<br>마감날짜 : {$history['expiration_date']}<br>";
-    // echo "<br>오늘날짜 : ".date('Y-m-d')."<br>";
-    // echo "<br>사용일수 : {$diff_day}<br>";
-    // echo "<br>유효일수 : {$exp_day}<br>";
-    // echo "<br>기본가격 : {$base_price}<br>";
-    // echo "<br>결제가격 : {$history['amount']}<br>";
-    // echo "<br><br>환불 금액<br>";
-
-    // 결제금액 - (사용일수 * (기본가격 / 유효일수))
-    return $history['amount'] - $diff_day * round($base_price / $exp_day);
-}
+$refund_amount = $billing->calcurateRefundAmount($history, $service['base_price']);
 ?>
 
 <div id="menu_frm" class="new_win">

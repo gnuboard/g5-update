@@ -1,7 +1,7 @@
 <?php
 //마이페이지와 마이페이지 상세 view
 require_once dirname(__FILE__) . '/_common.php';
-include_once G5_LIB_PATH . '/billing/config.php';
+// include_once G5_LIB_PATH . '/billing/config.php';
 if (!isset($page) || empty($page)) {
     $page = 1;
 }

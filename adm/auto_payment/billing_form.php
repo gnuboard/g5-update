@@ -1,11 +1,6 @@
 <?php
-$sub_menu = '400930';
-$pg_code = 'kcp';
+$sub_menu = '800940';
 include_once './_common.php';
-require_once G5_LIB_PATH . "/billing/{$pg_code}/config.php";
-require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
-$autoload = new G5AutoLoader();
-$autoload->register();
 
 $g5['title'] = "구독결제 수정";
 include_once G5_ADMIN_PATH . '/admin.head.php';
@@ -14,11 +9,12 @@ include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
 auth_check_menu($auth, $sub_menu, 'w');
 
 /** 변수 선언 */
-$billing            = new Billing($pg_code);
+$billing            = new Billing($billing_conf['bc_pg_code']);
 $service_model      = new BillingServiceModel();
 $information_model  = new BillingInformationModel();
 $price_model        = new BillingServicePriceModel();
 $history_model      = new BillingHistoryModel();
+$cancel_model       = new BillingCancelModel();
 
 $od_id = isset($_REQUEST['od_id']) ? safe_replace_regex($_REQUEST['od_id'], 'od_id') : '';
 
@@ -63,11 +59,13 @@ $history_list = $history_model->selectListByOrderId($od_id);
 // 결과처리
 foreach ($history_list as $i => $history) {
     $count = $history['payment_count'];
+    $cancel_amount = $cancel_model->selectTotalCancelAmount($history['payment_no']);
 
     $history_list[$i]['display_payment_count']  = $count . "회차";
     $history_list[$i]['display_amount']         = number_format($history['amount']) . "원";
     $history_list[$i]['display_period']         = ($history['result_code'] == "0000" ? $history['period'] : '');
     $history_list[$i]['is_btn_cancel']          = false;
+    $history_list[$i]['display_cancel_amount']  = number_format($cancel_amount) . '원';
     
     if ($history['total_cancel'] == $history['amount']) {
         $history_list[$i]['display_result'] = "환불";
@@ -91,7 +89,7 @@ foreach ($history_list as $i => $history) {
     
     if ($history['result_code'] == "0000") {
         $payment_success[$count] = true;
-        $total_amount += $history['amount'];
+        $total_amount += ($history['amount'] - $cancel_amount);
     }
 }
 
@@ -231,13 +229,14 @@ $pg_anchor = '<ul class="anchor">
             <thead>
                 <tr>
                     <th scope="col" style="width:10%;">회차</th>
-                    <th scope="col" style="width:15%;">결제번호</th>
-                    <th scope="col" style="width:10%;">결제금액</th>
+                    <th scope="col" style="width:12%;">결제번호</th>
+                    <th scope="col" style="width:8%;">결제금액</th>
+                    <th scope="col" style="width:8%;">환불금액</th>
                     <th scope="col" style="width:10%;">카드명</th>
                     <th scope="col" style="width:10%;">결제상태</th>
-                    <th scope="col" style="width:15%;">결제일</th>
-                    <th scope="col" style="width:15%;">유효기간</th>
-                    <th scope="col" style="width:10%;">관리</th>
+                    <th scope="col" style="width:12%;">결제일</th>
+                    <th scope="col" style="width:12%;">유효기간</th>
+                    <th scope="col" style="width:8%;">관리</th>
                 </tr>
             </thead>
             <tbody>
@@ -251,7 +250,8 @@ $pg_anchor = '<ul class="anchor">
                             <?php echo $history['payment_no'] ?>
                         </span>
                     </td>
-                    <td><?php echo $history['display_amount'] ?></td>
+                    <td style="color: green;"><?php echo $history['display_amount'] ?></td>
+                    <td style="color: red;"><?php echo $history['display_cancel_amount'] ?></td>
                     <td><?php echo $history['card_name'] ?></td>
                     <td style="color:<?php echo $history['display_result_color']?>">
                         <strong><?php echo $history['display_result'] ?></strong>
@@ -322,7 +322,13 @@ $pg_anchor = '<ul class="anchor">
     <input type="hidden" name="mb_id"       value="<?php echo $billing_info['mb_id'] ?>"/>
 </form>
 
-<script type="text/javascript" src="https://testpay.kcp.co.kr/plugin/payplus_web.jsp"></script>
+<?php
+if ($billing_conf['bc_kcp_is_test'] == "0") {
+    echo '<script type="text/javascript" src="https://pay.kcp.co.kr/plugin/payplus_web.jsp"></script>';
+} else {
+    echo '<script type="text/javascript" src="https://testpay.kcp.co.kr/plugin/payplus_web.jsp"></script>';
+}
+?>
 <script>
 function m_Completepayment( frm_mpi, closeEvent ) 
 {

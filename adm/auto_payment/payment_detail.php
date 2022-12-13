@@ -1,10 +1,6 @@
 <?php
-$sub_menu = '400930';
+$sub_menu = '800940';
 include_once './_common.php';
-require_once G5_LIB_PATH . '/billing/kcp/config.php';
-require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
-$autoload = new G5AutoLoader();
-$autoload->register();
 
 $g5['title'] = '결제정보';
 require_once G5_PATH . '/head.sub.php';
@@ -14,7 +10,7 @@ auth_check_menu($auth, $sub_menu, "w");
 /* 변수 선언 */
 $id = isset($_GET['id']) ? preg_replace('/[^0-9]/', '', $_GET['id']) : 0;
 
-$billing        = new Billing('kcp');
+$billing        = new Billing($billing_conf['bc_pg_code']);
 $history_model  = new BillingHistoryModel();
 $cancel_model   = new BillingCancelModel();
 

@@ -1,11 +1,6 @@
 <?php
-$sub_menu = '400940';
-$pg_code = 'kcp';
+$sub_menu = '800950';
 include_once './_common.php';
-require_once G5_LIB_PATH . '/billing/kcp/config.php';
-require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
-$autoload = new G5AutoLoader();
-$autoload->register();
 
 auth_check_menu($auth, $sub_menu, "r");
 
@@ -14,8 +9,8 @@ include_once G5_ADMIN_PATH . '/admin.head.php';
 include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
 
 /* 변수 선언 */
-$billing        = new Billing($pg_code);
-$scheduler_model = new BillingSchedulerHistoryModel();
+$billing            = new Billing($billing_conf['bc_pg_code']);
+$scheduler_model    = new BillingSchedulerHistoryModel();
 
 $history_list   = array();
 $stx        = !empty($stx) ? clean_xss_tags($stx) : '';

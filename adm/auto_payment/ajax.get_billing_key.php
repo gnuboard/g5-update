@@ -1,15 +1,10 @@
 <?php
-$sub_menu = '400930';
-$pg_code = 'kcp';
+$sub_menu = '800940';
 include_once './_common.php';
-require_once G5_LIB_PATH . "/billing/{$pg_code}/config.php";
-require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
-$autoload = new G5AutoLoader();
-$autoload->register();
 
-$billing = new Billing($pg_code);
-$information_model = new BillingInformationModel();
-$key_history_model = new BillingKeyHistoryModel();
+$billing            = new Billing($billing_conf['bc_pg_code']);
+$information_model  = new BillingInformationModel();
+$key_history_model  = new BillingKeyHistoryModel();
 
 /* ============================================================================== */
 /* =  요청정보                                                                   = */
@@ -29,7 +24,7 @@ if (isset($res_data['http_code'])) {
     responseJson($res_data['result_message'], $res_data['http_code']);
 }
 
-$res_data['pg_code'] = $pg_code;
+$res_data['pg_code'] = $billing_conf['bc_pg_code'];
 $res_data['od_id'] = $od_id;
 $res_data['mb_id'] = $mb_id;
 

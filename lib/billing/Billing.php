@@ -135,6 +135,30 @@ class Billing
     }
 
     /**
+     * 환불금액 계산
+     * - `일별금액 * 잔여일`
+     * @param array $history    결제내역
+     * @param int $base_price   구독상품 원가
+     * @return int
+     */
+    function calcurateRefundAmount($history, $base_price) {
+
+        $sTime = strtotime($history['payment_date']);       // 결제시작일
+        $eTime = strtotime($history['expiration_date']);    // 유효기간 만료일
+        $todayTime = strtotime(date('Y-m-d H:i:s'));        // 오늘
+    
+        // 만료일이 지났을 경우 
+        if ($todayTime > strtotime($history['expiration_date'])) {
+            return 0;
+        }
+        $diff_day   = ceil(($todayTime - $sTime) / (60 * 60 * 24)); // 사용 일수
+        $exp_day    = floor(($eTime - $sTime) / (60 * 60 * 24));    // 유효기간 일수
+    
+        // 결제금액 - (사용일수 * (기본가격 / 유효일수))
+        return $history['amount'] - $diff_day * round($base_price / $exp_day);
+    }
+
+    /**
      * 주기 단위를 문자로 변환
      * @param string $string    입력 문자열
      * @param string $type      단위 형식 (default, period, prefix)

@@ -3,7 +3,7 @@
 require_once dirname(__FILE__) . '/_common.php';
 
 $pg_code = 'kcp';
-require_once G5_LIB_PATH . "/billing/G5Autoloader.php";
+require_once G5_LIB_PATH . "/billing/G5AutoLoader.php";
 require_once G5_BBS_PATH . '/subscription/subscription_service.php';
 /* ============================================================================== */
 /* =  결제 요청정보 준비                                                           = */

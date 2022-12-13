@@ -3,20 +3,31 @@
 if (!defined('_GNUBOARD_')) {
     exit;
 }
+/* Database Table 선언 */
+$g5['billing_information_table']        = G5_TABLE_PREFIX . 'billing_information';
+$g5['billing_history_table']            = G5_TABLE_PREFIX . 'billing_history';
+$g5['billing_service_table']            = G5_TABLE_PREFIX . 'billing_service';
+$g5['billing_service_price_table']      = G5_TABLE_PREFIX . 'billing_service_price';
+$g5["billing_key_history_table"]        = G5_TABLE_PREFIX . "billing_key_history";
+$g5["billing_cancel_table"]             = G5_TABLE_PREFIX . "billing_cancel";
+$g5['billing_scheduler_history_table']  = G5_TABLE_PREFIX . "billing_scheduler_history";
+$g5['billing_config_table']             = G5_TABLE_PREFIX . "billing_config";
 
-add_replace('admin_menu', 'add_admin_menu_auto_payment', 1, 1);
+/* Autoloader */
+require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
+$autoload = new G5AutoLoader();
+$autoload->register();
 
-function add_admin_menu_auto_payment($menu)
-{
-    if (!isset($menu['menu400'])) {
-        return $menu;
-    }
+/* 자동결제 설정 조회 */
+$config_model = new BillingConfigModel();
+$billing_conf = $config_model->selectOne();
 
-    array_push($menu['menu400'], array('400900', '====자동결제====', ''));
-    array_push($menu['menu400'], array('400910', '구독 현황', G5_ADMIN_URL.'/auto_payment/index.php', 'auto_payment_statistics'));
-    array_push($menu['menu400'], array('400920', '구독상품 관리', G5_ADMIN_URL.'/auto_payment/service_list.php', 'auto_payment_service'));
-    array_push($menu['menu400'], array('400930', '구독결제 관리', G5_ADMIN_URL.'/auto_payment/billing_list.php', 'auto_payment_list'));
-    array_push($menu['menu400'], array('400940', '자동결제 실행기록 ', G5_ADMIN_URL.'/auto_payment/billing_scheduler_history_list.php', 'auto_payment_scheduler'));
-
-    return $menu;
-}
+/* 상수 선언 */
+// 인증서 경로
+define('kcp_cert_path', G5_DATA_PATH . "/billing/kcp/certificate/");
+// 사이트코드
+define('site_cd', (isset($billing_conf['bc_kcp_site_cd']) && !empty($billing_conf['bc_kcp_site_cd'])) ? $billing_conf['bc_kcp_site_cd'] : '');
+// 그룹 ID
+define('kcpgroup_id', (isset($billing_conf['bc_kcp_group_id']) && !empty($billing_conf['bc_kcp_group_id'])) ? $billing_conf['bc_kcp_group_id'] : '');
+// Priavate Key Password
+define('PRIVATE_PW', (isset($billing_conf['bc_kcp_prikey_password']) && !empty($billing_conf['bc_kcp_prikey_password'])) ? $billing_conf['bc_kcp_prikey_password'] : '');

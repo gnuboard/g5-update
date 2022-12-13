@@ -32,7 +32,7 @@ add_stylesheet('<link rel="stylesheet" href="'.$member_skin_url.'/style.css">', 
     <input type="hidden" name="od_id" value="<?php echo $od_id ?>" maxlength="40" />
     <!-- 가맹점 정보 설정-->
     <input type="hidden" name="site_name"  value="<?php echo $g5['title'] ?>" />
-    <input type="hidden" name="site_cd"  value="<?php echo $site_cd ?>" />
+    <input type="hidden" name="site_cd"  value="<?php echo site_cd ?>" />
 
     <!-- 주민번호 S / 사업자번호 C 선택 -->
     <input type='hidden' name='batch_soc_choice' value='S' />
