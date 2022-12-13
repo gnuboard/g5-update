@@ -38,7 +38,7 @@ $data = array(
 $price_array = array();
 if (isset($_POST['price'])) {
     foreach($_POST['price'] as $key => $price) {
-        if (!empty($price)) {
+        if (isset($price)) {
             $price_array[$key]['id']                = isset($_POST['id'][$key]) ? preg_replace('/[^0-9]/', '', $_POST['id'][$key]) : null;
             $price_array[$key]['price']             = isset($price) ? preg_replace('/[^0-9]/', '', $price) : 0;
             $price_array[$key]['application_date']      = !empty($_POST['application_date'][$key]) ? clean_xss_tags($_POST['application_date'][$key], 1, 1) : null;
@@ -108,7 +108,8 @@ $file_content .= "\n Price : ";
 foreach ($price_array as $price) {
     $id         = $price['id'] ? $price['id'] : 'New';
     $end_date   = $price['application_end_date'] ? $price['application_end_date'] : 'None';
-    $file_content .= "\n    " . $id ." / " . number_format($price['price']) . " / " .  $price['application_date'] . " / " . $end_date;
+    $log_price  = !empty($price['price']) ? number_format($price['price']) : 0; 
+    $file_content .= "\n    " . $id ." / " . $log_price . " / " .  $price['application_date'] . " / " . $end_date;
 }
 $file_content .= "\n====================================================\n";
 // 경로 생성

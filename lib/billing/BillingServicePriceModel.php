@@ -25,7 +25,8 @@ class BillingServicePriceModel
         $sql = "SELECT 
                     *
                 FROM {$g5['billing_service_price_table']}
-                WHERE service_id = ?";
+                WHERE service_id = ?
+                ORDER BY application_date ASC, application_end_date ASC";
         array_push($bindParam, $serviceId);
 
         return $this->g5Mysqli->execSQL($sql, $bindParam);
