@@ -25,7 +25,8 @@ class BillingServicePriceModel
         $sql = "SELECT 
                     *
                 FROM {$g5['billing_service_price_table']}
-                WHERE service_id = ?";
+                WHERE service_id = ?
+                ORDER BY application_date ASC, application_end_date ASC";
         array_push($bindParam, $serviceId);
 
         return $this->g5Mysqli->execSQL($sql, $bindParam);
@@ -43,14 +44,20 @@ class BillingServicePriceModel
         $bindParam = array();
 
         $sql = "SELECT
-                    IFNULL(
+                    COALESCE(
                         (SELECT
                             price
-                        FROM {$g5["billing_service_price_table"]} bsp
-                        WHERE bsp.service_id = bs.service_id
-                            AND now() BETWEEN application_date AND application_end_date
-                        ORDER BY application_date DESC, price ASC
-                        LIMIT 1), 
+                        FROM {$g5['billing_service_price_table']} sp
+                        WHERE sp.service_id = bs.service_id 
+                            AND NOW() BETWEEN application_date AND application_end_date
+                        ORDER BY application_date ASC, application_end_date ASC LIMIT 1),
+                        (SELECT 
+                            price
+                        FROM {$g5['billing_service_price_table']} sp
+                        WHERE sp.service_id = bs.service_id
+                            AND NOW() >= application_date 
+                            AND application_end_date IS NULL
+                        ORDER BY application_date DESC LIMIT 1),
                         base_price
                     ) AS current_price
                 FROM {$g5["billing_service_table"]} bs
