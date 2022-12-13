@@ -193,36 +193,29 @@ if (isset($service_id) && !empty($service_id)) {
                 </colgroup>
                 <tbody>
                     <tr>
-                        <th scope="row"><label for="base_price">기본 가격</label></th>
-                        <td>
-                            <?php echo help("기본 가격을 설정합니다."); ?>
-                            <div>
-                                <input type="number" name="base_price" value="<?php echo $service['base_price']; ?>" class="frm_input" size="12"> 원
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
                         <th scope="row">
-                            <label for="price">변경 가격 
+                            <label for="price">가격 설정
                                 <button type="button" id="create_price_row" class="btn_frmline">가격 추가</button>
                             </label>
                         </th>
                         <td id="td_price">
-                            <?php echo help("가격이 변경되는 일자를 선택할 수 있습니다. 설정된 가격은 해당 날짜에 맞춰 자동으로 반영됩니다.
-                            <span class='help_modal_log' data-remodal-target='modal_price_log'>가격변동 이력을 확인</span>할 수 있습니다."); ?>
+                            <?php echo help("가격이 변경되는 일자를 선택할 수 있습니다. 설정된 가격은 해당 날짜에 맞춰 자동으로 반영됩니다. 
+                            ※가격 변경기간이 중복되지 않도록 주의해주시기 바랍니다.
+                            ※<span class='help_modal_log' data-remodal-target='modal_price_log'>가격변동 이력을 확인</span>할 수 있습니다."); ?>
+                            <div>
+                                <input type="text" name="base_price" value="<?php echo $service['base_price']; ?>" class="frm_input" size="12"> 원                            
+                            </div>
                         <?php 
                             foreach ($service_price as $key => $price) {
                                 $row = (int)$key + 1;
                         ?> 
-                            <div id="td_price_<?php echo $row ?>">
+                            <div id="td_price_<?php echo $row ?>" style="margin-top:4px;">
                                 <input type="hidden" name="id[<?php echo $row ?>]" value="<?php echo $price['id'] ?>">
                                 <input type="text" name="price[<?php echo $row ?>]" value="<?php echo $price['price']; ?>" class="frm_input" size="12"> 원
                                 / 
                                 <input type="text" name="application_date[<?php echo $row ?>]" id="application_date_<?php echo $row ?>" value="<?php echo $price['application_date']; ?>" class="frm_input date_format" size="20"> ~
                                 <input type="text" name="application_end_date[<?php echo $row ?>]" id="application_end_date_<?php echo $row ?>" value="<?php echo $price['application_end_date']; ?>" class="frm_input date_format" size="20">까지 적용
-                                <?php if ($price_count == $row) { ?>
-                                    <button type="button" name="remove_price_row" class="btn_frmline">삭제</button>
-                                <?php } ?>
+                                <button type="button" name="remove_price_row" class="btn_frmline">삭제</button>
                             </div>
                             <?php } ?>
                         </td>
@@ -298,7 +291,7 @@ $(function() {
     // 가격삭제 버튼
     $(document).on("click", "button[name='remove_price_row']", function(){
         remote_price_row(this);
-        add_remove_price_btn();
+        // add_remove_price_btn();
     });
 
     $.datepicker.setDefaults({
@@ -316,7 +309,7 @@ function create_price_row()
     price_row += 1;
 
     let html    = '';
-    html += '<div id="td_price_' + price_row + '">';
+    html += '<div id="td_price_' + price_row + '" style="margin-top:4px;">';
     html += '<input type="text" name="price[' + price_row + ']" value="" class="frm_input" size="12"> 원 / ';
     html += '<input type="text" name="application_date[' + price_row + ']" value="" id="application_date_' + price_row + '" class="frm_input date_format" size="20"> ~ ';
     html += '<input type="text" name="application_end_date[' + price_row + ']" value="" id="application_end_date_' + price_row + '" class="frm_input date_format" size="20">까지 적용';
@@ -330,7 +323,7 @@ function remote_price_row(obj)
 }
 function add_remove_price_btn()
 {
-    $("button[name='remove_price_row']").remove();
+    // $("button[name='remove_price_row']").remove();
     if (price_row > 0) {
         $("#td_price_" + price_row).append(' <button type="button" name="remove_price_row" class="btn_frmline">삭제</button>');
     }
@@ -355,14 +348,6 @@ function check_form_service(f)
             $("#application_date_" + i).focus();
             return false;
         }
-        // 마지막 행은 제외하고 검사
-        if (($("#application_end_date_" + i).val() === '' || $("#application_end_date_" + i).val() === '0000-00-00 00:00:00')
-            && i != price_row) {
-            alert("변경 가격의 종료날짜를 입력해주세요.");
-            $("#application_end_date_" + i).focus();
-            return false;
-        }
-
     }
 
     <?php echo get_editor_js('explan'); ?>

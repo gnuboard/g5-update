@@ -16,6 +16,7 @@ $price_model    = new BillingServicePriceModel();
 /** Form Data */
 /* 기본정보 */
 $service_id = isset($_POST['service_id']) ? preg_replace('/[^0-9]/', '', $_POST['service_id']) : 0;
+$base_price = isset($_POST['base_price']) ? preg_replace('/[^0-9]/', '', $_POST['base_price']) : 0;
 $data = array(
     "name"              => isset($_POST['name']) ? clean_xss_tags($_POST['name'], 1, 1) : '',
     "summary"           => isset($_POST['summary']) ? clean_xss_tags($_POST['summary'], 1, 1) : '',
@@ -31,7 +32,7 @@ $data = array(
     "service_table"     => isset($_POST['service_table']) ? clean_xss_tags($_POST['service_table'], 1, 1) : '',
     "service_url"       => isset($_POST['service_url']) ? strip_tags(clean_xss_attributes($_POST['service_url'])) : '',
     "service_hook_code" => isset($_POST['service_hook_code']) ? clean_xss_tags($_POST['service_hook_code'], 1, 1) : '',
-    "base_price"        => isset($_POST['base_price']) ? preg_replace('/[^0-9]/', '', $_POST['base_price']) : 0
+    "base_price"        => $base_price
 );
 
 /* 가격 */
@@ -104,12 +105,12 @@ $file_content = "====================================================";
 $file_content .= "\n IP : " . $_SERVER['REMOTE_ADDR'];
 $file_content .= "\n ID : " . $member['mb_id'];
 $file_content .= "\n Date : " . date('Y-m-d H:i:s');
-$file_content .= "\n Price : ";
+$file_content .= "\n Price : \n    " . number_format((int)$base_price);
 foreach ($price_array as $price) {
     $id         = $price['id'] ? $price['id'] : 'New';
     $end_date   = $price['application_end_date'] ? $price['application_end_date'] : 'None';
     $log_price  = !empty($price['price']) ? number_format($price['price']) : 0; 
-    $file_content .= "\n    " . $id ." / " . $log_price . " / " .  $price['application_date'] . " / " . $end_date;
+    $file_content .= "\n    " . $log_price . " / " .  $price['application_date'] . " / " . $end_date;
 }
 $file_content .= "\n====================================================\n";
 // 경로 생성
