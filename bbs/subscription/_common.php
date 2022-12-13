@@ -21,18 +21,18 @@ function to_han($str)
 /**
  * json 형식으로 메시지를 출력 후 exit 합니다.
  * @param string $msg
- * @param string $http_state_no
+ * @param string $http_status_code
  * @return void
  */
-function responseJson($msg, $http_state_no = 200)
+function response_json($msg, $http_status_code = 200)
 {
-    $res_data = array('msg' => $msg);
+    $res_data = array('result_msg' => $msg);
     if (PHP_VERSION_ID >= 50400) {
         echo json_encode($res_data, JSON_UNESCAPED_UNICODE);
     } else {
         echo to_han(json_encode($res_data));
     }
 
-    header('Content-type: application/json; charset=utf-8', true, $http_state_no);
+    header('Content-type: application/json; charset=utf-8', true, $http_status_code);
     exit;
 }

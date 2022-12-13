@@ -34,6 +34,6 @@ function curl_request_async($url, $params)
     curl_close($ch);
 
     $http_code = isset($http_code) ? $http_code : 200;
-    responseJson('결제작업이 실행되었습니다.', $http_code);
+    response_json('결제작업이 실행되었습니다.', $http_code);
 
 }
