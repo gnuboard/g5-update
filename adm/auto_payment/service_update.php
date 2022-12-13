@@ -6,8 +6,9 @@ $w = isset($_REQUEST['w']) ? $_REQUEST['w'] : '';
 auth_check_menu($auth, $sub_menu, 'w');
 check_admin_token();
 
-@mkdir(G5_DATA_PATH . '/billing', G5_DIR_PERMISSION);
-@chmod(G5_DATA_PATH . '/billing', G5_DIR_PERMISSION);
+$default_path = G5_DATA_PATH . '/billing';
+@mkdir($default_path, G5_DIR_PERMISSION);
+@chmod($default_path, G5_DIR_PERMISSION);
 
 $service_model  = new BillingServiceModel();
 $price_model    = new BillingServicePriceModel();
@@ -92,6 +93,40 @@ if ($w == "") {
             $price_model->insert($data);
         }
     }
+}
+
+/* 가격변경 파일로그 추가 */
+// 파일설명 변수 및 로그내용 선언
+$log_path       = $default_path . "/log";
+$file_name      = "service_price_change_log_" . $service_id . ".txt";
+$log_file_path  = $log_path . "/" . $file_name;
+$file_content = "====================================================";
+$file_content .= "\n IP : " . $_SERVER['REMOTE_ADDR'];
+$file_content .= "\n ID : " . $member['mb_id'];
+$file_content .= "\n Date : " . date('Y-m-d H:i:s');
+$file_content .= "\n Price : ";
+foreach ($price_array as $price) {
+    $id         = $price['id'] ? $price['id'] : 'New';
+    $end_date   = $price['application_end_date'] ? $price['application_end_date'] : 'None';
+    $file_content .= "\n    " . $id ." / " . number_format($price['price']) . " / " .  $price['application_date'] . " / " . $end_date;
+}
+$file_content .= "\n====================================================\n";
+// 경로 생성
+if (!is_dir($log_path)) {
+    @mkdir($log_path, G5_DIR_PERMISSION, true);
+    @chmod($log_path, G5_DIR_PERMISSION);
+}
+// 이전파일 내용을 하단에 추가 (최신내용이 상단에 오게하기 위함)
+$before_content = fopen($log_file_path, 'c+');
+$before_filesize = filesize($log_file_path);
+if ($before_filesize > 0) {
+    $file_content .= (string)fread($before_content, filesize($log_file_path));
+}
+// 파일생성 및 쓰기
+$resource = fopen($log_file_path, 'w+');
+if ($resource) {
+    fwrite($resource, $file_content);
+    fclose($resource);
 }
 
 if ($w == "" || $w == "u") {

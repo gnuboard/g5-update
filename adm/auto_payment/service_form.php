@@ -67,8 +67,30 @@ $pg_anchor = '<ul class="anchor">
 $g5['title'] = $html_title;
 include_once G5_ADMIN_PATH . '/admin.head.php';
 include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
-?>
 
+/* 가격변동 이력 modal popup */
+// add_stylesheet('css 구문', 출력순서); 숫자가 작을 수록 먼저 출력됨
+add_stylesheet('<link rel="stylesheet" href="' . G5_JS_URL . '/remodal/remodal.css">', 11);
+add_stylesheet('<link rel="stylesheet" href="' . G5_JS_URL . '/remodal/remodal-default-theme.css">', 12);
+add_javascript('<script src="' . G5_JS_URL . '/remodal/remodal.js"></script>', 10);
+
+$log_content = '';
+if (isset($service_id) && !empty($service_id)) {
+    $log_path = G5_DATA_PATH . '/billing/log/service_price_change_log_' . $service_id . '.txt';
+    $resource = fopen($log_path, 'r');
+    if ($resource && filesize($log_path) > 0) {
+        $log_content = fread($resource, filesize($log_path));
+    }
+}
+
+?>
+<style>
+.help_modal_log {
+    font-weight: bold;
+    text-decoration-line: underline;
+    cursor: pointer;
+}
+</style>
 <form name="form_service" action="./service_update.php" method="post" enctype="multipart/form-data"
     autocomplete="off" onsubmit="return check_form_service(this)">
     <input type="hidden" name="w" value="<?php echo $w; ?>">
@@ -186,7 +208,8 @@ include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
                             </label>
                         </th>
                         <td id="td_price">
-                            <?php echo help("가격이 변경되는 일자를 선택할 수 있습니다."); ?>
+                            <?php echo help("가격이 변경되는 일자를 선택할 수 있습니다. 설정된 가격은 해당 날짜에 맞춰 자동으로 반영됩니다.
+                            <span class='help_modal_log' data-remodal-target='modal_price_log'>가격변동 이력을 확인</span>할 수 있습니다."); ?>
                         <?php 
                             foreach ($service_price as $key => $price) {
                                 $row = (int)$key + 1;
@@ -245,7 +268,21 @@ include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
     </div>
 </form>
 
+<div class="server_rewrite_info">
+    <div class="is_rewrite remodal" data-remodal-id="modal_price_log" role="dialog" aria-labelledby="modalPrice" aria-describedby="modal1Desc">
 
+        <button type="button" class="connect-close" data-remodal-action="close">
+            <i class="fa fa-close"></i>
+            <span class="txt">닫기</span>
+        </button>
+
+        <h4 class="copy_title">해당 구독상품의 가격변동 이력입니다.
+            <!-- <br><span class="info-warning"></span>
+            <br><span class="info-success"></span> -->
+        </h4>
+        <textarea readonly="readonly" rows="10"><?php echo $log_content ?></textarea>
+    </div>
+</div>
 <script>
 let price_row   = <?php echo $price_count ?>;
 
