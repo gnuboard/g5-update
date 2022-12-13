@@ -313,11 +313,19 @@ function check_form_service(f)
     }
 
     for (let i = 1; i <= price_row; i++) {
-        if ($("#application_date_" + i).val() === '' || $("#application_end_date_" + i).val() === '') {
-            alert("변경 가격의 시작/종료일시를 입력해주세요.");
+        if ($("#application_date_" + i).val() === '') {
+            alert("변경 가격의 시작날짜를 입력해주세요.");
             $("#application_date_" + i).focus();
             return false;
         }
+        // 마지막 행은 제외하고 검사
+        if (($("#application_end_date_" + i).val() === '' || $("#application_end_date_" + i).val() === '0000-00-00 00:00:00')
+            && i != price_row) {
+            alert("변경 가격의 종료날짜를 입력해주세요.");
+            $("#application_end_date_" + i).focus();
+            return false;
+        }
+
     }
 
     <?php echo get_editor_js('explan'); ?>
