@@ -39,10 +39,7 @@ $payment_success_code = '0000'; // kcp 결제 성공코드
 $billing_list_length = $billing_info->selectTotalCount($query_data);
 $billing_total_page = (int)ceil($billing_list_length / $query_data['rows']); //DB 부하, 배열 메모리 줄이기위한 페이징
 for ($idx = 0; $idx < $billing_total_page; $idx++) {
-    if ($idx > 0) {
-        $query_data['offset'] = $query_data['rows'] * $idx + 1;
-    }
-
+    $query_data['offset'] = ($idx - 1) * $query_data['rows'];
     $billing_list = $billing_info->selectList($query_data);
     if (!is_array($billing_list) || count($billing_list) === 0) {
         continue;
@@ -55,7 +52,7 @@ for ($idx = 0; $idx < $billing_total_page; $idx++) {
             continue;
         }
         //구독만료기간이 있는 상품.
-        if (!empty($today_payment['end_date'])) {
+        if ($today_payment['end_date'] !== '0000-00-00 00:00:00') {
             $payment_end_date = date('Y-m-d', strtotime($today_payment['end_date']));
 
             //배치실행일이 구독 만료일이면 결제하지 않는다.

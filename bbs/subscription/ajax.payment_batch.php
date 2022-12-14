@@ -2,7 +2,7 @@
 
 require_once(dirname(__FILE__) . '/_common.php');
 
-$url = G5_BBS_URL . '/subscription/batch_service.php';
+$url = G5_BBS_URL . '/subscription/payment_batch.php';
 curl_request_async($url, '' );
 
 /**
