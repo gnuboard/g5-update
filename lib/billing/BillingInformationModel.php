@@ -144,6 +144,7 @@ class BillingInformationModel
             'od_id'             => $requestData['od_id'],
             'service_id'        => $requestData['service_id'],
             'mb_id'             => $requestData['mb_id'],
+            'price'             => isset($requestData['price']) ? $requestData['price'] : 0,
             'billing_key'       => $requestData['billing_key'],
             'start_date'        => $requestData['start_date'],
             'end_date'          => $requestData['end_date'],

@@ -39,6 +39,7 @@ CREATE TABLE `g5_billing_information` (
   `od_id` bigint(20) unsigned NOT NULL,
   `service_id` int(11) NOT NULL,
   `mb_id` varchar(20) NOT NULL,
+  `price` int(11) NOT NULL DEFAULT 0,
   `billing_key` varchar(255) NOT NULL,
   `start_date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `end_date` datetime DEFAULT NULL,
