@@ -31,3 +31,47 @@ define('site_cd', (isset($billing_conf['bc_kcp_site_cd']) && !empty($billing_con
 define('kcpgroup_id', (isset($billing_conf['bc_kcp_group_id']) && !empty($billing_conf['bc_kcp_group_id'])) ? $billing_conf['bc_kcp_group_id'] : '');
 // Priavate Key Password
 define('PRIVATE_PW', (isset($billing_conf['bc_kcp_prikey_password']) && !empty($billing_conf['bc_kcp_prikey_password'])) ? $billing_conf['bc_kcp_prikey_password'] : '');
+
+/**
+ * @param mixed $s
+ * @return mixed|false
+ */
+function han($s)
+{
+    return reset(json_decode('{"s":"' . $s . '"}'));
+}
+
+/**
+ * PHP 5.3 이하에서 json_encode JSON_UNESCAPED_UNICODE 구현
+ * @param $str
+ * @return string|string[]|null
+ */
+function to_han($str)
+{
+    return preg_replace('/(\\\u[a-f0-9]+)+/e', 'han("$0")', $str);
+}
+
+/**
+ * json 형식으로 메시지를 출력 후 exit 합니다.
+ * @param array|string $data
+ * @param string $httpStateNo
+ * @return void
+ */
+function response_json($data, $httpStateNo = 200)
+{
+    header('Content-type: application/json; charset=utf-8', true, $httpStateNo);
+
+    if (is_string($data)) {
+        $resData['result_message'] = $data;
+    } else {
+        $resData = $data;
+    }
+
+    if (PHP_VERSION_ID >= 50400) {
+        echo json_encode($resData, JSON_UNESCAPED_UNICODE);
+    } else {
+        echo to_han(json_encode($resData));
+    }
+
+    exit;
+}
