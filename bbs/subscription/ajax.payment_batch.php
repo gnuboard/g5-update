@@ -1,8 +1,8 @@
 <?php
 
-require_once(dirname(__FILE__) . '/../../common.php');
+require_once(dirname(__FILE__) . '/_common.php');
 
-$url = G5_BBS_URL . '/subscription/batch_service.php';
+$url = G5_BBS_URL . '/subscription/payment_batch.php';
 curl_request_async($url, '' );
 
 /**
@@ -23,21 +23,17 @@ function curl_request_async($url, $params)
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
     curl_setopt($ch, CURLOPT_TIMEOUT, 1);
-
-    //curl_setopt($ch, CURLOPT_POSTFIELDS, $req_data);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 
     // API RES
     curl_exec($ch);
-    $curlError = curl_error($ch);
-    $curlInfo = curl_getinfo($ch);
     if(defined(CURLINFO_HTTP_CODE)){
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     }
     curl_close($ch);
 
     $http_code = isset($http_code) ? $http_code : 200;
-    header('', true, $http_code);
-    echo json_encode(array('message' => '결제 작업이 실행되었습니다'));
+    response_json('결제작업이 실행되었습니다.', $http_code);
 
 }

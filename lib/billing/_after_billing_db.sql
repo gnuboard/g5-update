@@ -113,6 +113,8 @@ CREATE TABLE `g5_billing_scheduler_history` (
   `fail_count` int(11) NOT NULL DEFAULT 0,
   `state` int(1) NOT NULL DEFAULT 0 COMMENT '1: 성공, 0: 실패, -1:부분성공',
   `start_time` datetime NOT NULL,
+  `title` varchar(11) NOT NULL,
+  `ip` varchar(40),
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 

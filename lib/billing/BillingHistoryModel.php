@@ -53,6 +53,30 @@ class BillingHistoryModel
     }
 
     /**
+     * 마지막 결제 성공내역 1건
+     * @param string $orderId
+     * @param string $resultCode
+     * @return array|null
+     */
+    public function selectOneLastSuccessByOdId($orderId, $resultCode)
+    {
+        global $g5;
+
+        $bindParam = array();
+
+        $sql = "SELECT 
+                    *
+                FROM {$g5['billing_history_table']}
+                WHERE od_id = ? and result_code = ?
+                ORDER BY payment_count DESC
+                LIMIT 1";
+        $bindParam[] = $orderId;
+        $bindParam[] = $resultCode;
+
+        return $this->g5Mysqli->getOne($sql, $bindParam);
+    }
+
+    /**
      * 결제이력 조회
      * @param int       $offset     시작위치
      * @param int       $rows       출력 갯수
@@ -80,7 +104,7 @@ class BillingHistoryModel
         }
 
         /* 반환 결과 수 */
-        if (!empty($requestData['offset']) && !empty($requestData['rows'])) {
+        if (isset($requestData['offset'], $requestData['rows'])) {
             $sql .= " LIMIT ?, ?";
             array_push($bindParam, $requestData['offset'], $requestData['rows']);
         }
