@@ -352,9 +352,6 @@ class G5BillingKcp implements BillingInterface
      * 자동결제(빌링) 승인취소 요청
      * @param string $tno           NHN KCP 거래 고유번호
      * @param string $cancelReason  취소사유
-     * @param string $type          취소 타입 (all : 전체취소, partial: 부분취소)
-     * @param string $mod_mny       부분취소일 경우 부분취소금액
-     * @param string $rem_mny       부분취소일 경우 남은 원거래 금액
      * @return mixed
      */
     public function requestCancelBilling($tno, $cancelReason = '가맹점 DB 처리 실패(자동취소)')

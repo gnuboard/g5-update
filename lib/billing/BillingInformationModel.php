@@ -1,4 +1,5 @@
 <?php
+
 /**
  * 구독정보 Model Class
  */
@@ -132,7 +133,7 @@ class BillingInformationModel
 
     /**
      * 자동결제(빌링) 정보 저장
-     * @param array $resultData     
+     * @param array $requestData
      * @return bool
      */
     public function insert($requestData = array())
@@ -171,8 +172,8 @@ class BillingInformationModel
 
     /**
      * 상태 값 업데이트
-     * @param string $orderId   주문번호
-     * @param string $billKey   자동결제(빌링) 키
+     * @param string $orderId 주문번호
+     * @param int $status 0 or 1
      * @return bool
      */
     public function updateStatus($orderId, $status)
@@ -188,7 +189,7 @@ class BillingInformationModel
     /**
      * 빌링 키 정보 업데이트
      * @param string $orderId   주문번호
-     * @param string $billKey   자동결제(빌링) 키
+     * @param string $billingKey   자동결제(빌링) 키
      * @return bool
      */
     public function updateBillingKey($orderId, $billingKey)

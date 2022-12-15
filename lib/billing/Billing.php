@@ -7,7 +7,7 @@
 class Billing
 {
     /**
-     * @var instance $pg        PG사 Instance
+     * @var BillingInterface $pg        PG사 Instance
      */
     public $pg = null;
 
