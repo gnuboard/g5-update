@@ -234,4 +234,32 @@ class Billing
             return $this->unitArray['default'];
         }
     }
+
+    /**
+     * 자동결제 가격 조회
+     * - 결제종료일의 존재유무에 따라 가져오는 가격이 달라진다.
+     * @param string $orderId   주문번호
+     * @param array $info       자동결제 정보
+     * @return int
+     */
+    function getBillingPrice($orderId, $info = array())
+    {
+        $price = 0;
+
+        if (empty($info) || !isset($info['price'])) {
+            $info_model = new BillingInformationModel();
+            $info = $info_model->selectOneByOrderId($orderId);
+        }
+
+        // 결제종료일이 있을 때, 결제정보 가격 조회
+        if ($info['end_date'] != '0000-00-00 00:00:00' && !is_null($info['end_date'])) {
+            $price = $info['price'];
+        // 결제종료일이 없을 때, 구독상품 가격 조회
+        } else {
+            $price_model = new BillingServicePriceModel();
+            $price = $price_model->selectCurrentPrice($info['service_id']);
+        }
+
+        return (int)$price;
+    }
 }
