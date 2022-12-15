@@ -17,6 +17,10 @@ CREATE TABLE `g5_billing_service` (
   `service_url` varchar(255) DEFAULT NULL,
   `service_hook_code` varchar(255) DEFAULT NULL,
   `base_price` int(11) DEFAULT 0,
+  `is_event` tinyint(1) DEFAULT 0,
+  `event_period` int(11) DEFAULT 0,
+  `event_unit` varchar(1) DEFAULT 'm',
+  `event_price` int(11) DEFAULT 0,
   PRIMARY KEY (`service_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
@@ -39,11 +43,14 @@ CREATE TABLE `g5_billing_information` (
   `od_id` bigint(20) unsigned NOT NULL,
   `service_id` int(11) NOT NULL,
   `mb_id` varchar(20) NOT NULL,
+  `price` int(11) NOT NULL DEFAULT 0,
   `billing_key` varchar(255) NOT NULL,
   `start_date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `end_date` datetime DEFAULT NULL,
   `status` tinyint(1) NOT NULL DEFAULT 1,
   `next_payment_date` datetime DEFAULT NULL,
+  `event_expiration_date` datetime DEFAULT '0000-00-00 00:00:00',
+  `event_price` int(11) DEFAULT 0,
   PRIMARY KEY (`od_id`),
   KEY `g5_billing_information_FK` (`service_id`),
   CONSTRAINT `g5_billing_information_FK` FOREIGN KEY (`service_id`) REFERENCES `g5_billing_service` (`service_id`)

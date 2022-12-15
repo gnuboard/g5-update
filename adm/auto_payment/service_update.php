@@ -25,23 +25,27 @@ $data = array(
     "explan"            => isset($_POST['explan']) ? $_POST['explan'] : '',
     "mobile_explan"     => isset($_POST['mobile_explan']) ? $_POST['mobile_explan'] : '',
     "image_path"        => isset($_POST['image_path']) ? clean_xss_tags($_POST['image_path']) : '',
-    "expiration"        => isset($_POST['expiration']) ? clean_xss_tags($_POST['expiration'], 1, 1) : '',
+    "expiration"        => isset($_POST['expiration']) ? preg_replace('/[^0-9]/', '', $_POST['expiration']) : 0,
     "expiration_unit"   => isset($_POST['expiration_unit']) ? clean_xss_tags($_POST['expiration_unit'], 1, 1) : '',
     "recurring"         => isset($_POST['recurring']) ? preg_replace('/[^0-9]/', '', $_POST['recurring']) : 0,
     "recurring_unit"    => isset($_POST['recurring_unit']) ? clean_xss_tags($_POST['recurring_unit'], 1, 1) : '',
     "service_table"     => isset($_POST['service_table']) ? clean_xss_tags($_POST['service_table'], 1, 1) : '',
     "service_url"       => isset($_POST['service_url']) ? strip_tags(clean_xss_attributes($_POST['service_url'])) : '',
     "service_hook_code" => isset($_POST['service_hook_code']) ? clean_xss_tags($_POST['service_hook_code'], 1, 1) : '',
-    "base_price"        => $base_price
+    "base_price"        => $base_price,
+    'is_event'          => isset($_POST['is_event']) ? preg_replace('/[^0-9]/', '', $_POST['is_event']) : 0,
+    'event_period'      => isset($_POST['event_period']) ? preg_replace('/[^0-9]/', '', $_POST['event_period']) : 0,
+    'event_unit'        => isset($_POST['event_unit']) ? clean_xss_tags($_POST['event_unit'], 1, 1) : '',
+    'event_price'       => isset($_POST['event_price']) ? preg_replace('/[^0-9]/', '', $_POST['event_price']) : 0
 );
 
 /* 가격 */
 $price_array = array();
 if (isset($_POST['price'])) {
-    foreach($_POST['price'] as $key => $price) {
+    foreach ($_POST['price'] as $key => $price) {
         if (isset($price)) {
-            $price_array[$key]['id']                = isset($_POST['id'][$key]) ? preg_replace('/[^0-9]/', '', $_POST['id'][$key]) : null;
-            $price_array[$key]['price']             = isset($price) ? preg_replace('/[^0-9]/', '', $price) : 0;
+            $price_array[$key]['id']    = isset($_POST['id'][$key]) ? preg_replace('/[^0-9]/', '', $_POST['id'][$key]) : null;
+            $price_array[$key]['price'] = isset($price) ? preg_replace('/[^0-9]/', '', $price) : 0;
             $price_array[$key]['application_date']      = !empty($_POST['application_date'][$key]) ? clean_xss_tags($_POST['application_date'][$key], 1, 1) : null;
             $price_array[$key]['application_end_date']  = !empty($_POST['application_end_date'][$key]) ? clean_xss_tags($_POST['application_end_date'][$key], 1, 1) : null;
         }
@@ -55,22 +59,23 @@ if ($w == "") {
     $service_id = $service_model->g5Mysqli->insertId();
 
     foreach ($price_array as $price) {
-        $price_data = array(
-            "service_id"    => $service_id,
-            "price"         => $price['price'],
-            "application_date" => $price['application_date'],
-            "application_end_date" => $price['application_end_date']
+        $price_model->insert(
+            array(
+                "service_id" => $service_id,
+                "price" => $price['price'],
+                "application_date" => $price['application_date'],
+                "application_end_date" => $price['application_end_date']
+            )
         );
-        $price_model->insert($price_data);
     }
 } else if ($w == "u") {
     $service_model->update($service_id, $data);
 
     /* 가격 업데이트 */
     // delete
-    $in         = '';
+    $in = '';
     $bind_param = array($service_id);
-    foreach($price_array as $price) {
+    foreach ($price_array as $price) {
         if (isset($price['id'])) {
             $in .= ($in == '') ? '?' : ',?';
             array_push($bind_param, $price['id']);
@@ -82,16 +87,16 @@ if ($w == "") {
 
     // insert or update
     foreach ($price_array as $price) {
-        $data = array(
-            "service_id"    => $service_id,
-            "price"         => $price['price'],
+        $price_data = array(
+            "service_id" => $service_id,
+            "price" => $price['price'],
             "application_date" => $price['application_date'],
             "application_end_date" => $price['application_end_date']
         );
         if (!empty($price['id'])) {
-            $price_model->update($price['id'], $data);
+            $price_model->update($price['id'], $price_data);
         } else {
-            $price_model->insert($data);
+            $price_model->insert($price_data);
         }
     }
 }
@@ -109,7 +114,7 @@ $file_content .= "\n Price : \n    " . number_format((int)$base_price);
 foreach ($price_array as $price) {
     $id         = $price['id'] ? $price['id'] : 'New';
     $end_date   = $price['application_end_date'] ? $price['application_end_date'] : 'None';
-    $log_price  = !empty($price['price']) ? number_format($price['price']) : 0; 
+    $log_price  = !empty($price['price']) ? number_format($price['price']) : 0;
     $file_content .= "\n    " . $log_price . " / " .  $price['application_date'] . " / " . $end_date;
 }
 $file_content .= "\n====================================================\n";
@@ -119,10 +124,10 @@ if (!is_dir($log_path)) {
     @chmod($log_path, G5_DIR_PERMISSION);
 }
 // 이전파일 내용을 하단에 추가 (최신내용이 상단에 오게하기 위함)
-$before_content = fopen($log_file_path, 'c+');
-$before_filesize = filesize($log_file_path);
+$before_content     = fopen($log_file_path, 'c+');
+$before_filesize    = filesize($log_file_path);
 if ($before_filesize > 0) {
-    $file_content .= (string)fread($before_content, filesize($log_file_path));
+    $file_content .= (string)fread($before_content, $before_filesize);
 }
 // 파일생성 및 쓰기
 $resource = fopen($log_file_path, 'w+');

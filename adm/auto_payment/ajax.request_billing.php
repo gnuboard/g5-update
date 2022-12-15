@@ -21,37 +21,37 @@ $history_id = clean_xss_tags($_POST['id']);
 /** 결제정보 조회 */
 $billing_info = $information_model->selectOneByOrderId($od_id);
 if (!$billing_info || $mb_id != $billing_info['mb_id']) {
-    responseJson('구독정보를 찾을 수 없습니다.', 400);
+    response_json('구독정보를 찾을 수 없습니다.', 400);
 }
 /** 결제이력 조회 */ 
 $history_info = $history_model->selectOneById($history_id);
 if (!$history_info || $mb_id != $history_info['mb_id']) {
-    responseJson('이전 결제정보를 찾을 수 없습니다.', 400);
+    response_json('이전 결제정보를 찾을 수 없습니다.', 400);
 }
 /** 필수 파라미터 체크 */
 if (empty($history_info['billing_key']) || empty($history_info['amount']) || empty($history_info['od_id'])) {
-    responseJson('필수 파라미터가 없습니다.', 400);
+    response_json('필수 파라미터가 없습니다.', 400);
 }
 /* ============================================================================== */
 /* =  결제 요청                                                                  = */
 /* = -------------------------------------------------------------------------- = */
 $data = array_merge($billing_info, $history_info);
-$json_res = $billing->pg->requestBilling($data);
-$json_res = $billing->convertPgDataToCommonData($json_res);
+$res_data = $billing->pg->requestBilling($data);
+$res_data = $billing->convertPgDataToCommonData($res_data);
 /* ============================================================================== */
 /* =  응답정보                                                                     = */
 /* = -------------------------------------------------------------------------- = */
 // Res JSON DATA Parsing
-if (isset($json_res['http_code'])) {
-    responseJson($json_res['result_message'], $json_res['http_code']);
+if (isset($res_data['http_code'])) {
+    response_json($res_data['result_message'], $res_data['http_code']);
 }
 
-$json_res['mb_id']              = $history_info['mb_id'];
-$json_res['billing_key']        = $history_info['billing_key'];
-$json_res['payment_count']      = $history_info['payment_count'];
-$json_res['payment_date']       = date('Y-m-d H:i:s'); // @todo 응답받은 시간으로 입력필요
-$json_res['expiration_date']    = $billing->nextPaymentDate($billing_info['start_date'], $json_res['payment_date'], $billing_info['recurring'], $billing_info['recurring_unit']);
-// $json_res['expiration_date']    = date('Y-m-d 23:59:59 ', strtotime('+' . $billing_info['recurring'] . " " . $unit_array[$billing_info['recurring_unit']]));
+$res_data['mb_id']              = $history_info['mb_id'];
+$res_data['billing_key']        = $history_info['billing_key'];
+$res_data['payment_count']      = $history_info['payment_count'];
+$res_data['payment_date']       = date('Y-m-d H:i:s'); // @todo 응답받은 시간으로 입력필요
+$res_data['expiration_date']    = $billing->nextPaymentDate($billing_info['start_date'], $res_data['payment_date'], $billing_info['recurring'], $billing_info['recurring_unit']);
+// $res_data['expiration_date']    = date('Y-m-d 23:59:59 ', strtotime('+' . $billing_info['recurring'] . " " . $unit_array[$billing_info['recurring_unit']]));
 /* ============================================================================== */
 /* =  로그파일 생성                                                              = */
 /* = -------------------------------------------------------------------------- = */
@@ -60,12 +60,12 @@ $json_res['expiration_date']    = $billing->nextPaymentDate($billing_info['start
 /* ============================================================================== */
 /* =  결제 결과처리                                                              = */
 /* ============================================================================== */
-$result = $history_model->insert($json_res);
+$result = $history_model->insert($res_data);
 if ($result_code == "0000") {
     if (!$result) {
         $bSucc = false;
     } else {
-        $result = $information_model->updateNextPaymentDate($od_id, date('Y-m-d', strtotime($json_res['expiration_date'])));
+        $result = $information_model->updateNextPaymentDate($od_id, date('Y-m-d', strtotime($res_data['expiration_date'])));
         if (!$result) {
             $bSucc = false;
         }
@@ -84,25 +84,21 @@ DB 작업이 실패 한 경우, bSucc 라는 변수의 값을 false로 설정해
 --------------------------------------------------------------------------
 */
 //0000 은 성공
-if ($json_res['result_code'] === '0000' && $bSucc === false) {
+if ($res_data['result_code'] === '0000' && $bSucc === false) {
     $reason = '가맹점 DB 처리 실패(자동취소)';
-    $cancel_res = $billing->pg->requestCancelBilling($json_res['payment_no'], $reason);
+    $cancel_res = $billing->pg->requestCancelBilling($res_data['payment_no'], $reason);
     $cancel_res = $billing->convertPgDataToCommonData($cancel_res);
     
     // 취소이력 저장
     $cancel_res['od_id']            = $od_id;
     $cancel_res['cancel_reason']    = $reason;
-    $cancel_res['cancel_amount']    = $json_res['amount'];
+    $cancel_res['cancel_amount']    = $res_data['amount'];
     $cancel_model->insert($cancel_res);
     
     if ($cancel_res['result_code'] !== '0000') {
-        responseJson('결제 취소가 실패했습니다.' . $cancel_res['result_message'], 401);
+        response_json('결제 취소가 실패했습니다.' . $cancel_res['result_message'], 401);
     }
 }
 
 // 나머지 결과 출력
-if (PHP_VERSION_ID >= 50400) {
-    echo json_encode($json_res, JSON_UNESCAPED_UNICODE);
-} else {
-    echo to_han(json_encode($json_res));
-}
+response_json($res_data);

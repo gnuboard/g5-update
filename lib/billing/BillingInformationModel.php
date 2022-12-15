@@ -125,7 +125,7 @@ class BillingInformationModel
             $sql .= " AND {$requestData['sfl']} LIKE ? ";
             array_push($bindParam, "%{$requestData['stx']}%");
         }
-        
+
         $result = $this->g5Mysqli->getOne($sql, $bindParam);
 
         return (int)$result['cnt'];
@@ -144,10 +144,13 @@ class BillingInformationModel
             'od_id'             => $requestData['od_id'],
             'service_id'        => $requestData['service_id'],
             'mb_id'             => $requestData['mb_id'],
+            'price'             => isset($requestData['price']) ? $requestData['price'] : 0,
             'billing_key'       => $requestData['billing_key'],
             'start_date'        => $requestData['start_date'],
             'end_date'          => $requestData['end_date'],
-            'next_payment_date' => $requestData['next_payment_date']
+            'next_payment_date' => $requestData['next_payment_date'],
+            'event_expiration_date' => isset($requestData['event_expiration_date']) ? $requestData['event_expiration_date'] : null,
+            'event_price'       => isset($requestData['event_price']) ? $requestData['event_price'] : 0,
         );
 
         return $this->g5Mysqli->insertSQL($g5["billing_information_table"], $data);
@@ -241,11 +244,12 @@ class BillingInformationModel
                         LEFT JOIN {$g5['billing_information_table']} bi ON bh.od_id = bi.od_id
                     WHERE bh.mb_id = ?
                         AND bi.service_id = ?
-                        AND now() BETWEEN payment_date AND expiration_date) as permission";
+                        AND NOW() BETWEEN payment_date AND expiration_date
+                        AND status = 1) as permission";
         array_push($bindParam, $memberId, $serviceId);
 
         $result = $this->g5Mysqli->getOne($sql, $bindParam);
-        
+
         if ((int)$result['permission'] > 0) {
             return true;
         } else {

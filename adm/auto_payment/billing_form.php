@@ -32,6 +32,8 @@ $billing_info['display_status']       = $billing_info['status'] == "1" ? "구독
 $billing_info['display_billing_key']  = $billing->displayBillKey($billing_info['billing_key']);
 $billing_info['display_next_payment'] = date('Y-m-d', strtotime($billing_info['next_payment_date']));
 $billing_info['display_od_id']        = $billing_info['od_id'];
+$billing_info['display_event_price']  = number_format((int)$billing_info['event_price']) . "원";
+$billing_info['display_event_date']   = (!is_null($billing_info['event_expiration_date']) && $billing_info['event_expiration_date'] != '0000-00-00 00:00:00') ? date('Y-m-d', strtotime($billing_info['event_expiration_date'])) : "";
 
 /* 구독상품 */
 // 구독상품 정보 조회
@@ -66,7 +68,7 @@ foreach ($history_list as $i => $history) {
     $history_list[$i]['display_period']         = ($history['result_code'] == "0000" ? $history['period'] : '');
     $history_list[$i]['is_btn_cancel']          = false;
     $history_list[$i]['display_cancel_amount']  = number_format($cancel_amount) . '원';
-    
+
     if ($history['total_cancel'] == $history['amount']) {
         $history_list[$i]['display_result'] = "환불";
         $history_list[$i]['display_result_color']   = "#AAAAAA";
@@ -74,7 +76,7 @@ foreach ($history_list as $i => $history) {
         $history_list[$i]['display_result'] = "부분 취소";
         $history_list[$i]['display_result_color']   = "#AAAAAA";
         $history_list[$i]['is_btn_cancel'] = true;
-    } else if ($history['result_code'] == "0000"){
+    } else if ($history['result_code'] == "0000") {
         $history_list[$i]['display_result'] = "성공";
         $history_list[$i]['display_result_color']   = "#53C14B";
         $history_list[$i]['is_btn_cancel'] = true;
@@ -86,7 +88,7 @@ foreach ($history_list as $i => $history) {
     if (!isset($payment_success[$count])) {
         $payment_success[$count] = false;
     }
-    
+
     if ($history['result_code'] == "0000") {
         $payment_success[$count] = true;
         $total_amount += ($history['amount'] - $cancel_amount);
@@ -101,7 +103,9 @@ $pg_anchor = '<ul class="anchor">
 </ul>';
 ?>
 <style>
-.tbl_frm01 th {width:100px;}
+    .tbl_frm01 th {
+        width: 100px;
+    }
 </style>
 <section id="anc_billing_info">
     <h2 class="h2_frm">구독결제 정보</h2>
@@ -154,12 +158,20 @@ $pg_anchor = '<ul class="anchor">
                                     <input type="text" class="frm_input date_format" name="end_date" value="<?php echo $billing_info['display_end_date'] ?>">
                                 </td>
                             </tr>
+                            <?php if (!empty($billing_info['display_event_date'])) { ?>
+                            <tr>
+                                <th scope="row">이벤트 가격</th>
+                                <td><?php echo $billing_info['display_event_price'] ?></td>
+                                <th scope="row">이벤트 종료일</th>
+                                <td><?php echo $billing_info['display_event_date'] ?></td>
+                            </tr>
+                            <?php } ?>
                             <tr>
                                 <th scope="row"><label for="status">구독 상태</label></th>
                                 <td colspan="3">
                                     <select name="status">
-                                        <option value="1" <?php echo $billing_info['status'] == "1" ? "selected" : ""?>>구독 중</option>
-                                        <option value="0" <?php echo $billing_info['status'] == "0" ? "selected" : ""?>>구독 종료</option>
+                                        <option value="1" <?php echo $billing_info['status'] == "1" ? "selected" : "" ?>>구독 중</option>
+                                        <option value="0" <?php echo $billing_info['status'] == "0" ? "selected" : "" ?>>구독 종료</option>
                                     </select>
                                 </td>
                             </tr>
@@ -192,14 +204,14 @@ $pg_anchor = '<ul class="anchor">
                             </tr>
                             <tr>
                                 <th>가격</th>
-                                <td <?php echo (!isset($price_schedule)) ? "colspan='3'" : ""?>><?php echo number_format($service['price']); ?>원</td>
+                                <td <?php echo (!isset($price_schedule)) ? "colspan='3'" : "" ?>><?php echo number_format($service['price']); ?>원</td>
                                 <?php if (isset($price_schedule)) { ?>
-                                <th>
-                                    변경예정 가격
-                                    <br>
-                                    (<?php echo $price_schedule['display_date']?>)
-                                </th>
-                                <td><?php echo number_format($price_schedule['price']) ?>원</td>
+                                    <th>
+                                        변경예정 가격
+                                        <br>
+                                        (<?php echo $price_schedule['display_date'] ?>)
+                                    </th>
+                                    <td><?php echo number_format($price_schedule['price']) ?>원</td>
                                 <?php } ?>
                             </tr>
                             <tr>
@@ -211,7 +223,7 @@ $pg_anchor = '<ul class="anchor">
                 </div>
             </section>
         </div>
-        
+
         <div class="btn_confirm01 btn_confirm">
             <input type="submit" value="결제정보 수정" class="btn_submit btn">
             <a href="./billing_list.php?<?php echo $qstr; ?>" class="btn btn_02">목록</a>
@@ -240,38 +252,38 @@ $pg_anchor = '<ul class="anchor">
                 </tr>
             </thead>
             <tbody>
-            <?php foreach ($history_list as $history) { ?>
-                <tr>
-                    <td class="td_mng_l">
-                        <div><?php echo $history['display_payment_count'] ?></div>
-                    </td>
-                    <td>
-                        <span class="payment_no" style="text-decoration: underline; cursor: pointer;" data-id="<?php echo $history['id']?>">
-                            <?php echo $history['payment_no'] ?>
-                        </span>
-                    </td>
-                    <td style="color: green;"><?php echo $history['display_amount'] ?></td>
-                    <td style="color: red;"><?php echo $history['display_cancel_amount'] ?></td>
-                    <td><?php echo $history['card_name'] ?></td>
-                    <td style="color:<?php echo $history['display_result_color']?>">
-                        <strong><?php echo $history['display_result'] ?></strong>
-                    </td>
-                    <td class="td_mng_l">
-                        <?php echo $history['payment_date'] ?>
-                    </td>
-                    <td class="td_mng_l">
-                        <?php echo $history['display_period'] ?>
-                    </td>
-                    <td>
-                    <?php if (!$payment_success[$history['payment_count']]) { ?>
-                        <button type="button" name="btn_payment" data-id="<?php echo $history['id']?>" data-count="<?php echo $history['payment_count']?>" class="btn btn_02 btn_payment">결제</button>
-                    <?php } ?>
-                    <?php if ($history['is_btn_cancel']) { ?>
-                        <button type="button" class="btn btn_01 btn_cancel" data-id="<?php echo $history['id']?>" data-service_id="<?php echo $service_id?>">환불</button>
-                    <?php } ?>
-                    </td>
-                </tr>
-            <?php } ?>
+                <?php foreach ($history_list as $history) { ?>
+                    <tr>
+                        <td class="td_mng_l">
+                            <div><?php echo $history['display_payment_count'] ?></div>
+                        </td>
+                        <td>
+                            <span class="payment_no" style="text-decoration: underline; cursor: pointer;" data-id="<?php echo $history['id'] ?>">
+                                <?php echo $history['payment_no'] ?>
+                            </span>
+                        </td>
+                        <td style="color: green;"><?php echo $history['display_amount'] ?></td>
+                        <td style="color: red;"><?php echo $history['display_cancel_amount'] ?></td>
+                        <td><?php echo $history['card_name'] ?></td>
+                        <td style="color:<?php echo $history['display_result_color'] ?>">
+                            <strong><?php echo $history['display_result'] ?></strong>
+                        </td>
+                        <td class="td_mng_l">
+                            <?php echo $history['payment_date'] ?>
+                        </td>
+                        <td class="td_mng_l">
+                            <?php echo $history['display_period'] ?>
+                        </td>
+                        <td>
+                            <?php if (!$payment_success[$history['payment_count']]) { ?>
+                                <button type="button" name="btn_payment" data-id="<?php echo $history['id'] ?>" data-count="<?php echo $history['payment_count'] ?>" class="btn btn_02 btn_payment">결제</button>
+                            <?php } ?>
+                            <?php if ($history['is_btn_cancel']) { ?>
+                                <button type="button" class="btn btn_01 btn_cancel" data-id="<?php echo $history['id'] ?>" data-service_id="<?php echo $service_id ?>">환불</button>
+                            <?php } ?>
+                        </td>
+                    </tr>
+                <?php } ?>
             </tbody>
             <tfoot>
                 <tr>
@@ -285,41 +297,41 @@ $pg_anchor = '<ul class="anchor">
 <form name="form_billing_key" id="form_billing_key" method="post" enctype="multipart/form-data">
     <input type="hidden" name="ordr_idxx" class="w200" value="<?php echo $od_id ?>" maxlength="40" />
 
-    <input type="hidden" name="site_cd"         value="<?php echo site_cd ?>" />
-    <input type="hidden" name="kcpgroup_id"     value="<?php echo kcpgroup_id ?>" />
+    <input type="hidden" name="site_cd" value="<?php echo site_cd ?>" />
+    <input type="hidden" name="kcpgroup_id" value="<?php echo kcpgroup_id ?>" />
     <!-- 가맹점 정보 설정-->
-    <input type="hidden" name="site_name"      value="<?php echo $config['cf_title']?>" />
+    <input type="hidden" name="site_name" value="<?php echo $config['cf_title'] ?>" />
     <!-- 상품제공기간 설정 -->
-    <input type="hidden" name="good_expr"      value="2:1m"/>
+    <input type="hidden" name="good_expr" value="2:1m" />
     <!-- 결제 방법 : 인증키 요청-->
-    <input type="hidden" name="pay_method"     value="AUTH:CARD" />
+    <input type="hidden" name="pay_method" value="AUTH:CARD" />
     <!-- 인증 방식 : 공동인증-->
     <input type="hidden" name="card_cert_type" value="BATCH" />
     <!-- 배치키 발급시 주민번호 입력을 결제창 안에서 진행 -->
-    <input type='hidden' name='batch_soc'      value="Y"/>
+    <input type='hidden' name='batch_soc' value="Y" />
     <!-- 
         ※필수 항목
         표준웹에서 값을 설정하는 부분으로 반드시 포함되어야 합니다값을 설정하지 마십시오
     -->
-    <input type="hidden" name="module_type"     value="01"/>
-    <input type="hidden" name="res_cd"          value=""/>
-    <input type="hidden" name="res_msg"         value=""/>
-    <input type="hidden" name="enc_info"        value=""/>
-    <input type="hidden" name="enc_data"        value=""/>
-    <input type="hidden" name="tran_cd"         value=""/>
-    <input type="hidden" name="buyr_name"       value="<?php echo $billing_info['mb_name']?>"/>
+    <input type="hidden" name="module_type" value="01" />
+    <input type="hidden" name="res_cd" value="" />
+    <input type="hidden" name="res_msg" value="" />
+    <input type="hidden" name="enc_info" value="" />
+    <input type="hidden" name="enc_data" value="" />
+    <input type="hidden" name="tran_cd" value="" />
+    <input type="hidden" name="buyr_name" value="<?php echo $billing_info['mb_name'] ?>" />
 
     <!-- 주민번호 S / 사업자번호 C 픽스 여부 -->
     <!-- <input type='hidden' name='batch_soc_choice' value='' /> -->
 
     <!-- 배치키 발급시 카드번호 리턴 여부 설정 -->
     <!-- Y : 1234-4567-****-8910 형식, L : 8910 형식(카드번호 끝 4자리) -->
-    <input type='hidden' name='batch_cardno_return_yn'  value='L'>
+    <input type='hidden' name='batch_cardno_return_yn' value='L'>
 
     <!-- batch_cardno_return_yn 설정시 결제창에서 리턴 -->
-    <input type='hidden' name='card_mask_no'			value=''>
+    <input type='hidden' name='card_mask_no' value=''>
 
-    <input type="hidden" name="mb_id"       value="<?php echo $billing_info['mb_id'] ?>"/>
+    <input type="hidden" name="mb_id" value="<?php echo $billing_info['mb_id'] ?>" />
 </form>
 
 <?php
@@ -330,87 +342,26 @@ if ($billing_conf['bc_kcp_is_test'] == "0") {
 }
 ?>
 <script>
-function m_Completepayment( frm_mpi, closeEvent ) 
-{
-    var frm = document.form_billing_key; 
+    function m_Completepayment(frm_mpi, closeEvent) {
+        var frm = document.form_billing_key;
 
-    if (frm_mpi.res_cd.value == "0000" )
-    {
-        GetField(frm, frm_mpi); 
-        
-        let data = new FormData(document.getElementById('form_billing_key'));
-        let queryString = new URLSearchParams(data).toString();
+        if (frm_mpi.res_cd.value == "0000") {
+            GetField(frm, frm_mpi);
 
-        $.ajax({
-            url : "./ajax.get_billing_key.php",
-            type: "POST",
-            data: queryString,
-            success: function(data) {
-                if (data) {
-                    let result = JSON.parse(data);
+            let data = new FormData(document.getElementById('form_billing_key'));
+            let queryString = new URLSearchParams(data).toString();
 
-                    if (result.result_code == "0000") {
-                        alert("자동결제 키가 변경되었습니다.");
-                        document.querySelector("#display_billing_key").innerHTML = result.display_billing_key;
-                    } else {
-                        alert("[" + result.result_code + "]" + result.result_message);
-                    }
-                } else {
-                    alert("잠시 후에 시도해주세요.");
-                }
-            },
-            error: function() {
-                alert("에러 발생");
-            }
-        });
-    } else {
-        setTimeout("alert( \"[" + frm_mpi.res_cd.value + "]" + frm_mpi.res_msg.value + "\");", 1000);
-    }
-    closeEvent();
-}
-
-$(function() {
-    let form            = document.querySelector("#form_billing_key");
-    let btn_billing_key = document.querySelector("#btn_billing_key");
-    let btn_payment     = $("button[name=btn_payment]");
-
-    $('.date_format').datepicker();
-
-    $.datepicker.setDefaults({
-        changeMonth: true,
-        changeYear: true,
-        dateFormat: "yy-mm-dd",
-        showButtonPanel: true,
-        yearRange: "c-99:c+99",
-        maxDate: "+10y"
-    })
-
-    /* 표준웹 실행 */
-    btn_billing_key.onclick = function(){
-        try {
-            KCP_Pay_Execute(form);
-        } catch (e) {
-            /* IE 에서 결제 정상종료시 throw로 스크립트 종료 */
-        }
-    };
-    /* 실패한 결제이력 결제처리 */
-    btn_payment.on('click', function(){
-        if (confirm(this.dataset.count + "회차 결제를 진행하시겠습니까?")) {
             $.ajax({
-                url : "./ajax.request_billing.php",
+                url: "./ajax.get_billing_key.php",
                 type: "POST",
-                data: {
-                    "id" : this.dataset.id,
-                    "od_id" : '<?php echo $od_id ?>',
-                    "mb_id" : '<?php echo $billing_info['mb_id'] ?>'
-                },
+                data: queryString,
                 success: function(data) {
                     if (data) {
                         let result = JSON.parse(data);
 
                         if (result.result_code == "0000") {
-                            alert(result.result_message);
-                            location.reload();
+                            alert("자동결제 키가 변경되었습니다.");
+                            document.querySelector("#display_billing_key").innerHTML = result.display_billing_key;
                         } else {
                             alert("[" + result.result_code + "]" + result.result_message);
                         }
@@ -418,29 +369,88 @@ $(function() {
                         alert("잠시 후에 시도해주세요.");
                     }
                 },
-                error: function(result) {
-                    if (result.responseJSON.msg) {
-                        alert(result.responseJSON.msg);
-                    } else {
-                        alert("에러 발생");
-                    }
+                error: function() {
+                    alert("에러 발생");
                 }
             });
+        } else {
+            setTimeout("alert( \"[" + frm_mpi.res_cd.value + "]" + frm_mpi.res_msg.value + "\");", 1000);
         }
+        closeEvent();
+    }
+
+    $(function() {
+        let form = document.querySelector("#form_billing_key");
+        let btn_billing_key = document.querySelector("#btn_billing_key");
+        let btn_payment = $("button[name=btn_payment]");
+
+        $('.date_format').datepicker();
+
+        $.datepicker.setDefaults({
+            changeMonth: true,
+            changeYear: true,
+            dateFormat: "yy-mm-dd",
+            showButtonPanel: true,
+            yearRange: "c-99:c+99",
+            maxDate: "+10y"
+        })
+
+        /* 표준웹 실행 */
+        btn_billing_key.onclick = function() {
+            try {
+                KCP_Pay_Execute(form);
+            } catch (e) {
+                /* IE 에서 결제 정상종료시 throw로 스크립트 종료 */
+            }
+        };
+        /* 실패한 결제이력 결제처리 */
+        btn_payment.on('click', function() {
+            if (confirm(this.dataset.count + "회차 결제를 진행하시겠습니까?")) {
+                $.ajax({
+                    url: "./ajax.request_billing.php",
+                    type: "POST",
+                    data: {
+                        "id": this.dataset.id,
+                        "od_id": '<?php echo $od_id ?>',
+                        "mb_id": '<?php echo $billing_info['mb_id'] ?>'
+                    },
+                    success: function(data) {
+                        if (data) {
+                            let result = JSON.parse(data);
+
+                            if (result.result_code == "0000") {
+                                alert(result.result_message);
+                                location.reload();
+                            } else {
+                                alert("[" + result.result_code + "]" + result.result_message);
+                            }
+                        } else {
+                            alert("잠시 후에 시도해주세요.");
+                        }
+                    },
+                    error: function(result) {
+                        if (result.responseJSON.msg) {
+                            alert(result.responseJSON.msg);
+                        } else {
+                            alert("에러 발생");
+                        }
+                    }
+                });
+            }
+        });
+
+        $(".btn_cancel").on("click", function() {
+            var url = "./cancel_popup.php?id=" + $(this).data('id') + "&service_id=" + $(this).data('service_id');
+            window.open(url, "cancel_billing", "left=100,top=100,width=550,height=650,scrollbars=yes,resizable=yes");
+            return false;
+        })
+
+        $(".payment_no").on("click", function() {
+            var url = "./payment_detail.php?id=" + $(this).data('id');
+            window.open(url, "billing_history_Detail", "left=100,top=100,width=550,height=650,scrollbars=yes,resizable=yes");
+            return false;
+        })
     });
-
-    $(".btn_cancel").on("click", function(){
-        var url = "./cancel_popup.php?id=" + $(this).data('id') + "&service_id=" + $(this).data('service_id');
-        window.open(url, "cancel_billing", "left=100,top=100,width=550,height=650,scrollbars=yes,resizable=yes");
-        return false;
-    })
-
-    $(".payment_no").on("click", function(){
-        var url = "./payment_detail.php?id=" + $(this).data('id');
-        window.open(url, "billing_history_Detail", "left=100,top=100,width=550,height=650,scrollbars=yes,resizable=yes");
-        return false;
-    })
-});
 </script>
 <?php
-include_once(G5_ADMIN_PATH.'/admin.tail.php');
+include_once(G5_ADMIN_PATH . '/admin.tail.php');

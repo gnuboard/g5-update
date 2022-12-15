@@ -125,6 +125,7 @@ if (empty($service_info['expiration'])) {
     $end_date = '0000-00-00 00:00:00';//구독 만료기간이 정해지지않음.
 } else {
     $end_date = $billing->nextPaymentDate($start_date, $start_date, $service_info['expiration'], $service_info['expiration_unit']);
+    $payment_insert_data['price'] = $payment_insert_data['amount'];
 }
 
 $next_payment_date = $billing->nextPaymentDate($start_date, $start_date, $recurring, $recurring_unit);

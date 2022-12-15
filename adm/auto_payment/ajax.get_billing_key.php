@@ -21,7 +21,7 @@ $res_data = $billing->convertPgDataToCommonData($res_data);
 /* = -------------------------------------------------------------------------- = */
 // Res JSON DATA Parsing
 if (isset($res_data['http_code'])) {
-    responseJson($res_data['result_message'], $res_data['http_code']);
+    response_json($res_data['result_message'], $res_data['http_code']);
 }
 
 $res_data['pg_code'] = $billing_conf['bc_pg_code'];
@@ -43,8 +43,4 @@ if ($result_code == "0000") {
     $res_data['display_billing_key'] = $billing->displayBillKey($billing_key);
 }
 // 나머지 결과 출력
-if (PHP_VERSION_ID >= 50400) {
-    echo json_encode($res_data, JSON_UNESCAPED_UNICODE);
-} else {
-    echo to_han(json_encode($res_data));
-}
+response_json($res_data);
