@@ -33,7 +33,7 @@ $billing_info['display_billing_key']  = $billing->displayBillKey($billing_info['
 $billing_info['display_next_payment'] = date('Y-m-d', strtotime($billing_info['next_payment_date']));
 $billing_info['display_od_id']        = $billing_info['od_id'];
 $billing_info['display_event_price']  = number_format((int)$billing_info['event_price']) . "원";
-$billing_info['display_event_date']   = !empty($billing_info['event_expiration_date']) ? date('Y-m-d', strtotime($billing_info['event_expiration_date'])) : '';
+$billing_info['display_event_date']   = (!is_null($billing_info['event_expiration_date']) && $billing_info['event_expiration_date'] != '0000-00-00 00:00:00') ? date('Y-m-d', strtotime($billing_info['event_expiration_date'])) : "";
 
 /* 구독상품 */
 // 구독상품 정보 조회
