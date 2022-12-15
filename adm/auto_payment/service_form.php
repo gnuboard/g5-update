@@ -12,7 +12,7 @@ $billing        = new Billing($billing_conf['bc_pg_code']);
 $service_model  = new BillingServiceModel();
 $price_model    = new BillingServicePriceModel();
 
-$unit_array     = $billing->getUnitArray();
+$unit_period    = $billing->getUnitArray('period');
 $service_id     = isset($_GET['service_id']) ? $_GET['service_id'] : 0;
 $board_list     = array();
 $service        = array(
@@ -25,10 +25,15 @@ $service        = array(
     'mobile_explan' => '',
     'summary' => '',
     'recurring' => 1,
-    'base_price' => '',
+    'base_price' => 0,
     'recurring_unit' => 'm',
     'expiration' => '0',
-    'expiration_unit' => 'm'
+    'expiration_unit' => 'm',
+    'is_event' => '',
+    'is_event_checked' => '',
+    'event_period' => 0,
+    'event_unit' => 'm',
+    'event_price' => 0
 );
 $service_price  = array();
 $price_count = 0;
@@ -43,6 +48,9 @@ if ($w == '') {
     if (!$service) {
         alert('구독상품 정보가 존재하지 않습니다.');
     }
+    // 결과처리
+    $service['is_event_checked'] = ($service['is_event'] == '1' ? 'checked' : '');
+
     // 구독상품 가격정보
     $service_price  = $price_model->selectListByServiceId($service_id);
     $price_count    = count($service_price);
@@ -84,21 +92,13 @@ if (isset($service_id) && !empty($service_id)) {
 }
 
 ?>
-<style>
-.help_modal_log {
-    font-weight: bold;
-    text-decoration-line: underline;
-    cursor: pointer;
-}
-</style>
-<form name="form_service" action="./service_update.php" method="post" enctype="multipart/form-data"
-    autocomplete="off" onsubmit="return check_form_service(this)">
+<form name="form_service" action="./service_update.php" method="post" enctype="multipart/form-data" autocomplete="off" onsubmit="return check_form_service(this)">
     <input type="hidden" name="w" value="<?php echo $w; ?>">
     <input type="hidden" name="sca" value="<?php echo $sca; ?>">
     <input type="hidden" name="sst" value="<?php echo $sst; ?>">
-    <input type="hidden" name="sod"  value="<?php echo $sod; ?>">
+    <input type="hidden" name="sod" value="<?php echo $sod; ?>">
     <input type="hidden" name="sfl" value="<?php echo $sfl; ?>">
-    <input type="hidden" name="stx"  value="<?php echo $stx; ?>">
+    <input type="hidden" name="stx" value="<?php echo $stx; ?>">
     <input type="hidden" name="page" value="<?php echo $page; ?>">
     <input type="hidden" name="service_id" value="<?php echo $service_id; ?>">
 
@@ -119,7 +119,7 @@ if (isset($service_id) && !empty($service_id)) {
                             <?php echo help("게시판을 선택하면 해당 구독서비스가 적용됩니다."); ?>
                             <select name="service_table" id="service_table">
                                 <option value="">선택하세요</option>
-                                <?php foreach($board_list as $board) { ?>
+                                <?php foreach ($board_list as $board) { ?>
                                     <option value="<?php echo $board['bo_table']; ?>" <?php echo $board['selected']; ?>><?php echo $board['bo_subject']; ?></option>
                                 <?php } ?>
                             </select>
@@ -194,29 +194,33 @@ if (isset($service_id) && !empty($service_id)) {
                 <tbody>
                     <tr>
                         <th scope="row">
-                            <label for="price">가격 설정
-                                <button type="button" id="create_price_row" class="btn_frmline">가격 추가</button>
+                            <label for="price">
+                                가격 설정
+                                <?php if (!empty($service_id)) { ?>
+                                    <div style="margin-top:10px;">
+                                        <button type="button" data-remodal-target='modal_price_log' class="btn_frmline">변동이력 확인</button>
+                                    </div>
+                                <?php } ?>
                             </label>
                         </th>
                         <td id="td_price">
                             <?php echo help("가격이 변경되는 일자를 선택할 수 있습니다. 설정된 가격은 해당 날짜에 맞춰 자동으로 반영됩니다. 
-                            ※가격 변경기간이 중복되지 않도록 주의해주시기 바랍니다.
-                            ※<span class='help_modal_log' data-remodal-target='modal_price_log'>가격변동 이력을 확인</span>할 수 있습니다."); ?>
+                            <b>※ 가격 변경기간이 중복되지 않도록 주의해주시기 바랍니다.</b>"); ?>
                             <div>
-                                <input type="text" name="base_price" value="<?php echo $service['base_price']; ?>" class="frm_input" size="12"> 원                            
+                                <input type="text" name="base_price" value="<?php echo $service['base_price']; ?>" class="frm_input required" size="12"> 원
+                                &nbsp;<button type="button" id="create_price_row" class="btn_frmline">가격 추가</button>
                             </div>
-                        <?php 
+                            <?php
                             foreach ($service_price as $key => $price) {
                                 $row = (int)$key + 1;
-                        ?> 
-                            <div id="td_price_<?php echo $row ?>" style="margin-top:4px;">
-                                <input type="hidden" name="id[<?php echo $row ?>]" value="<?php echo $price['id'] ?>">
-                                <input type="text" name="price[<?php echo $row ?>]" value="<?php echo $price['price']; ?>" class="frm_input" size="12"> 원
-                                / 
-                                <input type="text" name="application_date[<?php echo $row ?>]" id="application_date_<?php echo $row ?>" value="<?php echo $price['application_date']; ?>" class="frm_input date_format" size="20"> ~
-                                <input type="text" name="application_end_date[<?php echo $row ?>]" id="application_end_date_<?php echo $row ?>" value="<?php echo $price['application_end_date']; ?>" class="frm_input date_format" size="20">까지 적용
-                                <button type="button" name="remove_price_row" class="btn_frmline">삭제</button>
-                            </div>
+                            ?>
+                                <div id="td_price_<?php echo $row ?>" style="margin-top:4px;">
+                                    <input type="hidden" name="id[<?php echo $row ?>]" value="<?php echo $price['id'] ?>">
+                                    <input type="text" name="price[<?php echo $row ?>]" value="<?php echo $price['price']; ?>" class="frm_input" size="12">&nbsp;원&nbsp;
+                                    <input type="text" name="application_date[<?php echo $row ?>]" id="application_date_<?php echo $row ?>" value="<?php echo $price['application_date']; ?>" class="frm_input date_format" size="20" placeholder="시작일"> ~
+                                    <input type="text" name="application_end_date[<?php echo $row ?>]" id="application_end_date_<?php echo $row ?>" value="<?php echo $price['application_end_date']; ?>" class="frm_input date_format" size="20" placeholder="종료일">&nbsp;까지 적용&nbsp;
+                                    <button type="button" name="remove_price_row" class="btn_frmline">삭제</button>
+                                </div>
                             <?php } ?>
                         </td>
                     </tr>
@@ -225,11 +229,11 @@ if (isset($service_id) && !empty($service_id)) {
                         <td>
                             <?php echo help("결제가 진행되는 주기를 설정할 수 있습니다."); ?>
                             <div>
-                                <input type="text" name="recurring" value="<?php echo $service['recurring']; ?>" class="frm_input" size="12">
+                                <input type="text" name="recurring" value="<?php echo $service['recurring']; ?>" class="frm_input required" size="12">
                                 <select name="recurring_unit">
-                                <?php foreach($unit_array as $key => $val) { ?>
-                                    <option value="<?php echo $key ?>" <?php echo get_selected($key, $service['recurring_unit']); ?>><?php echo $val ?></option>
-                                <?php } ?>
+                                    <?php foreach ($unit_period as $key => $val) { ?>
+                                        <option value="<?php echo $key ?>" <?php echo get_selected($key, $service['recurring_unit']); ?>><?php echo $val ?></option>
+                                    <?php } ?>
                                 </select>
                                 주기로 결제진행
                             </div>
@@ -238,15 +242,36 @@ if (isset($service_id) && !empty($service_id)) {
                     <tr>
                         <th scope="row"><label for="price">구독만료 기간 설정</label></th>
                         <td>
-                            <?php echo help("결제일로부터 구독서비스가 종료되는 만기 기간을 설정합니다."); ?>
+                            <?php echo help("구독서비스가 종료되는 만기 기간을 설정합니다.\n만료기간을 설정하지 않는다면 빈 값으로 입력해주시기 바랍니다."); ?>
                             결제일로부터
                             <input type="text" name="expiration" value="<?php echo $service['expiration']; ?>" id="expiration" class="frm_input" size="8" placeholder="0">
                             <select name="expiration_unit">
-                            <?php foreach($unit_array as $key => $val) { ?>
-                                <option value="<?php echo $key ?> " <?php echo get_selected($key, $service['expiration_unit']); ?>><?php echo $val ?></option>
-                            <?php } ?>
+                                <?php foreach ($unit_period as $key => $val) { ?>
+                                    <option value="<?php echo $key ?> " <?php echo get_selected($key, $service['expiration_unit']); ?>><?php echo $val ?></option>
+                                <?php } ?>
                             </select>
                             이후 종료
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="price">첫 구독 이벤트 설정</label></th>
+                        <td>
+                            <?php echo help("첫 구독 신청부터 적용되는 이벤트가격 & 적용기간을 설정할 수 있습니다."); ?>
+                            <div>
+                                <input type="checkbox" name="is_event" value="1" id="is_event" <?php echo $service['is_event_checked'] ?>>
+                                <label for="is_event">사용</label>
+                                <div id="event_area">
+                                    결제일로부터
+                                    <input type="text" name="event_period" id="event_period" value="<?php echo $service['event_period']; ?>" class="frm_input" size="8" placeholder="0">
+                                    <select name="event_unit">
+                                        <?php foreach ($unit_period as $key => $val) { ?>
+                                            <option value="<?php echo $key ?>" <?php echo get_selected($key, $service['event_unit']); ?>><?php echo $val ?></option>
+                                        <?php } ?>
+                                    </select>
+                                    동안
+                                    <input type="text" name="event_price" value="<?php echo $service['event_price']; ?>" class="frm_input" size="12"> 원으로 결제
+                                </div>
+                            </div>
                         </td>
                     </tr>
                 </tbody>
@@ -269,92 +294,107 @@ if (isset($service_id) && !empty($service_id)) {
             <span class="txt">닫기</span>
         </button>
 
-        <h4 class="copy_title">해당 구독상품의 가격변동 이력입니다.
-            <!-- <br><span class="info-warning"></span>
-            <br><span class="info-success"></span> -->
-        </h4>
+        <h4 class="copy_title">해당 구독상품의 가격변동 이력입니다.</h4>
         <textarea readonly="readonly" rows="10"><?php echo $log_content ?></textarea>
     </div>
 </div>
 <script>
-let price_row   = <?php echo $price_count ?>;
+    let price_row = <?php echo $price_count ?>;
 
-$(function() {
-    set_datepicker();
-
-    // 가격추가 버튼
-    $(document).on("click", "#create_price_row", function(){
-        create_price_row();
-        add_remove_price_btn();
+    $(function() {
         set_datepicker();
+        toggle_event_area();
+
+        // 가격추가 버튼
+        $(document).on("click", "#create_price_row", function() {
+            create_price_row();
+            add_remove_price_btn();
+            set_datepicker();
+        });
+        // 가격삭제 버튼
+        $(document).on("click", "button[name='remove_price_row']", function() {
+            remote_price_row(this);
+            // add_remove_price_btn();
+        });
+        // 첫결제 이벤트 사용 체크
+        $(document).on('click', '#is_event', function() {
+            toggle_event_area();
+        })
+
+
+        $.datepicker.setDefaults({
+            changeMonth: true,
+            changeYear: true,
+            dateFormat: "yy-mm-dd 00:00:00",
+            showButtonPanel: true,
+            yearRange: "c-99:c+99",
+            maxDate: "+10y"
+        })
     });
-    // 가격삭제 버튼
-    $(document).on("click", "button[name='remove_price_row']", function(){
-        remote_price_row(this);
-        // add_remove_price_btn();
-    });
 
-    $.datepicker.setDefaults({
-        changeMonth: true,
-        changeYear: true,
-        dateFormat: "yy-mm-dd 00:00:00",
-        showButtonPanel: true,
-        yearRange: "c-99:c+99",
-        maxDate: "+10y"
-    })
-});
+    function create_price_row() {
+        price_row += 1;
 
-function create_price_row()
-{
-    price_row += 1;
-
-    let html    = '';
-    html += '<div id="td_price_' + price_row + '" style="margin-top:4px;">';
-    html += '<input type="text" name="price[' + price_row + ']" value="" class="frm_input" size="12"> 원 / ';
-    html += '<input type="text" name="application_date[' + price_row + ']" value="" id="application_date_' + price_row + '" class="frm_input date_format" size="20"> ~ ';
-    html += '<input type="text" name="application_end_date[' + price_row + ']" value="" id="application_end_date_' + price_row + '" class="frm_input date_format" size="20">까지 적용';
-    html += '</div>';
-    $("#td_price").append(html);
-}
-function remote_price_row(obj)
-{
-    price_row   -= 1;
-    $(obj).parent().remove();
-}
-function add_remove_price_btn()
-{
-    // $("button[name='remove_price_row']").remove();
-    if (price_row > 0) {
-        $("#td_price_" + price_row).append(' <button type="button" name="remove_price_row" class="btn_frmline">삭제</button>');
-    }
-}
-
-function set_datepicker()
-{
-    $('.date_format').datepicker();
-}
-
-function check_form_service(f)
-{
-    if (!f.service_table.value) {
-        alert("게시판을 선택하십시오.");
-        f.service_table.focus();
-        return false;
+        let html = '';
+        html += '<div id="td_price_' + price_row + '" style="margin-top:4px;">';
+        html += '<input type="text" name="price[' + price_row + ']" value="" class="frm_input" size="12">&nbsp;원&nbsp;&nbsp;';
+        html += '<input type="text" name="application_date[' + price_row + ']" value="" id="application_date_' + price_row + '" class="frm_input date_format" size="20" placeholder="시작일"> ~ ';
+        html += '<input type="text" name="application_end_date[' + price_row + ']" value="" id="application_end_date_' + price_row + '" class="frm_input date_format" size="20" placeholder="종료일">&nbsp;까지 적용&nbsp;';
+        html += '</div>';
+        $("#td_price").append(html);
     }
 
-    for (let i = 1; i <= price_row; i++) {
-        if ($("#application_date_" + i).val() === '') {
-            alert("변경 가격의 시작날짜를 입력해주세요.");
-            $("#application_date_" + i).focus();
-            return false;
+    function remote_price_row(obj) {
+        price_row -= 1;
+        $(obj).parent().remove();
+    }
+
+    function add_remove_price_btn() {
+        // $("button[name='remove_price_row']").remove();
+        if (price_row > 0) {
+            $("#td_price_" + price_row).append(' <button type="button" name="remove_price_row" class="btn_frmline">삭제</button>');
         }
     }
 
-    <?php echo get_editor_js('explan'); ?>
-    <?php echo get_editor_js('mobile_explan'); ?>
+    function set_datepicker() {
+        $('.date_format').datepicker();
+    }
 
-    return true;
-}
+    function check_form_service(f) {
+        if (!f.service_table.value) {
+            alert("게시판을 선택해주세요.");
+            f.service_table.focus();
+            return false;
+        }
+
+        if (f.recurring.value <= 0) {
+            alert("결제주기는 0보다 큰 숫자로 입력해주세요.");
+            f.recurring.focus();
+            return false;
+        }
+
+        for (let i = 1; i <= price_row; i++) {
+            if ($("#application_date_" + i).val() === '') {
+                alert("변경 가격의 시작날짜를 입력해주세요.");
+                $("#application_date_" + i).focus();
+                return false;
+            }
+        }
+
+        <?php echo get_editor_js('explan'); ?>
+        <?php echo get_editor_js('mobile_explan'); ?>
+
+        return true;
+    }
+
+    function toggle_event_area()
+    {
+        if ($('#is_event').is(':checked')) {
+            $('#event_area').show();
+        } else {
+            $('#event_area').hide();   
+        }
+    }
 </script>
 <?php
-include_once (G5_ADMIN_PATH.'/admin.tail.php');
+include_once G5_ADMIN_PATH . '/admin.tail.php';

@@ -148,7 +148,9 @@ class BillingInformationModel
             'billing_key'       => $requestData['billing_key'],
             'start_date'        => $requestData['start_date'],
             'end_date'          => $requestData['end_date'],
-            'next_payment_date' => $requestData['next_payment_date']
+            'next_payment_date' => $requestData['next_payment_date'],
+            'event_expiration_date' => isset($requestData['event_expiration_date']) ? $requestData['event_expiration_date'] : null,
+            'event_price'       => isset($requestData['event_price']) ? $requestData['event_price'] : 0,
         );
 
         return $this->g5Mysqli->insertSQL($g5["billing_information_table"], $data);
