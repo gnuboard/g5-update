@@ -31,7 +31,7 @@ $request_data = array(
 /* 데이터 출력 */
 // 전체 건수
 $total_count    = $history_model->selectTotalCountByAdmin($request_data);   
-$total_page     = ceil($total_count / $rows);   // 전체 페이지
+$total_page     = (int)ceil($total_count / $rows);   // 전체 페이지
 $request_data['offset'] = ($page - 1) * $rows;  // 시작 열
 $request_data['rows']   = $rows;
 
@@ -46,7 +46,7 @@ foreach ($history_list as $i => $history) {
     $history_list[$i]['display_amount']         = number_format($history['amount']) . "원";
     $history_list[$i]['display_period']         = ($history['result_code'] == "0000" ? $history['period'] : '');
     $history_list[$i]['mb_side_view']           = get_sideview($history['mb_id'], get_text($history['mb_id']) . " (" . get_text($history['mb_name']) . ")", $history['mb_email'], '');
-    
+
     if ($history['total_cancel'] == $history['amount']) {
         $history_list[$i]['display_result'] = "환불";
         $history_list[$i]['display_result_color']   = "#AAAAAA";
