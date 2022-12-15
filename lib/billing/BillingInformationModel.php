@@ -1,4 +1,5 @@
 <?php
+
 /**
  * 구독정보 Model Class
  */
@@ -124,7 +125,7 @@ class BillingInformationModel
             $sql .= " AND {$requestData['sfl']} LIKE ? ";
             array_push($bindParam, "%{$requestData['stx']}%");
         }
-        
+
         $result = $this->g5Mysqli->getOne($sql, $bindParam);
 
         return (int)$result['cnt'];
@@ -241,11 +242,12 @@ class BillingInformationModel
                         LEFT JOIN {$g5['billing_information_table']} bi ON bh.od_id = bi.od_id
                     WHERE bh.mb_id = ?
                         AND bi.service_id = ?
-                        AND now() BETWEEN payment_date AND expiration_date) as permission";
+                        AND NOW() BETWEEN payment_date AND expiration_date
+                        AND status = 1) as permission";
         array_push($bindParam, $memberId, $serviceId);
 
         $result = $this->g5Mysqli->getOne($sql, $bindParam);
-        
+
         if ((int)$result['permission'] > 0) {
             return true;
         } else {

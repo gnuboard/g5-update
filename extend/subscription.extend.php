@@ -1,21 +1,20 @@
 <?php
 if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 
-require_once G5_LIB_PATH . '/billing/kcp/config.php';
-require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
-$autoload = new G5AutoLoader();
-$autoload->register();
-
 // 게시판 진입 시 check
 add_event('header_board', 'checkRoute', 10, 1);
 
 /**
- * 게시판이름이나 url 확인 후 인증함수 호출
+ * 구독권한 체크 
+ * - 게시판 코드(bo_table)가 등록된 구독서비스의 결제내역이 있는지 체크
+ * @todo URL or Hook Code로 체크하는 프로세스
  * @return void
  */
 function checkRoute()
 {
-    global $member;
+    global $g5, $member;
+
+    require_once G5_LIB_PATH . '/billing/_setting.php';
 
     $check      = false;
     $bo_table   = $_GET['bo_table'];
@@ -28,19 +27,19 @@ function checkRoute()
         "service_table" => $bo_table
     );
     $service_list = $service_model->selectList($request_data);
-    
+
     if (count($service_list) > 0) {
         if (empty($member['mb_id'])) {
             alert('로그인 후 이용하실 수 있습니다.', G5_URL . '/bbs/login.php');
         }
 
-        foreach($service_list as $service) {
+        foreach ($service_list as $service) {
             if ($information_model->checkPermission($member['mb_id'], $service['service_id'])) {
                 $check = true;
                 break;
             }
         }
-        
+
         if ($check === false) {
             alert('결제가 필요합니다.', G5_URL . '/skin/subscription/basic/service.skin.php?bo_table=' . $bo_table);
         }
