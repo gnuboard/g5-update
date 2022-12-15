@@ -9,7 +9,10 @@ $autoload = new G5AutoLoader();
 $autoload->register();
 ignore_user_abort(true); // http 커넥션이 끊어져도 동작하게 설정.
 
-$pg_code = 'kcp';
+$pg_code = $billing_conf['bc_pg_code'];
+if(empty($pg_code)){
+    exit;
+}
 $billing = new Billing($pg_code);
 $billing_history = new BillingHistoryModel();
 $service_price = new BillingServicePriceModel();

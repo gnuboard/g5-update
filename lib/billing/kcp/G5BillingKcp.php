@@ -152,7 +152,7 @@ class G5BillingKcp implements BillingInterface
      *
      * @return  self
      */ 
-    public function setKcpGroupId(string $kcpGroupId)
+    public function setKcpGroupId($kcpGroupId)
     {
         $this->kcpGroupId = $kcpGroupId;
 
