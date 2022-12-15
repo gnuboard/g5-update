@@ -261,7 +261,7 @@ if (isset($service_id) && !empty($service_id)) {
                                 <input type="checkbox" name="is_event" value="1" id="is_event" <?php echo $service['is_event_checked'] ?>>
                                 <label for="is_event">사용</label>
                                 <div id="event_area">
-                                    결제일로부터
+                                    처음 결제부터
                                     <input type="text" name="event_period" id="event_period" value="<?php echo $service['event_period']; ?>" class="frm_input" size="8" placeholder="0">
                                     <select name="event_unit">
                                         <?php foreach ($unit_period as $key => $val) { ?>
