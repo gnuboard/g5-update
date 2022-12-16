@@ -81,7 +81,7 @@ $result_code = $pg_res_data['result_code'];
 $result_message = $pg_res_data['result_message'];
 
 if ($result_code === '0000') {
-    if ($payment_price === $pg_res_data['amount']) { //결제된 금액과 서비스 금액 같은지 확인.
+    if ($payment_price == $pg_res_data['amount']) { //결제된 금액과 서비스 금액 같은지 확인.
         $bSucc = true;
     }
 }

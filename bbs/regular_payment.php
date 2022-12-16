@@ -261,7 +261,7 @@ function order_payment(){
         data: data,
         success: function (data) {
             if (data) {
-                const res = JSON.parse(data);
+                const res = data;
                 if (res.result_code === "0000") {
                     // 성공
                     alert('결제가 완료되었습니다.');
