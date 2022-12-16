@@ -28,7 +28,7 @@ $request_data = array(
     "stx"   => $stx,
     "sst"   => $sst,
     "sod"   => $sod,
-    "status"=> $status
+    "status" => $status
 );
 
 /* 데이터 출력 */
@@ -47,8 +47,8 @@ foreach ($billing_list as $i => $row) {
     $billing_list[$i]['mb_side_view']       = get_sideview($row['mb_id'], get_text($row['mb_name']), $row['mb_email'], '');
     $billing_list[$i]['price']              = $price_model->selectCurrentPrice($row['service_id']);
     $billing_list[$i]['display_recurring']  = ($dsRec = $billing->displayRecurring($row)) ? $dsRec : '없음';
-    $billing_list[$i]['display_od_id']      = $row['od_id'];
-    $billing_list[$i]['display_date']       = $row['start_date'] . ' ~ ' . ($row['end_date'] != null && $row['end_date'] != '0000-00-00 00:00:00' ? $row['end_date'] : '');
+    $billing_list[$i]['display_od_id']      = $billing->displayOrderId($row['od_id']);
+    $billing_list[$i]['display_date']       = $billing->convertDateFormat($row['start_date']) . ' ~ ' . $billing->convertDateFormat($row['end_date']);
     $billing_list[$i]['display_status']     = $row['status'] == '1' ? '진행 중' : '종료';
     $billing_list[$i]['payment_count']      = $history_model->selectPaymentCount($row['od_id']);
 }
@@ -95,54 +95,54 @@ $qstr = $qstr . '&amp;page=' . $page;
             <caption>주문 내역 목록</caption>
             <thead>
                 <tr>
-                    <th scope="col" rowspan="2">
-                        <label for="chkall" class="sound_only">주문 전체</label>
+                    <th scope="col" rowspan="2" style="width:5%;">
+                        <label for="chkall" class="sound_only">전체 선택</label>
                         <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
                     </th>
-                    <th scope="col" rowspan="2" id="th_od_id">주문번호</th>
-                    <th scope="col" colspan="3" id="th_service_name">서비스명</th>
-                    <th scope="col" rowspan="2" id="th_member">회원</th>
-                    <th scope="col" rowspan="2" id="th_date">기간</th>
-                    <th scope="col" rowspan="2" id="th_end_date">결제진행 상태</th>
-                    <th scope="col" rowspan="2">보기</th>
+                    <th scope="col" rowspan="2" style="width:20%;">주문번호</th>
+                    <th scope="col" colspan="3" style="width:21%;">서비스명</th>
+                    <th scope="col" rowspan="2" style="width:15%;">회원</th>
+                    <th scope="col" rowspan="2" style="width:15%;">결제기간</th>
+                    <th scope="col" rowspan="2" style="width:10%;">결제진행 상태</th>
+                    <th scope="col" rowspan="2" style="width:14%;">관리</th>
                 </tr>
                 <tr>
-                    <th scope="col" id="th_price">가격</th>
-                    <th scope="col" id="th_recurring">주기</th>
-                    <th scope="col" id="th_payment_count">결제횟수</th>
+                    <th scope="col" style="width:10%;">결제가격</th>
+                    <th scope="col" style="width:10%;">결제주기</th>
+                    <th scope="col" style="width:10%;">총 결제횟수</th>
                 </tr>
             </thead>
             <tbody>
-            <?php foreach ($billing_list as $key => $billing) { ?>
-                <tr class="<?php echo $billing['bg_class']; ?>">
-                    <td rowspan="2" class="td_chk2">
-                        <input type="hidden" name="od_id[<?php echo $key ?>]" value="<?php echo $billing['od_id'] ?>" id="od_id_<?php echo $key ?>">
-                        <label for="chk_<?php echo $key; ?>" class="sound_only">주문번호 <?php echo $billing['od_id']; ?></label>
-                        <input type="checkbox" name="chk[]" value="<?php echo $key ?>" id="chk_<?php echo $key ?>">
-                    </td>
-                    <td headers="th_od_id" rowspan="2"><?php echo $billing['display_od_id']; ?></td>
-                    <td headers="th_service_name" colspan="3"><?php echo $billing['name']; ?></td>
-                    <td headers="th_member" rowspan="2"><?php echo $billing['mb_side_view']; ?></td>
-                    <td headers="th_date" rowspan="2"><?php echo $billing['display_date']; ?></td>
-                    <td headers="th_status" rowspan="2"><?php echo $billing['display_status']; ?></td>
-                    <td class="td_mng td_mng_s" rowspan="2">
-                        <a href="./billing_form.php?od_id=<?php echo $billing['od_id']; ?>&amp;<?php echo $qstr; ?>" class="mng_mod btn btn_02">
-                            <span class="sound_only"><?php echo $billing['od_id']; ?></span>
-                            보기
-                        </a>
-                    </td>
-                </tr>
-                <tr class="<?php echo $billing['bg_class']; ?>">
-                    <td><?php echo number_format($billing['price']) ?>원</td>
-                    <td><?php echo $billing['display_recurring'] ?></td>
-                    <td><?php echo number_format($billing['payment_count']) ?>회</td>
-                </tr>
-            <?php
-            }
-            if ($total_count == 0) {
-                echo '<tr><td colspan="9" class="empty_table">자료가 없습니다.</td></tr>';
-            }
-            ?>
+                <?php foreach ($billing_list as $key => $billing) { ?>
+                    <tr class="<?php echo $billing['bg_class']; ?>">
+                        <td rowspan="2" class="td_chk2">
+                            <input type="hidden" name="od_id[<?php echo $key ?>]" value="<?php echo $billing['od_id'] ?>" id="od_id_<?php echo $key ?>">
+                            <label for="chk_<?php echo $key; ?>" class="sound_only">주문번호 <?php echo $billing['od_id']; ?></label>
+                            <input type="checkbox" name="chk[]" value="<?php echo $key ?>" id="chk_<?php echo $key ?>">
+                        </td>
+                        <td headers="th_od_id" rowspan="2"><?php echo $billing['display_od_id']; ?></td>
+                        <td headers="th_service_name" colspan="3"><?php echo $billing['name']; ?></td>
+                        <td headers="th_member" rowspan="2"><?php echo $billing['mb_side_view']; ?></td>
+                        <td headers="th_date" rowspan="2"><?php echo $billing['display_date']; ?></td>
+                        <td headers="th_status" rowspan="2"><?php echo $billing['display_status']; ?></td>
+                        <td class="td_mng td_mng_s" rowspan="2">
+                            <a href="./billing_form.php?od_id=<?php echo $billing['od_id']; ?>&amp;<?php echo $qstr; ?>" class="mng_mod btn btn_02">
+                                <span class="sound_only">상세정보</span>
+                                상세정보
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="<?php echo $billing['bg_class']; ?>">
+                        <td><?php echo number_format($billing['price']) ?>원</td>
+                        <td><?php echo $billing['display_recurring'] ?></td>
+                        <td><?php echo number_format($billing['payment_count']) ?>회</td>
+                    </tr>
+                <?php
+                }
+                if ($total_count == 0) {
+                    echo '<tr><td colspan="9" class="empty_table">자료가 없습니다.</td></tr>';
+                }
+                ?>
             </tbody>
         </table>
     </div>

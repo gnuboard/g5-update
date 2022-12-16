@@ -43,6 +43,12 @@ foreach ($service_list as $i => $service) {
     $service_list[$i]['price']              = $price_model->selectCurrentPrice($service['service_id']);
     $service_list[$i]['display_recurring']  = ($dsRec = $billing->displayRecurring($service)) ? $dsRec : '없음';
     $service_list[$i]['display_expiration'] = ($dsExp = $billing->displayExpiration($service)) ? '결제일로부터 ' . $dsExp . ' 이후' : '없음';
+    if ($service['is_event'] == "1") {
+        $service_list[$i]['display_event'] = number_format($service['event_price']) . '원<br>';
+        $service_list[$i]['display_event'] .= "(첫 결제부터 " . $service['event_period'] . $billing->convertDateUnitToText($service['event_unit'], 'period') . " 동안)";
+    } else {
+        $service_list[$i]['display_event'] = '없음';
+    }
 }
 
 $qstr = $qstr . '&amp;page=' . $page;
@@ -78,45 +84,47 @@ $qstr = $qstr . '&amp;page=' . $page;
             <caption><?php echo $g5['title']; ?> 목록</caption>
             <thead>
                 <tr>
-                    <th scope="col" rowspan="2">
+                    <th scope="col" rowspan="2" style="width:5%;">
                         <label for="chkall" class="sound_only">상품 전체</label>
                         <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
                     </th>
-                    <th scope="col" rowspan="2"><?php echo subject_sort_link('service_table', 'sca=' . $sca); ?>게시판</a></th>
-                    <th scope="col" rowspan="2"><?php echo subject_sort_link('name', 'sca=' . $sca); ?>구독상품명</a></th>
-                    <!-- <th scope="col" rowspan="2">이미지</th> -->
-                    <th scope="col" colspan="2">가격</th>
-                    <th scope="col" rowspan="2"><?php echo subject_sort_link('order', 'sca=' . $sca); ?>순서</a></th>
-                    <th scope="col" rowspan="2"><?php echo subject_sort_link('is_use', 'sca=' . $sca, 1); ?>판매</a></th>
-                    <th scope="col" rowspan="2">관리</th>
+                    <th scope="col" rowspan="2" style="width:10%;"><?php echo subject_sort_link('service_table', 'sca=' . $sca); ?>게시판</a></th>
+                    <th scope="col" rowspan="2" style="width:30%;"><?php echo subject_sort_link('name', 'sca=' . $sca); ?>구독상품명</a></th>
+                    <!-- <th scope="col" rowspan="2" style="width:10%;">이미지</th> -->
+                    <th scope="col" colspan="2" style="width:20%;">가격</th>
+                    <th scope="col" rowspan="2" style="width:10%;">이벤트</th>
+                    <th scope="col" rowspan="2" style="width:5%;"><?php echo subject_sort_link('order', 'sca=' . $sca); ?>순서</a></th>
+                    <th scope="col" rowspan="2" style="width:5%;"><?php echo subject_sort_link('is_use', 'sca=' . $sca, 1); ?>판매</a></th>
+                    <th scope="col" rowspan="2" style="width:5%;">관리</th>
                 </tr>
                 <tr>
-                    <th scope="col">결제주기</a></th>
-                    <th scope="col">구독만료 기간</a></th>
+                    <th scope="col" style="width:10%;">결제주기</a></th>
+                    <th scope="col" style="width:10%;">구독만료 기간</a></th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($service_list as $key => $service) { ?>
                     <tr class="<?php echo $service['bg_class']; ?>">
-                        <td rowspan="2" class="td_chk2">
+                        <td rowspan="2">
                             <label for="chk_<?php echo $key; ?>" class="sound_only"><?php echo get_text($service['name']); ?></label>
                             <input type="checkbox" name="chk[]" value="<?php echo $key ?>" id="chk_<?php echo $key; ?>">
                             <input type="hidden" name="service_id[<?php echo $key; ?>]" value="<?php echo $service['service_id'] ?>">
                         </td>
-                        <td rowspan="2" class="td_mng_l">
+                        <td rowspan="2">
                             <label class="sound_only"><?php echo get_text($service['bo_subject']); ?></label>
                             <?php echo $service['bo_subject']; ?>
                         </td>
                         <td rowspan="2">
                             <input type="text" name="name[<?php echo $key; ?>]" value="<?php echo $service['name']; ?>" class="tbl_input required" required="" size="30">
                         </td>
-                        <!-- <td rowspan="2" class="td_img">
+                        <!-- <td rowspan="2">
                             <?php echo get_it_image($service['image_path'], 50, 50); ?>
                         </td> -->
                         <td colspan="2">
                             <?php echo number_format($service['price']); ?>원
                         </td>
-                        <td rowspan="2" class="td_num">
+                        <td rowspan="2"><?php echo $service['display_event'] ?></td>
+                        <td rowspan="2">
                             <label for="order_<?php echo $key; ?>" class="sound_only">순서</label>
                             <input type="text" name="order[<?php echo $key; ?>]" value="<?php echo $service['order']; ?>" id="order_<?php echo $key; ?>" class="tbl_input" size="3">
                         </td>
@@ -124,19 +132,19 @@ $qstr = $qstr . '&amp;page=' . $page;
                             <label for="use_<?php echo $key; ?>" class="sound_only">판매여부</label>
                             <input type="checkbox" name="is_use[<?php echo $key; ?>]" <?php echo ($service['is_use'] ? 'checked' : ''); ?> value="1" id="use_<?php echo $key; ?>">
                         </td>
-                        <td rowspan="2" class="td_mng td_mng_s">
+                        <td rowspan="2">
                             <a href="./service_form.php?w=u&amp;service_id=<?php echo $service['service_id']; ?>&amp;<?php echo $qstr; ?>" class="btn btn_03">
                                 <span class="sound_only"><?php echo htmlspecialchars2(cut_str($service['name'], 250, "")); ?> </span>
                                 수정
                             </a>
                         </td>
                     </tr>
-                    <tr class="td_mng_l <?php echo $service['bg_class']; ?>">
+                    <tr class="<?php echo $service['bg_class']; ?>">
                         <td>
                             <label class="sound_only">결제주기</label>
                             <?php echo $service['display_recurring'] ?>
                         </td>
-                        <td class="td_mng_l">
+                        <td>
                             <label class="sound_only">구독만료 기간</label>
                             <?php echo $service['display_expiration'] ?>
                         </td>
