@@ -40,7 +40,7 @@ $recurring = $service_info['recurring'];  // 정기 결제의 주기 몇일, 몇
 $recurring_unit = $service_info['recurring_unit']; // 정기결제 주기단위
 
 /**
- * @var bool $bSucc 결제결과 후처리 성공여부 변수 (false 일때 결제 취소처리)
+ * @var bool $bSucc 결제결과 성공여부 변수 (false 일때 결제 취소처리)
  */
 $bSucc = false;
 
@@ -116,7 +116,7 @@ if (empty($service_info['expiration'])) {
 $next_payment_date = $billing->nextPaymentDate($start_date, $start_date, $recurring, $recurring_unit);
 
 if ($next_payment_date !== false && $bSucc === true) {
-
+    //서비스 구독
     $event_expiration_date = $billing->nextPaymentDate($start_date, $start_date, $service_info['event_period'], $service_info['event_unit']);
 
     $payment_data['event_expiration_date'] = empty($event_expiration_date) ? '0000-00-00 00:00:00' : $event_expiration_date;
@@ -156,22 +156,19 @@ if ($result_code === '0000') {
         $cancel_res = $billing->pg->requestCancelBilling($payment_data['payment_no']);
         $cancel_res = $billing->convertPgDataToCommonData($cancel_res);
 
-        $history_data = array();
+        $cancel_data = array();
         $error_http_code = isset($pg_response['http_code']) ? $pg_response['http_code'] : 0;
-        $history_data['result_data'] = json_encode($cancel_res);
-        $history_data['od_id'] = $payment_data['od_id'];
-        $history_data['mb_id'] = $payment_data['mb_id'];
-        $history_data['amount'] = $payment_price;
-        $history_data['billing_key'] = $payment_data['billing_key'];
-        $history_data['result_code'] = isset($cancel_res['result_code']) ? $cancel_res['result_code'] : $error_http_code;
-        $history_data['result_message'] = isset($cancel_res['result_message']) ? $cancel_res['result_message'] : $billing_conf['bc_pg_code'] . '사 결제 취소 실패';
-        $history_data['card_name'] = isset($cancel_res['card_name']) ? $cancel_res['card_name'] : '';
-        $history_data['payment_no'] = $payment_data['payment_no'];
-        $history_data['payment_count'] = 1;
-        $history_data['payment_date'] = G5_TIME_YMD;
-        $history_data['expiration_date'] = $payment_data['expiration_date'];
+        $cancel_data['od_id'] = $payment_data['od_id'];
+        $cancel_data['payment_no'] = $payment_data['payment_no'];
+        $cancel_data['type'] = 'all';
+        $cancel_data['result_code'] = isset($cancel_res['result_code']) ? $cancel_res['result_code'] : $error_http_code;
+        $cancel_data['result_message'] = isset($cancel_res['result_message']) ? $cancel_res['result_message'] : $billing_conf['bc_pg_code'] . '사 결제 취소 실패';
+        $cancel_data['cancel_no'] = $cancel_res['cancel_no'];
+        $cancel_data['cancel_reason'] = '결제 실패';
+        $cancel_data['cancel_amount'] = $payment_price;
+        $cancel_data['refundable_amount'] = $payment_price;
 
-        $history_model->insert($history_data);
+        $cancel_model->insert($cancel_data);
         response_payment_cancel($cancel_res);
     }
 } else {
@@ -181,12 +178,10 @@ if ($result_code === '0000') {
 /**
  * 결제 취소 요청 응답
  * @param $cancel_res
- * @param BillingHistoryModel $history_model
  * @return void
  */
 function response_payment_cancel($cancel_res)
 {
-
     // 유효성 검사.
     if (!isset($cancel_res['result_code']) || $cancel_res['result_code'] !== '0000') {
         $msg = '결제 취소가 실패했습니다. 관리자 문의바랍니다.';
