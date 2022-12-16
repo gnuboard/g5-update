@@ -145,35 +145,53 @@ $is_insert_history = $history_model->insert($payment_data);
 
 //0000 은 KCP 결제성공
 if ($result_code === '0000') {
-    if ($bSucc === false) {
-        payment_cancel($payment_insert_data['payment_no'], $billing);
+    if ($bSucc && $is_insert_history && (isset($is_insert_billing_information) && $is_insert_billing_information)) {
+        $res_data = array();
+        $res_data['result_code'] = $result_code;
+        $res_data['result_message'] = $result_message;
+
+        response_json($res_data, 200);
+    } else {
+        //결제 취소 및 취소 이력저장
+        $cancel_res = $billing->pg->requestCancelBilling($payment_data['payment_no']);
+        $cancel_res = $billing->convertPgDataToCommonData($cancel_res);
+
+        $history_data = array();
+        $error_http_code = isset($pg_response['http_code']) ? $pg_response['http_code'] : 0;
+        $history_data['result_data'] = json_encode($cancel_res);
+        $history_data['od_id'] = $payment_data['od_id'];
+        $history_data['mb_id'] = $payment_data['mb_id'];
+        $history_data['amount'] = $payment_price;
+        $history_data['billing_key'] = $payment_data['billing_key'];
+        $history_data['result_code'] = isset($cancel_res['result_code']) ? $cancel_res['result_code'] : $error_http_code;
+        $history_data['result_message'] = isset($cancel_res['result_message']) ? $cancel_res['result_message'] : $billing_conf['bc_pg_code'] . '사 결제 취소 실패';
+        $history_data['card_name'] = isset($cancel_res['card_name']) ? $cancel_res['card_name'] : '';
+        $history_data['payment_no'] = $payment_data['payment_no'];
+        $history_data['payment_count'] = 1;
+        $history_data['payment_date'] = G5_TIME_YMD;
+        $history_data['expiration_date'] = $payment_data['expiration_date'];
+
+        $history_model->insert($history_data);
+        response_payment_cancel($cancel_res);
     }
 } else {
     response_json('결제 승인이 되지 않았습니다.', 200); //결제 실패기록이 남는다.
 }
 
 /**
- * 결제 취소 요청후 종료
- * @param $payment_no
- * @param Billing $billing
+ * 결제 취소 요청 응답
+ * @param $cancel_res
+ * @param BillingHistoryModel $history_model
  * @return void
  */
-function payment_cancel($payment_no, $billing)
+function response_payment_cancel($cancel_res)
 {
-    // API RES
-    $cancle_res = $billing->pg->requestCancelBilling($payment_no);
 
     // 유효성 검사.
-    if (isset($cancle_res['result_code']) && $cancle_res['result_code'] !== '0000') {
+    if (!isset($cancel_res['result_code']) || $cancel_res['result_code'] !== '0000') {
         $msg = '결제 취소가 실패했습니다. 관리자 문의바랍니다.';
-        responseJson($msg, 401);
+        response_json($msg, 401);
     }
 
-    if (PHP_VERSION_ID >= 50400) {
-        echo json_encode($cancle_res, JSON_UNESCAPED_UNICODE);
-    } else {
-        echo to_han(json_encode($cancle_res));
-    }
-
-    exit;
+    response_json('결제 승인이 취소되었습니다.', 200);
 }
