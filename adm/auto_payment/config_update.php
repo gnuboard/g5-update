@@ -17,25 +17,25 @@ if ($_POST['bc_pg_code'] == 'kcp') {
         @mkdir(kcp_cert_path, G5_DIR_PERMISSION, true);
         @chmod(kcp_cert_path, G5_DIR_PERMISSION);
     }
-}
 
-/* 인증서 & 개인키 파일처리 */
-// if (!empty($_POST['bc_kcp_cert_del'])) {
-//     @unlink(G5_PATH . $billing_conf['bc_kcp_cert']);
-// }
-// if (!empty($_POST['bc_kcp_prikey_del'])) {
-//     @unlink(G5_PATH . $billing_conf['bc_kcp_prikey']);
-// }
-if ($_FILES['bc_kcp_cert_file']['name']) {
-    $result = upload_file($_FILES['bc_kcp_cert_file']['tmp_name'], $_FILES['bc_kcp_cert_file']['name'], kcp_cert_path);
-    if ($result) {
-        $bc_kcp_cert = $_FILES['bc_kcp_cert_file']['name'];
+    /* 인증서 & 개인키 파일처리 */
+    // if (!empty($_POST['bc_kcp_cert_del'])) {
+    //     @unlink(G5_PATH . $billing_conf['bc_kcp_cert']);
+    // }
+    // if (!empty($_POST['bc_kcp_prikey_del'])) {
+    //     @unlink(G5_PATH . $billing_conf['bc_kcp_prikey']);
+    // }
+    if ($_FILES['bc_kcp_cert_file']['name']) {
+        $result = upload_file($_FILES['bc_kcp_cert_file']['tmp_name'], $_FILES['bc_kcp_cert_file']['name'], kcp_cert_path);
+        if ($result) {
+            $bc_kcp_cert = $_FILES['bc_kcp_cert_file']['name'];
+        }
     }
-}
-if ($_FILES['bc_kcp_prikey_file']['name']) {
-    $result = upload_file($_FILES['bc_kcp_prikey_file']['tmp_name'], $_FILES['bc_kcp_prikey_file']['name'], kcp_cert_path);
-    if ($result) {
-        $bc_kcp_prikey = $_FILES['bc_kcp_prikey_file']['name'];
+    if ($_FILES['bc_kcp_prikey_file']['name']) {
+        $result = upload_file($_FILES['bc_kcp_prikey_file']['tmp_name'], $_FILES['bc_kcp_prikey_file']['name'], kcp_cert_path);
+        if ($result) {
+            $bc_kcp_prikey = $_FILES['bc_kcp_prikey_file']['name'];
+        }
     }
 }
 
@@ -51,6 +51,9 @@ $data   = array(
     'bc_kcp_prikey_password' => isset($_POST['bc_kcp_prikey_password']) ? $_POST['bc_kcp_prikey_password'] : null,
     'bc_kcp_is_test'        => isset($_POST['bc_kcp_is_test']) ? preg_replace('/[^0-9]/', '', $_POST['bc_kcp_is_test']) : 0,
     'bc_kcp_curruncy'       => isset($_POST['bc_kcp_curruncy']) ? $_POST['bc_kcp_curruncy'] : 410,
+    'bc_toss_client_key'    => isset($_POST['bc_toss_client_key']) ? $_POST['bc_toss_client_key'] : null,
+    'bc_toss_secret_key'    => isset($_POST['bc_toss_secret_key']) ? $_POST['bc_toss_secret_key'] : null,
+    'bc_toss_customer_key'  => isset($_POST['bc_toss_customer_key']) ? $_POST['bc_toss_customer_key'] : null,
     'bc_notice_email'       => isset($_POST['bc_notice_email']) ? $_POST['bc_notice_email'] : null,
     'bc_update_ip'          => $_SERVER['REMOTE_ADDR'],
     'bc_update_id'          => $member['mb_id'],

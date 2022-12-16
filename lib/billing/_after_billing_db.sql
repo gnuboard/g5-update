@@ -138,10 +138,12 @@ CREATE TABLE `g5_billing_config` (
   `bc_kcp_prikey_password` varchar(255) DEFAULT '' COMMENT 'kcp 암호화 개인 키 비밀번호',
   `bc_kcp_is_test` tinyint(1) DEFAULT 1 COMMENT 'kcp 테스트 환경여부 (1:테스트, 0:운영)',
   `bc_kcp_curruncy` varchar(10) DEFAULT '410' COMMENT '통화 단위 (410:원화)',
+  `bc_toss_client_key` varchar(255) DEFAULT '' COMMENT 'toss 클라이언트 키',
+  `bc_toss_secret_key` varchar(255) DEFAULT '' COMMENT 'toss 시크릿 키',
+  `bc_toss_customer_key` varchar(255) DEFAULT '' COMMENT 'toss 고객 ID',
   `bc_notice_email` varchar(255) DEFAULT '' COMMENT '자동결제 스케쥴러 실행 결과 수신 이메일',
   `bc_update_ip` varchar(100) NOT NULL DEFAULT '',
   `bc_update_id` varchar(100) NOT NULL DEFAULT '',
   `bc_update_time` datetime NOT NULL,
-  `bc_toss_is_test` tinyint(1) DEFAULT 1 COMMENT 'toss 테스트 환경여부 (1:테스트, 0:운영)',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
