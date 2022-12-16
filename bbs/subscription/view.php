@@ -1,7 +1,7 @@
 <?php
 //서비스와 서비스 상세 view 를 담당.
 require_once dirname(__FILE__) . '/_common.php';
-include_once G5_LIB_PATH . '/billing/config.php';
+require_once G5_LIB_PATH . '/billing/_setting.php';
 
 //테마기준
 
