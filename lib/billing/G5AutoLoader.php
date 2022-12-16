@@ -56,10 +56,10 @@ class G5AutoLoader
                    if (($file !== '.') && ($file !== '..')) {
                        if (is_dir($this->getDirectory() . $file)) {
                            $fileName = $this->getDirectory() . $file . '/' . $class . $this->getExtension();
-                           if(file_exists($fileName)){
+                           if (file_exists($fileName)) {
                                include_once $fileName;
+                               break;
                            }
-                           break;
                        }
                    }
                }
