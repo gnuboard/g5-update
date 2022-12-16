@@ -1,4 +1,5 @@
 <?php
+
 /**
  * 자동결제(빌링) 공통 Class
  * - 생성자에서 입력받은 PG사의 Class를 선언한다.
@@ -96,11 +97,11 @@ class Billing
     function nextPaymentDate($startDate, $paymentDate, $recurring, $recurringUnit)
     {
         switch (strtolower($recurringUnit)) {
-            case 'y' :
+            case 'y':
                 $time = "+{$recurring} years";
                 return date('Y-m-d', strtotime($time, strtotime($paymentDate)));
                 break;
-            case 'm' :
+            case 'm':
                 /**
                  * 월 결제일 경우 아래 경우를 고려해서 계산한다.
                  * 1. 다음 결제일이 존재하지 않는 날짜일 때, "+{$recurring} months"가 다음 결제월을 초과하게 된다.
@@ -120,15 +121,15 @@ class Billing
                     return date('Y-m-' . $startDay, strtotime("+{$recurring} months", strtotime($paymentDate)));
                 }
                 break;
-            case 'w' :
+            case 'w':
                 $recurring *= 7;
                 $time = "+{$recurring} days";
                 return date('Y-m-d', strtotime($time, strtotime($paymentDate)));
-            case 'd' :
+            case 'd':
                 $time = "+{$recurring} days";
                 return date('Y-m-d', strtotime($time, strtotime($paymentDate)));
                 break;
-            default :
+            default:
                 return false;
                 break;
         }
@@ -141,19 +142,20 @@ class Billing
      * @param int $base_price   구독상품 원가
      * @return int
      */
-    function calcurateRefundAmount($history, $base_price) {
+    function calcurateRefundAmount($history, $base_price)
+    {
 
         $sTime = strtotime($history['payment_date']);       // 결제시작일
         $eTime = strtotime($history['expiration_date']);    // 유효기간 만료일
         $todayTime = strtotime(date('Y-m-d H:i:s'));        // 오늘
-    
+
         // 만료일이 지났을 경우 
         if ($todayTime > strtotime($history['expiration_date'])) {
             return 0;
         }
         $diff_day   = ceil(($todayTime - $sTime) / (60 * 60 * 24)); // 사용 일수
         $exp_day    = floor(($eTime - $sTime) / (60 * 60 * 24));    // 유효기간 일수
-    
+
         // 결제금액 - (사용일수 * (기본가격 / 유효일수))
         return $history['amount'] - $diff_day * round($base_price / $exp_day);
     }
@@ -188,7 +190,7 @@ class Billing
     }
 
     /**
-     * 주기 단위를 구독만료
+     * 주기 단위를 구독만료 형식에 맞게 텍스트 표시
      * @param array $service    구독상품 정보
      * @return string|false
      */
@@ -225,13 +227,83 @@ class Billing
      * Get the value of unitArray
      * @param $type     단위 형식 (default, period, prefix)
      * @return array
-     */ 
+     */
     public function getUnitArray($type = 'default')
     {
         if (isset($this->unitArray[$type])) {
             return $this->unitArray[$type];
         } else {
             return $this->unitArray['default'];
+        }
+    }
+
+    /**
+     * 자동결제 가격 조회
+     * - 결제종료일의 존재유무에 따라 가져오는 가격이 달라진다.
+     * @param string $orderId   주문번호
+     * @param array $info       자동결제 정보
+     * @return int
+     */
+    function getBillingPrice($orderId, $info = array())
+    {
+        $price = 0;
+
+        if (empty($info) || !isset($info['price'])) {
+            $info_model = new BillingInformationModel();
+            $info = $info_model->selectOneByOrderId($orderId);
+        }
+
+        // 결제종료일이 있을 때, 결제정보 가격 조회
+        if (!$this->isNullByDate($info['end_date'])) {
+            $price = $info['price'];
+        // 결제종료일이 없을 때, 구독상품 가격 조회
+        } else {
+            $price_model = new BillingServicePriceModel();
+            $price = $price_model->selectCurrentPrice($info['service_id']);
+        }
+
+        return (int)$price;
+    }
+
+    /**
+     * 주문번호 구분자 추가표시
+     * @param string $orderId   주문번호
+     * @param string $separator 구분자
+     * @return string
+     */
+    public function displayOrderId($orderId, $separator = '-')
+    {
+        $length = strlen($orderId) / 2;
+        return substr($orderId, 0, $length) . $separator . substr($orderId, $length);
+    }
+
+    /**
+     * date, datetime null 체크
+     * @param string $date  날짜
+     * @return bool
+     */
+    public function isNullByDate($date)
+    {
+        if (is_null($date) || $date == '0000-00-00 00:00:00' || $date == '0000-00-00') {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * 날짜포맷 변환
+     * @param string $date      날짜
+     * @param string $format    날짜포맷
+     * @param string $alt       날짜가 null일 경우, 출력할 대체 문구
+     * @return string
+     */
+    public function convertDateFormat($date, $format = 'Y-m-d', $alt = '')
+    {
+        if (!$this->isNullByDate($date)) {
+            return date($format, strtotime($date));
+        } else {
+            return $alt;
         }
     }
 }

@@ -82,6 +82,7 @@ add_stylesheet('<link rel="stylesheet" href="' . G5_JS_URL . '/remodal/remodal.c
 add_stylesheet('<link rel="stylesheet" href="' . G5_JS_URL . '/remodal/remodal-default-theme.css">', 12);
 add_javascript('<script src="' . G5_JS_URL . '/remodal/remodal.js"></script>', 10);
 
+/* 가격변동 로그파일 불러오기 */
 $log_content = '';
 if (isset($service_id) && !empty($service_id)) {
     $log_path = G5_DATA_PATH . '/billing/log/service_price_change_log_' . $service_id . '.txt';
@@ -261,7 +262,7 @@ if (isset($service_id) && !empty($service_id)) {
                                 <input type="checkbox" name="is_event" value="1" id="is_event" <?php echo $service['is_event_checked'] ?>>
                                 <label for="is_event">사용</label>
                                 <div id="event_area">
-                                    결제일로부터
+                                    처음 결제부터
                                     <input type="text" name="event_period" id="event_period" value="<?php echo $service['event_period']; ?>" class="frm_input" size="8" placeholder="0">
                                     <select name="event_unit">
                                         <?php foreach ($unit_period as $key => $val) { ?>
@@ -387,12 +388,11 @@ if (isset($service_id) && !empty($service_id)) {
         return true;
     }
 
-    function toggle_event_area()
-    {
+    function toggle_event_area() {
         if ($('#is_event').is(':checked')) {
             $('#event_area').show();
         } else {
-            $('#event_area').hide();   
+            $('#event_area').hide();
         }
     }
 </script>

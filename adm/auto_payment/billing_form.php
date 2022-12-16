@@ -27,13 +27,14 @@ $billing_info = $information_model->selectOneByOrderId($od_id);
 $service_id = $billing_info['service_id'];
 
 $billing_info['mb_side_view']         = get_sideview($billing_info['mb_id'], get_text($billing_info['mb_name']), $billing_info['mb_email'], '');
-$billing_info['display_end_date']     = (!is_null($billing_info['end_date']) && $billing_info['end_date'] != '0000-00-00 00:00:00') ? date('Y-m-d', strtotime($billing_info['end_date'])) : "";
+$billing_info['display_end_date']     = $billing->convertDateFormat($billing_info['end_date']);
 $billing_info['display_status']       = $billing_info['status'] == "1" ? "구독 중" : "구독 종료";
 $billing_info['display_billing_key']  = $billing->displayBillKey($billing_info['billing_key']);
-$billing_info['display_next_payment'] = date('Y-m-d', strtotime($billing_info['next_payment_date']));
-$billing_info['display_od_id']        = $billing_info['od_id'];
+$billing_info['display_next_payment'] = $billing->convertDateFormat($billing_info['next_payment_date']);
+$billing_info['display_od_id']        = $billing->displayOrderId($billing_info['od_id']);
+$billing_info['display_price']        = number_format($billing->getBillingPrice($od_id, $billing_info)) . "원";
 $billing_info['display_event_price']  = number_format((int)$billing_info['event_price']) . "원";
-$billing_info['display_event_date']   = (!is_null($billing_info['event_expiration_date']) && $billing_info['event_expiration_date'] != '0000-00-00 00:00:00') ? date('Y-m-d', strtotime($billing_info['event_expiration_date'])) : "";
+$billing_info['display_event_date']   = $billing->convertDateFormat($billing_info['event_expiration_date']);
 
 /* 구독상품 */
 // 구독상품 정보 조회
@@ -138,6 +139,14 @@ $pg_anchor = '<ul class="anchor">
                                 <td><?php echo $billing_info['mb_side_view'] ?></td>
                             </tr>
                             <tr>
+                                <th scope="row">결제가격</th>
+                                <td <?php echo empty($billing_info['display_event_date']) ? 'colspan="3"' : '' ?>><?php echo $billing_info['display_price'] ?></td>
+                                <?php if (!empty($billing_info['display_event_date'])) { ?>
+                                    <th scope="row">이벤트 가격</th>
+                                    <td><?php echo $billing_info['display_event_price'] . " ({$billing_info['display_event_date']} 까지)"; ?></td>
+                                <?php } ?>
+                            </tr>
+                            <tr>
                                 <th scope="row">자동결제 키</th>
                                 <td>
                                     <span id="display_billing_key">
@@ -158,14 +167,6 @@ $pg_anchor = '<ul class="anchor">
                                     <input type="text" class="frm_input date_format" name="end_date" value="<?php echo $billing_info['display_end_date'] ?>">
                                 </td>
                             </tr>
-                            <?php if (!empty($billing_info['display_event_date'])) { ?>
-                            <tr>
-                                <th scope="row">이벤트 가격</th>
-                                <td><?php echo $billing_info['display_event_price'] ?></td>
-                                <th scope="row">이벤트 종료일</th>
-                                <td><?php echo $billing_info['display_event_date'] ?></td>
-                            </tr>
-                            <?php } ?>
                             <tr>
                                 <th scope="row"><label for="status">구독 상태</label></th>
                                 <td colspan="3">
