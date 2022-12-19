@@ -1,9 +1,7 @@
 <?php
 require_once dirname(__FILE__) . '/_common.php';
+require_once G5_LIB_PATH . '/billing/_setting.php';
 require_once (G5_BBS_PATH . '/subscription/subscription_service.php');
-require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
-$autoload = new G5AutoLoader();
-$autoload->register();
 $input_data = json_decode(file_get_contents('php://input'), true);
 
 /**
@@ -13,7 +11,7 @@ $work = isset($input_data['w']) ? $input_data['w'] : '';
 
 //필수 파라미터
 if (empty($input_data) || $is_guest === true || empty($work)) {
-    responseJson('잘못된 요청입니다.', 400);
+    response_json('잘못된 요청입니다.', 400);
 }
 
 if ($work === 'get_info') {
@@ -22,7 +20,7 @@ if ($work === 'get_info') {
 
     //유효성 검사
     if (empty($service_id) || empty($order_id)) {
-        responseJson('잘못된 요청입니다.', 400);
+        response_json('잘못된 요청입니다.', 400);
         exit;
     }
 
@@ -39,9 +37,9 @@ function send_batch_info($order_id, $service_id)
 {
     $result = get_batchkey_info_kcp($order_id, $service_id);
     if ($result === false) {
-        responseJson('결제정보를 가져오는데 실패했습니다.', 400);
+        response_json('결제정보를 가져오는데 실패했습니다.', 400);
     }
-    echo json_encode($result);
+    echo response_json($result);
 }
 
 /**

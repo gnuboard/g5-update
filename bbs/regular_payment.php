@@ -146,7 +146,7 @@ function m_Completepayment(return_form, close_event)
 
         const data = new URLSearchParams(kcp_form).toString();
         $.ajax({
-            url : "kcp-batch/ajax.get_billing_key.php",
+            url: "kcp-batch/ajax.get_billing_key.php",
             type: 'post',
             data: data,
             success: function (data) {
@@ -196,10 +196,10 @@ window.onload = function() {
             'order_id' : order_id
         }
         $.ajax({
-            url : 'kcp-batch/ajax.set_batch_info.php',
+            url: 'kcp-batch/ajax.set_batch_info.php',
             type: 'POST',
             data: JSON.stringify(param),
-            dataType : 'json',
+            dataType: 'json',
             success: function(data) {
                 if (data) {
                     let form_tag = document.createElement('form');
@@ -261,8 +261,8 @@ function order_payment(){
         data: data,
         success: function (data) {
             if (data) {
-                const result = JSON.parse(data);
-                if (result.result_code == "0000") {
+                const res = data;
+                if (res.result_code === "0000") {
                     // 성공
                     alert('결제가 완료되었습니다.');
                     window.location.replace(g5_url);

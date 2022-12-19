@@ -4,12 +4,13 @@
  * 매일 실행되는 정기 결제
  */
 require_once(dirname(__FILE__) . '/_common.php');
-require_once G5_LIB_PATH . '/billing/G5AutoLoader.php';
-$autoload = new G5AutoLoader();
-$autoload->register();
+require_once G5_LIB_PATH . '/billing/_setting.php';
 ignore_user_abort(true); // http 커넥션이 끊어져도 동작하게 설정.
 
-$pg_code = 'kcp';
+$pg_code = $billing_conf['bc_pg_code'];
+if(empty($pg_code)){
+    exit;
+}
 $billing = new Billing($pg_code);
 $billing_history = new BillingHistoryModel();
 $service_price = new BillingServicePriceModel();
@@ -46,25 +47,29 @@ for ($idx = 0; $idx < $billing_total_page; $idx++) {
     }
 
     foreach ($billing_list as $today_payment) {
-        $history_data = $billing_history->selectOneLastSuccessByOdId($today_payment['od_id'], $payment_success_code); //이전 결제성공 기록불러오기
+        $history_data = $billing_history->selectOneLastSuccessByOdId($today_payment['od_id'], $payment_success_code); //지난 결제성공 기록불러오기
         if (empty($history_data)) {
             ++$fail_count;
             continue;
         }
         //구독만료기간이 있는 상품.
-        if ($today_payment['end_date'] !== '0000-00-00 00:00:00') {
+        if ($billing->isNullByDate($today_payment['end_date'])) {
             $payment_end_date = date('Y-m-d', strtotime($today_payment['end_date']));
 
             //배치실행일이 구독 만료일이면 결제하지 않는다.
             if (G5_TIME_YMD === $payment_end_date) {
                 ++$success_count;
                 continue;
-            } //구독기간만료가 되지않아서 이전가격으로 진행
-            else {
-                $price = $history_data['amount'];
             }
-        } //만료기간이 설정되지 않음 상품, 변동된 가격을 따라 결제한다.
-        else {
+            else { //구독기간만료가 되지않아서 이벤트 기간 체크
+                if (strtotime($today_payment['event_expiration_date']) > strtotime(G5_TIME_YMD)) {
+                    $price = $today_payment['event_price'];
+                } else {
+                    $price = $today_payment['price'];
+                }
+            }
+        }
+        else { //만료기간이 설정되지 않음 상품, 변동된 가격을 따라 결제한다.
             $price = $service_price->selectCurrentPrice($today_payment['service_id']);
             $price = empty($price) ? $price : 0;
         }
@@ -99,7 +104,7 @@ for ($idx = 0; $idx < $billing_total_page; $idx++) {
             $history_data['result_data'] = json_encode($pg_response);
             $history_data['result_code'] = $pg_response['result_code'];
             $history_data['result_message'] = $pg_response['result_message'];
-            $history_data['payment_count'] = $pg_response['payment_count'] + 1;
+            $history_data['payment_count'] += 1;
             $history_data['payment_date'] = G5_TIME_YMD;
             $history_data['card_name'] = $pg_response['card_name'];
             $history_data['expiration_date'] = $next_payment_date;
@@ -113,6 +118,7 @@ for ($idx = 0; $idx < $billing_total_page; $idx++) {
             $history_data['result_code'] = isset($pg_response['result_code']) ? $pg_response['result_code'] : $error_http_code;
             $history_data['result_message'] = isset($pg_response['result_message']) ? $pg_response['result_message'] : 'pg사 연결 실패';
             $history_data['result_data'] = json_encode($pg_response);
+            $history_data['payment_count'] += 1;
             $history_data['payment_date'] = G5_TIME_YMD;
             $history_data['card_name'] = isset($pg_response['card_name']) ? $pg_response['card_name'] : '';
         }
@@ -140,8 +146,7 @@ $scheduler_result = array(
     'fail_count' => $fail_count,
     'state' => $state,
     'start_time' => G5_TIME_YMDHIS,
-    'ip' => $user_ip,
-    'title' => '정기 결제'
+    'ip' => $user_ip
 );
 
 $billing_scheduler->insert($scheduler_result);

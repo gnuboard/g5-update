@@ -8,6 +8,10 @@ $g5['title'] = '자동결제 실행기록';
 include_once G5_ADMIN_PATH . '/admin.head.php';
 include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
 
+if(!isset($billing_conf['bc_pg_code'])){
+    alert('정기 결제 설정을 먼저 해주세요.', 'config_form.php');
+    exit;
+}
 /* 변수 선언 */
 $billing            = new Billing($billing_conf['bc_pg_code']);
 $scheduler_model    = new BillingSchedulerHistoryModel();

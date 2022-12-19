@@ -78,8 +78,7 @@ class BillingHistoryModel
 
     /**
      * 결제이력 조회
-     * @param int       $offset     시작위치
-     * @param int       $rows       출력 갯수
+     * @param array $requestData
      * @return array
      */
     public function selectListByAdmin($requestData = array())
@@ -114,8 +113,7 @@ class BillingHistoryModel
 
     /**
      * 결제이력 조회
-     * @param int       $offset     시작위치
-     * @param int       $rows       출력 갯수
+     * @param array $requestData
      * @return int
      */
     public function selectTotalCountByAdmin($requestData = array())
