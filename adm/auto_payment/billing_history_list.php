@@ -63,6 +63,9 @@ foreach ($history_list as $i => $history) {
 }
 
 $qstr = $qstr . '&amp;page=' . $page;
+if(!empty($date)) {
+    $qstr .= '&amp;date=' . $date;
+}
 ?>
 
 <div class="local_ov01 local_ov">
@@ -140,7 +143,7 @@ $qstr = $qstr . '&amp;page=' . $page;
     </div>
 </form>
 
-<?php echo get_paging(G5_IS_MOBILE ? $config['cf_mobile_pages'] : $config['cf_write_pages'], $page, $total_page, "{$_SERVER['SCRIPT_NAME']}?$qstr&amp;page="); ?>
+<?php echo get_paging(G5_IS_MOBILE ? $config['cf_mobile_pages'] : $config['cf_write_pages'], $page, $total_page, "{$_SERVER['SCRIPT_NAME']}?$qstr"); ?>
 
 <script>
     $(function(){
