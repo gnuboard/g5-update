@@ -30,7 +30,8 @@ $query_data = array(
     'rows' => 1000,
     'date' => G5_TIME_YMD,
     'sdate' => G5_TIME_YMD . ' 00:00:00',
-    'edate' => G5_TIME_YMD . ' 23:59:59'
+    'edate' => G5_TIME_YMD . ' 23:59:59',
+    'exclude_end_date' => G5_TIME_YMD //배치실행일이 구독 만료일이면 결제하지 않는다.
 );
 
 $success_count = 0;

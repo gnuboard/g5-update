@@ -71,6 +71,11 @@ class BillingInformationModel
             array_push($bindParam, "{$requestData['date']}");
         }
 
+        if(isset($requestData['exclude_end_date']) && !empty($requestData['exclude_end_date'])) {
+            $sql .= " AND date_format(bi.end_date, '%Y-%m-%d')  <> ? ";
+            array_push($bindParam, $requestData['exclude_end_date']);
+        }
+
         if (!empty($requestData['sfl']) && !empty($requestData['stx'])) {
             $sql .= " AND {$requestData['sfl']} LIKE ? ";
             array_push($bindParam, "%{$requestData['stx']}%");
@@ -114,6 +119,11 @@ class BillingInformationModel
         if (isset($requestData['date']) && !empty($requestData['date'])) {
             $sql .= ' AND date_format(bi.next_payment_date, "%Y-%m-%d") = ? ';
             array_push($bindParam, "{$requestData['date']}");
+        }
+
+        if(isset($requestData['exclude_end_date']) && !empty($requestData['exclude_end_date'])) {
+            $sql .= " AND date_format(bi.end_date, '%Y-%m-%d')  <> ? ";
+            array_push($bindParam, $requestData['exclude_end_date']);
         }
 
         if (!empty($requestData['mb_id'])) {
