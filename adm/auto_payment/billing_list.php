@@ -44,7 +44,19 @@ $billing_list = $information_model->selectList($request_data);
 foreach ($billing_list as $i => $row) {
     $billing_list[$i] = $row;
     $billing_list[$i]['bg_class']           = 'bg' . ($i % 2);
-    $billing_list[$i]['mb_side_view']       = get_sideview($row['mb_id'], get_text($row['mb_name']), $row['mb_email'], '');
+    $billing_list[$i]['mb_icon']            = '';
+    $icon_file = G5_DATA_PATH . '/member/' . substr($row['mb_id'], 0, 2) . '/' . get_mb_icon_name($row['mb_id']) . '.gif';
+    if (file_exists($icon_file)) {
+        $icon_url = str_replace(G5_DATA_PATH, G5_DATA_URL, $icon_file);
+        $icon_filemtile = (defined('G5_USE_MEMBER_IMAGE_FILETIME') && G5_USE_MEMBER_IMAGE_FILETIME) ? '?' . filemtime($icon_file) : '';
+        $billing_list[$i]['mb_icon'] = '<img src="' . $icon_url . $icon_filemtile . '" alt="">';
+    } else {
+        if( defined('G5_THEME_NO_PROFILE_IMG') ){
+            $billing_list[$i]['mb_icon'] .= G5_THEME_NO_PROFILE_IMG;
+        } else if( defined('G5_NO_PROFILE_IMG') ){
+            $billing_list[$i]['mb_icon'] .= G5_NO_PROFILE_IMG;
+        }
+    }
     $billing_list[$i]['price']              = $price_model->selectCurrentPrice($row['service_id']);
     $billing_list[$i]['display_recurring']  = ($dsRec = $billing->displayRecurring($row)) ? $dsRec : '없음';
     $billing_list[$i]['display_od_id']      = $billing->displayOrderId($row['od_id']);
@@ -121,11 +133,17 @@ $qstr = $qstr . '&amp;page=' . $page;
                             <input type="checkbox" name="chk[]" value="<?php echo $key ?>" id="chk_<?php echo $key ?>">
                         </td>
                         <td headers="th_od_id" rowspan="2"><?php echo $billing['display_od_id']; ?></td>
-                        <td headers="th_service_name" colspan="3"><?php echo $billing['name']; ?>
-                            <button name="quick_search_service_btn" class="mng_mod btn btn01">*</button>
+                        <td headers="th_service_name" colspan="3">
+                            <span name="quick_search_service_btn" style="text-decoration: underline; cursor: pointer;"
+                                onclick="search_service_name('<?php echo $billing['name']; ?>')">
+                                <?php echo $billing['name']; ?>
+                            </span>
                         </td>
-                        <td headers="th_member" rowspan="2"><?php echo $billing['mb_side_view']; ?>
-                            <button name="quick_search_member_btn" class="mng_mod btn btn01">*</button>
+                        <td headers="th_member" rowspan="2">
+                            <span name="quick_search_member_btn" style="text-decoration: underline; cursor: pointer;"
+                                onclick="search_member_name('<?php echo $billing['mb_name']; ?>')">
+                                <?php echo $billing['mb_icon'] . $billing['mb_name']; ?>
+                            </span>
                         </td>
                         <td headers="th_date" rowspan="2"><?php echo $billing['display_date']; ?></td>
                         <td headers="th_status" rowspan="2"><?php echo $billing['display_status']; ?></td>
@@ -152,36 +170,12 @@ $qstr = $qstr . '&amp;page=' . $page;
     </div>
 </form>
 <script>
-    //이벤트 리스너 붙이기
-    add_button_listener()
-
-    function add_button_listener() {
-        const quick_search_member_button = document.querySelectorAll('[name="quick_search_member_btn"]');
-        for (let i = 0; i < quick_search_member_button.length; i++) {
-            quick_search_member_button[i].addEventListener('click', function (e) {
-                search_member_name(e);
-            })
-        }
-
-        const quick_search_service_button = document.querySelectorAll('[name="quick_search_service_btn"]');
-        for (let i = 0; i < quick_search_service_button.length; i++) {
-            quick_search_service_button[i].addEventListener('click', function (e) {
-                search_service_name(e);
-            })
-        }
-    }
-
-    function search_member_name(e) {
-        e.preventDefault();
-        const user_name = e.target.parentNode.querySelector('.sv_member').innerText.trim();
+    function search_member_name(user_name) {
         document.location.href = g5_admin_url + '/auto_payment/billing_list.php?sfl=mb.mb_name&stx=' + user_name;
     }
 
-    function search_service_name(e) {
-        e.preventDefault();
-        const button_text = e.target.innerText;
-        const service_name = e.target.parentNode.innerText.trim();
-        document.location.href = g5_admin_url + '/auto_payment/billing_list.php?sfl=bs.name&stx=' + service_name.split(button_text)[0];
+    function search_service_name(service_name) {
+        document.location.href = g5_admin_url + '/auto_payment/billing_list.php?sfl=bs.name&stx=' + service_name;
     }
 </script>
 <?php echo get_paging(G5_IS_MOBILE ? $config['cf_mobile_pages'] : $config['cf_write_pages'], $page, $total_page, "{$_SERVER['SCRIPT_NAME']}?$qstr&amp;page="); ?>
