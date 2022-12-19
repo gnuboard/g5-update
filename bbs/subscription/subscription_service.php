@@ -23,7 +23,7 @@ $billing_cancel = new BillingCancelModel();
  */
 function get_service_detail($service_id)
 {
-    global $service_price, $billing_service;
+    global $service_price, $billing_service, $billing;
 
     $result_list = array();
     $service = $billing_service->selectOneById($service_id);
@@ -35,6 +35,10 @@ function get_service_detail($service_id)
     if (empty($price)) {
         return $result_list;
     }
+    $convertYMDUnit1 = $billing->getUnitArray('prefix');
+    $convertYMDUnit2 = $billing->getUnitArray('period');
+    $service['display_recurring1'] = $convertYMDUnit1[$service['recurring_unit']];
+    $service['display_recurring2'] = $convertYMDUnit2[$service['recurring_unit']];
 
     return $service + array('price' => $price);
 }
