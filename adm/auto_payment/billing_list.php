@@ -121,8 +121,12 @@ $qstr = $qstr . '&amp;page=' . $page;
                             <input type="checkbox" name="chk[]" value="<?php echo $key ?>" id="chk_<?php echo $key ?>">
                         </td>
                         <td headers="th_od_id" rowspan="2"><?php echo $billing['display_od_id']; ?></td>
-                        <td headers="th_service_name" colspan="3"><?php echo $billing['name']; ?></td>
-                        <td headers="th_member" rowspan="2"><?php echo $billing['mb_side_view']; ?></td>
+                        <td headers="th_service_name" colspan="3"><?php echo $billing['name']; ?>
+                            <button name="quick_search_service_btn" class="mng_mod btn btn01">*</button>
+                        </td>
+                        <td headers="th_member" rowspan="2"><?php echo $billing['mb_side_view']; ?>
+                            <button name="quick_search_member_btn" class="mng_mod btn btn01">*</button>
+                        </td>
                         <td headers="th_date" rowspan="2"><?php echo $billing['display_date']; ?></td>
                         <td headers="th_status" rowspan="2"><?php echo $billing['display_status']; ?></td>
                         <td class="td_mng td_mng_s" rowspan="2">
@@ -147,6 +151,39 @@ $qstr = $qstr . '&amp;page=' . $page;
         </table>
     </div>
 </form>
+<script>
+    //이벤트 리스너 붙이기
+    add_button_listener()
+
+    function add_button_listener() {
+        const quick_search_member_button = document.querySelectorAll('[name="quick_search_member_btn"]');
+        for (let i = 0; i < quick_search_member_button.length; i++) {
+            quick_search_member_button[i].addEventListener('click', function (e) {
+                search_member_name(e);
+            })
+        }
+
+        const quick_search_service_button = document.querySelectorAll('[name="quick_search_service_btn"]');
+        for (let i = 0; i < quick_search_service_button.length; i++) {
+            quick_search_service_button[i].addEventListener('click', function (e) {
+                search_service_name(e);
+            })
+        }
+    }
+
+    function search_member_name(e) {
+        e.preventDefault();
+        const user_name = e.target.parentNode.querySelector('.sv_member').innerText.trim();
+        document.location.href = g5_admin_url + '/auto_payment/billing_list.php?sfl=mb.mb_name&stx=' + user_name;
+    }
+
+    function search_service_name(e) {
+        e.preventDefault();
+        const button_text = e.target.innerText;
+        const service_name = e.target.parentNode.innerText.trim();
+        document.location.href = g5_admin_url + '/auto_payment/billing_list.php?sfl=bs.name&stx=' + service_name.split(button_text)[0];
+    }
+</script>
 <?php echo get_paging(G5_IS_MOBILE ? $config['cf_mobile_pages'] : $config['cf_write_pages'], $page, $total_page, "{$_SERVER['SCRIPT_NAME']}?$qstr&amp;page="); ?>
 <?php
 include_once G5_ADMIN_PATH . '/admin.tail.php';
