@@ -100,12 +100,29 @@ class BillingSchedulerHistoryModel
      * @param array $requestData
      * @return bool
      */
-    public function update($id, $requestData = array())
+    public function updateById($id, $requestData = array())
     {
         global $g5;
 
         $conditional = array(
             "id" => $id
+        );
+
+        return $this->g5Mysqli->updateSQL($g5["billing_scheduler_history_table"], $requestData, $conditional);
+    }
+
+    /**
+     * 스케쥴러에서 쓰는 실행기록 업데이트
+     * @param array $requestData
+     * @return bool
+     */
+    public function update($conditionalData , $requestData = array())
+    {
+        global $g5;
+
+        $conditional = array(
+            'start_time' => $conditionalData['start_time'],
+            'ip' => $conditionalData['ip']
         );
 
         return $this->g5Mysqli->updateSQL($g5["billing_scheduler_history_table"], $requestData, $conditional);

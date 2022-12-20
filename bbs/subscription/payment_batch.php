@@ -38,10 +38,27 @@ $success_count = 0;
 $fail_count = 0;
 $currency = 410; // @TODO kcp 원화 코드
 $payment_success_code = '0000'; // kcp 결제 성공코드
+
+define('STATE_SUCCESS', 1); //성공
+define('STATE_PART_FAIL', -1); //일부 실패
+define('STATE_FAIL', 0); // 모두 실패
+define('STATE_CONTINUE', 2); // 스케쥴링 작업 실행 중
+define('STATE_FORCE_STOP', 3); // 스케쥴링 작업 강제종료
+
+$state = STATE_CONTINUE;
+$scheduler_start_data = array(
+    'success_count' => $success_count,
+    'fail_count' => $fail_count,
+    'state' => $state,
+    'start_time' => G5_TIME_YMDHIS,
+    'ip' => $user_ip
+);
+
+$billing_scheduler->insert($scheduler_start_data);
 $billing_list_length = $billing_info->selectTotalCount($query_data);
 $billing_total_page = (int)ceil($billing_list_length / $query_data['rows']); //DB 부하, 배열 메모리 줄이기위한 페이징
 for ($idx = 0; $idx < $billing_total_page; $idx++) {
-    $query_data['offset'] = $idx === 0 ? 0 :$idx * $query_data['rows'];
+    $query_data['offset'] = $query_data['rows'] * $idx;
 
     $billing_list = $billing_info->selectList($query_data);
     if (!is_array($billing_list) || count($billing_list) === 0) {
@@ -124,22 +141,27 @@ for ($idx = 0; $idx < $billing_total_page; $idx++) {
     }
 }
 
-if ($billing_list_length === $success_count) {
-    $state = 1;
-} elseif ($billing_list_length === 0) {
-    $state = 1;
+if ($billing_list_length === $success_count || $billing_list_length === 0) {
+    $state = STATE_SUCCESS;
 } else {
-    $state = -1;
+    if ($success_count === 0) {
+        $state = STATE_FAIL;
+    } else {
+        $state = STATE_PART_FAIL;
+    }
 }
 
 $scheduler_result = array(
     'success_count' => $success_count,
     'fail_count' => $fail_count,
-    'state' => $state,
+    'state' => $state
+);
+
+$update_condition = array(
     'start_time' => G5_TIME_YMDHIS,
     'ip' => $user_ip
 );
 
-$billing_scheduler->insert($scheduler_result);
+$billing_scheduler->update($update_condition ,$scheduler_result);
 
 run_event('end_batch_billing', $scheduler_result);
