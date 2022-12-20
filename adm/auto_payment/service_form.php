@@ -162,13 +162,6 @@ if (isset($service_id) && !empty($service_id)) {
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="is_use">판매가능</label></th>
-                        <td>
-                            <?php echo help(""); ?>
-                            <input type="checkbox" name="is_use" value="1" id="is_use" <?php echo ($service['is_use']) ? "checked" : ""; ?>> 예
-                        </td>
-                    </tr>
-                    <tr>
                         <th scope="row">상품설명</th>
                         <td colspan="2"> <?php echo editor_html('explan', get_text(html_purifier(str_replace('\"', '', $service['explan'])), 0)); ?></td>
                     </tr>
@@ -193,6 +186,13 @@ if (isset($service_id) && !empty($service_id)) {
                 </colgroup>
                 <tbody>
                     <tr>
+                        <th scope="row"><label for="is_use">판매가능</label></th>
+                        <td>
+                            <?php echo help(""); ?>
+                            <input type="checkbox" name="is_use" value="1" id="is_use" <?php echo ($service['is_use']) ? "checked" : ""; ?>> 예
+                        </td>
+                    </tr>
+                    <tr>
                         <th scope="row">
                             <label for="price">
                                 가격 설정
@@ -215,6 +215,7 @@ if (isset($service_id) && !empty($service_id)) {
                                     <input type="hidden" name="id[<?php echo $row ?>]" value="<?php echo $price['id'] ?>">
                                     <input type="text" name="price[<?php echo $row ?>]" value="<?php echo $price['price']; ?>" class="frm_input" size="12">&nbsp;원&nbsp;
                                     <input type="text" name="application_date[<?php echo $row ?>]" id="application_date_<?php echo $row ?>" value="<?php echo $price['application_date']; ?>" class="frm_input date_format" size="20" placeholder="시작일">&nbsp;부터 적용&nbsp;
+                                    <input type="text" name="memo[<?php echo $row ?>]" id="memo<?php echo $row ?>" value="<?php echo $price['memo']; ?>" class="frm_input" size="40" placeholder="적요">
                                     <button type="button" name="remove_price_row" class="btn_frmline">삭제</button>
                                 </div>
                             <?php } ?>
@@ -302,7 +303,6 @@ if (isset($service_id) && !empty($service_id)) {
         toggle_event_area();
         if (price_row == 0) {
             create_price_row();
-            add_remove_price_btn();
         }
 
         // 가격추가 버튼
@@ -338,7 +338,8 @@ if (isset($service_id) && !empty($service_id)) {
         let html = '';
         html += '<div id="td_price_' + price_row + '" style="margin-top:4px;">';
         html += '<input type="text" name="price[' + price_row + ']" value="" class="frm_input" size="12">&nbsp;원&nbsp;&nbsp;';
-        html += '<input type="text" name="application_date[' + price_row + ']" value="" id="application_date_' + price_row + '" class="frm_input date_format" size="20" placeholder="시작일">&nbsp;부터 적용&nbsp;';
+        html += '<input type="text" name="application_date[' + price_row + ']" value="" id="application_date_' + price_row + '" class="frm_input date_format" size="20" placeholder="시작일">&nbsp;부터 적용&nbsp;&nbsp;';
+        html += '<input type="text" name="memo[' + price_row + ']" id="memo' + price_row + '" value="" class="frm_input" size="40" placeholder="적요">';
         html += '</div>';
         $("#td_price").append(html);
     }

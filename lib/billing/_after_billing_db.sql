@@ -29,7 +29,8 @@ CREATE TABLE `g5_billing_service_price` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `service_id` int(11) NOT NULL,
   `price` int(11) NOT NULL DEFAULT 0,
-  `application_date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00'
+  `application_date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `memo` varchar(255) DEFAULT '',
   PRIMARY KEY (`id`),
   KEY `g5_billing_service_price_FK` (`service_id`),
   CONSTRAINT `g5_billing_service_price_FK` FOREIGN KEY (`service_id`) REFERENCES `g5_billing_service` (`service_id`)

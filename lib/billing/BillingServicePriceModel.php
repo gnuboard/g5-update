@@ -100,7 +100,8 @@ class BillingServicePriceModel
         $data = array(
             'service_id' => $requestData['service_id'],
             'price' => $requestData['price'],
-            'application_date' => $requestData['application_date']
+            'application_date' => $requestData['application_date'],
+            'memo' => $requestData['memo']
         );
 
         return $this->g5Mysqli->insertSQL($g5["billing_service_price_table"], $data);

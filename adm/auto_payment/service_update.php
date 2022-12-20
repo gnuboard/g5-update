@@ -45,6 +45,7 @@ if (isset($_POST['price'])) {
             $price_array[$key]['id']    = isset($_POST['id'][$key]) ? preg_replace('/[^0-9]/', '', $_POST['id'][$key]) : null;
             $price_array[$key]['price'] = isset($price) ? preg_replace('/[^0-9]/', '', $price) : 0;
             $price_array[$key]['application_date']      = !empty($_POST['application_date'][$key]) ? clean_xss_tags($_POST['application_date'][$key], 1, 1) : null;
+            $price_array[$key]['memo']  = !empty($_POST['memo'][$key]) ? clean_xss_tags($_POST['memo'][$key], 1, 1) : null;
         }
     }
     sort($price_array);
@@ -60,7 +61,8 @@ if ($w == "") {
             array(
                 "service_id" => $service_id,
                 "price" => $price['price'],
-                "application_date" => $price['application_date']
+                "application_date" => $price['application_date'],
+                "memo" => $price['memo']
             )
         );
     }
@@ -86,7 +88,8 @@ if ($w == "") {
         $price_data = array(
             "service_id" => $service_id,
             "price" => $price['price'],
-            "application_date" => $price['application_date']
+            "application_date" => $price['application_date'],
+            "memo" => $price['memo']
         );
         if (!empty($price['id'])) {
             $price_model->update($price['id'], $price_data);
