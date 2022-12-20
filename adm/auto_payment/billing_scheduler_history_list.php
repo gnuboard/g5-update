@@ -112,6 +112,7 @@ if(!empty($sdate) && !empty($edate)){
                     <th scope="col">실행 시각</th>
                     <th scope="col">성공 건수</th>
                     <th scope="col">실패 건수</th>
+                    <th scope="col">실행 ip</th>
                     <th scope="col">관리</th>
                 </tr>
             </thead>
@@ -131,6 +132,7 @@ if(!empty($sdate) && !empty($edate)){
                     <td><?php echo $history['start_time']; ?></td>
                     <td><?php echo number_format($history['success_count']); ?></td>
                     <td><?php echo number_format($history['fail_count']); ?></td>
+                    <td><?php echo $history['ip']; ?></td>
                     <td class="td_mng_l">
                         <a href="./billing_history_list.php?date=<?php echo $history['start_time_ymd']; ?>" class="btn btn_03">
                             결제이력 확인
