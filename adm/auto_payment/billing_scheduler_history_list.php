@@ -170,9 +170,11 @@ if(!empty($sdate) && !empty($edate)){
             type: 'post',
             success: function () {
                 alert("결제 스케쥴러 시작되었습니다.");
+                location.reload();
             },
-            error: function (e) {
+            error: function () {
                 alert('결제 스케쥴러 실행이 실패했습니다.')
+                location.reload();
             }
         })
     }
