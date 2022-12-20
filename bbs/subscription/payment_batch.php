@@ -54,8 +54,7 @@ $scheduler_start_data = array(
     'ip' => $user_ip
 );
 
-$result = $billing_scheduler->insert($scheduler_start_data);
-error_log('-------new - run ---insert' . $result . PHP_EOL, 3, 'batch_result.log.txt');
+$billing_scheduler->insert($scheduler_start_data);
 $billing_list_length = $billing_info->selectTotalCount($query_data);
 $billing_total_page = (int)ceil($billing_list_length / $query_data['rows']); //DB 부하, 배열 메모리 줄이기위한 페이징
 for ($idx = 0; $idx < $billing_total_page; $idx++) {
