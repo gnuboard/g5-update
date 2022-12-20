@@ -40,7 +40,7 @@ $service_list = $service_model->selectList($request_data);
 
 foreach ($service_list as $i => $service) {
     $service_list[$i]['bg_class']           = 'bg' . ($i % 2);
-    $service_list[$i]['price']              = $price_model->selectCurrentPrice($service['service_id']);
+    $service_list[$i]['display_price']      = ($cuPrice = $price_model->selectCurrentPrice($service['service_id'])) ? number_format($cuPrice) . '원' : '오픈 전';
     $service_list[$i]['display_recurring']  = ($dsRec = $billing->displayRecurring($service)) ? $dsRec : '없음';
     $service_list[$i]['display_expiration'] = ($dsExp = $billing->displayExpiration($service)) ? '결제일로부터 ' . $dsExp . ' 이후' : '없음';
     if ($service['is_event'] == "1") {
@@ -121,7 +121,7 @@ $qstr = $qstr . '&amp;page=' . $page;
                             <?php echo get_it_image($service['image_path'], 50, 50); ?>
                         </td> -->
                         <td colspan="2">
-                            <?php echo number_format($service['price']); ?>원
+                            <?php echo $service['display_price']; ?>
                         </td>
                         <td rowspan="2"><?php echo $service['display_event'] ?></td>
                         <td rowspan="2">

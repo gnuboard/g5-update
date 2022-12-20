@@ -19,7 +19,7 @@ $data       = array(
 // 결제종료일이 입력여부에 따라 price를 업데이트해준다.
 $billing_info = $information_model->selectOneByOrderId($od_id);
 if ($end_date != null) {
-    $data['price'] = $price_model->selectCurrentPrice($billing_info['service_id']);
+    $data['price'] = (int)$price_model->selectCurrentPrice($billing_info['service_id']);
 } else {
     $data['price'] = 0;
 }

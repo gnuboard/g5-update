@@ -23,7 +23,7 @@ $cancel_amount = $cancel_model->selectTotalCancelAmount($history['payment_no']);
 $refundable_amount = (int)$history['amount'] - (int)$cancel_amount;
 
 // test
-$refund_amount = $billing->calcurateRefundAmount($history, $service['base_price']);
+$refund_amount = $billing->calcurateRefundAmount($history, $billing->getBillingPrice($history['od_id']));
 ?>
 
 <div id="menu_frm" class="new_win">

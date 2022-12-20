@@ -43,7 +43,7 @@ $service = $service_model->selectOneById($service_id);
 // 결과처리
 $service['display_expiration']  = ($dsExp = $billing->displayExpiration($service)) ? '결제일로부터 ' . $dsExp . ' 이후' : '없음';
 $service['display_recurring']   = ($dsRec = $billing->displayRecurring($service)) ? $dsRec : '없음';
-$service['price']               = $price_model->selectCurrentPrice($service_id);
+$service['display_price']       = ($cuPrice = $price_model->selectCurrentPrice($service_id)) ? number_format($cuPrice) . '원' : '오픈 전';
 
 // 변경예정 가격 최근 1건 조회
 $price_schedule = $price_model->selectScheduledChangePriceInfo($service_id);
@@ -205,7 +205,7 @@ $pg_anchor = '<ul class="anchor">
                             </tr>
                             <tr>
                                 <th>가격</th>
-                                <td <?php echo (!isset($price_schedule)) ? "colspan='3'" : "" ?>><?php echo number_format($service['price']); ?>원</td>
+                                <td <?php echo (!isset($price_schedule)) ? "colspan='3'" : "" ?>><?php echo $service['display_price']; ?></td>
                                 <?php if (isset($price_schedule)) { ?>
                                     <th>
                                         변경예정 가격

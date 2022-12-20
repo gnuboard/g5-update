@@ -135,7 +135,6 @@ class BillingServiceModel
             'service_table' => $requestData['service_table'],
             'service_url' => $requestData['service_url'],
             'service_hook_code' => $requestData['service_hook_code'],
-            'base_price' => $requestData['base_price'],
             'is_event' => $requestData['is_event'],
             'event_period' => $requestData['event_period'],
             'event_unit' => $requestData['event_unit'],

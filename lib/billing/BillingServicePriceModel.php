@@ -26,7 +26,7 @@ class BillingServicePriceModel
                     *
                 FROM {$g5['billing_service_price_table']}
                 WHERE service_id = ?
-                ORDER BY application_date ASC, application_end_date ASC";
+                ORDER BY application_date ASC";
         array_push($bindParam, $serviceId);
 
         return $this->g5Mysqli->execSQL($sql, $bindParam);
@@ -45,20 +45,12 @@ class BillingServicePriceModel
 
         $sql = "SELECT
                     COALESCE(
-                        (SELECT
-                            price
-                        FROM {$g5['billing_service_price_table']} sp
-                        WHERE sp.service_id = bs.service_id 
-                            AND NOW() BETWEEN application_date AND application_end_date
-                        ORDER BY application_date ASC, application_end_date ASC LIMIT 1),
                         (SELECT 
                             price
                         FROM {$g5['billing_service_price_table']} sp
                         WHERE sp.service_id = bs.service_id
-                            AND NOW() >= application_date 
-                            AND application_end_date IS NULL
-                        ORDER BY application_date DESC LIMIT 1),
-                        base_price
+                            AND NOW() >= application_date
+                        ORDER BY application_date DESC LIMIT 1)
                     ) AS current_price
                 FROM {$g5["billing_service_table"]} bs
                 WHERE bs.service_id = ?";
@@ -108,8 +100,7 @@ class BillingServicePriceModel
         $data = array(
             'service_id' => $requestData['service_id'],
             'price' => $requestData['price'],
-            'application_date' => $requestData['application_date'],
-            'application_end_date' => $requestData['application_end_date']
+            'application_date' => $requestData['application_date']
         );
 
         return $this->g5Mysqli->insertSQL($g5["billing_service_price_table"], $data);

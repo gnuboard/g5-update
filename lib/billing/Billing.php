@@ -139,10 +139,10 @@ class Billing
      * 환불금액 계산
      * - `일별금액 * 잔여일`
      * @param array $history    결제내역
-     * @param int $base_price   구독상품 원가
+     * @param int $price   구독상품 가격
      * @return int
      */
-    function calcurateRefundAmount($history, $base_price)
+    function calcurateRefundAmount($history, $price)
     {
 
         $sTime = strtotime($history['payment_date']);       // 결제시작일
@@ -157,7 +157,7 @@ class Billing
         $exp_day    = floor(($eTime - $sTime) / (60 * 60 * 24));    // 유효기간 일수
 
         // 결제금액 - (사용일수 * (기본가격 / 유효일수))
-        return $history['amount'] - $diff_day * round($base_price / $exp_day);
+        return $history['amount'] - $diff_day * round($price / $exp_day);
     }
 
     /**
