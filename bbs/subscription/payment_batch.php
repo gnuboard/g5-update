@@ -43,6 +43,7 @@ define('STATE_SUCCESS', 1); //성공
 define('STATE_PART_FAIL', -1); //일부 실패
 define('STATE_FAIL', 0); // 모두 실패
 define('STATE_CONTINUE', 2); // 스케쥴링 작업 실행 중
+define('STATE_FORCE_STOP', 3); // 스케쥴링 작업 강제종료
 
 $state = STATE_CONTINUE;
 $scheduler_start_data = array(
@@ -53,7 +54,8 @@ $scheduler_start_data = array(
     'ip' => $user_ip
 );
 
-$billing_scheduler->insert($scheduler_start_data);
+$result = $billing_scheduler->insert($scheduler_start_data);
+error_log('-------new - run ---insert' . $result . PHP_EOL, 3, 'batch_result.log.txt');
 $billing_list_length = $billing_info->selectTotalCount($query_data);
 $billing_total_page = (int)ceil($billing_list_length / $query_data['rows']); //DB 부하, 배열 메모리 줄이기위한 페이징
 for ($idx = 0; $idx < $billing_total_page; $idx++) {
@@ -140,12 +142,14 @@ for ($idx = 0; $idx < $billing_total_page; $idx++) {
     }
 }
 
-if ($billing_list_length === $success_count) {
-    $state = 1;
-} elseif ($billing_list_length === 0) {
-    $state = 1;
+if ($billing_list_length === $success_count || $billing_list_length === 0) {
+    $state = STATE_SUCCESS;
 } else {
-    $state = -1;
+    if ($success_count === 0) {
+        $state = STATE_FAIL;
+    } else {
+        $state = STATE_PART_FAIL;
+    }
 }
 
 $scheduler_result = array(
