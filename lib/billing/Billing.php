@@ -28,7 +28,7 @@ class Billing
 
     /**
      * 각 PG사 Class Name : 'G5Billing' + $pgCode
-     * - Ex : G5BillingKcp (KCP) / G5BillingToss (Toss)
+     * - Ex : G5BillingKcp (KCP)
      * @param string $pgCode    자동결제 PG사 ('kcp')
      */
     public function __construct($pgCode)
