@@ -41,7 +41,7 @@ function checkRoute()
         }
 
         if ($check === false) {
-            alert('결제가 필요합니다.', G5_URL . '/skin/subscription/basic/service.skin.php?bo_table=' . $bo_table);
+            alert('게시판을 열람하려면 게시판 구독신청이 필요합니다.\n구독 서비스 목록으로 이동합니다.', G5_URL . '/bbs/subscription/view.php?bo_table=' . $bo_table);
         }
     }
 }
