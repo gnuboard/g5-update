@@ -299,11 +299,11 @@ if (isset($service_id) && !empty($service_id)) {
     let price_row = <?php echo $price_count ?>;
 
     $(function() {
-        set_datepicker();
-        toggle_event_area();
         if (price_row == 0) {
             create_price_row();
         }
+        set_datepicker();
+        toggle_event_area();
 
         // 가격추가 버튼
         $(document).on("click", "#create_price_row", function() {
