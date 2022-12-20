@@ -1,7 +1,7 @@
 <?php
 include_once dirname(__FILE__) . '/_common.php';
-require_once (G5_BBS_PATH . '/subscription/subscription_service.php');
-include_once(G5_PATH . '/head.php');
+require_once G5_BBS_PATH . '/subscription/subscription_service.php';
+include_once G5_PATH . '/head.php';
 
 /**
  * @var string $service_id $_POST['service_id']
@@ -294,8 +294,8 @@ jQuery(function($){
 <?php
 
 include_once(G5_PATH . '/tail.php');
-if (G5_DEBUG) {
-    echo '<script type="text/javascript" src="https://testpay.kcp.co.kr/plugin/payplus_web.jsp"></script>';
-} else {
+if ($billing_conf['bc_kcp_is_test'] == "0") {
     echo '<script type="text/javascript" src="https://pay.kcp.co.kr/plugin/payplus_web.jsp"></script>';
+} else {
+    echo '<script type="text/javascript" src="https://testpay.kcp.co.kr/plugin/payplus_web.jsp"></script>';
 }
