@@ -112,7 +112,7 @@ $file_content .= "\n Price : ";
 foreach ($price_array as $price) {
     $id         = $price['id'] ? $price['id'] : 'New';
     $log_price  = !empty($price['price']) ? number_format($price['price']) : 0;
-    $file_content .= "\n    " . $log_price . " / " .  $price['application_date'];
+    $file_content .= "\n    " . $log_price . " / " .  $price['application_date'] . " / " . $price['memo'];
 }
 $file_content .= "\n====================================================\n";
 // 경로 생성
