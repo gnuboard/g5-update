@@ -12,7 +12,7 @@ $tran_cd = isset($_POST['tran_cd']) ? $tran_cd : '';   // 요청코드
 $enc_data = isset($_POST['enc_data']) ? $enc_data : ''; // 암호화 데이터
 $enc_info = isset($_POST['enc_info']) ? $enc_info : ''; // 결제창 인증결과 암호화 정보
 $od_id = isset($_POST['od_id']) ? $od_id : '';
-$card_no = isset($res_data['$card_mask_no']) ? $res_data['$card_mask_no'] : ''; //batch_cardno_return_yn 설정시
+$card_no = isset($_POST['card_mask_no']) ? $_POST['card_mask_no'] : ''; //batch_cardno_return_yn 설정시
 // 인증서 정보(직렬화)
 /**
  * @var Billing $billing subscription_service.php 선언
