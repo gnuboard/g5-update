@@ -117,17 +117,30 @@ $next_payment_date = $billing->nextPaymentDate($start_date, $start_date, $recurr
 
 if ($next_payment_date !== false && $bSucc === true) {
     //서비스 구독
-    $event_expiration_date = $billing->nextPaymentDate($start_date, $start_date, $service_info['event_period'], $service_info['event_unit']);
+    $billing_price          = $pg_res_data['amount'];
+    $event_expiration_date  = '0000-00-00 00:00:00';
+    $event_price            = 0;
 
-    $payment_data['event_expiration_date'] = empty($event_expiration_date) ? '0000-00-00 00:00:00' : $event_expiration_date;
-    $payment_data['event_price'] = $service_info['event_price'];
+    // 첫 구독 이벤트
+    if ($service_info['is_event'] == '1' && !empty($service_info['event_period'])) {
+        $billing_price          = $service_info['price'];
+        $event_expiration_date  = $billing->nextPaymentDate($start_date, $start_date, $service_info['event_period'], $service_info['event_unit']);
+        $event_price            = $service_info['event_price'];
+    }
+    // 구독만료기간이 없을 경우 결제정보가격 0원처리
+    if ($billing->isNullByDate($end_date)) {
+        $billing_price = 0;
+    }
+    
+    $payment_data['price'] = $billing_price;
+    $payment_data['event_expiration_date'] = $event_expiration_date;
+    $payment_data['event_price'] = $event_price;
     $payment_data['mb_id'] = get_user_id();
     $payment_data['service_id'] = $service_id;
     $payment_data['billing_key'] = $billing_key;
     $payment_data['start_date'] = $start_date;
     $payment_data['end_date'] = $end_date;
     $payment_data['next_payment_date'] = $next_payment_date;
-    $payment_data['price'] = $pg_res_data['amount'];
     $payment_data['status'] = 1;
 
     $is_insert_billing_information = $information_model->insert($payment_data);
