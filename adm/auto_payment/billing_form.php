@@ -356,10 +356,8 @@ if ($billing_conf['bc_kcp_is_test'] == "0") {
                 url: "./ajax.get_billing_key.php",
                 type: "POST",
                 data: queryString,
-                success: function(data) {
-                    if (data) {
-                        let result = JSON.parse(data);
-
+                success: function(result) {
+                    if (result) {
                         if (result.result_code == "0000") {
                             alert("자동결제 키가 변경되었습니다.");
                             document.querySelector("#display_billing_key").innerHTML = result.display_billing_key;
