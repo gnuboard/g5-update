@@ -243,7 +243,7 @@ class G5BillingKcp implements BillingInterface
         $curlError = curl_error($ch);
         $curlInfo = curl_getinfo($ch);
         curl_close($ch);
-        if (!empty($curlError)) {
+        if (($curlInfo['http_code'] != 200 && $curlInfo['http_code'] != 201) || !empty($curlError)) {
             return array(
                 'result_msg'=> 'pg 사와의 통신에 문제가 발생했습니다.',
                 'http_code' => $curlInfo['http_code'] ); //TODO PHP 5.x 버전 테스트
