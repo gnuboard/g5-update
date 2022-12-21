@@ -93,13 +93,16 @@ function get_myservice($request_data)
     }
 
     $results = array();
-    foreach ($billing_info_result as $row => $key) {
-        $service_id = $key['service_id'];
+    foreach ($billing_info_result as $key => $row) {
+        $service_id = $row['service_id'];
         $service_info = $billing_service->selectOneById($service_id);
-        $current_price = array('price' => (int)$service_price->selectCurrentPrice($service_id));
-        $results[$row]['bo_table'] = $service_info['bo_table'];
-        $results[$row]['subject'] = $service_info['bo_subject'];
-        $results[$row]['service'][] = $key + $service_info + $current_price;
+
+        $service = array_merge($row, $service_info);
+        $service['price'] = (int)$service_price->selectCurrentPrice($service_id);
+ 
+        $results[$key]['bo_table']  = $service_info['bo_table'];
+        $results[$key]['subject']   = $service_info['bo_subject'];
+        $results[$key]['service'][] = $service;
     }
 
     return $results;
