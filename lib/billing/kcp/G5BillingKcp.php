@@ -286,7 +286,7 @@ class G5BillingKcp implements BillingInterface
             'cust_ip'       => '',
             'amount'        => $data['amount'],
             'card_mny'      => $data['amount'],
-            'currency'      => '410',
+            'currency'      => $data['currency'],
             'quota'         => '00',
             'ordr_idxx'     => $data['od_id'],
             'good_name'     => $data['name'],           /** 권장 @todo 100바이트까지 자르기 */
