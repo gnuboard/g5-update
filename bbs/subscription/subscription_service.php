@@ -35,10 +35,6 @@ function get_service_detail($service_id)
     if (is_null($price)) {
         return $result_list;
     }
-    $convertYMDUnit1 = $billing->getUnitArray('prefix');
-    $convertYMDUnit2 = $billing->getUnitArray('period');
-    $service['display_recurring1'] = $convertYMDUnit1[$service['recurring_unit']];
-    $service['display_recurring2'] = $convertYMDUnit2[$service['recurring_unit']];
 
     return $service + array('price' => $price);
 }
