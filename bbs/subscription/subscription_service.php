@@ -32,7 +32,7 @@ function get_service_detail($service_id)
     }
 
     $price = $service_price->selectCurrentPrice($service_id);
-    if (empty($price)) {
+    if (is_null($price)) {
         return $result_list;
     }
     $convertYMDUnit1 = $billing->getUnitArray('prefix');
@@ -55,6 +55,9 @@ function get_service_list($request)
     $services = array();
     foreach ($service_list as $row) {
         $price_result = $service_price->selectCurrentPrice($row['service_id']);
+        if (is_null($price_result)) {
+            continue;
+        }
         $row['price'] = $price_result;
         $services[$row['service_table']]['subject'] = $row['bo_subject'];
         $services[$row['service_table']]['service'][] = $row;
@@ -93,7 +96,7 @@ function get_myservice($request_data)
     foreach ($billing_info_result as $row => $key) {
         $service_id = $key['service_id'];
         $service_info = $billing_service->selectOneById($service_id);
-        $current_price = array('price' => $service_price->selectCurrentPrice($service_id));
+        $current_price = array('price' => (int)$service_price->selectCurrentPrice($service_id));
         $results[$row]['bo_table'] = $service_info['bo_table'];
         $results[$row]['subject'] = $service_info['bo_subject'];
         $results[$row]['service'][] = $key + $service_info + $current_price;

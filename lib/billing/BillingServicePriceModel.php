@@ -35,7 +35,7 @@ class BillingServicePriceModel
     /**
      * 구독서비스(상품) 현재가격 조회
      * @param int $serviceId    서비스 ID
-     * @return int
+     * @return int|null
      */
     public function selectCurrentPrice($serviceId)
     {
@@ -59,7 +59,7 @@ class BillingServicePriceModel
         $result = $this->g5Mysqli->getOne($sql, $bindParam);
 
         if (isset($result)) {
-            return (int)$result['current_price'];
+            return $result['current_price'];
         } else {
             return 0;
         }
