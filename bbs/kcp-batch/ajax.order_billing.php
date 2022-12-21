@@ -45,7 +45,7 @@ $recurring_unit = $service_info['recurring_unit']; // 정기결제 주기단위
 $bSucc = false;
 
 //이벤트기간이 설정되면 이벤트가격 선택
-$payment_price = $service_info['is_event'] == 1 ? $service_info['event_price'] : $service_info['price'];
+$payment_price = ($service_info['is_event'] == '1' && !empty($service_info['event_period'])) ? $service_info['event_price'] : $service_info['price'];
 
 $request_billing_data = array(
     'cust_ip' => $customer_ip,

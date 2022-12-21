@@ -253,7 +253,8 @@ if (isset($service_id) && !empty($service_id)) {
                     <tr>
                         <th scope="row"><label for="price">첫 구독 이벤트 설정</label></th>
                         <td>
-                            <?php echo help("첫 구독 신청부터 적용되는 이벤트가격 & 적용기간을 설정할 수 있습니다."); ?>
+                            <?php echo help("첫 구독 신청부터 적용되는 이벤트가격 & 적용기간을 설정할 수 있습니다.
+                            <b>※ 기간이 '0'이면 이벤트 가격이 반영되지 않습니다.</b>"); ?>
                             <div>
                                 <input type="checkbox" name="is_event" value="1" id="is_event" <?php echo $service['is_event_checked'] ?>>
                                 <label for="is_event">사용</label>
