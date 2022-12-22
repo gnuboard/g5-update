@@ -21,9 +21,7 @@ $service = $service_model->selectOneById($service_id);
 $history = $history_model->selectOneById($id);
 $cancel_amount = $cancel_model->selectTotalCancelAmount($history['payment_no']);
 $refundable_amount = (int)$history['amount'] - (int)$cancel_amount;
-
-// test
-$refund_amount = $billing->calcurateRefundAmount($history, $billing->getBillingPrice($history['od_id']));
+$refund_amount = $billing->calcurateRefundAmount($history);
 ?>
 
 <div id="menu_frm" class="new_win">
@@ -34,7 +32,9 @@ $refund_amount = $billing->calcurateRefundAmount($history, $billing->getBillingP
         <input type="hidden" name="od_id" value="<?php echo $history['od_id'] ?>">
         <input type="hidden" name="id" value="<?php echo $id ?>">
         <div class="new_win_desc">
-            <label for="me_type"><h3>서비스 정보</h3></label>
+            <label for="me_type">
+                <h3>서비스 정보</h3>
+            </label>
         </div>
         <div id="menu_result">
             <div class="tbl_frm01 tbl_wrap">
@@ -56,10 +56,12 @@ $refund_amount = $billing->calcurateRefundAmount($history, $billing->getBillingP
                 </table>
             </div>
         </div>
-        
+
 
         <div class="new_win_desc">
-            <label for="me_type"><h3>환불 정보</h3></label>
+            <label for="me_type">
+                <h3>환불 정보</h3>
+            </label>
         </div>
         <div id="menu_result">
             <div class="tbl_frm01 tbl_wrap">
@@ -96,7 +98,7 @@ $refund_amount = $billing->calcurateRefundAmount($history, $billing->getBillingP
                     </tbody>
                 </table>
             </div>
-            
+
 
             <div class="btn_win02 btn_win">
                 <button type="submit" class="btn_submit btn">환불</button>
@@ -109,7 +111,7 @@ $refund_amount = $billing->calcurateRefundAmount($history, $billing->getBillingP
 
 <script>
     $(function() {
-        $("input[name=cancel_amount]").on('keyup', function(){
+        $("input[name=cancel_amount]").on('keyup', function() {
             let max = $(this).data("max");
             let input = $(this).val();
 
@@ -123,8 +125,7 @@ $refund_amount = $billing->calcurateRefundAmount($history, $billing->getBillingP
         });
     });
 
-    function check_cancel_form(form)
-    {
+    function check_cancel_form(form) {
         if (!form.cancel_reason.value) {
             alert("환불사유를 입력해주세요.");
             return false;
@@ -140,8 +141,7 @@ $refund_amount = $billing->calcurateRefundAmount($history, $billing->getBillingP
         }
     }
 
-    function input_cancel_amount()
-    {
+    function input_cancel_amount() {
         let amount = '<?php echo $refund_amount ?>';
         $("input[name=cancel_amount]").val(amount);
     }
