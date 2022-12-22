@@ -111,29 +111,24 @@ function get_myservice($request_data)
  */
 function get_myservice_info($od_id)
 {
-    global $billing_history, $billing_info, $billing_service;
+    global $billing_info, $billing_service, $billing;
 
     $mb_id = get_user_id();
     if ($mb_id === false) {
         return false;
     }
 
-    $payment_history = $billing_history->selectOneByOdId($od_id);
-    if ($payment_history['mb_id'] !== $mb_id) {
-        return false;
-    }
-
-    $billing_info_result = $billing_info->selectOneByOrderId($od_id);
-
+    $billing_info = $billing_info->selectOneByOrderId($od_id);
+    
     //가격
-    $billing_info_result['price'] = $payment_history['amount'];
+    $billing_info['price'] = $billing->getBillingPrice($od_id, $billing_info);
 
     //게시판 정보 가져오기
-    $service_id = $billing_info_result['service_id'];
+    $service_id = $billing_info['service_id'];
     $service_info = $billing_service->selectOneById($service_id);
-    $billing_info_result['bo_subject'] = $service_info['bo_subject'];
+    $billing_info['bo_subject'] = $service_info['bo_subject'];
 
-    return $billing_info_result;
+    return $billing_info;
 }
 
 /**
