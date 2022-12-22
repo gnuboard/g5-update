@@ -8,8 +8,8 @@ if(empty($od_id)){
     alert('주문번호가 없습니다.');
 }
 
-$convertYMDUnit1 = array('y' => '연간', 'm' => '월', 'w' => '주', 'd' => '일');
-$convertYMDUnit2 = array('y' => '년', 'm' => '개월', 'w' => '주', 'd' => '일');
+$convertYMDUnit1 = $billing->getUnitArray('prefix');
+$convertYMDUnit2 = $billing->getUnitArray('period');
 
 $info = get_myservice_info($od_id);
 if($info === false){
@@ -23,18 +23,16 @@ $info['display_recurring']  = strtr($info['recurring'], $convertYMDUnit2);
 $info['display_period']     = strtotime($info['end_date']) > 0 ? date('Y-m-d', strtotime($info['start_date'])) . ' ~ ' . date('Y-m-d', strtotime($info['end_date'])) : '';
 $info['display_status']     = $info['status'] == '1' ? '구독 중' : '구독 종료';
 
-$payment_history = get_myservice_history($od_id, $start_page, $page_rows);
-if($payment_history === false){
-    $payment_history = array();
+$payment_list = get_myservice_history($od_id, $start_page, $page_rows);
+if($payment_list === false){
+    $payment_list = array();
 }
-$payment_list = array();
-foreach($payment_history as $row) {
-    $payment_list[$i] = $row;
-    $payment_list[$i]['display_payment_count'] = $row['payment_count'] . "회차";
-    $payment_list[$i]['display_amount'] = number_format($row['amount']) . "원";
-    $payment_list[$i]['display_res_cd'] = ($row['result_code'] == "0000" ? "성공" : "실패");
-    $payment_list[$i]['display_res_cd_color'] = ($row['result_code'] == "0000" ? "#53C14B" : "#FF0000");
-    $payment_list[$i]['display_period'] = ($row['result_code'] == "0000" ? $row['period'] : '');
+foreach($payment_list as $key => $row) {
+    $payment_list[$key]['display_payment_count'] = $row['payment_count'] . "회차";
+    $payment_list[$key]['display_amount'] = number_format($row['amount']) . "원";
+    $payment_list[$key]['display_res_cd'] = ($row['result_code'] == "0000" ? "성공" : "실패");
+    $payment_list[$key]['display_res_cd_color'] = ($row['result_code'] == "0000" ? "#53C14B" : "#FF0000");
+    $payment_list[$key]['display_period'] = ($row['result_code'] == "0000" ? $row['period'] : '');
 }
 ?>
 <div>
