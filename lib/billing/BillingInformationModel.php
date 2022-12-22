@@ -25,7 +25,7 @@ class BillingInformationModel
 
         $sql = "SELECT
                     bi.*,
-                    mb.mb_name, mb.mb_email, mb.mb_hp,
+                    mb.mb_id, mb.mb_name, mb.mb_email, mb.mb_hp,
                     bs.name, bs.recurring, bs.recurring_unit
                 FROM {$g5['billing_information_table']} bi
                     LEFT JOIN {$g5['billing_service_table']} bs ON bi.service_id = bs.service_id

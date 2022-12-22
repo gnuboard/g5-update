@@ -8,7 +8,7 @@ require_once G5_LIB_PATH . '/billing/_setting.php';
 ignore_user_abort(true); // http 커넥션이 끊어져도 동작하게 설정.
 
 $pg_code = $billing_conf['bc_pg_code'];
-if(empty($pg_code)){
+if(!isset($billing_conf['bc_pg_code'], $billing_conf['bc_kcp_currency'])){
     exit;
 }
 $billing = new Billing($pg_code);
@@ -36,14 +36,11 @@ $query_data = array(
 
 $success_count = 0;
 $fail_count = 0;
-$currency = 410; // @TODO kcp 원화 코드
-$payment_success_code = '0000'; // kcp 결제 성공코드
 
 define('STATE_SUCCESS', 1); //성공
 define('STATE_PART_FAIL', -1); //일부 실패
 define('STATE_FAIL', 0); // 모두 실패
 define('STATE_CONTINUE', 2); // 스케쥴링 작업 실행 중
-define('STATE_FORCE_STOP', 3); // 스케쥴링 작업 강제종료
 
 $state = STATE_CONTINUE;
 $scheduler_start_data = array(
@@ -77,32 +74,35 @@ for ($idx = 0; $idx < $billing_total_page; $idx++) {
                 $price = $today_payment['price'];
             } //만료기간이 설정되지 않음 상품, 변동된 가격을 따라 결제한다.
             else {
-                $price = (int)$service_price->selectCurrentPrice($today_payment['service_id']);
+                $price = $service_price->selectCurrentPrice($today_payment['service_id']);
             }
         }
-        /**
-         * @todo 결제금액 0원일때 처리 필요
-         */
 
-        $pg_req = array(
-            'amount' => $price,
-            'billing_key' => $today_payment['billing_key'],
-            'cust_ip' => $user_ip,
-            'od_id' => $today_payment['od_id'],
-            'mb_id' => $today_payment['mb_id'],
-            'mb_email' => isset($today_payment['mb_email']) ? $today_payment['mb_email'] : '',
-            'mb_hp' => isset($today_payment['mb_hp']) ? $today_payment['mb_hp'] : '',
-            'mb_name' => $today_payment['mb_name'],
-            'name' => $today_payment['name'],
-            'currency' => $currency
-        );
-        //결제시작
-        $pg_response = $billing->pg->requestBilling($pg_req);
-        $pg_response = $billing->convertPgDataToCommonData($pg_response);
+        if ($price === 0) {
+            // 가격이 0원으로 설정되면 최소거래금엑이 안되므로 pg 결제을 건너띄며 임의로 성공코드를 부여한다.
+            $pg_response['result_code'] = '0000';
+            $pg_response['result_message'] = '0원';
+        } else {
+            $pg_req = array(
+                'amount' => $price,
+                'billing_key' => $today_payment['billing_key'],
+                'cust_ip' => $user_ip,
+                'od_id' => $today_payment['od_id'],
+                'mb_id' => $today_payment['mb_id'],
+                'mb_email' => isset($today_payment['mb_email']) ? $today_payment['mb_email'] : '',
+                'mb_hp' => isset($today_payment['mb_hp']) ? $today_payment['mb_hp'] : '',
+                'mb_name' => $today_payment['mb_name'],
+                'name' => $today_payment['name'],
+                'currency' => $billing_conf['bc_kcp_currency']
+            );
 
+            //결제시작
+            $pg_response = $billing->pg->requestBilling($pg_req);
+            $pg_response = $billing->convertPgDataToCommonData($pg_response);
+        }
         //지난 결제성공 기록불러오기
         //결제 카운트, 실패시 이전 결제만기 날짜등 필요.
-        $history_data = $billing_history->selectOneLastSuccessByOdId($today_payment['od_id'], $payment_success_code);
+        $history_data = $billing_history->selectOneLastSuccessByOdId($today_payment['od_id'], '0000');
         if (empty($history_data)) {
             ++$fail_count;
             continue;

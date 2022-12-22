@@ -1,19 +1,17 @@
 <?php
 
 require_once(dirname(__FILE__) . '/_common.php');
+require_once G5_LIB_PATH . '/billing/_setting.php';
 
-$url = G5_BBS_URL . '/subscription/payment_batch.php';
-curl_request_async($url, '' );
+curl_request_async(G5_BBS_URL . '/subscription/payment_scheduler.php');
 
 /**
  * 일회성 요청
  * @param $url
- * @param $params
  * @return void
  */
-function curl_request_async($url, $params)
+function curl_request_async($url)
 {
-    //$req_data       = json_encode($data);
     $headerData    = array("Content-Type: application/json", "charset=utf-8");
 
     // API REQ

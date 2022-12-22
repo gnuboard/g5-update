@@ -166,7 +166,7 @@ if(!empty($sdate) && !empty($edate)){
 
     function run_payment_scheduler()
     {
-        $.ajax(g5_bbs_url + '/subscription/ajax.payment_batch.php', {
+        $.ajax(g5_bbs_url + '/subscription/ajax.payment_scheduler.php', {
             type: 'post',
             success: function () {
                 alert("결제 스케쥴러 시작되었습니다.");

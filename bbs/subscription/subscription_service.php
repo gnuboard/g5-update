@@ -16,14 +16,14 @@ $billing_service = new BillingServiceModel();
 $billing_cancel = new BillingCancelModel();
 
 /**
- * 서비스 선택 후 상세 보기
+ * 개별 서비스 상세 보기
  * @return array
  * @var int $serviceId
  * @return array 결과 없으면 빈배열 리턴
  */
 function get_service_detail($service_id)
 {
-    global $service_price, $billing_service, $billing;
+    global $service_price, $billing_service;
 
     $result_list = array();
     $service = $billing_service->selectOneById($service_id);
@@ -119,6 +119,9 @@ function get_myservice_info($od_id)
     }
 
     $billing_info = $billing_info->selectOneByOrderId($od_id);
+    if ($mb_id != $billing_info['mb_id']) {
+        return false;
+    }
 
     //가격
     $billing_info['price'] = $billing->getBillingPrice($od_id, $billing_info);
@@ -157,11 +160,11 @@ function get_myservice_history($od_id, $offset, $rows)
 /**
  * 구독 취소
  * @param string|int $od_id 구독서비스 주문번호
- * @return bool
+ * @return bool | string
  */
 function cancel_myservice($od_id)
 {
-    global $billing, $billing_info, $billing_service, $billing_cancel, $billing_history, $billing_conf;
+    global $billing, $billing_info, $billing_cancel, $billing_history, $billing_conf;
 
     $mb_id = get_user_id();
     if ($mb_id === false) {
@@ -212,7 +215,7 @@ function cancel_myservice($od_id)
         return json_encode($batch_del_result);
     }
 
-    $result = $billing_info->updateStatus($od_id, (int)false);
+    $result = $billing_info->updateStatus($od_id, 0);
     if ($result) {
         return true;
     }

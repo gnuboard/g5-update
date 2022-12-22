@@ -245,7 +245,7 @@ class G5BillingKcp implements BillingInterface
         $curlError = curl_error($ch);
         $curlInfo = curl_getinfo($ch);
         curl_close($ch);
-        if (!empty($curlError)) {
+        if (($curlInfo['http_code'] != 200 && $curlInfo['http_code'] != 201) || !empty($curlError)) {
             return array(
                 'result_msg' => 'pg 사와의 통신에 문제가 발생했습니다.',
                 'http_code' => $curlInfo['http_code']
@@ -289,7 +289,7 @@ class G5BillingKcp implements BillingInterface
             'cust_ip'       => '',
             'amount'        => $data['amount'],
             'card_mny'      => $data['amount'],
-            'currency'      => '410',
+            'currency'      => $data['currency'],
             'quota'         => '00',
             'ordr_idxx'     => $data['od_id'],
             'good_name'     => $data['name'],           /** 권장 @todo 100바이트까지 자르기 */
