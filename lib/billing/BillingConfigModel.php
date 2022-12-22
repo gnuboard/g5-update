@@ -69,7 +69,7 @@ class BillingConfigModel
             'bc_kcp_prikey'         => $resultData['bc_kcp_prikey'],
             'bc_kcp_prikey_password'=> $resultData['bc_kcp_prikey_password'],
             'bc_kcp_is_test'        => $resultData['bc_kcp_is_test'],
-            'bc_kcp_curruncy'       => $resultData['bc_kcp_curruncy'],
+            'bc_kcp_currency'       => $resultData['bc_kcp_currency'],
             'bc_notice_email'       => $resultData['bc_notice_email'],
             'bc_update_ip'          => $resultData['bc_update_ip'],
             'bc_update_id'          => $resultData['bc_update_id'],

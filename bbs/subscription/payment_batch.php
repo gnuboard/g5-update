@@ -36,7 +36,7 @@ $query_data = array(
 
 $success_count = 0;
 $fail_count = 0;
-$currency = 410; // @TODO kcp 원화 코드
+$currency = $billing_conf['bc_kcp_currency'];
 $payment_success_code = '0000'; // kcp 결제 성공코드
 
 define('STATE_SUCCESS', 1); //성공
