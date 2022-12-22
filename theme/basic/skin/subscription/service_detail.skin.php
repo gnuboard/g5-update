@@ -43,7 +43,7 @@ if (empty($service_info)) {
 <h2>서비스 설명</h2>
 <div class="section">
     <div>
-        <?php echo $service_info['explan'] ?>
+        <?php echo $service_info['explain'] ?>
     </div>
 </div>
 <div>

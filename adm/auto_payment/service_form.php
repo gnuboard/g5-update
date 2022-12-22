@@ -21,8 +21,8 @@ $service        = array(
     'name' => '',
     'order' => '',
     'is_use' => 1,
-    'explan' => '',
-    'mobile_explan' => '',
+    'explain' => '',
+    'mobile_explain' => '',
     'summary' => '',
     'recurring' => 1,
     'recurring_unit' => 'm',
@@ -163,11 +163,11 @@ if (isset($service_id) && !empty($service_id)) {
                     </tr>
                     <tr>
                         <th scope="row">상품설명</th>
-                        <td colspan="2"> <?php echo editor_html('explan', get_text(html_purifier(str_replace('\"', '', $service['explan'])), 0)); ?></td>
+                        <td colspan="2"> <?php echo editor_html('explain', get_text(html_purifier(str_replace('\"', '', $service['explain'])), 0)); ?></td>
                     </tr>
                     <tr>
                         <th scope="row">모바일 상품설명</th>
-                        <td colspan="2"> <?php echo editor_html('mobile_explan', get_text(html_purifier(str_replace('\"', '', $service['mobile_explan'])), 0)); ?></td>
+                        <td colspan="2"> <?php echo editor_html('mobile_explain', get_text(html_purifier(str_replace('\"', '', $service['mobile_explain'])), 0)); ?></td>
                     </tr>
                 </tbody>
             </table>
@@ -382,8 +382,8 @@ if (isset($service_id) && !empty($service_id)) {
             }
         }
 
-        <?php echo get_editor_js('explan'); ?>
-        <?php echo get_editor_js('mobile_explan'); ?>
+        <?php echo get_editor_js('explain'); ?>
+        <?php echo get_editor_js('mobile_explain'); ?>
 
         return true;
     }
