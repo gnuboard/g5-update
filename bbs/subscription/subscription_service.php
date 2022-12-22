@@ -95,7 +95,7 @@ function get_myservice($request_data)
 
         $service = array_merge($row, $service_info);
         $service['price'] = (int)$service_price->selectCurrentPrice($service_id);
- 
+
         $results[$key]['bo_table']  = $service_info['bo_table'];
         $results[$key]['subject']   = $service_info['bo_subject'];
         $results[$key]['service'][] = $service;
@@ -119,7 +119,7 @@ function get_myservice_info($od_id)
     }
 
     $billing_info = $billing_info->selectOneByOrderId($od_id);
-    
+
     //가격
     $billing_info['price'] = $billing->getBillingPrice($od_id, $billing_info);
 
@@ -176,12 +176,11 @@ function cancel_myservice($od_id)
 
     // 환불처리
     if ($billing_conf['bc_use_cancel_refund'] == "1") {
-        
+
         $history                = $billing_history->selectOneByOdId($od_id);
         $total_cancel_amount    = $billing_cancel->selectTotalCancelAmount($history['payment_no']);
-        $service                = $billing_service->selectOneById($bill_info['service_id']);
         $cancel_reason          = "사용자 구독취소";
-        $cancel_amount          = $billing->calcurateRefundAmount($history, $service['base_price']);
+        $cancel_amount          = $billing->calcurateRefundAmount($history);
         $refundable_amount      = (int)$history['amount'] - (int)$total_cancel_amount;
 
         if ($cancel_amount >= $refundable_amount) {
@@ -231,7 +230,7 @@ function get_user_id()
     if ($is_guest) {
         return false;
     }
-    
+
     if ($is_admin === 'super') {
         return $config['cf_admin'];
     }
