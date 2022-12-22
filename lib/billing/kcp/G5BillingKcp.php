@@ -1,4 +1,5 @@
 <?php
+
 /**
  * 자동결제 공통 Class
  */
@@ -25,29 +26,29 @@ class G5BillingKcp implements BillingInterface
     public $filenamePrivateKey           = '';
 
     /**
-     * @var string 배치 키 발급 API Reqeust URL
+     * @var string 빌링키 발급 API Reqeust URL
      */
-    public $urlGetBatchKey = 'https://spl.kcp.co.kr/gw/enc/v1/payment'; // 운영서버
+    private $urlGetBillingKey = 'https://spl.kcp.co.kr/gw/enc/v1/payment'; // 운영서버
 
     /**
-     * @var string 배치 키를 이용한 결제요청 API Reqeust URL
+     * @var string 빌링키를 이용한 결제요청 API Reqeust URL
      */
-    public $urlBatchPayment = 'https://spl.kcp.co.kr/gw/hub/v1/payment'; //운영서버
+    private $urlBillingPayment = 'https://spl.kcp.co.kr/gw/hub/v1/payment'; //운영서버
 
     /**
-     * @var string 배치키 삭제 URL
+     * @var string 빌링키 삭제 URL
      */
-    private $urlDeleteBatchKey = 'https://spl.kcp.co.kr/gw/hub/v1/payment';
+    private $urlDeleteBillingKey = 'https://spl.kcp.co.kr/gw/hub/v1/payment';
 
     /**
      * @var string 결제취소 요청 API Reqeust URL
      */
-    public $urlBatchCancel = 'https://spl.kcp.co.kr/gw/mod/v1/cancel'; // 운영서버
+    private $urlBillingCancel = 'https://spl.kcp.co.kr/gw/mod/v1/cancel'; // 운영서버
 
     /**
      * @var string 모바일에 쓰이는 거래등록 URL
      */
-    public $urlTradeRegister = 'https://spl.kcp.co.kr/std/tradeReg/register';
+    private $urlTradeRegister = 'https://spl.kcp.co.kr/std/tradeReg/register';
 
     /**
      * @var string
@@ -79,7 +80,7 @@ class G5BillingKcp implements BillingInterface
     public function __construct()
     {
         global $billing_conf;
-        
+
         $this->setSiteCd(site_cd);
         $this->setPathCert(kcp_cert_path);
         $this->setKcpGroupId(kcpgroup_id);
@@ -88,10 +89,10 @@ class G5BillingKcp implements BillingInterface
         $this->filenamePrivateKey = $billing_conf['bc_kcp_prikey'];
 
         if ($billing_conf['bc_kcp_is_test'] == "1") {
-            $this->urlGetBatchKey = 'https://stg-spl.kcp.co.kr/gw/enc/v1/payment';
-            $this->urlBatchPayment = 'https://stg-spl.kcp.co.kr/gw/hub/v1/payment';
-            $this->urlBatchCancel = 'https://stg-spl.kcp.co.kr/gw/mod/v1/cancel';
-            $this->urlDeleteBatchKey = 'https://stg-spl.kcp.co.kr/gw/hub/v1/payment';
+            $this->urlGetBillingKey = 'https://stg-spl.kcp.co.kr/gw/enc/v1/payment';
+            $this->urlBillingPayment = 'https://stg-spl.kcp.co.kr/gw/hub/v1/payment';
+            $this->urlBillingCancel = 'https://stg-spl.kcp.co.kr/gw/mod/v1/cancel';
+            $this->urlDeleteBillingKey = 'https://stg-spl.kcp.co.kr/gw/hub/v1/payment';
             $this->urlTradeRegister = 'https://stg-spl.kcp.co.kr/std/tradeReg/register';
         }
     }
@@ -140,7 +141,7 @@ class G5BillingKcp implements BillingInterface
      * Get the value of kcpGroupId
      *
      * @return  string
-     */ 
+     */
     public function getKcpGroupId()
     {
         return $this->kcpGroupId;
@@ -152,7 +153,7 @@ class G5BillingKcp implements BillingInterface
      * @param  string  $kcpGroupId
      *
      * @return  self
-     */ 
+     */
     public function setKcpGroupId($kcpGroupId)
     {
         $this->kcpGroupId = $kcpGroupId;
@@ -211,7 +212,7 @@ class G5BillingKcp implements BillingInterface
         $result = openssl_sign($cancel_target_data, $signature, $pri_key, 'sha256WithRSAEncryption');
 
         //개인키또는 인증서가 맞지 않음
-        if($result === false){
+        if ($result === false) {
             return false;
         }
 
@@ -246,8 +247,9 @@ class G5BillingKcp implements BillingInterface
         curl_close($ch);
         if (($curlInfo['http_code'] != 200 && $curlInfo['http_code'] != 201) || !empty($curlError)) {
             return array(
-                'result_msg'=> 'pg 사와의 통신에 문제가 발생했습니다.',
-                'http_code' => $curlInfo['http_code'] ); //TODO PHP 5.x 버전 테스트
+                'result_msg' => 'pg 사와의 통신에 문제가 발생했습니다.',
+                'http_code' => $curlInfo['http_code']
+            );
         }
 
         // RES JSON DATA Parsing
@@ -255,7 +257,7 @@ class G5BillingKcp implements BillingInterface
     }
 
     /**
-     * 빌링 키 발급 요청
+     * 빌링키 발급 요청
      * @param array $data   Request Data
      * @return mixed
      */
@@ -270,7 +272,7 @@ class G5BillingKcp implements BillingInterface
             "enc_info"      => $data["enc_info"]  // 암호화 인증데이터
         );
 
-        return $this->requestApi($this->urlGetBatchKey, $requestData);
+        return $this->requestApi($this->urlGetBillingKey, $requestData);
     }
 
     /**
@@ -299,31 +301,31 @@ class G5BillingKcp implements BillingInterface
             'bt_group_id'   => $this->getKcpGroupId()
         );
 
-        return $this->requestApi($this->urlBatchPayment, $requestData);
+        return $this->requestApi($this->urlBillingPayment, $requestData);
     }
 
     /**
-     * 배치키 삭제 요청
-     * @param string $batchKey      삭제할 배치키
+     * 빌링키 삭제 요청
+     * @param string $billingKey      삭제할 빌링키
      * @return mixed
      */
-    public function requestDeleteBillKey($batchKey)
+    public function requestDeleteBillKey($billingKey)
     {
         $data = array(
             "site_cd"        => $this->getSiteCd(),
             "site_key" 	     => '',
             "kcp_cert_info"  => $this->getServiceCertification(),
             "pay_method"     => 'BATCH',
-            "batch_key"      => $batchKey, // 결제수단 (고정)
+            "batch_key"      => $billingKey, // 결제수단 (고정)
             "group_id"       => $this->getKcpGroupId(),
             "tx_type"        => '10005010' // 거래요청타입(고정)
         );
 
-        return $this->requestApi($this->urlDeleteBatchKey, $data);
+        return $this->requestApi($this->urlDeleteBillingKey, $data);
     }
 
     /**
-     * 배치키 발급을 위해 NHN KCP 모바일 표준결제창 호출에 필요한 거래등록
+     * 빌링키 발급을 위해 NHN KCP 모바일 표준결제창 호출에 필요한 거래등록
      * @param string $od_id
      * @param string $amount
      * @param string $goodName 상품명
@@ -366,7 +368,7 @@ class G5BillingKcp implements BillingInterface
             'mod_desc'      => $cancelReason
         );
 
-        return $this->requestApi($this->urlBatchCancel, $requestData);
+        return $this->requestApi($this->urlBillingCancel, $requestData);
     }
 
     /**
@@ -390,6 +392,6 @@ class G5BillingKcp implements BillingInterface
             'mod_desc'      => $cancelReason
         );
 
-        return $this->requestApi($this->urlBatchCancel, $requestData);
+        return $this->requestApi($this->urlBillingCancel, $requestData);
     }
 }
