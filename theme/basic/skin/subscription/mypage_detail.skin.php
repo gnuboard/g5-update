@@ -35,9 +35,25 @@ if ($payment_list === false) {
 foreach ($payment_list as $key => $row) {
     $payment_list[$key]['display_payment_count'] = $row['payment_count'] . "회차";
     $payment_list[$key]['display_amount'] = number_format($row['amount']) . "원";
-    $payment_list[$key]['display_res_cd'] = ($row['result_code'] == "0000" ? "성공" : "실패");
-    $payment_list[$key]['display_res_cd_color'] = ($row['result_code'] == "0000" ? "#53C14B" : "#FF0000");
     $payment_list[$key]['display_period'] = ($row['result_code'] == "0000" ? $row['period'] : '');
+
+    // 환불금액 표시
+    $payment_list[$key]['cancel_amount'] = $billing_cancel->selectTotalCancelAmount($row['payment_no']);
+    if ($row['total_cancel'] == $row['amount']) {
+        $payment_list[$key]['display_result'] = "환불완료";
+        $payment_list[$key]['display_result_color']   = "#AAAAAA";
+    } else if ($row['total_cancel'] != null) {
+        $payment_list[$key]['display_result'] = "부분 취소";
+        $payment_list[$key]['display_result_color']   = "#AAAAAA";
+        $payment_list[$key]['is_btn_cancel'] = true;
+    } else if ($row['result_code'] == "0000") {
+        $payment_list[$key]['display_result'] = "성공";
+        $payment_list[$key]['display_result_color']   = "#53C14B";
+        $payment_list[$key]['is_btn_cancel'] = true;
+    } else {
+        $payment_list[$key]['display_result'] = "실패";
+        $payment_list[$key]['display_result_color']   = "#FF0000";
+    }
 }
 ?>
 <div>
@@ -72,7 +88,7 @@ foreach ($payment_list as $key => $row) {
                                 <td><?php echo $info['display_event_price'] . " ({$info['display_event_date']} 까지)"; ?></td>
                             <?php } ?>
                         </tr>
-                        <?php if ($info['status'] !== '0') { ?>
+                        <?php if ($info['status'] == '1') { ?>
                             <tr>
                                 <th>결제수단</th>
                                 <td>
@@ -93,7 +109,7 @@ foreach ($payment_list as $key => $row) {
                             <th>구독상태</th>
                             <td colspan="3">
                                 <span style="line-height: 2.6rem;"><?php echo $info['display_status'] ?></span>
-                                <?php if ($info['status'] !== '0') { ?>
+                                <?php if ($info['status'] == '1') { ?>
                                     <button type="button" class="btn_frmline btn_cancel" data-od_id="<?php echo $od_id ?>">구독 취소</button>
                                 <?php } ?>
                             </td>
@@ -114,11 +130,12 @@ foreach ($payment_list as $key => $row) {
             <caption>내역</caption>
             <thead>
                 <tr>
-                    <th scope="col">회차</th>
-                    <th scope="col">결제금액</th>
-                    <th scope="col">카드명</th>
-                    <th scope="col">결과</th>
-                    <th scope="col">결제일</th>
+                    <th scope="col" width="20%">회차</th>
+                    <th scope="col" width="15%">결제금액</th>
+                    <th scope="col" width="10%">카드명</th>
+                    <th scope="col" width="15%">결제일</th>
+                    <th scope="col" width="15%">결과</th>
+                    <th scope="col" width="25%">기타</th>
                 </tr>
             </thead>
             <tbody>
@@ -132,11 +149,13 @@ foreach ($payment_list as $key => $row) {
                             </td>
                             <td><?php echo $payment['display_amount'] ?></td>
                             <td><?php echo $payment['card_name'] ?></td>
-                            <td style="color:<?php echo $payment['display_res_cd_color'] ?>">
-                                <?php echo $payment['display_res_cd'] ?>
-                            </td>
                             <td><?php echo $payment['payment_date'] ?></td>
-                            <td></td>
+                            <td style="color:<?php echo $payment['display_result_color'] ?>">
+                                <?php echo $payment['display_result'] ?>
+                            </td>
+                            <td>
+                                <?php echo number_format($payment['cancel_amount']) ?>원 환불
+                            </td>
                         </tr>
                     <?php } ?>
                 <?php } else { ?>
