@@ -1,4 +1,5 @@
 <?php
+
 /**
  * 구독서비스 가격 Model Class
  */
@@ -40,7 +41,7 @@ class BillingServicePriceModel
     public function selectCurrentPrice($serviceId)
     {
         global $g5;
-        
+
         $bindParam = array();
 
         $sql = "SELECT
@@ -55,13 +56,13 @@ class BillingServicePriceModel
                 FROM {$g5["billing_service_table"]} bs
                 WHERE bs.service_id = ?";
         array_push($bindParam, $serviceId);
-     
+
         $result = $this->g5Mysqli->getOne($sql, $bindParam);
 
         if (isset($result)) {
             return $result['current_price'];
         } else {
-            return 0;
+            return null;
         }
     }
 
@@ -73,7 +74,7 @@ class BillingServicePriceModel
     public function selectScheduledChangePriceInfo($serviceId)
     {
         global $g5;
-        
+
         $bindParam = array();
 
         $sql = "SELECT
