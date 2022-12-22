@@ -8,7 +8,7 @@ require_once G5_LIB_PATH . '/billing/_setting.php';
 ignore_user_abort(true); // http 커넥션이 끊어져도 동작하게 설정.
 
 $pg_code = $billing_conf['bc_pg_code'];
-if(empty($pg_code)){
+if(!isset($billing_conf['bc_pg_code'], $billing_conf['bc_kcp_currency'])){
     exit;
 }
 $billing = new Billing($pg_code);
