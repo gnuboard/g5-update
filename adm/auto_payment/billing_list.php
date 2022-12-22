@@ -45,7 +45,7 @@ foreach ($billing_list as $i => $row) {
     $billing_list[$i] = $row;
     $billing_list[$i]['bg_class']           = 'bg' . ($i % 2);
     $billing_list[$i]['mb_side_view']       = get_sideview($row['mb_id'], get_text($row['mb_name']), $row['mb_email'], '');
-    $billing_list[$i]['price']              = ($cuPrice = $price_model->selectCurrentPrice($row['service_id'])) ? number_format($cuPrice) . '원' : '오픈 전';
+    $billing_list[$i]['price']              = is_null($cuPrice = $price_model->selectCurrentPrice($row['service_id'])) ? '오픈 전' : number_format($cuPrice) . '원';
     $billing_list[$i]['display_recurring']  = ($dsRec = $billing->displayRecurring($row)) ? $dsRec : '없음';
     $billing_list[$i]['display_od_id']      = $billing->displayOrderId($row['od_id']);
     $billing_list[$i]['display_date']       = $billing->convertDateFormat($row['start_date']) . ' ~ ' . $billing->convertDateFormat($row['end_date']);

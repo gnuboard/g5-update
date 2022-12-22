@@ -248,7 +248,7 @@ class Billing
     {
         $price = 0;
 
-        if (empty($info) || !isset($info['price'])) {
+        if (empty($info) || !isset($info['price']) || !isset($info['end_date']) || $info['service_id']) {
             $info_model = new BillingInformationModel();
             $info = $info_model->selectOneByOrderId($orderId);
         }

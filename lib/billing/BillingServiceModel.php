@@ -123,8 +123,8 @@ class BillingServiceModel
         $data = array(
             'name' => $requestData['name'],
             'summary' => $requestData['summary'],
-            'explan' => $requestData['explan'],
-            'mobile_explan' => $requestData['mobile_explan'],
+            'explain' => $requestData['explain'],
+            'mobile_explain' => $requestData['mobile_explain'],
             'image_path' => $requestData['image_path'],
             'order' => $requestData['order'],
             'is_use' => $requestData['is_use'],

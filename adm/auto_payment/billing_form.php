@@ -43,7 +43,7 @@ $service = $service_model->selectOneById($service_id);
 // 결과처리
 $service['display_expiration']  = ($dsExp = $billing->displayExpiration($service)) ? '결제일로부터 ' . $dsExp . ' 이후' : '없음';
 $service['display_recurring']   = ($dsRec = $billing->displayRecurring($service)) ? $dsRec : '없음';
-$service['display_price']       = ($cuPrice = $price_model->selectCurrentPrice($service_id)) ? number_format($cuPrice) . '원' : '오픈 전';
+$service['display_price']       = is_null($cuPrice = $price_model->selectCurrentPrice($service_id)) ? '오픈 전' : number_format($cuPrice) . '원';
 
 // 변경예정 가격 최근 1건 조회
 $price_schedule = $price_model->selectScheduledChangePriceInfo($service_id);
@@ -356,10 +356,8 @@ if ($billing_conf['bc_kcp_is_test'] == "0") {
                 url: "./ajax.get_billing_key.php",
                 type: "POST",
                 data: queryString,
-                success: function(data) {
-                    if (data) {
-                        let result = JSON.parse(data);
-
+                success: function(result) {
+                    if (result) {
                         if (result.result_code == "0000") {
                             alert("자동결제 키가 변경되었습니다.");
                             document.querySelector("#display_billing_key").innerHTML = result.display_billing_key;

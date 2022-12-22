@@ -11,6 +11,7 @@ $key_history_model  = new BillingKeyHistoryModel();
 /* = -------------------------------------------------------------------------- = */
 $od_id = clean_xss_tags($_POST['ordr_idxx']);
 $mb_id = clean_xss_tags($_POST['mb_id']);
+$card_no = clean_xss_tags($_POST['card_mask_no']);
 /* ============================================================================== */
 /* =  요청                                                                      = */
 /* = -------------------------------------------------------------------------- = */
@@ -25,6 +26,7 @@ if (isset($res_data['http_code'])) {
 }
 
 $res_data['pg_code'] = $billing_conf['bc_pg_code'];
+$res_data['card_no'] = $card_no;
 $res_data['od_id'] = $od_id;
 $res_data['mb_id'] = $mb_id;
 

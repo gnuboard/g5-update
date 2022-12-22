@@ -21,8 +21,8 @@ $data = array(
     "summary"           => isset($_POST['summary']) ? clean_xss_tags($_POST['summary'], 1, 1) : '',
     "order"             => isset($_POST['order']) ? preg_replace('/[^0-9]/', '', $_POST['order']) : 0,
     "is_use"            => isset($_POST['is_use']) ? preg_replace('/[^0-9]/', '', $_POST['is_use']) : 0,
-    "explan"            => isset($_POST['explan']) ? stripslashes($_POST['explan']) : '',
-    "mobile_explan"     => isset($_POST['mobile_explan']) ? stripslashes($_POST['mobile_explan']) : '',
+    "explain"           => isset($_POST['explain']) ? stripslashes($_POST['explain']) : '',
+    "mobile_explain"    => isset($_POST['mobile_explain']) ? stripslashes($_POST['mobile_explain']) : '',
     "image_path"        => isset($_POST['image_path']) ? clean_xss_tags($_POST['image_path']) : '',
     "expiration"        => isset($_POST['expiration']) ? preg_replace('/[^0-9]/', '', $_POST['expiration']) : 0,
     "expiration_unit"   => isset($_POST['expiration_unit']) ? clean_xss_tags($_POST['expiration_unit'], 1, 1) : '',
@@ -112,7 +112,7 @@ $file_content .= "\n Price : ";
 foreach ($price_array as $price) {
     $id         = $price['id'] ? $price['id'] : 'New';
     $log_price  = !empty($price['price']) ? number_format($price['price']) : 0;
-    $file_content .= "\n    " . $log_price . " / " .  $price['application_date'];
+    $file_content .= "\n    " . $log_price . " / " .  $price['application_date'] . " / " . $price['memo'];
 }
 $file_content .= "\n====================================================\n";
 // 경로 생성

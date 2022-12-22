@@ -40,7 +40,7 @@ $service_list = $service_model->selectList($request_data);
 
 foreach ($service_list as $i => $service) {
     $service_list[$i]['bg_class']           = 'bg' . ($i % 2);
-    $service_list[$i]['display_price']      = ($cuPrice = $price_model->selectCurrentPrice($service['service_id'])) ? number_format($cuPrice) . '원' : '오픈 전';
+    $service_list[$i]['display_price']      = is_null($cuPrice = $price_model->selectCurrentPrice($service['service_id'])) ? '오픈 전' : number_format($cuPrice) . '원';
     $service_list[$i]['display_recurring']  = ($dsRec = $billing->displayRecurring($service)) ? $dsRec : '없음';
     $service_list[$i]['display_expiration'] = ($dsExp = $billing->displayExpiration($service)) ? '결제일로부터 ' . $dsExp . ' 이후' : '없음';
     if ($service['is_event'] == "1") {

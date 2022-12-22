@@ -21,8 +21,8 @@ $service        = array(
     'name' => '',
     'order' => '',
     'is_use' => 1,
-    'explan' => '',
-    'mobile_explan' => '',
+    'explain' => '',
+    'mobile_explain' => '',
     'summary' => '',
     'recurring' => 1,
     'recurring_unit' => 'm',
@@ -163,11 +163,11 @@ if (isset($service_id) && !empty($service_id)) {
                     </tr>
                     <tr>
                         <th scope="row">상품설명</th>
-                        <td colspan="2"> <?php echo editor_html('explan', get_text(html_purifier(str_replace('\"', '', $service['explan'])), 0)); ?></td>
+                        <td colspan="2"> <?php echo editor_html('explain', get_text(html_purifier(str_replace('\"', '', $service['explain'])), 0)); ?></td>
                     </tr>
                     <tr>
                         <th scope="row">모바일 상품설명</th>
-                        <td colspan="2"> <?php echo editor_html('mobile_explan', get_text(html_purifier(str_replace('\"', '', $service['mobile_explan'])), 0)); ?></td>
+                        <td colspan="2"> <?php echo editor_html('mobile_explain', get_text(html_purifier(str_replace('\"', '', $service['mobile_explain'])), 0)); ?></td>
                     </tr>
                 </tbody>
             </table>
@@ -253,7 +253,8 @@ if (isset($service_id) && !empty($service_id)) {
                     <tr>
                         <th scope="row"><label for="price">첫 구독 이벤트 설정</label></th>
                         <td>
-                            <?php echo help("첫 구독 신청부터 적용되는 이벤트가격 & 적용기간을 설정할 수 있습니다."); ?>
+                            <?php echo help("첫 구독 신청부터 적용되는 이벤트가격 & 적용기간을 설정할 수 있습니다.
+                            <b>※ 기간이 '0'이면 이벤트 가격이 반영되지 않습니다.</b>"); ?>
                             <div>
                                 <input type="checkbox" name="is_event" value="1" id="is_event" <?php echo $service['is_event_checked'] ?>>
                                 <label for="is_event">사용</label>
@@ -299,11 +300,11 @@ if (isset($service_id) && !empty($service_id)) {
     let price_row = <?php echo $price_count ?>;
 
     $(function() {
-        set_datepicker();
-        toggle_event_area();
         if (price_row == 0) {
             create_price_row();
         }
+        set_datepicker();
+        toggle_event_area();
 
         // 가격추가 버튼
         $(document).on("click", "#create_price_row", function() {
@@ -381,8 +382,8 @@ if (isset($service_id) && !empty($service_id)) {
             }
         }
 
-        <?php echo get_editor_js('explan'); ?>
-        <?php echo get_editor_js('mobile_explan'); ?>
+        <?php echo get_editor_js('explain'); ?>
+        <?php echo get_editor_js('mobile_explain'); ?>
 
         return true;
     }

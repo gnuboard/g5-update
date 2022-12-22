@@ -45,7 +45,7 @@ class BillingCancelModel
 
         $sql = "SELECT
                     refundable_amount
-                FROM g5_billing_cancel
+                FROM {$g5['billing_cancel_table']}
                 WHERE type = 'partial'
                     AND result_code = '0000'
                     AND payment_no = ?
@@ -71,7 +71,7 @@ class BillingCancelModel
 
         $sql = "SELECT
                     IFNULL(sum(cancel_amount), 0) as total_cancel_amount
-                FROM {$g5['billing_cancel_table']} 
+                FROM {$g5['billing_cancel_table']}
                 WHERE result_code = '0000'
                     AND payment_no = ?";
         array_push($bindParam, $paymentNo);

@@ -77,9 +77,12 @@ for ($idx = 0; $idx < $billing_total_page; $idx++) {
                 $price = $today_payment['price'];
             } //만료기간이 설정되지 않음 상품, 변동된 가격을 따라 결제한다.
             else {
-                $price = $service_price->selectCurrentPrice($today_payment['service_id']);
+                $price = (int)$service_price->selectCurrentPrice($today_payment['service_id']);
             }
         }
+        /**
+         * @todo 결제금액 0원일때 처리 필요
+         */
 
         $pg_req = array(
             'amount' => $price,

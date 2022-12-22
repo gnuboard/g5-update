@@ -67,6 +67,7 @@ class G5BillingKcp implements BillingInterface
         'batch_key' => 'billing_key',
         'card_cd'   => 'card_code',
         'card_name' => 'card_name',
+        'card_mask_no' => 'card_no',
         'tno'       => 'payment_no',
         'amount'    => 'amount',
         'canc_time' => 'cancel_time',

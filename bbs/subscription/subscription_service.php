@@ -32,13 +32,9 @@ function get_service_detail($service_id)
     }
 
     $price = $service_price->selectCurrentPrice($service_id);
-    if (empty($price)) {
+    if (is_null($price)) {
         return $result_list;
     }
-    $convertYMDUnit1 = $billing->getUnitArray('prefix');
-    $convertYMDUnit2 = $billing->getUnitArray('period');
-    $service['display_recurring1'] = $convertYMDUnit1[$service['recurring_unit']];
-    $service['display_recurring2'] = $convertYMDUnit2[$service['recurring_unit']];
 
     return $service + array('price' => $price);
 }
@@ -55,6 +51,9 @@ function get_service_list($request)
     $services = array();
     foreach ($service_list as $row) {
         $price_result = $service_price->selectCurrentPrice($row['service_id']);
+        if (is_null($price_result)) {
+            continue;
+        }
         $row['price'] = $price_result;
         $services[$row['service_table']]['subject'] = $row['bo_subject'];
         $services[$row['service_table']]['service'][] = $row;
@@ -90,13 +89,16 @@ function get_myservice($request_data)
     }
 
     $results = array();
-    foreach ($billing_info_result as $row => $key) {
-        $service_id = $key['service_id'];
+    foreach ($billing_info_result as $key => $row) {
+        $service_id = $row['service_id'];
         $service_info = $billing_service->selectOneById($service_id);
-        $current_price = array('price' => $service_price->selectCurrentPrice($service_id));
-        $results[$row]['bo_table'] = $service_info['bo_table'];
-        $results[$row]['subject'] = $service_info['bo_subject'];
-        $results[$row]['service'][] = $key + $service_info + $current_price;
+
+        $service = array_merge($row, $service_info);
+        $service['price'] = (int)$service_price->selectCurrentPrice($service_id);
+ 
+        $results[$key]['bo_table']  = $service_info['bo_table'];
+        $results[$key]['subject']   = $service_info['bo_subject'];
+        $results[$key]['service'][] = $service;
     }
 
     return $results;
@@ -109,29 +111,24 @@ function get_myservice($request_data)
  */
 function get_myservice_info($od_id)
 {
-    global $billing_history, $billing_info, $billing_service;
+    global $billing_info, $billing_service, $billing;
 
     $mb_id = get_user_id();
     if ($mb_id === false) {
         return false;
     }
 
-    $payment_history = $billing_history->selectOneByOdId($od_id);
-    if ($payment_history['mb_id'] !== $mb_id) {
-        return false;
-    }
-
-    $billing_info_result = $billing_info->selectOneByOrderId($od_id);
-
+    $billing_info = $billing_info->selectOneByOrderId($od_id);
+    
     //가격
-    $billing_info_result['price'] = $payment_history['amount'];
+    $billing_info['price'] = $billing->getBillingPrice($od_id, $billing_info);
 
     //게시판 정보 가져오기
-    $service_id = $billing_info_result['service_id'];
+    $service_id = $billing_info['service_id'];
     $service_info = $billing_service->selectOneById($service_id);
-    $billing_info_result['bo_subject'] = $service_info['bo_subject'];
+    $billing_info['bo_subject'] = $service_info['bo_subject'];
 
-    return $billing_info_result;
+    return $billing_info;
 }
 
 /**
