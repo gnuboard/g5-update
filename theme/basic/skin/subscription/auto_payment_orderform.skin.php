@@ -109,9 +109,9 @@ add_stylesheet('<link rel="stylesheet" href="'.$member_skin_url.'/style.css">', 
 
     function m_Completepayment(return_form, close_event)
     {
-        if (return_form.res_cd.value == "0000" ) {
+        if (return_form.res_cd.value === "0000" ) {
             const batch_form = document.getElementById('form_batch_key');
-            const paymen_form = document.getElementById('form_payment')
+            const payment_form = document.getElementById('form_payment')
             const od_id = batch_form.od_id.value;
             const site_cd = batch_form.site_cd.value;
             const batch_soc_choice = batch_form.batch_soc_choice.value != undefined ? batch_form.batch_soc_choice.value : 'S';
@@ -126,13 +126,12 @@ add_stylesheet('<link rel="stylesheet" href="'.$member_skin_url.'/style.css">', 
                 url: "kcp-batch/ajax.get_billing_key.php",
                 type: 'post',
                 data: data,
-                success: function (data) {
-                    if (data) {
-                        const res = JSON.parse(data);
-                        if (res.result_code == "0000") {
-                            paymen_form.billing_key.value = res.billing_key;
-                            paymen_form.enc_info.value = res.enc_info;
-                            paymen_form.tran_cd.vaue = res.tran_cd;
+                success: function (res) {
+                    if (res) {
+                        if (res.result_code === "0000") {
+                            payment_form.billing_key.value = res.billing_key;
+                            payment_form.enc_info.value = res.enc_info;
+                            payment_form.tran_cd.vaue = res.tran_cd;
                             order_payment();
                         } else {
                             alert('카드 등록에 실패했습니다.');
@@ -140,7 +139,7 @@ add_stylesheet('<link rel="stylesheet" href="'.$member_skin_url.'/style.css">', 
                         }
 
                     } else {
-                        alert("잠시 후에 시도해주세요.");
+                        alert("카드 등록에 실패했습니다.");
                     }
                 },
                 error: function() {
@@ -192,19 +191,17 @@ add_stylesheet('<link rel="stylesheet" href="'.$member_skin_url.'/style.css">', 
                         }
                         form.site_cd.value = form_tag.site_cd.value;
 
-                        console.log(form.site_cd.value)
-
                         try {
                             KCP_Pay_Execute(form_tag);
                         } catch (e) {
-                            /* IE 에서 결제 정상종료시 throw로 스크립트 종료 */
+                            /* IE 에서 결제 정상종료시 throw 로 스크립트 종료 */
                         }
                     } else {
                         alert("잠시 후에 시도해주세요.");
                     }
                 },
                 error: function() {
-                    alert("결제 에러 발생");
+                    alert("결제 오류 발생");
                 }
             });
         }
@@ -227,9 +224,8 @@ add_stylesheet('<link rel="stylesheet" href="'.$member_skin_url.'/style.css">', 
             url: "kcp-batch/ajax.order_billing.php",
             type: 'post',
             data: data,
-            success: function (data) {
-                if (data) {
-                    const res = data;
+            success: function (res) {
+                if (res) {
                     if (res.result_code === "0000") {
                         // 성공
                         alert('결제가 완료되었습니다.');
@@ -239,7 +235,7 @@ add_stylesheet('<link rel="stylesheet" href="'.$member_skin_url.'/style.css">', 
                         alert('결제 요청에 실패했습니다.')
                     }
                 } else {
-                    alert("잠시 후에 시도해주세요.");
+                    alert("결제 요청에 실패했습니다.");
                 }
             },
             error: function () {

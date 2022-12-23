@@ -346,7 +346,7 @@ if ($billing_conf['bc_kcp_is_test'] == "0") {
     function m_Completepayment(frm_mpi, closeEvent) {
         var frm = document.form_billing_key;
 
-        if (frm_mpi.res_cd.value == "0000") {
+        if (frm_mpi.res_cd.value === "0000") {
             GetField(frm, frm_mpi);
 
             let data = new FormData(document.getElementById('form_billing_key'));
@@ -358,7 +358,7 @@ if ($billing_conf['bc_kcp_is_test'] == "0") {
                 data: queryString,
                 success: function(result) {
                     if (result) {
-                        if (result.result_code == "0000") {
+                        if (result.result_code === "0000") {
                             alert("자동결제 키가 변경되었습니다.");
                             document.querySelector("#display_billing_key").innerHTML = result.display_billing_key;
                         } else {
@@ -366,10 +366,11 @@ if ($billing_conf['bc_kcp_is_test'] == "0") {
                         }
                     } else {
                         alert("잠시 후에 시도해주세요.");
+                        location.reload();
                     }
                 },
                 error: function() {
-                    alert("에러 발생");
+                    alert("오류 발생");
                 }
             });
         } else {
@@ -413,25 +414,24 @@ if ($billing_conf['bc_kcp_is_test'] == "0") {
                         "od_id": '<?php echo $od_id ?>',
                         "mb_id": '<?php echo $billing_info['mb_id'] ?>'
                     },
-                    success: function(data) {
-                        if (data) {
-                            let result = JSON.parse(data);
-
-                            if (result.result_code == "0000") {
-                                alert(result.result_message);
+                    success: function(res) {
+                        if (res) {
+                            if (res.result_code === "0000") {
+                                alert(res.result_message);
                                 location.reload();
                             } else {
                                 alert("[" + result.result_code + "]" + result.result_message);
                             }
                         } else {
                             alert("잠시 후에 시도해주세요.");
+                            location.reload();
                         }
                     },
                     error: function(result) {
                         if (result.responseJSON.msg) {
                             alert(result.responseJSON.msg);
                         } else {
-                            alert("에러 발생");
+                            alert("오류 발생");
                         }
                     }
                 });

@@ -4,11 +4,15 @@ include_once dirname(__FILE__) . '/_common.php';
 require_once(G5_BBS_PATH . '/subscription/subscription_service.php');
 
 /**
- * @var string $service_id $_POST['service_id']
+ * @var bool $is_guest 그누보드 비회원 체크 변수
  */
 if ($is_guest) {
     alert('회원만 이용하실 수 있습니다.', G5_BBS_URL . '/login.php');
 }
+
+/**
+ * @var string $service_id $_POST['service_id']
+ */
 if (isset($service_id) && $service_id === '0') {
     $service_id = 0;
 } else {
@@ -19,7 +23,7 @@ if (isset($service_id) && $service_id === '0') {
 }
 
 $service_info = get_service_detail($service_id);
-if ($service_info === null) {
+if (empty($service_info)) {
     alert('해당 상품이 없습니다.', G5_URL);
 }
 
