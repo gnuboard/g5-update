@@ -80,6 +80,7 @@ for ($idx = 0; $idx < $billing_total_page; $idx++) {
 
         if ($price === 0) {
             // 가격이 0원으로 설정되면 최소거래금엑이 안되므로 pg 결제을 건너띄며 임의로 성공코드를 부여한다.
+            $pg_response = array();
             $pg_response['result_code'] = '0000';
             $pg_response['result_message'] = '0원';
         } else {
@@ -126,12 +127,13 @@ for ($idx = 0; $idx < $billing_total_page; $idx++) {
         }
 
         $error_http_code = isset($pg_response['http_code']) ? $pg_response['http_code'] : 0;
+        $history_data['amount'] = $price;
+        $history_data['card_name'] = isset($pg_response['card_name']) ? $pg_response['card_name'] : '';
         $history_data['result_code'] = isset($pg_response['result_code']) ? $pg_response['result_code'] : $error_http_code;
         $history_data['result_message'] = isset($pg_response['result_message']) ? $pg_response['result_message'] : 'pg사 연결 실패';
         $history_data['result_data'] = json_encode($pg_response);
-        $history_data['amount'] = $price;
         $history_data['payment_date'] = G5_TIME_YMD;
-        $history_data['card_name'] = isset($pg_response['card_name']) ? $pg_response['card_name'] : '';
+        $history_data['payment_no'] = isset($pg_response['payment_no']) ? $pg_response['payment_no'] : 0;
         $history_data['payment_count'] += 1;
 
         // 성공, 실패 모두 기록
