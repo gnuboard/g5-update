@@ -134,16 +134,26 @@ add_stylesheet('<link rel="stylesheet" href="'.$member_skin_url.'/style.css">', 
                             payment_form.tran_cd.vaue = res.tran_cd;
                             order_payment();
                         } else {
-                            alert('카드 등록에 실패했습니다.');
+                            if (res.result_message == undefined) {
+                                //로그아웃이 된 경우에도 발생.
+                                alert("카드 등록에 실패했습니다");
+                                location.reload();
+                            }
+
+                            alert('카드 등록에 실패했습니다. ' + res.result_message);
                             console.log("[" + res.result_code + "]" + res.result_message);
                         }
-
                     } else {
-                        alert("카드 등록에 실패했습니다.");
+                        alert("카드 등록에 실패했습니다");
+                        location.reload();
                     }
                 },
-                error: function() {
-                    alert("에러 발생");
+                error: function(res) {
+                    let message = '';
+                    if (res.responseJSON != undefined && res.responseJSON.result_message != undefined) {
+                        message = res.responseJSON.result_message;
+                    }
+                    alert("카드 등록에 실패했습니다" + message);
                 }
             });
 

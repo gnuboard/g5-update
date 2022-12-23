@@ -92,7 +92,7 @@ foreach ($payment_list as $key => $row) {
                             <tr>
                                 <th>결제수단</th>
                                 <td>
-                                    <span id="display_batch_key" style="line-height: 2.6rem;"><?php echo $info['display_bill_key']; ?></span>
+                                    <span id="display_billing_key" style="line-height: 2.6rem;"><?php echo $info['display_bill_key']; ?></span>
                                     <button type="button" class="btn_frmline" id="btn_batch_key">결제수단 변경</button>
                                 </td>
                                 <th>다음 결제일</th>
@@ -253,9 +253,9 @@ if ($billing_conf['bc_kcp_is_test'] == "0") {
     });
 
     function m_Completepayment(frm_mpi, closeEvent) {
-        var frm = document.form_batch_key;
+        let frm = document.form_batch_key;
 
-        if (frm_mpi.res_cd.value == "0000") {
+        if (frm_mpi.res_cd.value === "0000") {
             GetField(frm, frm_mpi);
 
             let data = new FormData(document.getElementById('form_batch_key'));
@@ -265,25 +265,32 @@ if ($billing_conf['bc_kcp_is_test'] == "0") {
                 url: "<?php echo G5_ADMIN_URL ?>/auto_payment/ajax.get_billing_key.php",
                 type: "POST",
                 data: queryString,
-                success: function(data) {
-                    if (data) {
-                        console.log(data);
-                        // Set Data
-                        let result = JSON.parse(data);
-
-                        if (result.res_cd == "0000") {
+                success: function(res) {
+                    if (res) {
+                        if (res.result_code === "0000") {
                             alert("자동결제 키가 변경되었습니다.");
-                            document.querySelector("#display_batch_key").innerHTML = result.display_batch_key;
+                            document.querySelector("#display_billing_key").innerHTML = res.display_billing_key;
                         } else {
-                            alert("[" + result.res_cd + "]" + result.res_msg);
-                        }
+                            if (res.result_message == undefined) {
+                                //로그아웃이 된 경우에도 발생.
+                                alert("카드 등록에 실패했습니다");
+                                location.reload();
+                            }
 
+                            alert('카드 등록에 실패했습니다. ' + res.result_message);
+                            console.log("[" + res.result_code + "]" + res.result_message);
+                        }
                     } else {
-                        alert("잠시 후에 시도해주세요.");
+                        alert("카드 등록에 실패했습니다");
+                        location.reload();
                     }
                 },
-                error: function() {
-                    alert("에러 발생");
+                error: function(res) {
+                    let message = '';
+                    if (res.responseJSON != undefined && res.responseJSON.result_message != undefined) {
+                        message = res.responseJSON.result_message;
+                    }
+                    alert("카드 등록에 실패했습니다" + message);
                 }
             });
         } else {

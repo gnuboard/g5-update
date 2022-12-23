@@ -358,21 +358,32 @@ if ($billing_conf['bc_kcp_is_test'] == "0") {
                 url: "./ajax.get_billing_key.php",
                 type: "POST",
                 data: queryString,
-                success: function(result) {
-                    if (result) {
-                        if (result.result_code === "0000") {
+                success: function(res) {
+                    if (res) {
+                        if (res.result_code === "0000") {
                             alert("자동결제 키가 변경되었습니다.");
-                            document.querySelector("#display_billing_key").innerHTML = result.display_billing_key;
+                            document.querySelector("#display_billing_key").innerHTML = res.display_billing_key;
                         } else {
-                            alert("[" + result.result_code + "]" + result.result_message);
+                            if (res.result_message == undefined) {
+                                //로그아웃이 된 경우에도 발생.
+                                alert("카드 등록에 실패했습니다");
+                                location.reload();
+                            }
+
+                            alert('카드 등록에 실패했습니다. ' + res.result_message);
+                            console.log("[" + res.result_code + "]" + res.result_message);
                         }
                     } else {
-                        alert("잠시 후에 시도해주세요.");
+                        alert("카드 등록에 실패했습니다");
                         location.reload();
                     }
                 },
-                error: function() {
-                    alert("오류 발생");
+                error: function(res) {
+                    let message = '';
+                    if (res.responseJSON != undefined && res.responseJSON.result_message != undefined) {
+                        message = res.responseJSON.result_message;
+                    }
+                    alert("카드 등록에 실패했습니다" + message);
                 }
             });
         } else {
