@@ -36,12 +36,21 @@ if($_SERVER['REQUEST_METHOD'] === 'GET') {
         }
         break;
         case 'id' : {
-            if(!isset($input_data['od_id']) || empty($input_data['od_id'])){
+            if (!isset($input_data['od_id']) || empty($input_data['od_id'])) {
                 response_json('요청파라미터가 잘못되었습니다', 400);
             }
-            get_myservice_info($input_data['od_id']);
+            $result = get_myservice_info($input_data['od_id']);
+            if ($result === false) {
+                response_json('잘못된 요청입니다.', 400);
+            } else {
+                response_json($result);
+            }
         }
-            break;
+        break;
+
+        default : {
+            response_json('요청파라미터가 잘못되었습니다', 400);
+        }
 
     }
 }

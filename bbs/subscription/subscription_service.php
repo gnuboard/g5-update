@@ -119,6 +119,10 @@ function get_myservice_info($od_id)
     }
 
     $billing_info = $billing_info->selectOneByOrderId($od_id);
+    if(empty($billing_info)){
+        return false;
+    }
+
     if ($mb_id != $billing_info['mb_id']) {
         return false;
     }
