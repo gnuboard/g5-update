@@ -21,7 +21,6 @@ if ($work === 'get_info') {
     //유효성 검사
     if (empty($service_id) || empty($order_id)) {
         response_json('잘못된 요청입니다.', 400);
-        exit;
     }
 
     send_batch_info($order_id, $service_id);
@@ -39,7 +38,7 @@ function send_batch_info($order_id, $service_id)
     if ($result === false) {
         response_json('결제정보를 가져오는데 실패했습니다.', 400);
     }
-    echo response_json($result);
+    response_json($result);
 }
 
 /**
