@@ -36,6 +36,7 @@ if (empty($history_info['billing_key']) || empty($history_info['amount']) || emp
 /* =  결제 요청                                                                  = */
 /* = -------------------------------------------------------------------------- = */
 $data = array_merge($billing_info, $history_info);
+$data['currency'] = $billing_conf['bc_kcp_currency'];;
 $res_data = $billing->pg->requestBilling($data);
 $res_data = $billing->convertPgDataToCommonData($res_data);
 /* ============================================================================== */
@@ -61,7 +62,7 @@ $res_data['expiration_date']    = $billing->nextPaymentDate($billing_info['start
 /* =  결제 결과처리                                                              = */
 /* ============================================================================== */
 $result = $history_model->insert($res_data);
-if ($result_code == "0000") {
+if ($res_data['result_code'] === "0000") {
     if (!$result) {
         $bSucc = false;
     } else {
