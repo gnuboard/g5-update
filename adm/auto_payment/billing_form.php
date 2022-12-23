@@ -17,12 +17,14 @@ $history_model      = new BillingHistoryModel();
 $cancel_model       = new BillingCancelModel();
 
 $od_id = isset($_REQUEST['od_id']) ? safe_replace_regex($_REQUEST['od_id'], 'od_id') : '';
-
-/** 데이터 출력 */
-/* 구독정보 */
-// 구독정보 조회
+if (empty($od_id)) {
+    alert('주문 번호가 없습니다.');
+}
+/** 데이터 출력 구독정보 */
 $billing_info = $information_model->selectOneByOrderId($od_id);
-
+if (empty($billing_info)) {
+    alert('잘못된 주문 번호입니다.');
+}
 // 결과처리
 $service_id = $billing_info['service_id'];
 
