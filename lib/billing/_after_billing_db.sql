@@ -1,6 +1,6 @@
 -- gnuboard5.g5_billing_service definition
 
-CREATE TABLE `g5_billing_service` (
+CREATE TABLE IF NOT EXISTS `g5_billing_service` (
   `service_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL DEFAULT '',
   `summary` varchar(255) DEFAULT '',
@@ -25,7 +25,7 @@ CREATE TABLE `g5_billing_service` (
 
 -- gnuboard5.g5_billing_service_price definition
 
-CREATE TABLE `g5_billing_service_price` (
+CREATE TABLE IF NOT EXISTS `g5_billing_service_price` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `service_id` int(11) NOT NULL,
   `price` int(11) NOT NULL DEFAULT 0,
@@ -38,7 +38,7 @@ CREATE TABLE `g5_billing_service_price` (
 
 -- gnuboard5.g5_billing_information definition
 
-CREATE TABLE `g5_billing_information` (
+CREATE TABLE IF NOT EXISTS `g5_billing_information` (
   `od_id` bigint(20) unsigned NOT NULL,
   `service_id` int(11) NOT NULL,
   `mb_id` varchar(20) NOT NULL,
@@ -57,7 +57,7 @@ CREATE TABLE `g5_billing_information` (
 
 -- gnuboard5.g5_billing_history definition
 
-CREATE TABLE `g5_billing_history` (
+CREATE TABLE IF NOT EXISTS `g5_billing_history` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `od_id` bigint(20) unsigned NOT NULL,
   `mb_id` varchar(20) NOT NULL DEFAULT '',
@@ -78,7 +78,7 @@ CREATE TABLE `g5_billing_history` (
 
 -- gnuboard5.g5_billing_key_history definition
 
-CREATE TABLE `g5_billing_key_history` (
+CREATE TABLE IF NOT EXISTS `g5_billing_key_history` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `pg_code` varchar(20) NOT NULL,
   `od_id` bigint(20) unsigned NOT NULL,
@@ -95,7 +95,7 @@ CREATE TABLE `g5_billing_key_history` (
 
 -- gnuboard5.g5_billing_cancel definition
 
-CREATE TABLE `g5_billing_cancel` (
+CREATE TABLE IF NOT EXISTS `g5_billing_cancel` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `od_id` bigint(20) unsigned NOT NULL,
   `payment_no` varchar(100) NOT NULL,
@@ -112,7 +112,7 @@ CREATE TABLE `g5_billing_cancel` (
 
 -- gnuboard5.g5_billing_scheduler_history definition
 
-CREATE TABLE `g5_billing_scheduler_history` (
+CREATE TABLE IF NOT EXISTS `g5_billing_scheduler_history` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `success_count` int(11) NOT NULL DEFAULT 0,
   `fail_count` int(11) NOT NULL DEFAULT 0,
@@ -125,7 +125,7 @@ CREATE TABLE `g5_billing_scheduler_history` (
 
 -- gnuboard5.g5_billing_config definition
 
-CREATE TABLE `g5_billing_config` (
+CREATE TABLE IF NOT EXISTS `g5_billing_config` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `bc_use_cancel_refund` tinyint(1) NOT NULL DEFAULT 1 COMMENT '구독취소 환불 (1:사용, 0:미사용)',
   `bc_use_pause` tinyint(1) NOT NULL DEFAULT 0 COMMENT '구독 일시정지 (1:사용, 0:미사용)',
