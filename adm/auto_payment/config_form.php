@@ -15,6 +15,11 @@ if (empty($billing_conf)) {
     }
 }
 
+// 초기 값 설정
+if (empty($billing_conf['bc_pg_code'])) {
+    $billing_conf['bc_pg_code'] = 'kcp';
+}
+
 // kcp의 경우 인증서 디렉토리 체크
 if ($billing_conf['bc_pg_code'] == 'kcp') {
     if (!is_dir(kcp_cert_path)) {
@@ -90,7 +95,9 @@ a.help_link {text-decoration: underline;}
                             <input type="hidden" name="bc_pg_code" id="bc_pg_code" value="<?php echo $billing_conf['bc_pg_code']; ?>">
                             <?php echo help('정기결제에서 사용할 결제대행사를 선택합니다.'); ?>
                             <ul class="de_pg_tab">
-                                <li class="tab-current"><a href="#kcp_info_anchor" data-value="kcp" title="NHN KCP 선택하기">NHN KCP</a></li>
+                                <li class="<?php echo ($billing_conf['bc_pg_code'] == 'kcp' ? 'tab-current' : '') ?>">
+                                    <a href="#kcp_info_anchor" data-value="kcp" title="NHN KCP 선택하기">NHN KCP</a>
+                                </li>
                             </ul>
                         </td>
                     </tr>
