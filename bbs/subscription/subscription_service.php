@@ -227,6 +227,13 @@ function cancel_myservice($od_id)
     return false;
 }
 
+function get_myservice_total_count($requestData)
+{
+    global $billing_info;
+
+    return $billing_info->selectTotalCount($requestData);
+}
+
 /**
  * 사용자아이디 가져오는 함수
  * @return false|string

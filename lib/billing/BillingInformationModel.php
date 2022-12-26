@@ -127,7 +127,7 @@ class BillingInformationModel
         }
 
         if (!empty($requestData['mb_id'])) {
-            $sql .= " AND mb_id = ?";
+            $sql .= " AND bi.mb_id = ?";
             array_push($bindParam, $requestData['mb_id']);
         }
 

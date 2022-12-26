@@ -9,16 +9,19 @@ $convertYMDUnit2 = $billing->getUnitArray('period');
 $request_data = array(
     'sfl' => '',
     'stx' => '',
-    'sst' => '',
-    'sod' => '',
+    'sst' => 'start_date',
+    'sod' => 'desc',
     'status' => 1,
     'offset' => $start_page,
-    'rows' => $page_rows
+    'rows' => $page_rows,
+    'mb_id' => get_user_id()
 );
 $board_list = get_myservice($request_data);
 $request_data['status'] = 0;
 $expiration_list = get_myservice($request_data);
 
+$request_data['status'] = null; //status 리셋
+$total_page = (int)(get_myservice_total_count($request_data) / $page_rows);
 if (empty($board_list)) {
     $board_list = array();
 }
@@ -203,4 +206,5 @@ if (empty($expiration_list)) {
     });
 </script>
 <?php
+echo get_paging(10, $page, $total_page, "{$_SERVER['SCRIPT_NAME']}?$qstr");
 include_once G5_PATH . '/tail.php';
