@@ -207,7 +207,7 @@ class BillingHistoryModel
             'od_id' => $resultData['od_id'],
             'mb_id' => $resultData['mb_id'],
             'billing_key' => $resultData['billing_key'],
-            'amount' => $resultData['amount'],
+            'amount' => isset($resultData['amount']) ? $resultData['amount'] : 0,
             'result_code' => $resultData['result_code'],
             'result_message' => $resultData['result_message'],
             'result_data' => json_encode($resultData),

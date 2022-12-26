@@ -242,14 +242,18 @@ add_stylesheet('<link rel="stylesheet" href="'.$member_skin_url.'/style.css">', 
                         window.location.replace(g5_url);
                     } else {
                         // 실패
-                        alert('결제 요청에 실패했습니다.')
+                        alert('[결제처리 실패] ' + res.result_message);
                     }
                 } else {
                     alert("결제 요청에 실패했습니다.");
                 }
             },
-            error: function () {
-                alert("결제 요청에 실패했습니다.");
+            error: function (res) {
+                let message = '';
+                if (res.responseJSON != undefined && res.responseJSON.result_message != undefined) {
+                    message = res.responseJSON.result_message;
+                }
+                alert('[결제요청 실패] ' + message);
             }
         });
     }

@@ -103,8 +103,7 @@ bSucc 및 각 테이블에 기록하는 작업이 하나라도 false 인경우 �
 --------------------------------------------------------------------------
 */
 
-$payment_data = array();
-$payment_data = array_merge($payment_data, $pg_res_data);
+$payment_data = $pg_res_data;
 
 $start_date = date('Y-m-d H:i:s');
 if (empty($service_info['expiration'])) {
@@ -114,6 +113,10 @@ if (empty($service_info['expiration'])) {
 }
 
 $next_payment_date = $billing->nextPaymentDate($start_date, $start_date, $recurring, $recurring_unit);
+
+$payment_data['od_id'] = $od_id;
+$payment_data['mb_id'] = get_user_id();
+$payment_data['billing_key'] = $billing_key;
 
 if ($next_payment_date !== false && $bSucc === true) {
     //서비스 구독
@@ -135,9 +138,7 @@ if ($next_payment_date !== false && $bSucc === true) {
     $payment_data['price'] = $billing_price;
     $payment_data['event_expiration_date'] = $event_expiration_date;
     $payment_data['event_price'] = $event_price;
-    $payment_data['mb_id'] = get_user_id();
     $payment_data['service_id'] = $service_id;
-    $payment_data['billing_key'] = $billing_key;
     $payment_data['start_date'] = $start_date;
     $payment_data['end_date'] = $end_date;
     $payment_data['next_payment_date'] = $next_payment_date;
@@ -149,7 +150,7 @@ if ($next_payment_date !== false && $bSucc === true) {
 // 자동결제 이력 저장
 
 // 결제일, 구독만료일
-$payment_data['payment_date'] = date('Y-m-d');
+$payment_data['payment_date'] = date('Y-m-d H:i:s');
 $expiration_date = $billing->nextPaymentDate(G5_TIME_YMD, G5_TIME_YMD, $service_info['recurring'], $service_info['recurring_unit']);
 
 $payment_data['expiration_date'] = date('Y-m-d 23:59:59 ', strtotime($expiration_date));
@@ -185,7 +186,7 @@ if ($result_code === '0000') {
         response_payment_cancel($cancel_res);
     }
 } else {
-    response_json('결제 승인이 되지 않았습니다.', 200); //결제 실패기록이 남는다.
+    response_json($result_message, 200); //결제 실패기록이 남는다.
 }
 
 /**
