@@ -48,7 +48,7 @@ foreach ($history_list as $i => $history) {
     $history_list[$i]['display_period']         = ($history['result_code'] == "0000" ? $history['period'] : '');
     $history_list[$i]['mb_side_view']           = get_sideview($history['mb_id'], get_text($history['mb_id']) . " (" . get_text($history['mb_name']) . ")", $history['mb_email'], '');
 
-    if ($history['total_cancel'] == $history['amount']) {
+    if ($history['total_cancel'] == $history['amount'] && $history['total_cancel'] > 0) {
         $history_list[$i]['display_result'] = "환불";
         $history_list[$i]['display_result_color']   = "#AAAAAA";
     } else if ($history['total_cancel'] != null) {

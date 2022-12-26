@@ -36,10 +36,9 @@ foreach ($payment_list as $key => $row) {
     $payment_list[$key]['display_payment_count'] = $row['payment_count'] . "회차";
     $payment_list[$key]['display_amount'] = number_format($row['amount']) . "원";
     $payment_list[$key]['display_period'] = ($row['result_code'] == "0000" ? $row['period'] : '');
-
     // 환불금액 표시
     $payment_list[$key]['cancel_amount'] = $billing_cancel->selectTotalCancelAmount($row['payment_no']);
-    if ($row['total_cancel'] == $row['amount']) {
+    if ($row['total_cancel'] == $row['amount'] && $row['total_cancel'] > 0) {
         $payment_list[$key]['display_result'] = "환불완료";
         $payment_list[$key]['display_result_color']   = "#AAAAAA";
     } else if ($row['total_cancel'] != null) {
