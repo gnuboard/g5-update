@@ -12,11 +12,20 @@ $cancel_reason  = isset($_POST['cancel_reason']) ? clean_xss_tags($_POST['cancel
 $cancel_amount  = isset($_POST['cancel_amount']) ? preg_replace('/[^0-9]/', '', $_POST['cancel_amount']) : 0;
 $payment_no     = isset($_POST['payment_no']) ? preg_replace('/[^0-9]/', '', $_POST['payment_no']) : 0;
 $od_id          = isset($_POST['od_id']) ? clean_xss_tags($_POST['od_id']) : '';
-$id             = isset($_POST['id']) ? preg_replace('/[^0-9]/', '', $_POST['id']) : 0;
+$id             = isset($_POST['id']) ? preg_replace('/[^0-9]/', '', $_POST['id']) : '';
 
-$history                = $history_model->selectOneById($id);
+if(empty($od_id) || $id === '' || empty($payment_no)) {
+    alert('필수 파라미터가 없습니다');
+}
+
+$history = $history_model->selectOneById($id);
+
+if(empty($history)) {
+    alert('결제 내역이 없습니다.');
+}
+
 $total_cancel_amount    = $cancel_model->selectTotalCancelAmount($od_id);
-$refundable_amount      = (int)$history['amount'] - (int)$total_cancel_amount;
+$refundable_amount      = (int)$history['amount'] - $total_cancel_amount;
 
 if ($cancel_amount >= $refundable_amount) {
     $cancel_amount = $refundable_amount;
