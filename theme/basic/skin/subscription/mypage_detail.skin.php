@@ -154,7 +154,8 @@ foreach ($payment_list as $key => $row) {
                                 <?php echo $payment['display_result'] ?>
                             </td>
                             <td>
-                                <?php echo number_format($payment['cancel_amount']) ?>원 환불
+                                <?php echo $payment['cancel_amount'] > 0 ? number_format($payment['cancel_amount']) . '원 환불' : '' ?>
+                                <?php echo $payment['result_code'] !== '0000' ? $payment['result_message'] : '' ?>
                             </td>
                         </tr>
                     <?php } ?>
