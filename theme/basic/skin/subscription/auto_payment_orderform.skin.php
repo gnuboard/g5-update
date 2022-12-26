@@ -66,7 +66,7 @@ add_stylesheet('<link rel="stylesheet" href="'.$member_skin_url.'/style.css">', 
                             <button type="button" class="tooltip_icon"><i class="fa fa-question-circle-o" aria-hidden="true"></i><span class="sound_only">설명보기</span></button>
                             <span class="tooltip">주문 정보 입력</span>
                         </label>
-                        <input type="text" name="good_mny" id="good_mny" value="<?php echo $service_info['event_price']?>" class="frm_input full_input" placeholder="상품금액">
+                        <input type="text" name="good_mny" id="good_mny" value="<?php echo ($service_info['is_event'] == '1' && !empty($service_info['event_period'])) ? $service_info['event_price'] : $service_info['price'];?>" class="frm_input full_input" placeholder="상품금액">
                     </li>
                     <li>
                         <label for="buyr_name">
