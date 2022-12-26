@@ -184,18 +184,18 @@ function cancel_myservice($od_id)
     // 환불처리
     if ($billing_conf['bc_use_cancel_refund'] == "1") {
 
-        $history                = $billing_history->selectOneByOdId($od_id);
+        $history                = $billing_history->selectOneLastSuccessByOdId($od_id, '0000');
         $total_cancel_amount    = $billing_cancel->selectTotalCancelAmount($history['payment_no']);
         $cancel_reason          = "사용자 구독취소";
-        $cancel_amount          = $billing->calcurateRefundAmount($history);
-        $refundable_amount      = (int)$history['amount'] - (int)$total_cancel_amount;
+        $cancel_amount          = (int)$billing->calcurateRefundAmount($history);
+        $refundable_amount      = (int)$history['amount'] - $total_cancel_amount;
 
         if ($cancel_amount >= $refundable_amount) {
             $cancel_amount = $refundable_amount;
         }
         $cancel_res = $billing->pg->requestPartialCancelBilling($history['payment_no'], $cancel_reason, $cancel_amount, $refundable_amount);
-        $cancel_res['type'] = 'partial';
         $cancel_res = $billing->convertPgDataToCommonData($cancel_res);
+        $cancel_res['type'] = 'partial';
 
         // 취소이력 저장
         $cancel_res['od_id']            = $od_id;
