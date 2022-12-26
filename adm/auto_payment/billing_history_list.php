@@ -4,7 +4,7 @@ include_once './_common.php';
 
 auth_check_menu($auth, $sub_menu, "r");
 
-$g5['title'] = '자동결제 이력';
+$g5['title'] = '자동결제 스케쥴러 상세이력';
 include_once G5_ADMIN_PATH . '/admin.head.php';
 include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
 
@@ -45,16 +45,16 @@ foreach ($history_list as $i => $history) {
     $history_list[$i]['bg_class']               = 'bg' . ($i % 2);
     $history_list[$i]['display_payment_count']  = $count . "회차";
     $history_list[$i]['display_amount']         = number_format($history['amount']) . "원";
-    $history_list[$i]['display_period']         = ($history['result_code'] == "0000" ? $history['period'] : '');
+    $history_list[$i]['display_period']         = ($history['result_code'] === "0000" ? $history['period'] : '');
     $history_list[$i]['mb_side_view']           = get_sideview($history['mb_id'], get_text($history['mb_id']) . " (" . get_text($history['mb_name']) . ")", $history['mb_email'], '');
 
-    if ($history['total_cancel'] == $history['amount']) {
+    if ($history['total_cancel'] === $history['amount']) {
         $history_list[$i]['display_result'] = "환불";
         $history_list[$i]['display_result_color']   = "#AAAAAA";
-    } else if ($history['total_cancel'] != null) {
+    } else if ($history['total_cancel'] !== null) {
         $history_list[$i]['display_result'] = "부분 취소";
         $history_list[$i]['display_result_color']   = "#AAAAAA";
-    } else if ($history['result_code'] == "0000"){
+    } else if ($history['result_code'] === "0000"){
         $history_list[$i]['display_result'] = "성공";
         $history_list[$i]['display_result_color']   = "#53C14B";
     } else {

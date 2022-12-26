@@ -35,18 +35,18 @@ if ($payment_list === false) {
 foreach ($payment_list as $key => $row) {
     $payment_list[$key]['display_payment_count'] = $row['payment_count'] . "회차";
     $payment_list[$key]['display_amount'] = number_format($row['amount']) . "원";
-    $payment_list[$key]['display_period'] = ($row['result_code'] == "0000" ? $row['period'] : '');
+    $payment_list[$key]['display_period'] = ($row['result_code'] === "0000" ? $row['period'] : '');
 
     // 환불금액 표시
     $payment_list[$key]['cancel_amount'] = $billing_cancel->selectTotalCancelAmount($row['payment_no']);
-    if ($row['total_cancel'] == $row['amount']) {
+    if ($row['total_cancel'] === $row['amount']) {
         $payment_list[$key]['display_result'] = "환불완료";
         $payment_list[$key]['display_result_color']   = "#AAAAAA";
-    } else if ($row['total_cancel'] != null) {
+    } else if ($row['total_cancel'] !== null) {
         $payment_list[$key]['display_result'] = "부분 취소";
         $payment_list[$key]['display_result_color']   = "#AAAAAA";
         $payment_list[$key]['is_btn_cancel'] = true;
-    } else if ($row['result_code'] == "0000") {
+    } else if ($row['result_code'] === "0000") {
         $payment_list[$key]['display_result'] = "성공";
         $payment_list[$key]['display_result_color']   = "#53C14B";
         $payment_list[$key]['is_btn_cancel'] = true;
