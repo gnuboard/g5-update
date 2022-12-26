@@ -84,7 +84,7 @@ foreach ($history_list as $i => $history) {
         $history_list[$i]['display_result_color']   = "#53C14B";
         $history_list[$i]['is_btn_cancel'] = true;
     } else {
-        $history_list[$i]['display_result'] = "실패";
+        $history_list[$i]['display_result'] = "실패<br>" . $history['result_message'];
         $history_list[$i]['display_result_color']   = "#FF0000";
     }
 
@@ -243,12 +243,12 @@ $pg_anchor = '<ul class="anchor">
             <caption>주문결제 내역</caption>
             <thead>
                 <tr>
-                    <th scope="col" style="width:10%;">회차</th>
-                    <th scope="col" style="width:12%;">결제번호</th>
+                    <th scope="col" style="width:8%;">회차</th>
+                    <th scope="col" style="width:10%;">결제번호</th>
                     <th scope="col" style="width:8%;">결제금액</th>
                     <th scope="col" style="width:8%;">환불금액</th>
                     <th scope="col" style="width:10%;">카드명</th>
-                    <th scope="col" style="width:10%;">결제상태</th>
+                    <th scope="col" style="width:14%;">결제상태</th>
                     <th scope="col" style="width:12%;">결제일</th>
                     <th scope="col" style="width:12%;">유효기간</th>
                     <th scope="col" style="width:8%;">관리</th>
@@ -431,18 +431,18 @@ if ($billing_conf['bc_kcp_is_test'] == "0") {
                         if (res) {
                             if (res.result_code === "0000") {
                                 alert(res.result_message);
-                                location.reload();
                             } else {
-                                alert("[" + result.result_code + "]" + result.result_message);
+                                alert("[" + res.result_code + "]" + res.result_message);
                             }
+                            location.reload();
                         } else {
                             alert("잠시 후에 시도해주세요.");
                             location.reload();
                         }
                     },
-                    error: function(result) {
-                        if (result.responseJSON.msg) {
-                            alert(result.responseJSON.msg);
+                    error: function(res) {
+                        if (res.responseJSON.msg) {
+                            alert(res.responseJSON.msg);
                         } else {
                             alert("오류 발생");
                         }
