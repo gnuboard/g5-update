@@ -71,7 +71,6 @@ if(!empty($date)) {
 if(!empty($date_time)) {
     $qstr = '&amp;date_time=' . htmlspecialchars_decode($date_time);
 }
-echo $qstr;
 ?>
 
 <div class="local_ov01 local_ov">
