@@ -190,22 +190,25 @@ function cancel_myservice($od_id)
         $cancel_amount          = (int)$billing->calcurateRefundAmount($history);
         $refundable_amount      = (int)$history['amount'] - $total_cancel_amount;
 
-        if ($cancel_amount >= $refundable_amount) {
-            $cancel_amount = $refundable_amount;
-        }
-        $cancel_res = $billing->pg->requestPartialCancelBilling($history['payment_no'], $cancel_reason, $cancel_amount, $refundable_amount);
-        $cancel_res = $billing->convertPgDataToCommonData($cancel_res);
-        $cancel_res['type'] = 'partial';
+        // 환불금액이 남아있을때만 처리
+        if ($cancel_amount > 0) {
+            if ($cancel_amount >= $refundable_amount) {
+                $cancel_amount = $refundable_amount;
+            }
+            $cancel_res = $billing->pg->requestPartialCancelBilling($history['payment_no'], $cancel_reason, $cancel_amount, $refundable_amount);
+            $cancel_res['type'] = 'partial';
+            $cancel_res = $billing->convertPgDataToCommonData($cancel_res);
 
-        // 취소이력 저장
-        $cancel_res['od_id']            = $od_id;
-        $cancel_res['payment_no']       = $history['payment_no'];
-        $cancel_res['cancel_reason']    = $cancel_reason;
-        $cancel_res['cancel_amount']    = $cancel_amount;
-        $billing_cancel->insert($cancel_res);
+            // 취소이력 저장
+            $cancel_res['od_id']            = $od_id;
+            $cancel_res['payment_no']       = $history['payment_no'];
+            $cancel_res['cancel_reason']    = $cancel_reason;
+            $cancel_res['cancel_amount']    = $cancel_amount;
+            $billing_cancel->insert($cancel_res);
 
-        if ($cancel_res['result_code'] != '0000') {
-            return json_encode($cancel_res);
+            if ($cancel_res['result_code'] != '0000') {
+                return json_encode($cancel_res);
+            }
         }
     }
 
@@ -225,13 +228,6 @@ function cancel_myservice($od_id)
     }
 
     return false;
-}
-
-function get_myservice_total_count($requestData)
-{
-    global $billing_info;
-
-    return $billing_info->selectTotalCount($requestData);
 }
 
 /**

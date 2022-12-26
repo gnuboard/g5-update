@@ -93,7 +93,7 @@ foreach ($payment_list as $key => $row) {
                                 <th>결제수단</th>
                                 <td>
                                     <span id="display_billing_key" style="line-height: 2.6rem;"><?php echo $info['display_bill_key']; ?></span>
-                                    <button type="button" class="btn_frmline" id="btn_batch_key">결제수단 변경</button>
+                                    <button type="button" class="btn_frmline" id="btn_billing_key">결제수단 변경</button>
                                 </td>
                                 <th>다음 결제일</th>
                                 <td><?php echo $info['display_next_date']; ?></td>
@@ -154,7 +154,8 @@ foreach ($payment_list as $key => $row) {
                                 <?php echo $payment['display_result'] ?>
                             </td>
                             <td>
-                                <?php echo number_format($payment['cancel_amount']) ?>원 환불
+                                <?php echo $payment['cancel_amount'] > 0 ? number_format($payment['cancel_amount']) . '원 환불' : '' ?>
+                                <?php echo $payment['result_code'] !== '0000' ? $payment['result_message'] : '' ?>
                             </td>
                         </tr>
                     <?php } ?>
@@ -168,7 +169,7 @@ foreach ($payment_list as $key => $row) {
     </div>
 </div>
 
-<form name="form_batch_key" id="form_batch_key" method="post" enctype="multipart/form-data">
+<form name="form_billing_key" id="form_billing_key" method="post" enctype="multipart/form-data">
     <input type="hidden" name="ordr_idxx" class="w200" value="<?php echo $od_id ?>" maxlength="40" />
 
     <input type="hidden" name="site_cd" value="<?php echo site_cd ?>" />
@@ -211,18 +212,16 @@ if ($billing_conf['bc_kcp_is_test'] == "0") {
 ?>
 <script>
     $(function() {
-        let btn_batch_key = document.querySelector("#btn_batch_key");
-
         /* 표준웹 실행 */
-        btn_batch_key.onclick = function() {
-            let form = document.querySelector("#form_batch_key");
+        $('#btn_billing_key').on('click', function() {
+            let form = document.querySelector("#form_billing_key");
 
             try {
                 KCP_Pay_Execute(form);
             } catch (e) {
                 /* IE 에서 결제 정상종료시 throw로 스크립트 종료 */
             }
-        };
+        });
 
         $('.btn_cancel').on('click', function() {
             if (confirm("해당 서비스의 구독을 취소하시겠습니까?")) {
@@ -253,12 +252,12 @@ if ($billing_conf['bc_kcp_is_test'] == "0") {
     });
 
     function m_Completepayment(frm_mpi, closeEvent) {
-        let frm = document.form_batch_key;
+        let frm = document.form_billing_key;
 
         if (frm_mpi.res_cd.value === "0000") {
             GetField(frm, frm_mpi);
 
-            let data = new FormData(document.getElementById('form_batch_key'));
+            let data = new FormData(document.getElementById('form_billing_key'));
             let queryString = new URLSearchParams(data).toString();
 
             $.ajax({
