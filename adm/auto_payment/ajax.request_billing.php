@@ -29,16 +29,21 @@ if (!$history_info || $mb_id != $history_info['mb_id']) {
     response_json('이전 결제정보를 찾을 수 없습니다.', 400);
 }
 /** 필수 파라미터 체크 */
-if (empty($history_info['billing_key']) || empty($history_info['amount']) || empty($history_info['od_id'])) {
+if (empty($history_info['billing_key']) || empty($history_info['od_id']) || !isset($history_info['amount'])) {
     response_json('필수 파라미터가 없습니다.', 400);
 }
 /* ============================================================================== */
 /* =  결제 요청                                                                  = */
 /* = -------------------------------------------------------------------------- = */
-$data = array_merge($billing_info, $history_info);
-$data['currency'] = $billing_conf['bc_kcp_currency'];;
-$res_data = $billing->pg->requestBilling($data);
-$res_data = $billing->convertPgDataToCommonData($res_data);
+if ((int)$history_info['amount'] > 0) {
+    $data = array_merge($billing_info, $history_info);
+    $data['currency'] = $billing_conf['bc_kcp_currency'];
+    $res_data = $billing->pg->requestBilling($data);
+    $res_data = $billing->convertPgDataToCommonData($res_data);
+} else {
+    $res_data['result_code'] = '0000';
+    $res_data['result_message'] = '정상처리 (0원 이벤트)';
+}
 /* ============================================================================== */
 /* =  응답정보                                                                     = */
 /* = -------------------------------------------------------------------------- = */
