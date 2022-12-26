@@ -36,7 +36,7 @@ if (empty($history_info['billing_key']) || empty($history_info['amount']) || emp
 /* =  결제 요청                                                                  = */
 /* = -------------------------------------------------------------------------- = */
 $data = array_merge($billing_info, $history_info);
-$data['currency'] = $billing_conf['bc_kcp_currency'];;
+$data['currency'] = $billing_conf['bc_kcp_currency'];
 $res_data = $billing->pg->requestBilling($data);
 $res_data = $billing->convertPgDataToCommonData($res_data);
 /* ============================================================================== */
