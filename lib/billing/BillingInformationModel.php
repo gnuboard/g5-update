@@ -156,6 +156,7 @@ class BillingInformationModel
             'mb_id'             => $requestData['mb_id'],
             'price'             => isset($requestData['price']) ? $requestData['price'] : 0,
             'billing_key'       => $requestData['billing_key'],
+            'status'            => $requestData['status'],
             'start_date'        => $requestData['start_date'],
             'end_date'          => $requestData['end_date'],
             'next_payment_date' => $requestData['next_payment_date'],
