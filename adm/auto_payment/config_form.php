@@ -104,7 +104,7 @@ a.help_link {text-decoration: underline;}
                     <tr class="pg_info_fld kcp_info_fld" id="kcp_info_anchor">
                         <th scope="row">
                             <label for="bc_kcp_site_cd">NHN KCP SITE CODE</label><br>
-                            <a href="http://sir.kr/main/service/p_pg.php" target="_blank" class="kcp_btn">NHN KCP 신청하기</a>
+                            <a href="https://sir.kr/main/service/p_pg.php" target="_blank" class="kcp_btn">NHN KCP 신청하기</a>
                         </th>
                         <td>
                             <?php echo help("API를 연동하기 위해 NHN KCP에서 발급해드리는 site_cd가 필요합니다.

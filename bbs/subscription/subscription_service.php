@@ -105,6 +105,18 @@ function get_myservice($request_data)
 }
 
 /**
+ * 구독서비스에서 결제정보 클래스의 selectTotalCount 함수 호출
+ * @param $requestData
+ * @return int
+ */
+function get_myservice_total_count($requestData)
+{
+    global $billing_info;
+
+    return $billing_info->selectTotalCount($requestData);
+}
+
+/**
  * 한 주문번호의 구독 정보를 가져옴
  * @param $od_id
  * @return array | false
@@ -187,8 +199,8 @@ function cancel_myservice($od_id)
         $history                = $billing_history->selectOneLastSuccessByOdId($od_id, '0000');
         $total_cancel_amount    = $billing_cancel->selectTotalCancelAmount($history['payment_no']);
         $cancel_reason          = "사용자 구독취소";
-        $cancel_amount          = $billing->calcurateRefundAmount($history);
-        $refundable_amount      = (int)$history['amount'] - (int)$total_cancel_amount;
+        $cancel_amount          = (int)$billing->calcurateRefundAmount($history);
+        $refundable_amount      = (int)$history['amount'] - $total_cancel_amount;
 
         // 환불금액이 남아있을때만 처리
         if ($cancel_amount > 0) {
@@ -198,14 +210,14 @@ function cancel_myservice($od_id)
             $cancel_res = $billing->pg->requestPartialCancelBilling($history['payment_no'], $cancel_reason, $cancel_amount, $refundable_amount);
             $cancel_res['type'] = 'partial';
             $cancel_res = $billing->convertPgDataToCommonData($cancel_res);
-    
+
             // 취소이력 저장
             $cancel_res['od_id']            = $od_id;
             $cancel_res['payment_no']       = $history['payment_no'];
             $cancel_res['cancel_reason']    = $cancel_reason;
             $cancel_res['cancel_amount']    = $cancel_amount;
             $billing_cancel->insert($cancel_res);
-    
+
             if ($cancel_res['result_code'] != '0000') {
                 return json_encode($cancel_res);
             }

@@ -24,7 +24,10 @@ if($_SERVER['REQUEST_METHOD'] === 'GET') {
             $query_data = array(
                 'status' => 1,
                 'offset' => $offset,
-                'rows' => $rows
+                'rows' => $rows,
+                'sst' => 'start_date',
+                'sod' => 'desc',
+                'mb_id' => get_user_id()
             );
 
             $result = get_myservice($query_data);

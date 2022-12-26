@@ -60,7 +60,8 @@ class BillingCancelModel
 
     /**
      * 결제에 대한 총 부분취소 금액 조회
-     * @param string $paymentNo     PG 결제번호
+     * 부분취소 한 적이없으면 0
+     * @param string $paymentNo    PG 결제번호
      * @return int
      */
     public function selectTotalCancelAmount($paymentNo)

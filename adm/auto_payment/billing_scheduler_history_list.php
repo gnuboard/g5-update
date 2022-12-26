@@ -68,7 +68,6 @@ foreach ($history_list as $i => $history) {
             $history_list[$i]['display_state'] = "자동결제 작업 진행중";
             break;
     }
-    $history_list[$i]['start_time_ymd'] = date('Y-m-d', strtotime($history['start_time']));
 }
 
 $qstr = $qstr . '&amp;page=' . $page;
@@ -134,7 +133,7 @@ if(!empty($sdate) && !empty($edate)){
                     <td><?php echo number_format($history['fail_count']); ?></td>
                     <td><?php echo $history['ip']; ?></td>
                     <td class="td_mng_l">
-                        <a href="./billing_history_list.php?date=<?php echo $history['start_time_ymd']; ?>" class="btn btn_03">
+                        <a href="./billing_history_list.php?date_time=<?php echo $history['start_time']; ?>" class="btn btn_03">
                             결제이력 확인
                         </a>
                     </td>

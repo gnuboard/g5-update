@@ -11,4 +11,4 @@ if (!isset($page) || empty($page)) {
     $page = 1;
 }
 $page_rows  = 10;
-$start_page = ($page != 1) ? $page * $page_rows : 0;
+$start_page = ($page == 1) ? 0 : ($page -1) * $page_rows;

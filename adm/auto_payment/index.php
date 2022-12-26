@@ -143,12 +143,12 @@ function get_max_value($arr)
         $offset = 10; // 금액이 상대적으로 작아 높이가 0일 때 기본 높이로 사용
         foreach($arr_order as $val) {
             if($val['order'] > 0)
-                $h1 = intval(($max_height * $val['order']) / $max_y) + $offset;
+                $h1 = (int)(($max_height * $val['order']) / $max_y) + $offset;
             else
                 $h1 = 0;
 
             if($val['cancel'] > 0)
-                $h2 = intval(($max_height * $val['cancel']) / $max_y) + $offset;
+                $h2 = (int)(($max_height * $val['cancel']) / $max_y) + $offset;
             else
                 $h2 = 0 ;
 
@@ -298,7 +298,7 @@ function get_max_value($arr)
                 <tr>
                     <td class="td_num2"><a href="./itemstocklist.php"><?php echo number_format($item_noti); ?></a></td>
                     <td class="td_num2"><a href="./optionstocklist.php"><?php echo number_format($option_noti); ?></a></td>
-                    <td class="td_price"><?php echo display_price(intval($userinfo['coin'])); ?></td>
+                    <td class="td_price"><?php echo display_price((int)$userinfo['coin']); ?></td>
                 </tr>
                 </tbody>
                 </table>

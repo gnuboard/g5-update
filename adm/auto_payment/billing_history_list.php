@@ -17,7 +17,7 @@ $stx    = !empty($stx) ? clean_xss_tags($stx) : '';
 $sst    = !empty($sst) ? clean_xss_tags($sst) : 'id';
 $sod    = !empty($sod) ? clean_xss_tags($sod) : 'desc';
 $date   = (isset($_GET['date']) && preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $_GET['date'])) ? $_GET['date'] : '';
-
+$date_time    = !empty($date_time) ? clean_xss_tags($date_time) : '';
 $rows       = $config['cf_page_rows'];
 $page       = ($page > 1) ? $page : 1;
 
@@ -26,6 +26,7 @@ $request_data = array(
     "sst"   => $sst,
     "sod"   => $sod,
     "date"  => $date,
+    "date_time" => $date_time
 );
 
 /* 데이터 출력 */
@@ -66,6 +67,11 @@ $qstr = $qstr . '&amp;page=' . $page;
 if(!empty($date)) {
     $qstr .= '&amp;date=' . $date;
 }
+
+if(!empty($date_time)) {
+    $qstr = '&amp;date_time=' . htmlspecialchars_decode($date_time);
+}
+echo $qstr;
 ?>
 
 <div class="local_ov01 local_ov">

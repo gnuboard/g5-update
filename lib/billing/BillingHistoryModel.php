@@ -102,6 +102,11 @@ class BillingHistoryModel
             array_push($bindParam, $requestData['date']);
         }
 
+        if ((isset($requestData['date_time']) && !empty($requestData['date_time']))) {
+            $sql .= ' AND payment_date = ?';
+            array_push($bindParam, $requestData['date_time']);
+        }
+
         /* 반환 결과 수 */
         if (isset($requestData['offset'], $requestData['rows'])) {
             $sql .= " LIMIT ?, ?";
@@ -131,6 +136,11 @@ class BillingHistoryModel
         if ((isset($requestData['date']) && !empty($requestData['date']))) {
             $sql .= ' AND DATE_FORMAT(payment_date, "%Y-%m-%d") = DATE_FORMAT(?, "%Y-%m-%d")';
             array_push($bindParam, $requestData['date']);
+        }
+
+        if ((isset($requestData['date_time']) && !empty($requestData['date_time']))) {
+            $sql .= ' AND payment_date = ?';
+            array_push($bindParam, $requestData['date_time']);
         }
 
         $result = $this->g5Mysqli->getOne($sql, $bindParam);
