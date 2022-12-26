@@ -68,12 +68,11 @@ CREATE TABLE IF NOT EXISTS `g5_billing_history` (
   `result_data` text DEFAULT NULL,
   `card_name` varchar(20) DEFAULT NULL,
   `payment_count` int(11) NOT NULL DEFAULT 1,
-  `payment_no` varchar(100) NOT NULL,
+  `payment_no` varchar(100) DEFAULT NULL,
   `payment_date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
   `expiration_date` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `g5_billing_history_FK` (`od_id`),
-  CONSTRAINT `g5_billing_history_FK` FOREIGN KEY (`od_id`) REFERENCES `g5_billing_information` (`od_id`)
+  KEY `g5_billing_history_FK` (`od_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- gnuboard5.g5_billing_key_history definition

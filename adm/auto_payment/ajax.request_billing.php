@@ -46,13 +46,13 @@ $res_data = $billing->convertPgDataToCommonData($res_data);
 if (isset($res_data['http_code'])) {
     response_json($res_data['result_message'], $res_data['http_code']);
 }
-
+$res_data['od_id']              = $history_info['od_id'];
 $res_data['mb_id']              = $history_info['mb_id'];
+$res_data['amount']             = $history_info['amount'];
 $res_data['billing_key']        = $history_info['billing_key'];
 $res_data['payment_count']      = $history_info['payment_count'];
 $res_data['payment_date']       = date('Y-m-d H:i:s'); // @todo 응답받은 시간으로 입력필요
 $res_data['expiration_date']    = $billing->nextPaymentDate($billing_info['start_date'], $res_data['payment_date'], $billing_info['recurring'], $billing_info['recurring_unit']);
-// $res_data['expiration_date']    = date('Y-m-d 23:59:59 ', strtotime('+' . $billing_info['recurring'] . " " . $unit_array[$billing_info['recurring_unit']]));
 /* ============================================================================== */
 /* =  로그파일 생성                                                              = */
 /* = -------------------------------------------------------------------------- = */

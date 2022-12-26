@@ -132,7 +132,7 @@ for ($idx = 0; $idx < $billing_total_page; $idx++) {
         $history_data['result_code'] = isset($pg_response['result_code']) ? $pg_response['result_code'] : $error_http_code;
         $history_data['result_message'] = isset($pg_response['result_message']) ? $pg_response['result_message'] : 'pg사 연결 실패';
         $history_data['result_data'] = json_encode($pg_response);
-        $history_data['payment_date'] = G5_TIME_YMD;
+        $history_data['payment_date'] = G5_TIME_YMDHIS;
         $history_data['payment_no'] = isset($pg_response['payment_no']) ? $pg_response['payment_no'] : 0;
         $history_data['payment_count'] += 1;
 
