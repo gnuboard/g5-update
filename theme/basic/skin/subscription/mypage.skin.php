@@ -97,6 +97,12 @@ if (empty($expiration_list)) {
     .service_summary {
         font-size: 14px;
     }
+
+    .page_nav_area {
+        display: flex;
+        justify-content: center;
+        margin-top: 30px;
+    }
 </style>
 
 <div class="header_title">
@@ -205,6 +211,11 @@ if (empty($expiration_list)) {
         })
     });
 </script>
+<div class="page_nav_area">
+    <?php
+        echo get_paging(10, $page, $total_page, "{$_SERVER['SCRIPT_NAME']}?$qstr");
+    ?>
+</div>
+
 <?php
-echo get_paging(10, $page, $total_page, "{$_SERVER['SCRIPT_NAME']}?$qstr");
 include_once G5_PATH . '/tail.php';

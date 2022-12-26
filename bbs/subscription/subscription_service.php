@@ -105,6 +105,18 @@ function get_myservice($request_data)
 }
 
 /**
+ * 구독서비스에서 결제정보 클래스의 selectTotalCount 함수 호출
+ * @param $requestData
+ * @return int
+ */
+function get_myservice_total_count($requestData)
+{
+    global $billing_info;
+
+    return $billing_info->selectTotalCount($requestData);
+}
+
+/**
  * 한 주문번호의 구독 정보를 가져옴
  * @param $od_id
  * @return array | false
