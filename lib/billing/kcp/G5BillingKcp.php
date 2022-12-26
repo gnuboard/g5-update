@@ -341,7 +341,7 @@ class G5BillingKcp implements BillingInterface
             "site_cd"       => $this->getSiteCd(),
             'kcp_cert_info' => $this->getServiceCertification(),
             'good_mny'      => $amount,
-            'pay_method'    => 'AUTH', // 결제수단 (고정)
+            'pay_method'    => 'CARD', // 결제수단 (고정)
             'good_name'     => $goodName,
             'Ret_URL'       => $returnUrl,
             'escw_used'     => $useEscw, // 에스크로 사용여부 Y, N
