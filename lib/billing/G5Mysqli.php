@@ -105,7 +105,7 @@ class G5Mysqli
     public function execSqlResult($stmt)
     {
         $result = array();
-        if (version_compare(PHP_VERSION, '5.4.0', '>=')) {
+        if (PHP_VERSION_ID >= 50400) {
             $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         } else {
 
