@@ -55,12 +55,12 @@ function to_han($str)
 /**
  * json 형식으로 메시지를 출력 후 exit 합니다.
  * @param array|string $data
- * @param string $httpStateNo
+ * @param string $http_status_code
  * @return void
  */
-function response_json($data, $httpStateNo = 200)
+function response_json($data, $http_status_code = 200)
 {
-    header('Content-type: application/json; charset=utf-8', true, $httpStateNo);
+    header('Content-type: application/json; charset=utf-8', true, $http_status_code);
 
     if (is_string($data)) {
         $resData['result_message'] = $data;
