@@ -218,7 +218,7 @@ function cancel_myservice($od_id)
             $cancel_res['cancel_amount']    = $cancel_amount;
             $billing_cancel->insert($cancel_res);
 
-            if ($cancel_res['result_code'] != '0000') {
+            if ($cancel_res['result_code'] !== '0000') {
                 return json_encode($cancel_res);
             }
         }

@@ -89,3 +89,9 @@
 .section {
     margin: 20px 10px;
 }
+
+.page_nav_area {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+}

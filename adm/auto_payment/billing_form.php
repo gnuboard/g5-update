@@ -68,18 +68,18 @@ foreach ($history_list as $i => $history) {
 
     $history_list[$i]['display_payment_count']  = $count . "회차";
     $history_list[$i]['display_amount']         = number_format($history['amount']) . "원";
-    $history_list[$i]['display_period']         = ($history['result_code'] == "0000" ? $history['period'] : '');
+    $history_list[$i]['display_period']         = ($history['result_code'] === "0000" ? $history['period'] : '');
     $history_list[$i]['is_btn_cancel']          = false;
     $history_list[$i]['display_cancel_amount']  = number_format($cancel_amount) . '원';
 
-    if ($history['total_cancel'] == $history['amount'] && $history['total_cancel'] > 0) {
+    if ($history['total_cancel'] === $history['amount'] && $history['total_cancel'] > 0) {
         $history_list[$i]['display_result'] = "환불";
         $history_list[$i]['display_result_color']   = "#AAAAAA";
-    } else if ($history['total_cancel'] != null) {
+    } else if ($history['total_cancel'] !== null) {
         $history_list[$i]['display_result'] = "부분 취소";
         $history_list[$i]['display_result_color']   = "#AAAAAA";
         $history_list[$i]['is_btn_cancel'] = true;
-    } else if ($history['result_code'] == "0000") {
+    } else if ($history['result_code'] === "0000") {
         $history_list[$i]['display_result'] = "성공";
         $history_list[$i]['display_result_color']   = "#53C14B";
         if ((int)$history['amount'] > 0) {
@@ -94,7 +94,7 @@ foreach ($history_list as $i => $history) {
         $payment_success[$count] = false;
     }
 
-    if ($history['result_code'] == "0000") {
+    if ($history['result_code'] === "0000") {
         $payment_success[$count] = true;
         $total_amount += ($history['amount'] - $cancel_amount);
     }

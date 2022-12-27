@@ -8,6 +8,8 @@ if (empty($od_id)) {
     alert('주문번호가 없습니다.');
 }
 
+$qstr = '&amp;od_id='.$od_id;
+
 $convertYMDUnit1 = $billing->getUnitArray('prefix');
 $convertYMDUnit2 = $billing->getUnitArray('period');
 
@@ -35,17 +37,18 @@ if ($payment_list === false) {
 foreach ($payment_list as $key => $row) {
     $payment_list[$key]['display_payment_count'] = $row['payment_count'] . "회차";
     $payment_list[$key]['display_amount'] = number_format($row['amount']) . "원";
-    $payment_list[$key]['display_period'] = ($row['result_code'] == "0000" ? $row['period'] : '');
+    $payment_list[$key]['display_period'] = ($row['result_code'] === "0000" ? $row['period'] : '');
+
     // 환불금액 표시
     $payment_list[$key]['cancel_amount'] = $billing_cancel->selectTotalCancelAmount($row['payment_no']);
-    if ($row['total_cancel'] == $row['amount'] && $row['total_cancel'] > 0) {
+    if ($row['total_cancel'] === $row['amount'] && $row['total_cancel'] > 0) {
         $payment_list[$key]['display_result'] = "환불완료";
         $payment_list[$key]['display_result_color']   = "#AAAAAA";
-    } else if ($row['total_cancel'] != null) {
+    } else if ($row['total_cancel'] !== null) {
         $payment_list[$key]['display_result'] = "부분 취소";
         $payment_list[$key]['display_result_color']   = "#AAAAAA";
         $payment_list[$key]['is_btn_cancel'] = true;
-    } else if ($row['result_code'] == "0000") {
+    } else if ($row['result_code'] === "0000") {
         $payment_list[$key]['display_result'] = "성공";
         $payment_list[$key]['display_result_color']   = "#53C14B";
         $payment_list[$key]['is_btn_cancel'] = true;
@@ -54,6 +57,8 @@ foreach ($payment_list as $key => $row) {
         $payment_list[$key]['display_result_color']   = "#FF0000";
     }
 }
+
+add_stylesheet('<link rel="stylesheet" href="' . G5_THEME_CSS_URL . '/subscription/style.css">');
 ?>
 <div>
     <h2 id="container_title"><span title="결제 정보">구독&결제 정보</span></h2>
@@ -297,5 +302,11 @@ if ($billing_conf['bc_kcp_is_test'] == "0") {
         closeEvent();
     }
 </script>
+<!--<div class="page_nav_area">-->
+<?php
+//TODO total 페이지 추가해야됨.
+//    //echo get_paging(10, $page, 10, "{$_SERVER['SCRIPT_NAME']}?$qstr");
+?>
+<!--</div>-->
 <?php
 include_once G5_PATH . '/tail.php';
