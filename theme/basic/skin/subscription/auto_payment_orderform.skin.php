@@ -177,12 +177,11 @@ add_stylesheet('<link rel="stylesheet" href="'.$member_skin_url.'/style.css">', 
         function get_subscription_info(service_id){
             const order_id = payment_form.od_id.value;
             const param = {
-                'w' : 'get_info',
                 'service_id' : service_id,
                 'order_id' : order_id
             }
             $.ajax({
-                url: 'kcp-batch/ajax.set_batch_info.php',
+                url: 'kcp-batch/ajax.set_billing_info.php',
                 type: 'POST',
                 data: JSON.stringify(param),
                 dataType: 'json',

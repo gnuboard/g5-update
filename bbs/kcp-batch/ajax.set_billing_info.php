@@ -1,7 +1,8 @@
 <?php
+
 require_once dirname(__FILE__) . '/_common.php';
 require_once G5_LIB_PATH . '/billing/_setting.php';
-require_once (G5_BBS_PATH . '/subscription/subscription_service.php');
+require_once(G5_BBS_PATH . '/subscription/subscription_service.php');
 $input_data = json_decode(file_get_contents('php://input'), true);
 
 /**
@@ -14,17 +15,15 @@ if (empty($input_data) || $is_guest === true || empty($work)) {
     response_json('잘못된 요청입니다.', 400);
 }
 
-if ($work === 'get_info') {
-    $service_id = isset($input_data['service_id']) ? $input_data['service_id'] : '';
-    $order_id = isset($input_data['order_id']) ? $input_data['order_id'] : '';
+$service_id = isset($input_data['service_id']) ? $input_data['service_id'] : '';
+$order_id = isset($input_data['order_id']) ? $input_data['order_id'] : '';
 
-    //유효성 검사
-    if (empty($service_id) || empty($order_id)) {
-        response_json('잘못된 요청입니다.', 400);
-    }
-
-    send_batch_info($order_id, $service_id);
+//유효성 검사
+if (empty($service_id) || empty($order_id)) {
+    response_json('잘못된 요청입니다.', 400);
 }
+
+send_billing_info($order_id, $service_id);
 
 
 /**
@@ -32,9 +31,9 @@ if ($work === 'get_info') {
  * @param $service_id
  * @return void
  */
-function send_batch_info($order_id, $service_id)
+function send_billing_info($order_id, $service_id)
 {
-    $result = get_batchkey_info_kcp($order_id, $service_id);
+    $result = get_billingkey_info_kcp($order_id, $service_id);
     if ($result === false) {
         response_json('결제정보를 가져오는데 실패했습니다.', 400);
     }
@@ -47,7 +46,7 @@ function send_batch_info($order_id, $service_id)
  * @param $service_id
  * @return array | false
  */
-function get_batchkey_info_kcp($order_id, $service_id)
+function get_billingkey_info_kcp($order_id, $service_id)
 {
     $info = get_service_detail($service_id);
     if (!is_array($info) || empty($info)) {
@@ -58,11 +57,11 @@ function get_batchkey_info_kcp($order_id, $service_id)
 
     $recurring = $info['recurring'];
     $recurring_unit = $info['recurring_unit'];
-    if($recurring_unit === 'w'){
+    if ($recurring_unit === 'w') {
         $recurring *= 7;
         $recurring_unit = 'd';
     }
-    $good_expr =  '2:' . $recurring . $recurring_unit;
+    $good_expr = '2:' . $recurring . $recurring_unit;
     $sendInfo = array();
     $sendInfo['site_cd'] = $billing->pg->getSiteCd();
     $sendInfo['ordr_idxx'] = $order_id;
