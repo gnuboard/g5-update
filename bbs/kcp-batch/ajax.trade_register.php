@@ -1,62 +1,71 @@
 <?php
 
-header('Content-type: application/json; charset=utf-8');
+/**
+ * KCP 모바일 결제시 거래등록페이지
+ *
+ */
+
 require_once dirname(__FILE__) . '/_common.php';
-require_once dirname(__FILE__) . '../../subscription/subscription_service.php';
-require_once G5_PATH . '/bbs/kcp-batch/KcpBatch.php';
-define('WON', '410'); // 원화
+require_once G5_BBS_PATH . '/subscription/subscription_service.php';
 
-$od_id = isset($_POST['od_id']) ? $_POST['od_id'] : '';  // 주문 정보
-$currency = isset($_POST['currency']) ? $_POST['currency'] : WON;  // 화폐단위
-$service_id = isset($_POST['service_id']) ? $service_id : '';  // 구독 서비스 ID
+$input = json_decode(file_get_contents('php://input'), true);
+$od_id = isset($input['od_id']) ? $input['od_id'] : '';  // 주문 정보
+$currency = isset($input['currency']) ? $input['currency'] : '';  // 화폐단위
+$service_id = isset($input['service_id']) ? $input['service_id'] : '';  // 구독 서비스 ID
 
-if (empty($service_id) || empty($od_id)) {
-    responseJson('필수 파라미터가 없습니다.', 400);
+if (empty($service_id) || empty($od_id) || empty($currency)) {
+    response_json('필수 파라미터가 없습니다.', 400);
 }
 
-$subscribeService = get_service_detail($service_id);
-$amount = $subscribeService['price'];
-$good_name = $subscribeService['name'];
-$return_url = G5_BBS_URL . '/kcp-batch/ajax.mobile_redirect.php';
+$service_info = get_service_detail($service_id);
+if (!is_array($service_info) || empty($service_info)) {
+    response_json('구독 정보를 가져오는데 실패했습니다.', 400);
+}
 
-$kcpBatch = new KcpBatch();
-$result = $kcpBatch->tradeRegister($od_id, $amount, $good_name, $return_url, 'N');
-$res_data = json_decode($result, true);
+//이벤트기간이 설정되면 이벤트가격 선택
+$payment_price = $service_info['is_event'] == 1 ? $service_info['event_price'] : $service_info['price'];
+$good_name = $service_info['name'];
+$return_url = G5_BBS_URL . '/kcp-batch/ajax.trade_register.php';
+$pg_res_data = $billing->pg->requestTradeRegister($od_id, $payment_price, $good_name, $return_url, 'N');
+$res_data = $billing->convertPgDataToCommonData($pg_res_data);
+$res_data['result_message'] =  isset($res_data['Message']) ? $res_data['Message'] : '';
+$res_data['result_code'] =  isset($res_data['Code']) ? $res_data['Code'] : '';
 /*
 ============================
 거래등록 응답정보
 ----------------------------
 */
 
-if (is_array($result)) {
+if (isset($res_data['http_code'])) {
     //error 발생.
-    responseJson($res_data['Message'], $res_data['http_code']);
+    response_json($res_data['result_message'], $res_data['http_code']);
 }
 
-if ($res_data['Code'] !== '0000') {
-    responseJson($res_data['Message'], 400);
+if ($res_data['result_code'] !== '0000') {
+    response_json($res_data['result_message'], 400);
 }
 
-$res_cd = $res_data['Code']; // 응답코드
-$res_msg = $res_data['Message']; // 응답메세지
+$res_cd  = $res_data['result_code']; // 응답코드
+$res_msg = $res_data['result_message']; // 응답메세지
 $approvalKey = $res_data['approvalKey']; // 거래등록키
 $traceNo = $res_data['traceNo']; // 추적번호
-$payUrl = $res_data['PayUrl']; // 거래등록 PAY URL
+$payUrl  = $res_data['PayUrl']; // 거래등록 PAY URL
 
 $res = array(
-    'msg'          => $res_msg,
-    'approval_key' => $approvalKey,
-    'res_cd'       => $res_cd,
-    'tno'          => $traceNo,
-    'pay_url'      => stripslashes($payUrl)
+    'result_message' => $res_msg,
+    'approval_key'  => $approvalKey,
+    'result_code'   => $res_cd,
+    'traceNo'   => $traceNo,
+    'pay_url'   => stripslashes($payUrl),
+    'od_id'     => $od_id,
+    'service_id'    => $service_id,
+    'amount' => $payment_price
 );
 
 if (PHP_VERSION_ID >= 50400) {
     //역슬래시 제거
     echo str_replace('\\/', '/', json_encode($res, JSON_UNESCAPED_UNICODE));
-    exit;
+} else {
+    echo str_replace('\\/', '/', json_encode($res));
 }
-
-
-echo str_replace('\\/', '/', to_han(json_encode($res)));
 exit;
