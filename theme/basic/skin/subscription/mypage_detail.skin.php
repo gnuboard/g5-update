@@ -8,6 +8,8 @@ if (empty($od_id)) {
     alert('주문번호가 없습니다.');
 }
 
+$qstr = '&amp;od_id='.$od_id;
+
 $convertYMDUnit1 = $billing->getUnitArray('prefix');
 $convertYMDUnit2 = $billing->getUnitArray('period');
 
@@ -55,6 +57,8 @@ foreach ($payment_list as $key => $row) {
         $payment_list[$key]['display_result_color']   = "#FF0000";
     }
 }
+
+add_stylesheet('<link rel="stylesheet" href="' . G5_THEME_CSS_URL . '/subscription/style.css">');
 ?>
 <div>
     <h2 id="container_title"><span title="결제 정보">구독&결제 정보</span></h2>
@@ -298,5 +302,11 @@ if ($billing_conf['bc_kcp_is_test'] == "0") {
         closeEvent();
     }
 </script>
+<!--<div class="page_nav_area">-->
+<?php
+//TODO total 페이지 추가해야됨.
+//    //echo get_paging(10, $page, 10, "{$_SERVER['SCRIPT_NAME']}?$qstr");
+?>
+<!--</div>-->
 <?php
 include_once G5_PATH . '/tail.php';
