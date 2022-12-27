@@ -31,7 +31,7 @@ $request_data = array(
 
 /* 데이터 출력 */
 // 전체 건수
-$total_count    = $history_model->selectTotalCountByAdmin($request_data);   
+$total_count    = $history_model->selectTotalCountByAdmin($request_data);
 $total_page     = (int)ceil($total_count / $rows);   // 전체 페이지
 $request_data['offset'] = ($page - 1) * $rows;  // 시작 열
 $request_data['rows']   = $rows;
@@ -54,7 +54,7 @@ foreach ($history_list as $i => $history) {
     } else if ($history['total_cancel'] !== null) {
         $history_list[$i]['display_result'] = "부분 취소";
         $history_list[$i]['display_result_color']   = "#AAAAAA";
-    } else if ($history['result_code'] === "0000"){
+    } else if ($history['result_code'] === "0000") {
         $history_list[$i]['display_result'] = "성공";
         $history_list[$i]['display_result_color']   = "#53C14B";
     } else {
@@ -64,11 +64,11 @@ foreach ($history_list as $i => $history) {
 }
 
 $qstr = $qstr . '&amp;page=' . $page;
-if(!empty($date)) {
+if (!empty($date)) {
     $qstr .= '&amp;date=' . $date;
 }
 
-if(!empty($date_time)) {
+if (!empty($date_time)) {
     $qstr = '&amp;date_time=' . htmlspecialchars_decode($date_time);
 }
 ?>
@@ -109,37 +109,37 @@ if(!empty($date_time)) {
                 </tr>
             </thead>
             <tbody>
-            <?php foreach ($history_list as $history) { ?>
-                <tr class="<?php echo $history['bg_class']; ?>">
-                    <td><?php echo $history['mb_side_view'] ?></td>
-                    <td>
-                        <a href="./billing_form.php?od_id=<?php echo $history['od_id'] ?>" target="_blank" style="text-decoration: underline;">
-                            <?php echo $history['od_id'] ?>
-                        </a>
-                    </td>
-                    <td class="td_mng_l">
-                        <div><?php echo $history['display_payment_count'] ?></div>
-                    </td>
-                    <td>
-                        <span class="payment_no" style="text-decoration: underline; cursor: pointer;" data-id="<?php echo $history['id']?>">
-                            <?php echo $history['payment_no'] ?>
-                        </span>
-                    </td>
-                    <td><?php echo $history['display_amount'] ?></td>
-                    <td><?php echo $history['card_name'] ?></td>
-                    <td style="color:<?php echo $history['display_result_color']?>">
-                        <strong><?php echo $history['display_result'] ?></strong>
-                    </td>
-                    <td class="td_mng_l">
-                        <?php echo $history['payment_date'] ?>
-                    </td>
-                </tr>
-            <?php
+                <?php foreach ($history_list as $history) { ?>
+                    <tr class="<?php echo $history['bg_class']; ?>">
+                        <td><?php echo $history['mb_side_view'] ?></td>
+                        <td>
+                            <a href="./billing_form.php?od_id=<?php echo $history['od_id'] ?>" target="_blank" style="text-decoration: underline;">
+                                <?php echo $history['od_id'] ?>
+                            </a>
+                        </td>
+                        <td class="td_mng_l">
+                            <div><?php echo $history['display_payment_count'] ?></div>
+                        </td>
+                        <td>
+                            <span class="payment_no" style="text-decoration: underline; cursor: pointer;" data-id="<?php echo $history['id'] ?>">
+                                <?php echo $history['payment_no'] ?>
+                            </span>
+                        </td>
+                        <td><?php echo $history['display_amount'] ?></td>
+                        <td><?php echo $history['card_name'] ?></td>
+                        <td style="color:<?php echo $history['display_result_color'] ?>">
+                            <strong><?php echo $history['display_result'] ?></strong>
+                        </td>
+                        <td class="td_mng_l">
+                            <?php echo $history['payment_date'] ?>
+                        </td>
+                    </tr>
+                <?php
                 }
                 if ($total_count == 0) {
                     echo '<tr><td colspan="9" class="empty_table">자료가 없습니다.</td></tr>';
                 }
-            ?>
+                ?>
             </tbody>
         </table>
     </div>
@@ -151,12 +151,17 @@ if(!empty($date_time)) {
 <?php echo get_paging(G5_IS_MOBILE ? $config['cf_mobile_pages'] : $config['cf_write_pages'], $page, $total_page, "{$_SERVER['SCRIPT_NAME']}?$qstr"); ?>
 
 <script>
-    $(function(){
+    $(function() {
         $("#date").datepicker({
-            changeMonth: true, changeYear: true, dateFormat: "yy-mm-dd", showButtonPanel: true, yearRange: "c-99:c+99", maxDate: "+0d"
+            changeMonth: true,
+            changeYear: true,
+            dateFormat: "yy-mm-dd",
+            showButtonPanel: true,
+            yearRange: "c-99:c+99",
+            maxDate: "+0d"
         });
     })
 </script>
 
 <?php
-include_once (G5_ADMIN_PATH.'/admin.tail.php');
+include_once(G5_ADMIN_PATH . '/admin.tail.php');

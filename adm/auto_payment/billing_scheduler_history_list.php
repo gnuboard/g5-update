@@ -8,7 +8,7 @@ $g5['title'] = '자동결제 실행기록';
 include_once G5_ADMIN_PATH . '/admin.head.php';
 include_once G5_PLUGIN_PATH . '/jquery-ui/datepicker.php';
 
-if(!isset($billing_conf['bc_pg_code'])){
+if (!isset($billing_conf['bc_pg_code'])) {
     alert('정기 결제 설정을 먼저 해주세요.', 'config_form.php');
     exit;
 }
@@ -38,7 +38,7 @@ $request_data = array(
 
 /* 데이터 출력 */
 // 전체 건수
-$total_count    = $scheduler_model->selectTotalCount($request_data);   
+$total_count    = $scheduler_model->selectTotalCount($request_data);
 $total_page     = ceil($total_count / $rows);   // 전체 페이지
 $request_data['offset'] = ($page - 1) * $rows;  // 시작 열
 $request_data['rows']   = $rows;
@@ -55,23 +55,23 @@ define('STATE_FORCE_STOP', 3); // 스케쥴링 작업 강제종료
 foreach ($history_list as $i => $history) {
     $history_list[$i]['bg_class']  = 'bg' . ($i % 2);
     switch ($history['state']) {
-        case STATE_SUCCESS :
+        case STATE_SUCCESS:
             $history_list[$i]['display_state'] = "성공";
-            break;        
-        case STATE_FAIL :
+            break;
+        case STATE_FAIL:
             $history_list[$i]['display_state'] = "실패";
-            break;        
-        case STATE_PART_FAIL :
+            break;
+        case STATE_PART_FAIL:
             $history_list[$i]['display_state'] = "일부 실패";
             break;
-        case STATE_CONTINUE :
+        case STATE_CONTINUE:
             $history_list[$i]['display_state'] = "자동결제 작업 진행중";
             break;
     }
 }
 
 $qstr = $qstr . '&amp;page=' . $page;
-if(!empty($sdate) && !empty($edate)){
+if (!empty($sdate) && !empty($edate)) {
     $qstr = $qstr . '&amp;sdate=' . $sdate . '&amp;edate=' . $edate;
 }
 ?>
@@ -82,12 +82,12 @@ if(!empty($sdate) && !empty($edate)){
 </div>
 
 <form name="flist" class="local_sch03 local_sch" autocomplete="off">
-        <label for="sfl" class="sound_only">검색 날짜</label>
-        <strong>검색 날짜</strong>
-        <input type="text" id="sdate" name="sdate" value="<?php echo $sdate ?>" class="frm_input" size="10" maxlength="10">
-        ~
-        <input type="text" id="edate" name="edate" value="<?php echo $edate ?>" class="frm_input" size="10" maxlength="10">
-        <input type="submit" value="검색" class="btn_submit">
+    <label for="sfl" class="sound_only">검색 날짜</label>
+    <strong>검색 날짜</strong>
+    <input type="text" id="sdate" name="sdate" value="<?php echo $sdate ?>" class="frm_input" size="10" maxlength="10">
+    ~
+    <input type="text" id="edate" name="edate" value="<?php echo $edate ?>" class="frm_input" size="10" maxlength="10">
+    <input type="submit" value="검색" class="btn_submit">
 </form>
 
 <form id="form_scheduler_history_list" name="form_scheduler_history_list" method="post">
@@ -117,33 +117,33 @@ if(!empty($sdate) && !empty($edate)){
             </thead>
             <tbody>
 
-            <?php
-            foreach ($history_list as $key => $history) { ?>
-                <tr class="<?php echo $history['bg_class']; ?>">
-                    <td class="td_chk2">
-                        <input type="checkbox" name="chk[]" value="<?php echo $key ?>" id="chk_<?php echo $key; ?>">
-                        <input type="hidden" name="id[<?php echo $key; ?>]" value="<?php echo $history['id']?>">
-                    </td>
-                    <td class="td_mng_l">
-                        <label class="sound_only"><?php echo $history['display_state']; ?></label>
-                        <?php echo $history['display_state']; ?>
-                    </td>
-                    <td><?php echo $history['start_time']; ?></td>
-                    <td><?php echo number_format($history['success_count']); ?></td>
-                    <td><?php echo number_format($history['fail_count']); ?></td>
-                    <td><?php echo $history['ip']; ?></td>
-                    <td class="td_mng_l">
-                        <a href="./billing_history_list.php?date_time=<?php echo $history['start_time']; ?>" class="btn btn_03">
-                            결제이력 확인
-                        </a>
-                    </td>
-                </tr>
-            <?php
+                <?php
+                foreach ($history_list as $key => $history) { ?>
+                    <tr class="<?php echo $history['bg_class']; ?>">
+                        <td class="td_chk2">
+                            <input type="checkbox" name="chk[]" value="<?php echo $key ?>" id="chk_<?php echo $key; ?>">
+                            <input type="hidden" name="id[<?php echo $key; ?>]" value="<?php echo $history['id'] ?>">
+                        </td>
+                        <td class="td_mng_l">
+                            <label class="sound_only"><?php echo $history['display_state']; ?></label>
+                            <?php echo $history['display_state']; ?>
+                        </td>
+                        <td><?php echo $history['start_time']; ?></td>
+                        <td><?php echo number_format($history['success_count']); ?></td>
+                        <td><?php echo number_format($history['fail_count']); ?></td>
+                        <td><?php echo $history['ip']; ?></td>
+                        <td class="td_mng_l">
+                            <a href="./billing_history_list.php?date_time=<?php echo $history['start_time']; ?>" class="btn btn_03">
+                                결제이력 확인
+                            </a>
+                        </td>
+                    </tr>
+                <?php
                 }
                 if ($total_count == 0) {
                     echo '<tr><td colspan="6" class="empty_table">자료가 없습니다.</td></tr>';
                 }
-            ?>
+                ?>
             </tbody>
         </table>
     </div>
@@ -156,22 +156,26 @@ if(!empty($sdate) && !empty($edate)){
 <?php echo get_paging(G5_IS_MOBILE ? $config['cf_mobile_pages'] : $config['cf_write_pages'], $page, $total_page, "{$_SERVER['SCRIPT_NAME']}?$qstr&amp;page="); ?>
 
 <script>
-    $(function(){
+    $(function() {
         $("#sdate, #edate").datepicker({
-            changeMonth: true, changeYear: true, dateFormat: "yy-mm-dd", showButtonPanel: true, yearRange: "c-99:c+99", maxDate: "+0d"
+            changeMonth: true,
+            changeYear: true,
+            dateFormat: "yy-mm-dd",
+            showButtonPanel: true,
+            yearRange: "c-99:c+99",
+            maxDate: "+0d"
         });
     })
 
 
-    function run_payment_scheduler()
-    {
+    function run_payment_scheduler() {
         $.ajax(g5_bbs_url + '/subscription/ajax.payment_scheduler.php', {
             type: 'post',
-            success: function () {
+            success: function() {
                 alert("결제 스케쥴러 시작되었습니다.");
                 location.reload();
             },
-            error: function () {
+            error: function() {
                 alert('결제 스케쥴러 실행이 실패했습니다.')
                 location.reload();
             }
@@ -180,4 +184,4 @@ if(!empty($sdate) && !empty($edate)){
 </script>
 
 <?php
-include_once (G5_ADMIN_PATH.'/admin.tail.php');
+include_once G5_ADMIN_PATH . '/admin.tail.php';
