@@ -23,22 +23,27 @@ $billing_info = $information_model->selectOneByOrderId($od_id);
 if (!$billing_info || $mb_id != $billing_info['mb_id']) {
     response_json('구독정보를 찾을 수 없습니다.', 400);
 }
-/** 결제이력 조회 */ 
+/** 결제이력 조회 */
 $history_info = $history_model->selectOneById($history_id);
 if (!$history_info || $mb_id != $history_info['mb_id']) {
     response_json('이전 결제정보를 찾을 수 없습니다.', 400);
 }
 /** 필수 파라미터 체크 */
-if (empty($history_info['billing_key']) || empty($history_info['amount']) || empty($history_info['od_id'])) {
+if (empty($history_info['billing_key']) || empty($history_info['od_id']) || !isset($history_info['amount'])) {
     response_json('필수 파라미터가 없습니다.', 400);
 }
 /* ============================================================================== */
 /* =  결제 요청                                                                  = */
 /* = -------------------------------------------------------------------------- = */
-$data = array_merge($billing_info, $history_info);
-$data['currency'] = $billing_conf['bc_kcp_currency'];
-$res_data = $billing->pg->requestBilling($data);
-$res_data = $billing->convertPgDataToCommonData($res_data);
+if ((int)$history_info['amount'] > 0) {
+    $data = array_merge($billing_info, $history_info);
+    $data['currency'] = $billing_conf['bc_kcp_currency'];
+    $res_data = $billing->pg->requestBilling($data);
+    $res_data = $billing->convertPgDataToCommonData($res_data);
+} else {
+    $res_data['result_code'] = '0000';
+    $res_data['result_message'] = '정상처리 (0원 이벤트)';
+}
 /* ============================================================================== */
 /* =  응답정보                                                                     = */
 /* = -------------------------------------------------------------------------- = */
@@ -46,32 +51,30 @@ $res_data = $billing->convertPgDataToCommonData($res_data);
 if (isset($res_data['http_code'])) {
     response_json($res_data['result_message'], $res_data['http_code']);
 }
+
 $res_data['od_id']              = $history_info['od_id'];
 $res_data['mb_id']              = $history_info['mb_id'];
 $res_data['amount']             = $history_info['amount'];
 $res_data['billing_key']        = $history_info['billing_key'];
 $res_data['payment_count']      = $history_info['payment_count'];
 $res_data['payment_date']       = date('Y-m-d H:i:s'); // @todo 응답받은 시간으로 입력필요
-$res_data['expiration_date']    = $billing->nextPaymentDate($billing_info['start_date'], $res_data['payment_date'], $billing_info['recurring'], $billing_info['recurring_unit']);
-/* ============================================================================== */
-/* =  로그파일 생성                                                              = */
-/* = -------------------------------------------------------------------------- = */
-// 작업예정
-
+// 다음결제일
+$next_payment_date = $billing->nextPaymentDate($billing_info['start_date'], $res_data['payment_date'], $billing_info['recurring'], $billing_info['recurring_unit']);
+// 만료일
+$res_data['expiration_date']    = $next_payment_date . ' 23:59:59';
 /* ============================================================================== */
 /* =  결제 결과처리                                                              = */
 /* ============================================================================== */
-$result = $history_model->insert($res_data);
-if ($res_data['result_code'] === "0000") {
-    if (!$result) {
+$history_result = $history_model->insert($res_data);
+if ($res_data['result_code'] === "0000" && $history_result) {
+    $info_result = $information_model->updateNextPaymentDate($od_id, $next_payment_date);
+    if (!$info_result) {
         $bSucc = false;
-    } else {
-        $result = $information_model->updateNextPaymentDate($od_id, date('Y-m-d', strtotime($res_data['expiration_date'])));
-        if (!$result) {
-            $bSucc = false;
-        }
     }
+} else {
+    $bSucc = false;
 }
+
 /*
 ==========================================================================
 승인 결과 DB 처리 실패시 : 자동취소
@@ -89,13 +92,13 @@ if ($res_data['result_code'] === '0000' && $bSucc === false) {
     $reason = '가맹점 DB 처리 실패(자동취소)';
     $cancel_res = $billing->pg->requestCancelBilling($res_data['payment_no'], $reason);
     $cancel_res = $billing->convertPgDataToCommonData($cancel_res);
-    
+
     // 취소이력 저장
     $cancel_res['od_id']            = $od_id;
     $cancel_res['cancel_reason']    = $reason;
     $cancel_res['cancel_amount']    = $res_data['amount'];
     $cancel_model->insert($cancel_res);
-    
+
     if ($cancel_res['result_code'] !== '0000') {
         response_json('결제 취소가 실패했습니다.' . $cancel_res['result_message'], 401);
     }

@@ -14,13 +14,13 @@ $payment_no     = isset($_POST['payment_no']) ? preg_replace('/[^0-9]/', '', $_P
 $od_id          = isset($_POST['od_id']) ? clean_xss_tags($_POST['od_id']) : '';
 $id             = isset($_POST['id']) ? preg_replace('/[^0-9]/', '', $_POST['id']) : '';
 
-if(empty($od_id) || $id === '' || empty($payment_no)) {
+if (empty($od_id) || $id === '' || empty($payment_no)) {
     alert('필수 파라미터가 없습니다');
 }
 
 $history = $history_model->selectOneById($id);
 
-if(empty($history)) {
+if (empty($history)) {
     alert('결제 내역이 없습니다.');
 }
 
@@ -49,7 +49,7 @@ $cancel_res['cancel_amount']    = $cancel_amount;
 $cancel_model->insert($cancel_res);
 
 echo '<script>
-alert("'.$cancel_res['result_message'].'");
+alert("' . $cancel_res['result_message'] . '");
 window.close(); 
 opener.document.location.reload();
 </script>';

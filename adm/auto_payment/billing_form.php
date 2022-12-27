@@ -72,7 +72,7 @@ foreach ($history_list as $i => $history) {
     $history_list[$i]['is_btn_cancel']          = false;
     $history_list[$i]['display_cancel_amount']  = number_format($cancel_amount) . '원';
 
-    if ($history['total_cancel'] === $history['amount']) {
+    if ($history['total_cancel'] === $history['amount'] && $history['total_cancel'] > 0) {
         $history_list[$i]['display_result'] = "환불";
         $history_list[$i]['display_result_color']   = "#AAAAAA";
     } else if ($history['total_cancel'] !== null) {
@@ -82,7 +82,9 @@ foreach ($history_list as $i => $history) {
     } else if ($history['result_code'] === "0000") {
         $history_list[$i]['display_result'] = "성공";
         $history_list[$i]['display_result_color']   = "#53C14B";
-        $history_list[$i]['is_btn_cancel'] = true;
+        if ((int)$history['amount'] > 0) {
+            $history_list[$i]['is_btn_cancel'] = true;
+        }
     } else {
         $history_list[$i]['display_result'] = "실패<br>" . $history['result_message'];
         $history_list[$i]['display_result_color']   = "#FF0000";
@@ -441,11 +443,11 @@ if ($billing_conf['bc_kcp_is_test'] == "0") {
                         }
                     },
                     error: function(res) {
-                        if (res.responseJSON.msg) {
-                            alert(res.responseJSON.msg);
-                        } else {
-                            alert("오류 발생");
+                        let message = '';
+                        if (res.responseJSON != undefined && res.responseJSON.result_message != undefined) {
+                            message = res.responseJSON.result_message;
                         }
+                        alert('[결제요청 실패] ' + message);
                     }
                 });
             }

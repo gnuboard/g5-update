@@ -69,13 +69,8 @@ for ($idx = 0; $idx < $billing_total_page; $idx++) {
             strtotime($today_payment['event_expiration_date']) > strtotime(G5_TIME_YMD)) {
             $price = $today_payment['event_price'];
         } else {
-            //구독만료기간이 있는 상품.
-            if (!$billing->isNullByDate($today_payment['end_date'])) {
-                $price = $today_payment['price'];
-            } //만료기간이 설정되지 않음 상품, 변동된 가격을 따라 결제한다.
-            else {
-                $price = $service_price->selectCurrentPrice($today_payment['service_id']);
-            }
+            // 구독만료기간(결제종료일) 유무에 따라 반영되는 가격이 다름.
+            $price = $billing->getBillingPrice($today_payment['od_id'], $today_payment);
         }
 
         if ($price === 0) {

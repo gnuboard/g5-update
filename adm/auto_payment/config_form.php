@@ -11,7 +11,7 @@ require_once G5_ADMIN_PATH . '/admin.head.php';
 if (empty($billing_conf)) {
     $column_list = $config_model->selectColumnList();
     foreach ($column_list as $column) {
-        $billing_conf[$column['column_name']] = ''; 
+        $billing_conf[$column['column_name']] = '';
     }
 }
 
@@ -43,8 +43,19 @@ $pg_anchor = '<ul class="anchor">
 
 ?>
 <style>
-.kcp_billing_file { display: inline-block; padding: 0px 10px; background: #226C8B; color: #fff; font-weight: normal; text-decoration: none; border-radius: 10px; }
-a.help_link {text-decoration: underline;}
+    .kcp_billing_file {
+        display: inline-block;
+        padding: 0px 10px;
+        background: #226C8B;
+        color: #fff;
+        font-weight: normal;
+        text-decoration: none;
+        border-radius: 10px;
+    }
+
+    a.help_link {
+        text-decoration: underline;
+    }
 </style>
 
 <form name="fconfig" id="fconfig" action="./config_update.php" onsubmit="return fconfig_check(this)" method="post" enctype="multipart/form-data">
@@ -129,8 +140,8 @@ a.help_link {text-decoration: underline;}
                                             ※ 테스트 서비스 인증서 값은 <a class='help_link' href='https://developer.kcp.co.kr/page/download' target='_blank'>다운로드 자료실</a>을 참고해주시기 바랍니다."); ?>
                             <input type="file" name="bc_kcp_cert_file">
                             <?php if (!empty($billing_conf['bc_kcp_cert'])) { ?>
-                            <input type="hidden" name="bc_kcp_cert" value="<?php echo $billing_conf['bc_kcp_cert'] ?>">
-                            <span class="kcp_billing_file"><?php echo $billing_conf['bc_kcp_cert'] ?> 업로드 완료</span>
+                                <input type="hidden" name="bc_kcp_cert" value="<?php echo $billing_conf['bc_kcp_cert'] ?>">
+                                <span class="kcp_billing_file"><?php echo $billing_conf['bc_kcp_cert'] ?> 업로드 완료</span>
                             <?php } ?>
                         </td>
                     </tr>
@@ -143,8 +154,8 @@ a.help_link {text-decoration: underline;}
                                             ※ 테스트 개인키는 <a class='help_link' href='https://developer.kcp.co.kr/page/download' target='_blank'>다운로드 자료실</a>을 확인해주세요."); ?>
                             <input type="file" name="bc_kcp_prikey_file">
                             <?php if (!empty($billing_conf['bc_kcp_prikey'])) { ?>
-                            <input type="hidden" name="bc_kcp_prikey" value="<?php echo $billing_conf['bc_kcp_prikey'] ?>">
-                            <span class="kcp_billing_file"><?php echo $billing_conf['bc_kcp_prikey'] ?> 업로드 완료</span>
+                                <input type="hidden" name="bc_kcp_prikey" value="<?php echo $billing_conf['bc_kcp_prikey'] ?>">
+                                <span class="kcp_billing_file"><?php echo $billing_conf['bc_kcp_prikey'] ?> 업로드 완료</span>
                             <?php } ?>
                         </td>
                     </tr>

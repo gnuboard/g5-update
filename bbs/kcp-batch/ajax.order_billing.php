@@ -47,44 +47,45 @@ $bSucc = false;
 //이벤트기간이 설정되면 이벤트가격 선택
 $payment_price = ($service_info['is_event'] == '1' && !empty($service_info['event_period'])) ? $service_info['event_price'] : $service_info['price'];
 
-$request_billing_data = array(
-    'cust_ip' => $customer_ip,
-    'amount' => $payment_price,
-    'currency' => $currency,
-    'od_id' => $od_id,
-    'name' => $service_name,
-    'mb_name' => $mb_name,
-    'mb_email' => $mb_email,
-    'mb_hp' => $mb_hp,
-    'billing_key' => $billing_key
-);
+if ((int)$payment_price !== 0) {
+    $request_billing_data = array(
+        'cust_ip' => $customer_ip,
+        'amount' => $payment_price,
+        'currency' => $currency,
+        'od_id' => $od_id,
+        'name' => $service_name,
+        'mb_name' => $mb_name,
+        'mb_email' => $mb_email,
+        'mb_hp' => $mb_hp,
+        'billing_key' => $billing_key
+    );
 
-/* ============================================================================== */
-/* =  결제 요청                                                                  = */
-/* = -------------------------------------------------------------------------- = */
-$pg_res_data = $billing->pg->requestBilling($request_billing_data);
-$pg_res_data = $billing->convertPgDataToCommonData($pg_res_data);
-if (isset($pg_res_data['http_code'])) {
-    //pg 사 통신에러 응답.
-    response_json($pg_res_data['result_message'], $pg_res_data['http_code']);
-}
-
-/* ============================================================================== */
-/* =  로그파일 생성                                                              = */
-/* = -------------------------------------------------------------------------- = */
-
-
-/* ============================================================================== */
-/* =  pg 사 응답정보                                                                   = */
-/* = -------------------------------------------------------------------------- = */
-$result_code = $pg_res_data['result_code'];
-$result_message = $pg_res_data['result_message'];
-
-if ($result_code === '0000') {
-    if ($payment_price == $pg_res_data['amount']) { //결제된 금액과 서비스 금액 같은지 확인.
-        $bSucc = true;
+    /* ============================================================================== */
+    /* =  결제 요청                                                                  = */
+    /* = -------------------------------------------------------------------------- = */
+    $pg_res_data = $billing->pg->requestBilling($request_billing_data);
+    $pg_res_data = $billing->convertPgDataToCommonData($pg_res_data);
+    if (isset($pg_res_data['http_code'])) {
+        //pg 사 통신에러 응답.
+        response_json($pg_res_data['result_message'], $pg_res_data['http_code']);
     }
+    /* ============================================================================== */
+    /* =  pg 사 응답정보                                                             = */
+    /* = -------------------------------------------------------------------------- = */
+    $result_code = $pg_res_data['result_code'];
+    $result_message = $pg_res_data['result_message'];
+    
+    if ($result_code === '0000') {
+        if ($payment_price == $pg_res_data['amount']) { //결제된 금액과 서비스 금액 같은지 확인.
+            $bSucc = true;
+        }
+    }
+} else {
+    $bSucc = true;
+    $result_code = $pg_res_data['result_code'] = '0000';
+    $result_message = $pg_res_data['result_message'] = '0원';
 }
+
 //부정행위, 결제 실패도 기록으로 남기기 위해 다음 단계로 진행.
 
 /* ==============================================================================
