@@ -4,6 +4,59 @@
 
 <br>
 
+## **데이터베이스 테이블**
+| **Table Name** | **설명** |
+|:---:|:---:|
+| `billing_config` | 자동결제 설정 및 기록 |
+| `billing_service` | 자동결제 서비스(구독 서비스) 정보 |
+| `billing_service_price` | 자동결제 서비스(구독 서비스) 가격정보 |
+| `billing_information` | 자동결제 정보 |
+| `billing_key_history` | 빌링키(결제키) 발급 기록 |
+| `billing_history` | 자동결제 이력 |
+| `billing_cancel` | 자동결제 취소 이력 |
+| `billing_scheduler_history` | 자동결제 스케쥴러 실행 기록 |
+
+### **참고사항**
+- KCP 결제요청 성공코드(`result_code`)는 문자열 '0000' 입니다.
+
+
+## **디렉토리 구조**
+MVC Pattern(Model-View-Controller)에서 View가 Controller와 병합된 구조를 가지고 있습니다.
+
+### **1. Model**
+- `lib/billing/{TableName}Model.php`
+
+### **2. Controller**
+- `bbs/kcp-batch`
+  - `bbs/kcp-batch/ajax.get_billing_key.php` - 빌링키 발급후 리턴
+  - `bbs/kcp-batch/ajax.set_billing_info.php` - 빌링키 발급 요청 시, 필요한 데이터 수신
+  - `bbs/kcp-batch/ajax.order_billing.php` - 구독 상품 결제처리 및 정보/이력 저장
+  - `bbs/kcp-batch/ajax.payment_scheduler.php` - 자동결제 스케쥴러 실행 파일
+  - `bbs/kcp-batch/ajax.trade_register.php` - 모바일 거래등록 (가격이 결정된 이후에 거래등록 가능)
+- `bbs/subscription`
+  - `bbs/subscription/ajax.mypage.php` - 마이페이지 관련 처리 (구독상품 목록/상세 조회, 구독취소)
+- `adm/auto-payment/ajax.{FileName}.php`
+- `adm/auto-payment/{FileName}_update.php`
+
+### **3. View + Controller**
+스킨에서는 /bbs/subscription/subscription_service 서비스의 함수들을 호출하여 사용자가 요구하는 데이터를 입출력합니다.
+- `theme/basic/skin/subscription` (`G5_THEME_PATH . '/skin/subscription'`)
+- `theme/basic/mobile/skin/subscription` (`G5_THEME_MOBILE_PATH . '/skin/subscription'`) [개발예정]
+- `adm/auto-payment/`에서 Controller를 제외한 모든 php 파일
+
+### **참고사항**
+- 자동결제 ajax 파일들은 요청에 대해 json 형식의 데이터를 응답합니다.
+```json
+// 요청 성공 시, ajax에 결과코드/메시지를 제외한 데이터만 출력되는 경우가 있습니다.
+// 요청 실패 시, HTTP response status codes 400과 함께 결과코드/메시지가 출력됩니다.
+{
+  "result_code": "결과 코드",
+  "result_message": "결과 메시지"
+}
+```
+
+<br>
+
 ## **설치**
 
 ### **1. 소스코드**
@@ -140,83 +193,3 @@ crontab -e
 **2. 우측 상단의 '결제 크론 수동실행' 버튼을 클릭합니다.**
 
 **3. 목록에서 실행결과를 확인합니다.**
-
-
-### 참고 사항 ###
-* KCP 결제 성공코드는 문자열 '0000'
-* 스킨에서는 /bbs/subscription/subscription_service 서비스의 함수들을 호출하여 사용자가 요구하는 데이터를 입출력합니다.
-* MVC 구조입니다 
-* M lib/bbs 의 테이블 모델 클래스, bbs/subscription/subscription_service.php 구독 서비스
-* V: 스킨 , 테마폴더/subscription/이하 스킨파일
-* C ajax, bbs/subscirption/mypage.php , bbs/subscription/view.php : 서비스 컨트롤러
-* 기타 kcp 결제 요청 bbs/kcp-batch/이하 파일
-
-### DB 테이블 ###
-* billing_cancel 결제 취소이력
-* billing_history 결제 이력
-* billing_info 현재 결제 상태
-* billing_key_history 빌링키(결제키) 발급이력
-* billing_schedule 결제 스케쥴 실행이력
-* billing_service 결제 서비스정보
-* billing_service_price 결제 서비스별 가격정보 변동사항 기록
-* billing_config 결제플러그인 설정정보 및 설정변경 이력(site_cd, kcp 그룹 id 등)
-
-### api ###
-* 공통응답 에러시
-  * http 상태코드 400
-  * PG 사 서버에러, 연결 불가 할 때 400이 외의 코드를 출력할 수도 있음.
-  * json
-  * {"result_message":"에러메시지"
-     "result_code":"에러코드"
-    }
-
-  * 개별사항 api 에 따라 성공시 데이터만 출력
-
-* POST bbs/kcp-batch/ajax.get_billing_key
-  * 빌링키 발급후 리턴 
-  * 필수 파라미터
-  * tran_cd
-  * enc_data
-  * enc_info
-  * od_id 
-  * card_mask_no  결제폼에서 batch_cardno_return_yn 설정시 카드번호 리턴여부
-  * 필수파라미터 없을 때 http 상태코드 400
-
-* POST bbs/kcp-batch/ajax.set_billing_info
-  * 구독상품 정보 및 빌링키 발급받을때 필요한 데이터 수신 (폼으로 헤도 되지만 ajax 환경이 필요하면 사용)
-  * 필수 파라미터
-  * od_id
-  * service_id
-
-* POST bbs/kcp-batch/ajax.order_billing 
-  * 구독 상품 결제 처리
-  * 발급된 빌링키를 가지고 pg 사에 결제 요청, billing_information 에 결제 정보저장, billing_history 에 결제이력 저장
-  * 필수 파라미터
-  * od_id
-  * service_id
-  * billing_key
-  * currency (통화단위 원화)
-  * 필수파라미터 없을 때 http 상태코드 400
-
-* POST bbs/kcp-batch/ajax.payment_scheduler
-  * 스케쥴러 실행 api
-
-* POST bbs/kcp-batch/ajax.trade_register
-  * 모바일 거래등록 (가격이 결정된 이후에 거래등록해야 됩니다.)
-  * 필수 파라미터
-  * od_id
-  * service_id
-  * currency (통화단위 원화)
-
-* GET bbs/subscription/ajax.mypage
-  * 마이페이지
-  * 필수 파라미터
-  * w work_mode 
-
-  * w 값에 따라 다릅니다.
-  * w: all : 사용자가 구독중인 상품을 조회 
-  * w: id : 사용자가 구독중인 상품 한건의 기록을 조회
-
-* POST bbs/subscription/ajax.mypage
-  * w: cancel : 사용자가 구독중인 상품을 취소
-  
