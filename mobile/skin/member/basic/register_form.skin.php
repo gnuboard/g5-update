@@ -46,6 +46,9 @@ if ($config['cf_cert_use'] && ($config['cf_cert_simple'] || $config['cf_cert_ipi
         <h2>개인정보 입력</h2>
         <ul>
             <li>
+                <button type="button" id="mobile_bio" class="btn_frmline btn" style="display:none;">간편로그인</button>
+            </li>
+            <li>
                 <?php 
                 $desc_name = '';
                 $desc_phone = '';
@@ -513,5 +516,45 @@ if ($config['cf_cert_use'] && ($config['cf_cert_simple'] || $config['cf_cert_ipi
 		}
 		$(this).siblings('.fileName').val(filename);
 	});
+    
+    /* Send javascript event to flutter */
+    $(function(){
+        // check mobile device & display biometric button
+        if (typeof biometric !== "undefined") {
+            biometric.postMessage('checkDeivce');
+
+            $("#mobile_bio").on('click', function(){
+                biometric.postMessage('applyBiometric');
+            })
+        }
+    });
+
+    /* Receive javascript event from flutter */
+    function checkDeivceResult(result) {
+        if (result) {
+            $("#mobile_bio").show();
+        } else {
+            $("#mobile_bio").hide();
+        }
+    }
+
+    function setBioLogin(uuid, name = '') {
+        $.ajax({
+            type: "POST",
+            url: g5_url + "/lib/flutter/ajax.set_biometric.php",
+            data: { uuid: uuid, device_name: name  },
+            dataType: "json",
+            success: function(data) {
+                if (data.result) {
+                    console.log(data.message);
+                } else {
+                    console.log(data.message);
+                }
+            },
+            error: function(a, b, c) {
+                console.log("error");
+            }
+        });
+    }
     </script>
 </div>

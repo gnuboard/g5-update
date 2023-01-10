@@ -22,6 +22,7 @@ add_stylesheet('<link rel="stylesheet" href="'.$member_skin_url.'/style.css">', 
             <label for="login_auto_login"><span></span> 자동로그인</label>
         </div>
 		<button type="submit" class="btn_submit">로그인</button>
+        <button type="button" class="btn_submit" id="btn_bio_login" style="display:none; background:darkgray;">지문/얼굴인식 로그인</button>
     </div>
 
     <?php
@@ -124,5 +125,42 @@ function flogin_submit(f)
         return true;
     }
     return false;
+}
+
+/* Send javascript event to flutter */
+$(function(){
+    if (typeof biometric !== "undefined") {
+        biometric.postMessage('checkDeivce');
+    }
+    $("#btn_bio_login").on('click', function(){
+        biometric.postMessage('loginBiometric');
+    });
+});
+
+/* Receive javascript event from flutter */
+function checkDeivceResult(result) {
+    if (result) {
+        $("#btn_bio_login").show();
+    } else {
+        $("#btn_bio_login").hide();
+    }
+}
+function bioLogin(uuid) {
+    $.ajax({
+        type: "POST",
+        url: g5_url + "/lib/flutter/ajax.check_biometric.php",
+        data: { uuid: uuid },
+        dataType: "json",
+        success: function(data) {
+            if (data.result) {
+                location.href = g5_url;
+            } else {
+                console.log(data.message);
+            }
+        },
+        error: function(a, b, c) {
+            console.log("error");
+        }
+    });
 }
 </script>

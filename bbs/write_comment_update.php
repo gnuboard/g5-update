@@ -57,8 +57,8 @@ else
 
 // 세션의 시간 검사
 // 4.00.15 - 댓글 수정시 연속 게시물 등록 메시지로 인한 오류 수정
-if ($w == 'c' && !$is_admin && isset($_SESSION['ss_datetime']) && $_SESSION['ss_datetime'] >= (G5_SERVER_TIME - $config['cf_delay_sec']))
-    alert('너무 빠른 시간내에 게시물을 연속해서 올릴 수 없습니다.');
+// if ($w == 'c' && !$is_admin && isset($_SESSION['ss_datetime']) && $_SESSION['ss_datetime'] >= (G5_SERVER_TIME - $config['cf_delay_sec']))
+//     alert('너무 빠른 시간내에 게시물을 연속해서 올릴 수 없습니다.');
 
 set_session('ss_datetime', G5_SERVER_TIME);
 
@@ -269,6 +269,13 @@ if ($w == 'c') // 댓글 입력
                     where wr_id = '$comment_id' ";
         sql_query($sql);
     }
+
+    // 푸시메시지 발송
+    //todo 개별 푸시
+    $noti_data = set_notification_data('/topics/all', "{$member['mb_nick']}님이 내 글에 댓글을 남기셨습니다.", cut_str(get_text($wr_content), 70));
+    send_fcm($noti_data);
+    // $tmp_enable_pushmsg = true;
+    // array_push($push_update_id, $tmp_mb_id);
 }
 else if ($w == 'cu') // 댓글 수정
 {
