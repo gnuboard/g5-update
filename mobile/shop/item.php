@@ -87,7 +87,7 @@ $sql = " select it_id, it_name from {$g5['g5_shop_item_table']}
           limit 1 ";
 $row = sql_fetch($sql);
 if (isset($row['it_id']) && $row['it_id']) {
-    $next_title = '다음 상품 <span>'.$row['it_name'].'</span>';
+    $next_title = '다음상품 <span>'.$row['it_name'].'</span>';
     $next_href = '<a href="'.shop_item_url($row['it_id']).'" id="siblings_next">';
     $next_href2 = '</a>';
 } else {
@@ -197,7 +197,7 @@ include_once(G5_MSHOP_PATH.'/_head.php');
 include_once(G5_SHOP_PATH.'/settle_naverpay.inc.php');
 
 // 상단 HTML
-echo '<div id="sit_hhtml">'.conv_content($it['it_mobile_head_html'], 1).'</div>';
+echo run_replace('shop_it_mobile_head_html', '<div id="sit_hhtml">'.conv_content($it['it_mobile_head_html'], 1).'</div>', $it);
 ?>
 
 <?php if($is_orderable) { ?>
@@ -222,6 +222,6 @@ else
 
 <?php
 // 하단 HTML
-echo conv_content($it['it_mobile_tail_html'], 1);
+echo run_replace('shop_it_mobile_tail_html', conv_content($it['it_mobile_tail_html'], 1), $it);
 
 include_once(G5_MSHOP_PATH.'/_tail.php');
