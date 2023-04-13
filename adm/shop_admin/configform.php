@@ -202,6 +202,19 @@ if( ! isset($default['de_easy_pay_services']) ){
     sql_query($sql, false);
 }
 
+// KG 이니시스 iniapi_key 추가
+if( ! isset($default['de_inicis_iniapi_key']) ){
+    $sql = "ALTER TABLE `{$g5['g5_shop_default_table']}` 
+            ADD COLUMN `de_inicis_iniapi_key` VARCHAR(30) NOT NULL DEFAULT '' AFTER `de_inicis_sign_key`; ";
+    sql_query($sql, false);
+}
+
+if( ! isset($default['de_inicis_iniapi_iv']) ){
+    $sql = "ALTER TABLE `{$g5['g5_shop_default_table']}` 
+            ADD COLUMN `de_inicis_iniapi_iv` VARCHAR(30) NOT NULL DEFAULT '' AFTER `de_inicis_iniapi_key`; ";
+    sql_query($sql, false);
+}
+
 if( function_exists('pg_setting_check') ){
     pg_setting_check(true);
 }
@@ -2000,32 +2013,6 @@ if($default['de_iche_use'] || $default['de_vbank_use'] || $default['de_hp_use'] 
             echo '<script>'.PHP_EOL;
             echo 'alert("SOCKET 관련 함수를 사용할 수 없습니다.\n서버 관리자에게 문의해 주십시오.");'.PHP_EOL;
             echo '</script>'.PHP_EOL;
-        }
-
-        $log_path = G5_SHOP_PATH.'/inicis/log';
-        
-        try {
-            if( ! is_dir($log_path) && is_writable(G5_SHOP_PATH.'/inicis/') ){
-                @mkdir($log_path, G5_DIR_PERMISSION);
-                @chmod($log_path, G5_DIR_PERMISSION);
-            }
-        } catch(Exception $e) {
-        }
-
-        if(!is_dir($log_path)) {
-            echo '<script>'.PHP_EOL;
-            echo 'alert("'.str_replace(G5_PATH.'/', '', G5_SHOP_PATH).'/inicis 폴더 안에 log 폴더를 생성하신 후 쓰기권한을 부여해 주십시오.\n> mkdir log\n> chmod 707 log");'.PHP_EOL;
-            echo '</script>'.PHP_EOL;
-        } else {
-            if(!is_writable($log_path)) {
-                echo '<script>'.PHP_EOL;
-                echo 'alert("'.str_replace(G5_PATH.'/', '',$log_path).' 폴더에 쓰기권한을 부여해 주십시오.\n> chmod 707 log");'.PHP_EOL;
-                echo '</script>'.PHP_EOL;
-            } else {
-                if( function_exists('check_log_folder') && is_writable($log_path) ){
-                    check_log_folder($log_path);
-                }
-            }
         }
     }
 

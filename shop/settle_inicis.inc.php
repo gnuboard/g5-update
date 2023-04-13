@@ -41,24 +41,12 @@ else {
 /**************************
  * 1. 라이브러리 인클루드 *
  **************************/
-require_once(G5_SHOP_PATH.'/inicis/libs/INILib.php');
 require_once(G5_SHOP_PATH.'/inicis/libs/INIStdPayUtil.php');
 require_once(G5_SHOP_PATH.'/inicis/libs/sha256.inc.php');
+require_once(G5_SHOP_PATH.'/inicis/libs/inicis_youngcart_fn.php');
 
 $mid = $default['de_inicis_mid'];
 $signKey = $default['de_inicis_sign_key'];
-
-/***************************************
- * 2. INIpay50 클래스의 인스턴스 생성  *
- ***************************************/
-$inipay = new INIpay50;
-
-$inipay->SetField("inipayhome", G5_SHOP_PATH.'/inicis'); // 이니페이 홈디렉터리(상점수정 필요)
-$inipay->SetField("debug", "false");
-
-if( ! function_exists('mcrypt_encrypt')) {      // mcrypt 관련 함수가 없다면 취소시 openssl로 합니다.
-    $inipay->SetField("encMethod", "openssl");
-}
 
 $util = new INIStdPayUtil();
 
