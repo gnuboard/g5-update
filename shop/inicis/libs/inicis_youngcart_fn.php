@@ -1,9 +1,10 @@
 <?php
 if (!defined('_GNUBOARD_')) exit;
 
-function get_inicis_iniapi_key(){
+function get_inicis_iniapi_key() {
     global $default;
-
+    
+    // iniapi_key 는 전체취소, 부분취소, 현금영수증, 에스크로 배송등록에 사용됨
     if ($default['de_card_test']) {     // 테스트결제이면
         if ($default['de_inicis_mid'] === 'iniescrow0') {       // 에스크로 테스트용 mid
             return 'yERbIlJ3NhTeObsA';
@@ -15,12 +16,27 @@ function get_inicis_iniapi_key(){
     return $default['de_inicis_iniapi_key'];
 }
 
+function get_inicis_iniapi_iv() {
+    global $default;
+    
+    // iniapi_iv 는 현금영수증 발급에 사용됨
+    if ($default['de_card_test']) {     // 테스트결제이면
+        if ($default['de_inicis_mid'] === 'iniescrow0') {       // 에스크로 테스트용 mid
+            return 'tOGDXbfoajk2DQ==';
+        } else if ($default['de_inicis_mid'] === 'INIpayTest'){     // 일반 테스트용 mid
+            return 'HYb3yQ4f65QL89==';
+        }
+    }
+
+    return $default['de_inicis_iniapi_iv'];
+}
+
 // KG 이니시스 일반 주문 취소 함수
 // $args 변수의 타입은 array, $is_part 변수는 부분취소 구분 변수
 function inicis_tid_cancel($args, $is_part=false){
     global $default;
 
-    //step1. 요청을 위한 파라미터 설정
+    // step1. 요청을 위한 파라미터 설정
     // 가맹점관리자 > 상점정보 > 계약정보 > 부가정보 > INIAPI key 생성조회
     if (function_exists('get_inicis_iniapi_key')) {
         $key = get_inicis_iniapi_key();
@@ -110,6 +126,12 @@ function get_type_inicis_paymethod($od_settle_case){
         case '휴대폰':
             $ini_paymethod = 'HPP';
             break;
+    }
+    
+    if (! $ini_paymethod) {
+        if (is_inicis_order_pay($od_settle_case)) {
+            $ini_paymethod = 'Card';
+        }
     }
 
     return $ini_paymethod;

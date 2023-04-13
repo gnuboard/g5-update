@@ -7,13 +7,11 @@ if ($default['de_card_test']) {
     if ($default['de_escrow_use'] == 1) {
         // 에스크로결제 테스트
         $default['de_inicis_mid'] = 'iniescrow0';
-        $default['de_inicis_admin_key'] = '1111';
         $default['de_inicis_sign_key'] = 'SU5JTElURV9UUklQTEVERVNfS0VZU1RS';
     }
     else {
         // 일반결제 테스트
         $default['de_inicis_mid'] = 'INIpayTest';
-        $default['de_inicis_admin_key'] = '1111';
         $default['de_inicis_sign_key'] = 'SU5JTElURV9UUklQTEVERVNfS0VZU1RS';
     }
 

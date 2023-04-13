@@ -2,6 +2,11 @@
 include_once('./_common.php');
 include_once(G5_SHOP_PATH.'/settle_inicis.inc.php');
 
+$iv = get_inicis_iniapi_iv();
+if (strlen($iv) !== 16){
+    alert('쇼핑몰설정 < KG이니시스 INIAPI IV 값을 16자리로 설정 후 이용해 주세요.');
+}
+
 /*
  *
  * 현금결제(실시간 은행계좌이체, 무통장입금)에 대한 현금결제 영수증 발행 요청한다.
@@ -51,16 +56,8 @@ $currency = 'WON';
 
 //step1. 요청을 위한 파라미터 설정
 // 가맹점관리자 > 상점정보 > 계약정보 > 부가정보 > INIAPI key 생성조회, IV 도 조회 가능
-if (function_exists('get_inicis_iniapi_key')) {
-    $key = get_inicis_iniapi_key();
-} else {
-    $key = ! $default['de_card_test'] ? $default['de_inicis_iniapi_key'] : "ItEQKi3rY7uvDS8l";
-}
-if (function_exists('get_inicis_iniapi_iv')) {
-    $iv = get_inicis_iniapi_iv();
-} else {
-    $iv = ! $default['de_card_test'] ? $default['de_inicis_iniapi_iv'] : "HYb3yQ4f65QL89==";
-}
+$key = get_inicis_iniapi_key();
+$iv = get_inicis_iniapi_iv();
 $type          = "Issue";// 고정
 $paymethod     = "Receipt";// 고정
 $timestamp     = date("YmdHis");
