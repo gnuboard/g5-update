@@ -62,6 +62,11 @@ if(! isset($_SERVER['SERVER_ADDR'])) {
     $_SERVER['SERVER_ADDR'] = isset($_SERVER['LOCAL_ADDR']) ? $_SERVER['LOCAL_ADDR'] : '';
 }
 
+// Cloudflare 환경을 고려한 https 사용여부
+if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === "https") {
+    $_SERVER['HTTPS'] = 'on';
+}
+
 // multi-dimensional array에 사용자지정 함수적용
 function array_map_deep($fn, $array)
 {
@@ -366,8 +371,7 @@ if( $config['cf_cert_use'] || (defined('G5_YOUNGCART_VER') && G5_YOUNGCART_VER) 
                     || preg_match('/(iPhone|iPod|iPad).*AppleWebKit.*Safari/i', $_SERVER['HTTP_USER_AGENT'])
                     || preg_match('~MSIE|Internet Explorer~i', $_SERVER['HTTP_USER_AGENT'])
                     || preg_match('~Trident/7.0(; Touch)?; rv:11.0~',$_SERVER['HTTP_USER_AGENT'])
-                    || !(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on')
-                    || !(isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == "https")){
+                    || !(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on')) {
                     return $res;
                 }
             }
