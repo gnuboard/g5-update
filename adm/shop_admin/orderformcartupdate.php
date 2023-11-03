@@ -244,6 +244,32 @@ if (in_array($_POST['ct_status'], $status_cancel)) {
                         }
 
                         break;
+                    case 'nicepay':
+                        include_once(G5_SHOP_PATH.'/settle_nicepay.inc.php');
+                        $cancel_msg = '쇼핑몰 운영자 승인 취소';
+                        
+                        $tno = $od['od_tno'];
+                        
+                        $cancelAmt = $od['od_receipt_price'];
+
+                        // 0:전체 취소, 1:부분 취소(별도 계약 필요)
+                        $partialCancelCode = 0;
+
+
+                        include G5_SHOP_PATH.'/nicepay/cancel_process.php';
+
+                        if (isset($result['ResultCode'])) {
+                            // 실패했다면
+                            if ($result['ResultCode'] !== '2001') {
+                                $pg_res_cd = $result['ResultCode'];
+                                $pg_res_msg = $result['ResultMsg'];
+                            }
+                        } else {
+                            $pg_res_cd = '';
+                            $pg_res_msg = 'curl 로 데이터를 받지 못하거나 통신에 실패했습니다.';
+                        }
+
+                        break;
                     case 'KAKAOPAY':
                         include_once(G5_SHOP_PATH.'/settle_kakaopay.inc.php');
                         $_REQUEST['TID']               = $od['od_tno'];

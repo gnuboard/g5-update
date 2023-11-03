@@ -1492,7 +1492,7 @@ function forderform_check(f)
                 f.LGD_CUSTOM_FIRSTPAY.value = "무통장";
                 break;
         }
-        <?php }  else if($default['de_pg_service'] == 'inicis') { ?>
+        <?php } else if($default['de_pg_service'] == 'inicis') { ?>
         switch(settle_method)
         {
             case "계좌이체":
@@ -1523,8 +1523,26 @@ function forderform_check(f)
                 f.gopaymethod.value = "무통장";
                 break;
         }
+        <?php } else if($default['de_pg_service'] == 'nicepay') { ?>
+        switch(settle_method)
+        {
+            case "계좌이체":
+                f.PayMethod.value = "BANK";
+                break;
+            case "가상계좌":
+                f.PayMethod.value = "VBANK";
+                break;
+            case "휴대폰":
+                f.PayMethod.value = "CELLPHONE";
+                break;
+            case "신용카드":
+                f.PayMethod.value = "CARD";
+                break;
+            default:
+                f.PayMethod.value = "무통장";
+                break;
+        }
         <?php } ?>
-
         // 결제정보설정
         <?php if($default['de_pg_service'] == 'kcp') { ?>
         f.buyr_name.value = f.od_name.value;
@@ -1609,6 +1627,45 @@ function forderform_check(f)
         } else {
             f.submit();
         }
+        <?php } ?>
+        <?php if($default['de_pg_service'] == 'nicepay') { ?>
+        f.Amt.value       = f.good_mny.value;
+        <?php if($default['de_tax_flag_use']) { ?>
+        f.tax.value         = f.comm_vat_mny.value;
+        f.taxfree.value     = f.comm_free_mny.value;
+        <?php } ?>
+        f.BuyerName.value   = f.od_name.value;
+        f.BuyerEmail.value  = f.od_email.value;
+        f.BuyerTel.value    = f.od_hp.value ? f.od_hp.value : f.od_tel.value;
+
+        if(f.PayMethod.value != "무통장") {
+            // 주문정보 임시저장
+            var order_data = $(f).serialize();
+            var save_result = "";
+            $.ajax({
+                type: "POST",
+                data: order_data,
+                url: g5_url+"/shop/ajax.orderdatasave.php",
+                cache: false,
+                async: false,
+                success: function(data) {
+                    save_result = data;
+                }
+            });
+
+            if(save_result) {
+                alert(save_result);
+                return false;
+            }
+
+            if(!nicepay_create_signdata(f))
+                return false;
+            
+            nicepayStart(f);
+        } else {
+            f.submit();
+        }
+
         <?php } ?>
     }
 

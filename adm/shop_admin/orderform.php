@@ -519,6 +519,10 @@ add_javascript(G5_POSTCODE_JS, 0);    //다음 주소 js
                                     $pg_url  = 'https://mms.cnspay.co.kr';
                                     $pg_test = 'KAKAOPAY';
                                     break;
+                                case 'nicepay':
+                                    $pg_url  = 'https://nicepay.co.kr';
+                                    $pg_test = 'NICEPAY';
+                                    break;
                                 default:
                                     $pg_url  = 'http://admin8.kcp.co.kr';
                                     $pg_test = 'KCP';

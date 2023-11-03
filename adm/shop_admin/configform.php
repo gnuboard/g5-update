@@ -207,6 +207,14 @@ if( ! isset($default['de_inicis_iniapi_key']) ){
     sql_query($sql, false);
 }
 
+// KG 이니시스 iniapi_key 추가
+if (! isset($default['de_nicepay_mid'])) {
+    $sql = "ALTER TABLE `{$g5['g5_shop_default_table']}` 
+            ADD COLUMN `de_nicepay_mid` VARCHAR(30) NOT NULL DEFAULT '' AFTER `de_inicis_cartpoint_use`,
+            ADD COLUMN `de_nicepay_key` VARCHAR(30) NOT NULL DEFAULT '' AFTER `de_nicepay_mid`; ";
+    sql_query($sql, false);
+}
+
 if( function_exists('pg_setting_check') ){
     pg_setting_check(true);
 }
@@ -763,6 +771,7 @@ if(!$default['de_kakaopay_cancelpwd']){
                     <li class="<?php if($default['de_pg_service'] == 'kcp') echo 'tab-current'; ?>"><a href="#kcp_info_anchor" data-value="kcp" title="NHN KCP 선택하기" >NHN KCP</a></li>
                     <li class="<?php if($default['de_pg_service'] == 'lg') echo 'tab-current'; ?>"><a href="#lg_info_anchor" data-value="lg" title="토스페이먼츠 선택하기">토스페이먼츠</a></li>
                     <li class="<?php if($default['de_pg_service'] == 'inicis') echo 'tab-current'; ?>"><a href="#inicis_info_anchor" data-value="inicis" title="KG이니시스 선택하기">KG이니시스</a></li>
+                    <li class="<?php if($default['de_pg_service'] == 'nicepay') echo 'tab-current'; ?>"><a href="#nicepay_info_anchor" data-value="nicepay" title="NICEPAY 선택하기">NICEPAY</a></li>
                 </ul>
             </td>
         </tr>
@@ -918,7 +927,7 @@ if(!$default['de_kakaopay_cancelpwd']){
         </tr>
         <tr class="kakao_info_fld">
             <th scope="row">
-                <label for="de_kakaopay_enckey">카카오페이 사용</label>
+                <label for="de_kakaopay_enckey">KG이니시스<br>카카오페이 사용</label>
             </th>
             <td>
                 <?php echo help("체크시 카카오페이 (KG 이니시스)를 사용합니다. <br >KG 이니시스의 SIRK****** 아이디를 받은 상점만 해당됩니다.", 50); ?>
@@ -932,6 +941,20 @@ if(!$default['de_kakaopay_cancelpwd']){
                 <input type="text" name="de_kakaopay_hashkey" value="<?php echo get_sanitize_input($default['de_kakaopay_hashkey']); ?>" id="de_kakaopay_hashkey" class="frm_input" size="20">
             </td>
         </tr>
+
+        <tr class="pg_info_fld nicepay_info_fld">
+            <th scope="row"><label for="de_nicepay_mid">NICEPAY MID</label></th>
+            <td>
+                <input type="text" name="de_nicepay_mid" value="<?php echo get_sanitize_input($default['de_nicepay_mid']); ?>" id="de_nicepay_mid" class="frm_input" size="30" maxlength="30">
+            </td>
+        </tr>
+        <tr class="pg_info_fld inicis_info_fld">
+            <th scope="row"><label for="de_nicepay_key">NICEPAY KEY</label></th>
+            <td>
+                <input type="text" name="de_nicepay_key" value="<?php echo get_sanitize_input($default['de_nicepay_key']); ?>" id="de_nicepay_key" class="frm_input" size="100" maxlength="100">
+            </td>
+        </tr>
+
         <?php if (defined('G5_SHOP_DIRECT_NAVERPAY') && G5_SHOP_DIRECT_NAVERPAY) { ?>
         <tr class="naver_info_fld">
             <th scope="row">
@@ -1727,6 +1750,10 @@ function fconfig_check(f)
     } else if ( f.de_pg_service.value == "inicis" ) {
         if( f.de_inicis_mid.value && f.de_inicis_sign_key.value && parseInt(f.de_card_test.value) > 0 ){
             pg_msg = "KG이니시스";
+        }
+    } else if ( f.de_pg_service.value == "nicepay" ) {
+        if( f.de_nicepay_mid.value && f.de_nicepay_key.value && parseInt(f.de_card_test.value) > 0 ){
+            pg_msg = "NICEPAY";
         }
     }
 

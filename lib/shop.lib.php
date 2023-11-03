@@ -2642,6 +2642,15 @@ function make_order_field($data, $exclude)
     return $field;
 }
 
+function shop_order_data_fields($is_personal=0) {
+
+    if ($is_personal){
+        return array('pp_name', 'pp_email', 'pp_hp', 'pp_settle_case');
+    }
+
+    return array('od_price', 'od_name', 'od_tel', 'od_hp', 'od_email', 'od_memo', 'od_settle_case', 'max_temp_point', 'od_temp_point', 'od_bank_account', 'od_deposit_name', 'od_test', 'od_ip', 'od_zip', 'od_addr1', 'od_addr2', 'od_addr3', 'od_addr_jibeon', 'od_b_name', 'od_b_tel', 'od_b_hp', 'od_b_addr1', 'od_b_addr2', 'od_b_addr3', 'od_b_addr_jibeon', 'od_b_zip', 'od_send_cost', 'od_send_cost2', 'od_hope_date');
+}
+
 // 주문요청기록 로그를 남깁니다.
 function add_order_post_log($msg='', $code='error'){
     global $g5, $member;

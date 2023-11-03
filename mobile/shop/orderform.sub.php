@@ -1417,6 +1417,33 @@ function pay_approval()
         <?php } ?>
         f.P_RETURN_URL.value = "<?php echo $return_url.$od_id; ?>";
         f.action = "https://mobile.inicis.com/smart/" + paymethod + "/";
+        <?php } else if($default['de_pg_service'] == 'nicepay') { ?>
+
+        f.Amt.value       = f.good_mny.value;
+
+        switch(settle_method) {
+            case "계좌이체":
+                paymethod = "BANK";
+                break;
+            case "가상계좌":
+                paymethod = "VBANK";
+                break;
+            case "휴대폰":
+                paymethod = "CELLPHONE";
+                break;
+            case "신용카드":
+                paymethod = "CARD";
+                break;
+            default:
+                paymethod = "무통장";
+                break;
+        }
+        
+        f.PayMethod.value = paymethod;
+
+        if (! nicepay_create_signdata(f)) {
+            return false;
+        }
         <?php } ?>
 
         // 주문 정보 임시저장
@@ -1438,7 +1465,7 @@ function pay_approval()
             return false;
         }
 
-        f.submit();
+        nicepayStart(f);
     }
 
     return false;
