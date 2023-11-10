@@ -25,7 +25,7 @@ function nicepaySubmit(){
 
 //[PC Only]payment window close function <<'nicepayClose()' DO NOT CHANGE>>
 function nicepayClose(){
-	// alert("pㅆyment window is closed");
+	// alert("payment window is closed");
 }
 
 //pc, mobile chack script (sample code)

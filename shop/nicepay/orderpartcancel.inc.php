@@ -19,14 +19,33 @@ $is_save_history = true;
 
 if (isset($result['ResultCode'])) {
     // nicepay 의 경우 
-    if ($result['ResultCode'] === '2001') {
+    if ($result['ResultCode'] === '2001' || $result['ResultCode'] === '2211') {
+        
+        $add_memo_sql = '';
 
         if ($is_save_history) {
-            // 관리자 부분취소 로그
+            // 환불금액기록
             $mod_history = G5_TIME_YMDHIS.' '.$member['mb_id'].' 부분취소 ('.$cancelAmt.') 처리, 잔액 ('.$result['RemainAmt'].")\n";
-            $sql = " update {$g5['g5_shop_order_table']} set od_mod_history = CONCAT(od_mod_history,'$mod_history') where od_id = '$od_id' ";
-            sql_query($sql, false);
+            $add_memo_sql = ", od_shop_memo = concat(od_shop_memo, \"$mod_history\") ";
         }
+
+        $sql = " update {$g5['g5_shop_order_table']}
+                    set od_refund_price = od_refund_price + '$cancelAmt'
+                        $add_memo_sql
+                    where od_id = '{$od['od_id']}'
+                      and od_tno = '$tno' ";
+        sql_query($sql);
+
+        // 미수금 등의 정보 업데이트
+        $info = get_order_info($od_id);
+
+        $sql = " update {$g5['g5_shop_order_table']}
+                    set od_misu     = '{$info['od_misu']}',
+                        od_tax_mny  = '{$info['od_tax_mny']}',
+                        od_vat_mny  = '{$info['od_vat_mny']}',
+                        od_free_mny = '{$info['od_free_mny']}'
+                    where od_id = '$od_id' ";
+        sql_query($sql);
 
     } else {
         $pg_res_cd = $result['ResultCode'];

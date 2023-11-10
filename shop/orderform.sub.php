@@ -1631,8 +1631,9 @@ function forderform_check(f)
         <?php if($default['de_pg_service'] == 'nicepay') { ?>
         f.Amt.value       = f.good_mny.value;
         <?php if($default['de_tax_flag_use']) { ?>
-        f.tax.value         = f.comm_vat_mny.value;
-        f.taxfree.value     = f.comm_free_mny.value;
+        f.SupplyAmt.value         = f.comm_tax_mny.value;
+        f.GoodsVat.value     = f.comm_vat_mny.value;
+        f.TaxFreeAmt.value     = f.comm_free_mny.value;
         <?php } ?>
         f.BuyerName.value   = f.od_name.value;
         f.BuyerEmail.value  = f.od_email.value;

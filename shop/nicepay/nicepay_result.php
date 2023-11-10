@@ -137,7 +137,6 @@ if($authResultCode === "0000"){
             $account = nicepay_res('VbankNum', $respArr);
             $va_date   = nicepay_res('VbankExpDate', $respArr).' '.nicepay_res('VbankExpTime', $respArr); // 가상계좌 입금마감시간
             $app_no    = nicepay_res('VbankNum', $respArr);
-
             if ($default['de_escrow_use'] == 1)
                 $escw_yn         = 'Y';
 
@@ -153,7 +152,7 @@ if($authResultCode === "0000"){
                 $escw_yn         = 'Y';
 
         }
-        $depositor       = '';  // 입금할 계좌 예금주
+        $depositor       = nicepay_res('BuyerName', $respArr);  // 입금할 계좌 예금주
         $account         = nicepay_res('VbankNum', $respArr);
         $commid          = '';    // 통신사 코드
         $mobile_no       = '';    // 휴대폰결제시 휴대폰번호

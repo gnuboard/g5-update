@@ -114,8 +114,17 @@ function nicepay_create_signdata(frm)
 
 <input type="hidden" name="good_mny"     value="<?php echo $tot_price; ?>" >
 
-<?php if($default['de_tax_flag_use']) { ?>
-<input type="hidden" name="tax"         value="<?php echo $comm_vat_mny; ?>">
-<input type="hidden" name="taxfree"     value="<?php echo $comm_free_mny; ?>">
+<?php if ($default['de_tax_flag_use']) { ?>
+<!-- 필드명:SupplyAmt / 사이즈:12 / 설명:공급가 액 -->
+<input type="hidden" name="SupplyAmt" value="<?php echo $comm_tax_mny; ?>"> <!-- 과세금액    -->
+<!-- 필드명:GoodsVat / 사이즈:12 / 설명:부가가 치세 -->
+<input type="hidden" name="GoodsVat" value="<?php echo $comm_vat_mny; ?>">  <!-- 부가세	    -->
+<!-- 필드명:ServiceAmt / 사이즈:12 / 설명:봉사료 -->
+<input type="hidden" name="ServiceAmt" value="0">
+<!-- 필드명:TaxFreeAmt / 사이즈:12 / 설명:면세 금액 -->
+<input type="hidden" name="TaxFreeAmt" value="<?php echo $comm_free_mny; ?>">
+
+<input type="hidden" name="comm_tax_mny"	  value="<?php echo $comm_tax_mny; ?>">         <!-- 과세금액    -->
+<input type="hidden" name="comm_vat_mny"      value="<?php echo $comm_vat_mny; ?>">         <!-- 부가세	    -->
+<input type="hidden" name="comm_free_mny"     value="<?php echo $comm_free_mny; ?>">        <!-- 비과세 금액 -->
 <?php } ?>
-</form>

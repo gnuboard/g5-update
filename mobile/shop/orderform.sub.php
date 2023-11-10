@@ -1412,8 +1412,9 @@ function pay_approval()
         f.P_MOBILE.value = pf.od_hp.value;
         f.P_EMAIL.value = pf.od_email.value;
         <?php if($default['de_tax_flag_use']) { ?>
-        f.P_TAX.value = pf.comm_vat_mny.value;
-        f.P_TAXFREE = pf.comm_free_mny.value;
+        f.SupplyAmt.value = pf.comm_tax_mny.value;
+        f.GoodsVat.value = pf.comm_vat_mny.value;
+        f.TaxFreeAmt.value = pf.comm_free_mny.value;
         <?php } ?>
         f.P_RETURN_URL.value = "<?php echo $return_url.$od_id; ?>";
         f.action = "https://mobile.inicis.com/smart/" + paymethod + "/";

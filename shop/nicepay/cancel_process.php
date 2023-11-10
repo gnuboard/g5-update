@@ -47,7 +47,7 @@ try{
 	* <Cancel Request>	
 	****************************************************************************************
 	*/	
-	$response = nicepay_reqPost($data, "https://webapi.nicepay.co.kr/webapi/cancel_process.jsp"); //Cancel API call
+	$response = nicepay_reqPost($data, "https://pg-api.nicepay.co.kr/webapi/cancel_process.jsp"); //Cancel API call
 
     $result = json_decode($response, true);
     

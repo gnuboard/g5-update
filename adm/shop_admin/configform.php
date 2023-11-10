@@ -641,6 +641,12 @@ if(!$default['de_kakaopay_cancelpwd']){
                 <?php echo help("KG이니시스 가상계좌 사용시 다음 주소를 <strong><a href=\"https://iniweb.inicis.com/\" target=\"_blank\">KG이니시스 관리자</a> &gt; 거래내역 &gt; 가상계좌 &gt; 입금통보방식선택 &gt; URL 수신 설정</strong>에 넣으셔야 상점에 자동으로 입금 통보됩니다."); ?>
                 <?php echo G5_SHOP_URL; ?>/settle_inicis_common.php</td>
         </tr>
+        <tr id="nicepay_vbank_url" class="pg_vbank_url">
+            <th scope="row">NICEPAY 가상계좌 입금통보 URL</th>
+            <td>
+                <?php echo help("NICEPAY 가상계좌 사용시 다음 주소를 <strong><a href=\"https://npg.nicepay.co.kr/\" target=\"_blank\">NICEPAY 관리자</a> &gt; 가맹점관리자페이지 설정 (메인화면 → 가맹점정보 클릭)</strong>에 넣으셔야 상점에 자동으로 입금 통보됩니다."); ?>
+                <?php echo G5_SHOP_URL; ?>/settle_nicepay_common.php</td>
+        </tr>
         <tr>
             <th scope="row"><label for="de_hp_use">휴대폰결제사용</label></th>
             <td>

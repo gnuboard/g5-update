@@ -27,6 +27,11 @@ if (! (isset($od['od_id']) && $od['od_id']) || (!$is_member && md5($od['od_id'].
     alert("조회하실 주문서가 없습니다.", G5_SHOP_URL);
 }
 
+// nicepay 로 주문하고 가상계좌인 경우
+if ($od['od_pg'] === 'nicepay' && $od['od_settle_case'] === '가상계좌' && $od['od_deposit_name']){
+    $od['od_deposit_name'] .= '_NICE';
+}
+
 // 결제방법
 $settle_case = $od['od_settle_case'];
 
