@@ -141,10 +141,10 @@ if($authResultCode === "0000"){
                 $escw_yn         = 'Y';
 
         }
-        $depositor       = '';  // 입금할 계좌 예금주
+        $depositor       = nicepay_res('BuyerName', $respArr);  // 입금할 계좌 예금주
         $account         = nicepay_res('VbankNum', $respArr);
         $commid          = '';    // 통신사 코드
-        $mobile_no       = '';    // 휴대폰결제시 휴대폰번호
+        $mobile_no       = '';    // 휴대폰결제시 휴대폰번호 (나이스페이 경우 결제한 휴대폰번호를 리턴받지 못합니다.)
         $app_no = $od_app_no = nicepay_res('VbankNum', $respArr);
         $card_name       = nicepay_res('CardName', $respArr);
 

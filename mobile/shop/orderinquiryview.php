@@ -295,7 +295,7 @@ if($od['od_pg'] == 'lg') {
                 }
 
                 // 승인번호, 휴대폰번호, 거래번호
-                if($app_no_subj && $app_no)
+                if($app_no_subj && trim($app_no))
                 {
                 ?>
                 <tr>
@@ -337,6 +337,8 @@ if($od['od_pg'] == 'lg') {
                                 $hp_receipt_script = 'showReceiptByTID(\''.$LGD_MID.'\', \''.$LGD_TID.'\', \''.$LGD_HASHDATA.'\');';
                             } else if($od['od_pg'] == 'inicis') {
                                 $hp_receipt_script = 'window.open(\'https://iniweb.inicis.com/DefaultWebApp/mall/cr/cm/mCmReceipt_head.jsp?noTid='.$od['od_tno'].'&noMethod=1\',\'receipt\',\'width=430,height=700\');';
+                            } else if($od['od_pg'] == 'nicepay') {
+                                $hp_receipt_script = 'window.open(\'https://npg.nicepay.co.kr/issue/IssueLoader.do?type=0&TID='.$od['od_tno'].'&noMethod=1\',\'receipt\',\'width=430,height=700\');';
                             } else {
                                 $hp_receipt_script = 'window.open(\''.G5_BILL_RECEIPT_URL.'mcash_bill&tno='.$od['od_tno'].'&order_no='.$od['od_id'].'&trade_mony='.$od['od_receipt_price'].'\', \'winreceipt\', \'width=500,height=690,scrollbars=yes,resizable=yes\');';
                             }
@@ -354,6 +356,8 @@ if($od['od_pg'] == 'lg') {
                                 $LGD_HASHDATA = md5($LGD_MID.$LGD_TID.$LGD_MERTKEY);
 
                                 $card_receipt_script = 'showReceiptByTID(\''.$LGD_MID.'\', \''.$LGD_TID.'\', \''.$LGD_HASHDATA.'\');';
+                            } else if($od['od_pg'] == 'nicepay') {
+                                $card_receipt_script = 'window.open(\'https://npg.nicepay.co.kr/issue/IssueLoader.do?type=0&TID='.$od['od_tno'].'&noMethod=1\',\'receipt\',\'width=430,height=700\');';
                             } else if($od['od_pg'] == 'inicis') {
                                 $card_receipt_script = 'window.open(\'https://iniweb.inicis.com/DefaultWebApp/mall/cr/cm/mCmReceipt_head.jsp?noTid='.$od['od_tno'].'&noMethod=1\',\'receipt\',\'width=430,height=700\');';
                             } else {
@@ -428,6 +432,8 @@ if($od['od_pg'] == 'lg') {
                         } else if($od['od_pg'] == 'inicis') {
                             $cash = unserialize($od['od_cash_info']);
                             $cash_receipt_script = 'window.open(\'https://iniweb.inicis.com/DefaultWebApp/mall/cr/cm/Cash_mCmReceipt.jsp?noTid='.$cash['TID'].'&clpaymethod=22\',\'showreceipt\',\'width=380,height=540,scrollbars=no,resizable=no\');';
+                        } else if($od['od_pg'] == 'nicepay') {
+                            $cash_receipt_script = 'window.open(\'https://npg.nicepay.co.kr/issue/IssueLoader.do?type=1&TID='.$od['od_tno'].'&noMethod=1\',\'receipt\',\'width=430,height=700\');';
                         } else {
                             require_once G5_SHOP_PATH.'/settle_kcp.inc.php';
 

@@ -1263,7 +1263,7 @@ function pay_approval()
         var send_coupon = parseInt(pf.od_send_coupon.value);
         f.good_mny.value = od_price + send_cost + send_cost2 - send_coupon - temp_point;
     }
-
+    
     // 카카오페이 지불
     if(settle_method == "KAKAOPAY") {
         <?php if($default['de_tax_flag_use']) { ?>
@@ -1412,15 +1412,17 @@ function pay_approval()
         f.P_MOBILE.value = pf.od_hp.value;
         f.P_EMAIL.value = pf.od_email.value;
         <?php if($default['de_tax_flag_use']) { ?>
-        f.SupplyAmt.value = pf.comm_tax_mny.value;
-        f.GoodsVat.value = pf.comm_vat_mny.value;
-        f.TaxFreeAmt.value = pf.comm_free_mny.value;
+        f.P_TAX.value = pf.comm_vat_mny.value;
+        f.P_TAXFREE = pf.comm_free_mny.value;
         <?php } ?>
         f.P_RETURN_URL.value = "<?php echo $return_url.$od_id; ?>";
         f.action = "https://mobile.inicis.com/smart/" + paymethod + "/";
         <?php } else if($default['de_pg_service'] == 'nicepay') { ?>
 
         f.Amt.value       = f.good_mny.value;
+        f.BuyerName.value   = pf.od_name.value;
+        f.BuyerEmail.value  = pf.od_email.value;
+        f.BuyerTel.value    = pf.od_hp.value ? pf.od_hp.value : pf.od_tel.value;
 
         switch(settle_method) {
             case "계좌이체":
@@ -1441,6 +1443,12 @@ function pay_approval()
         }
         
         f.PayMethod.value = paymethod;
+
+        <?php if($default['de_tax_flag_use']) { ?>
+        f.SupplyAmt.value = pf.comm_tax_mny.value;
+        f.GoodsVat.value = pf.comm_vat_mny.value;
+        f.TaxFreeAmt.value = pf.comm_free_mny.value;
+        <?php } ?>
 
         if (! nicepay_create_signdata(f)) {
             return false;

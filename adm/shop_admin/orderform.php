@@ -526,7 +526,7 @@ add_javascript(G5_POSTCODE_JS, 0);    //다음 주소 js
                                     $pg_test = 'KAKAOPAY';
                                     break;
                                 case 'nicepay':
-                                    $pg_url  = 'https://nicepay.co.kr';
+                                    $pg_url  = 'https://npg.nicepay.co.kr/';
                                     $pg_test = 'NICEPAY';
                                     break;
                                 default:
@@ -634,7 +634,17 @@ add_javascript(G5_POSTCODE_JS, 0);    //다음 주소 js
                             $cash = unserialize($od['od_cash_info']);
                             $cash_receipt_script = 'window.open(\'https://iniweb.inicis.com/DefaultWebApp/mall/cr/cm/Cash_mCmReceipt.jsp?noTid='.$cash['TID'].'&clpaymethod=22\',\'showreceipt\',\'width=380,height=540,scrollbars=no,resizable=no\');';
                         } else if($od['od_pg'] == 'nicepay') {
-                            $cash_receipt_script = 'window.open(\'https://npg.nicepay.co.kr/issue/IssueLoader.do?type=0&TID='.$od['od_tno'].'&noMethod=1\',\'receipt\',\'width=430,height=700\');';
+                            
+                            $od_tid = $od['od_tno'];
+                            $cash_type = 0;
+
+                            if (! $od_tid) {
+                                $cash = unserialize($od['od_cash_info']);
+                                $od_tid = isset($cash['TID']) ? $cash['TID'] : '';
+                                $cash_type = $od_tid ? 1 : 0;
+                            }
+
+                            $cash_receipt_script = 'window.open(\'https://npg.nicepay.co.kr/issue/IssueLoader.do?type='.$cash_type.'&TID='.$od_tid.'&noMethod=1\',\'receipt\',\'width=430,height=700\');';
                         } else {
                             require G5_SHOP_PATH.'/settle_kcp.inc.php';
 

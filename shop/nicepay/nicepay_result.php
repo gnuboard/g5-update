@@ -51,6 +51,7 @@ function jsonRespDump($resp){
 	}
 }
 
+/*
 if (! function_exists('nicepay_reqPost')) {
     //Post api call
     function nicepay_reqPost($data, $url){
@@ -66,6 +67,7 @@ if (! function_exists('nicepay_reqPost')) {
         return $response;
     }
 }
+*/
 
 if (! function_exists('nicepay_res')) {
     function nicepay_res($key, $data, $default_val='') {
@@ -155,7 +157,7 @@ if($authResultCode === "0000"){
         $depositor       = nicepay_res('BuyerName', $respArr);  // 입금할 계좌 예금주
         $account         = nicepay_res('VbankNum', $respArr);
         $commid          = '';    // 통신사 코드
-        $mobile_no       = '';    // 휴대폰결제시 휴대폰번호
+        $mobile_no       = '';    // 휴대폰결제시 휴대폰번호 (나이스페이 경우 결제한 휴대폰번호를 리턴받지 못합니다.)
         $app_no = $od_app_no = nicepay_res('VbankNum', $respArr);
         $card_name       = nicepay_res('CardName', $respArr);
 
@@ -183,7 +185,7 @@ if($authResultCode === "0000"){
         alert("결제 오류로 더 이상 진행할수 없습니다.");
 	}	
 	
-}else{
+} else {
 	//When authentication fail
 	$ResultCode = $authResultCode; 	
 	$ResultMsg = $authResultMsg;

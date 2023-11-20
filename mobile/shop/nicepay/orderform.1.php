@@ -95,7 +95,7 @@ function nicepay_create_signdata(frm)
 
 <form name="sm_form" method="post" action="" accept-charset="euc-kr">
 <input type="hidden" name="PayMethod" value="CARD">
-<input type="hidden" name="GoodsName" value="<?php echo $goods; ?>">
+<input type="hidden" name="GoodsName" value="<?php echo get_text($goods); ?>">
 <input type="hidden" name="Amt" value="<?php echo $tot_price; ?>">
 <input type="hidden" name="MID" value="<?php echo $default['de_nicepay_mid']; ?>">
 <input type="hidden" name="Moid" value="<?php echo $od_id; ?>">
@@ -104,13 +104,13 @@ function nicepay_create_signdata(frm)
 <input type="hidden" name="BuyerTel" value="">
 <input type="hidden" name="ReturnURL" value="<?php echo $nicepay_returnURL; ?>">
 <input type="hidden" name="VbankExpDate" value="">
-<input type="hidden" name="NpLang" value="KO"/> <!-- EN:English, CN:Chinese, KO:Korean -->
-<input type="hidden" name="GoodsCl" value="1"/>	<!-- products(1), contents(0)) -->
-<input type="hidden" name="TransType" value="0"/>	<!-- USE escrow false(0)/true(1) --> 
-<input type="hidden" name="CharSet" value="utf-8"/>	<!-- Return CharSet -->
-<input type="hidden" name="ReqReserved" value=""/>	<!-- mall custom field -->
-<input type="hidden" name="EdiDate" value=""/> <!-- YYYYMMDDHHMISS -->
-<input type="hidden" name="SignData" value=""/>	<!-- EncryptData -->
+<input type="hidden" name="NpLang" value="KO"> <!-- EN:English, CN:Chinese, KO:Korean -->
+<input type="hidden" name="GoodsCl" value="1">	<!-- products(1), contents(0)) -->
+<input type="hidden" name="TransType" value="<?php echo $default['de_escrow_use'] ? '1' : '0';?>">	<!-- USE escrow false(0)/true(1) --> 
+<input type="hidden" name="CharSet" value="utf-8">	<!-- Return CharSet -->
+<input type="hidden" name="ReqReserved" value="">	<!-- mall custom field -->
+<input type="hidden" name="EdiDate" value=""> <!-- YYYYMMDDHHMISS -->
+<input type="hidden" name="SignData" value="">	<!-- EncryptData -->
 
 <input type="hidden" name="good_mny"     value="<?php echo $tot_price; ?>" >
 
@@ -128,3 +128,4 @@ function nicepay_create_signdata(frm)
 <input type="hidden" name="comm_vat_mny"      value="<?php echo $comm_vat_mny; ?>">         <!-- 부가세	    -->
 <input type="hidden" name="comm_free_mny"     value="<?php echo $comm_free_mny; ?>">        <!-- 비과세 금액 -->
 <?php } ?>
+</form>

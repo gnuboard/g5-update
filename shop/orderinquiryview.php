@@ -294,7 +294,7 @@ if($od['od_pg'] == 'lg') {
                 }
 
                 // 승인번호, 휴대폰번호, 거래번호
-                if($app_no_subj && $app_no)
+                if($app_no_subj && trim($app_no))
                 {
                 ?>
                 <tr>
