@@ -207,7 +207,7 @@ if( ! isset($default['de_inicis_iniapi_key']) ){
     sql_query($sql, false);
 }
 
-// KG 이니시스 iniapi_key 추가
+// NICEPAY mid, key 추가
 if (! isset($default['de_nicepay_mid'])) {
     $sql = "ALTER TABLE `{$g5['g5_shop_default_table']}` 
             ADD COLUMN `de_nicepay_mid` VARCHAR(30) NOT NULL DEFAULT '' AFTER `de_inicis_cartpoint_use`,
@@ -948,16 +948,27 @@ if(!$default['de_kakaopay_cancelpwd']){
             </td>
         </tr>
 
-        <tr class="pg_info_fld nicepay_info_fld">
+        <tr class="pg_info_fld nicepay_info_fld" id="nicepay_info_anchor">
             <th scope="row"><label for="de_nicepay_mid">NICEPAY MID</label></th>
             <td>
                 <input type="text" name="de_nicepay_mid" value="<?php echo get_sanitize_input($default['de_nicepay_mid']); ?>" id="de_nicepay_mid" class="frm_input" size="30" maxlength="30">
             </td>
         </tr>
-        <tr class="pg_info_fld inicis_info_fld">
+        <tr class="pg_info_fld nicepay_info_fld">
             <th scope="row"><label for="de_nicepay_key">NICEPAY KEY</label></th>
             <td>
                 <input type="text" name="de_nicepay_key" value="<?php echo get_sanitize_input($default['de_nicepay_key']); ?>" id="de_nicepay_key" class="frm_input" size="100" maxlength="100">
+            </td>
+        </tr>
+
+        <tr class="pg_info_fld nicepay_info_fld">
+            <th scope="row"><label for="de_nicepay_easy_pays">NICEPAY 간편결제</label></th>
+            <td>
+                <?php echo help("체크시 NICEPAY 간편결제들을 활성화 합니다.\nNICEPAY > 네이버페이, 카카오페이는 테스트결제가 되지 않습니다.\n애플페이는 IOS 기기에 모바일결제만 가능합니다."); ?>
+                <input type="checkbox" id="de_easy_nicepay_samsung" name="de_easy_pays[]" value="nicepay_samsung" <?php if(stripos($default['de_easy_pay_services'], 'nicepay_samsung') !== false){ echo 'checked="checked"'; } ?> > <label for="de_easy_nicepay_samsung" disabled>삼성페이</label><br>
+                <input type="checkbox" id="de_easy_nicepay_naverpay" name="de_easy_pays[]" value="nicepay_naverpay" <?php if(stripos($default['de_easy_pay_services'], 'nicepay_naverpay') !== false){ echo 'checked="checked"'; } ?> > <label for="de_easy_nicepay_naverpay">NAVERPAY (네이버페이)</label><br>
+                <input type="checkbox" id="de_easy_nicepay_kakaopay" name="de_easy_pays[]" value="nicepay_kakaopay" <?php if(stripos($default['de_easy_pay_services'], 'nicepay_kakaopay') !== false){ echo 'checked="checked"'; } ?> > <label for="de_easy_nicepay_kakaopay">KAKAOPAY (카카오페이)</label><br>
+                <input type="checkbox" id="de_easy_nicepay_applepay" name="de_easy_pays[]" value="nicepay_applepay" <?php if(stripos($default['de_easy_pay_services'], 'nicepay_applepay') !== false){ echo 'checked="checked"'; } ?> > <label for="de_easy_nicepay_applepay">APPLEPAY (애플페이)</label>
             </td>
         </tr>
 

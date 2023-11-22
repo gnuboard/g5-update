@@ -632,16 +632,29 @@ if($is_kakaopay_use) {
 
                     $multi_settle++;
 
-                    if($default['de_pg_service'] === 'kcp' && isset($default['de_easy_pay_services']) && $default['de_easy_pay_services']){
+                    if(in_array($default['de_pg_service'], array('kcp', 'nicepay')) && isset($default['de_easy_pay_services']) && $default['de_easy_pay_services']) {
                         $de_easy_pay_service_array = explode(',', $default['de_easy_pay_services']);
-                        if( in_array('nhnkcp_payco', $de_easy_pay_service_array) ){
-                            $easypay_prints['nhnkcp_payco'] = '<input type="radio" id="od_settle_nhnkcp_payco" name="od_settle_case" data-pay="payco" value="간편결제"> <label for="od_settle_nhnkcp_payco" class="PAYCO nhnkcp_payco lb_icon" title="NHN_KCP - PAYCO">PAYCO</label>';
-                        }
-                        if( in_array('nhnkcp_naverpay', $de_easy_pay_service_array) ){
-                            $easypay_prints['nhnkcp_naverpay'] = '<input type="radio" id="od_settle_nhnkcp_naverpay" name="od_settle_case" data-pay="naverpay" value="간편결제" > <label for="od_settle_nhnkcp_naverpay" class="naverpay_icon nhnkcp_naverpay lb_icon" title="NHN_KCP - 네이버페이">네이버페이</label>';
-                        }
-                        if( in_array('nhnkcp_kakaopay', $de_easy_pay_service_array) ){
-                            $easypay_prints['nhnkcp_kakaopay'] = '<input type="radio" id="od_settle_nhnkcp_kakaopay" name="od_settle_case" data-pay="kakaopay" value="간편결제" > <label for="od_settle_nhnkcp_kakaopay" class="kakaopay_icon nhnkcp_kakaopay lb_icon" title="NHN_KCP - 카카오페이">카카오페이</label>';
+
+                        if ($default['de_pg_service'] === 'kcp') {
+                            if( in_array('nhnkcp_payco', $de_easy_pay_service_array) ){
+                                $easypay_prints['nhnkcp_payco'] = '<input type="radio" id="od_settle_nhnkcp_payco" name="od_settle_case" data-pay="payco" value="간편결제"> <label for="od_settle_nhnkcp_payco" class="PAYCO nhnkcp_payco lb_icon" title="NHN_KCP - PAYCO">PAYCO</label>';
+                            }
+                            if( in_array('nhnkcp_naverpay', $de_easy_pay_service_array) ){
+                                $easypay_prints['nhnkcp_naverpay'] = '<input type="radio" id="od_settle_nhnkcp_naverpay" name="od_settle_case" data-pay="naverpay" value="간편결제" > <label for="od_settle_nhnkcp_naverpay" class="naverpay_icon nhnkcp_naverpay lb_icon" title="NHN_KCP - 네이버페이">네이버페이</label>';
+                            }
+                            if( in_array('nhnkcp_kakaopay', $de_easy_pay_service_array) ){
+                                $easypay_prints['nhnkcp_kakaopay'] = '<input type="radio" id="od_settle_nhnkcp_kakaopay" name="od_settle_case" data-pay="kakaopay" value="간편결제" > <label for="od_settle_nhnkcp_kakaopay" class="kakaopay_icon nhnkcp_kakaopay lb_icon" title="NHN_KCP - 카카오페이">카카오페이</label>';
+                            }
+                        } else if ($default['de_pg_service'] === 'nicepay') {
+                            if( in_array('nicepay_samsung', $de_easy_pay_service_array) ){
+                                $easypay_prints['nicepay_samsung'] = '<input type="radio" id="od_settle_nicepay_samsung" name="od_settle_case" data-pay="nice_samsungpay" value="간편결제"> <label for="od_settle_nicepay_samsung" class="samsung nicepay_samsung lb_icon" title="NICEPAY - 삼성페이">삼성페이</label>';
+                            }
+                            if( in_array('nicepay_naverpay', $de_easy_pay_service_array) ){
+                                $easypay_prints['nicepay_naverpay'] = '<input type="radio" id="od_settle_nicepay_naverpay" name="od_settle_case" data-pay="nice_naverpay" value="간편결제" > <label for="od_settle_nicepay_naverpay" class="naverpay_icon nicepay_naverpay lb_icon" title="NICEPAY - 네이버페이">네이버페이</label>';
+                            }
+                            if( in_array('nicepay_kakaopay', $de_easy_pay_service_array) ){
+                                $easypay_prints['nicepay_kakaopay'] = '<input type="radio" id="od_settle_nicepay_kakaopay" name="od_settle_case" data-pay="nice_kakaopay" value="간편결제" > <label for="od_settle_nicepay_kakaopay" class="kakaopay_icon nicepay_kakaopay lb_icon" title="NICEPAY - 카카오페이">카카오페이</label>';
+                            }
                         }
                     } else {
                         $easypay_prints[strtolower($pg_easy_pay_name)] = '<input type="radio" id="od_settle_easy_pay" name="od_settle_case" value="간편결제"> <label for="od_settle_easy_pay" class="'.$pg_easy_pay_name.' lb_icon">'.$pg_easy_pay_name.'</label>';
@@ -1524,6 +1537,14 @@ function forderform_check(f)
                 break;
         }
         <?php } else if($default['de_pg_service'] == 'nicepay') { ?>
+        f.DirectShowOpt.value = "";     // 간편결제 요청 값 초기화
+        f.DirectEasyPay.value = "";     // 간편결제 요청 값 초기화
+        f.NicepayReserved.value = "";   // 간편결제 요청 값 초기화
+        f.EasyPayMethod.value = "";   // 간편결제 요청 값 초기화
+
+            <?php if ($default['de_escrow_use']) {  // 간편결제시 에스크로값이 0이 되므로 기본설정값을 지정 ?>
+            f.TransType.value = "1";
+            <?php } ?>
         switch(settle_method)
         {
             case "계좌이체":
@@ -1537,6 +1558,31 @@ function forderform_check(f)
                 break;
             case "신용카드":
                 f.PayMethod.value = "CARD";
+                break;
+            case "간편결제":
+                f.PayMethod.value = "CARD";
+                f.DirectShowOpt.value = "CARD";
+                f.TransType.value = "0";    // 간편결제의 경우 에스크로를 사용할수 없다.
+
+                var nicepay_easy_pay = jQuery("input[name='od_settle_case']:checked" ).attr("data-pay");
+
+                if(nicepay_easy_pay === "nice_naverpay"){
+                    if(typeof f.DirectEasyPay !== "undefined") f.DirectEasyPay.value = "E020";
+                    
+                    <?php 
+                        // * 카드 선택 시 전액 카드로 결제, 포인트 선택 시 전액 포인트로 결제.
+                        // (카드와 포인트를 같이 사용하는 복합결제 형태의 결제는 불가함.)
+                        // - 카드: EasyPayMethod=”E020=CARD”, 포인트: EasyPayMethod=”E020=POINT”
+                    ?>
+                    
+                    if(typeof f.EasyPayMethod !== "undefined") f.EasyPayMethod.value = "E020=CARD";
+
+                } else if(nicepay_easy_pay === "nice_kakaopay"){
+                    if(typeof f.NicepayReserved !== "undefined") f.NicepayReserved.value = "DirectKakao=Y";
+                } else if(nicepay_easy_pay === "nice_samsungpay"){
+                    if(typeof f.DirectEasyPay !== "undefined") f.DirectEasyPay.value = "E021";
+                }
+
                 break;
             default:
                 f.PayMethod.value = "무통장";

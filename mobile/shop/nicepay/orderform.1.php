@@ -112,6 +112,15 @@ function nicepay_create_signdata(frm)
 <input type="hidden" name="EdiDate" value=""> <!-- YYYYMMDDHHMISS -->
 <input type="hidden" name="SignData" value="">	<!-- EncryptData -->
 
+<input type="hidden" name="DirectShowOpt" value=""> 
+<input type="hidden" name="SelectCardCode" value=""> <!-- 카드사 노출 제한, 카드코드 값(ex 비씨:01, 삼성:04) -->
+<input type="hidden" name="NicepayReserved" value="">   <!-- 간편결제 (카카오페이에 사용됨) -->
+<input type="hidden" name="DirectEasyPay"> <!-- 간편결제 요청 값 (네이버페이에 사용됨) -->
+<input type="hidden" name="EasyPayMethod">  <!-- 간편결제 (네이버페이에 사용됨) -->
+<input type="hidden" name="EasyPayCardCode"> <!-- 간편결제 카드 코드 -->
+<input type="hidden" name="EasyPayQuota"> <!-- 간편결제 할부개월 (3개월일 경우 03 으로 설정) -->
+<input type="hidden" name="MultiEasyPayQuota"> <!-- 간편결제 할부개월 다중 설정 옵션 PAYCO와 네이버페이만 가능 -->
+
 <input type="hidden" name="good_mny"     value="<?php echo $tot_price; ?>" >
 
 <?php if ($default['de_tax_flag_use']) { ?>
