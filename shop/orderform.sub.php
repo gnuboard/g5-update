@@ -646,8 +646,8 @@ if($is_kakaopay_use) {
                                 $easypay_prints['nhnkcp_kakaopay'] = '<input type="radio" id="od_settle_nhnkcp_kakaopay" name="od_settle_case" data-pay="kakaopay" value="간편결제" > <label for="od_settle_nhnkcp_kakaopay" class="kakaopay_icon nhnkcp_kakaopay lb_icon" title="NHN_KCP - 카카오페이">카카오페이</label>';
                             }
                         } else if ($default['de_pg_service'] === 'nicepay') {
-                            if( in_array('nicepay_samsung', $de_easy_pay_service_array) ){
-                                $easypay_prints['nicepay_samsung'] = '<input type="radio" id="od_settle_nicepay_samsung" name="od_settle_case" data-pay="nice_samsungpay" value="간편결제"> <label for="od_settle_nicepay_samsung" class="samsung nicepay_samsung lb_icon" title="NICEPAY - 삼성페이">삼성페이</label>';
+                            if( in_array('nicepay_samsungpay', $de_easy_pay_service_array) ){
+                                $easypay_prints['nicepay_samsungpay'] = '<input type="radio" id="od_settle_nicepay_samsungpay" name="od_settle_case" data-pay="nice_samsungpay" value="간편결제"> <label for="od_settle_nicepay_samsungpay" class="samsung nicepay_samsungpay lb_icon" title="NICEPAY - 삼성페이">삼성페이</label>';
                             }
                             if( in_array('nicepay_naverpay', $de_easy_pay_service_array) ){
                                 $easypay_prints['nicepay_naverpay'] = '<input type="radio" id="od_settle_nicepay_naverpay" name="od_settle_case" data-pay="nice_naverpay" value="간편결제" > <label for="od_settle_nicepay_naverpay" class="naverpay_icon nicepay_naverpay lb_icon" title="NICEPAY - 네이버페이">네이버페이</label>';

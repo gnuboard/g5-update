@@ -13,16 +13,16 @@ if ($default['de_card_test']) {
     $default['de_nicepay_key'] = 'EYzu8jGGMfqaDEp76gSckuvnaHHu+bC4opsSN6lHv3b2lurNYkVXrZ7Z1AoqQnXI3eLuaUFyoRNC6FkrzVjceg==';
 
     // 나이스 카카오페이 간편결제 직접 호출 테스트 아이디
-    $default['de_nicepay_mid'] = 'nickakao1m';
-    $default['de_nicepay_key'] = 'A2SY4ztPs6LPymgFl/5bbsLuINyvgKq5eOdDSHb31gdO4dfGr3O6hBxvRp9oXdat45VninNUySc7E/5UT01vKw==';
+    // $default['de_nicepay_mid'] = 'nickakao1m';
+    // $default['de_nicepay_key'] = 'A2SY4ztPs6LPymgFl/5bbsLuINyvgKq5eOdDSHb31gdO4dfGr3O6hBxvRp9oXdat45VninNUySc7E/5UT01vKw==';
     
     // 나이스 네이버페이 간편결제 직접 호출 테스트 아이디
     // $default['de_nicepay_mid'] = 'nicnaver0m';
     // $default['de_nicepay_key'] = 'kNuUIpYvHPGcTTlmRsFddsqp6P9JoTcEcoRB1pindAwCZ0oySNuCQX5Zv483XTU5UuRiy/VYZ9BXw1BRvEUYMg==';
 
     // 나이스 삼성페이 간편결제 직접 호출 테스트 아이디
-    // $default['de_nicepay_mid'] = 'nicessp06m';
-    // $default['de_nicepay_key'] = '+iz0ov8wQDjOQ73GhO6QJ/kXF041yRiS+ERc3rD36Oe62onynMp0u0+ZvmKcBw2EKd2LlRcxJqbHBz313h0aJg==';
+    $default['de_nicepay_mid'] = 'nicessp06m';
+    $default['de_nicepay_key'] = '+iz0ov8wQDjOQ73GhO6QJ/kXF041yRiS+ERc3rD36Oe62onynMp0u0+ZvmKcBw2EKd2LlRcxJqbHBz313h0aJg==';
 } else {
     // 실결제인 경우
     $default['de_nicepay_mid'] = "SIR".$default['de_nicepay_mid'];
