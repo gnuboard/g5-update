@@ -403,10 +403,10 @@ if($od['od_pg'] == 'lg') {
                 <?php
                 }
 
-                // 현금영수증 발급을 사용하는 경우에만
-                if (function_exists('shop_is_taxsave') && shop_is_taxsave($od)) {
+                // 현금영수증 발급을 사용하는 경우 또는 현금영수증 발급을 한 주문건이면
+                if ((function_exists('shop_is_taxsave') && shop_is_taxsave($od)) || (function_exists('is_order_cashreceipt') && is_order_cashreceipt($od))) {
                     // 미수금이 없고 현금일 경우에만 현금영수증을 발급 할 수 있습니다.
-                    if ($misu_price == 0 && $od['od_receipt_price'] && ($od['od_settle_case'] == '무통장' || $od['od_settle_case'] == '계좌이체' || $od['od_settle_case'] == '가상계좌')) {
+                    if ($misu_price == 0 && is_order_cashreceipt($od)) {
                 ?>
                 <tr>
                     <th scope="row">현금영수증</th>
@@ -444,7 +444,7 @@ if($od['od_pg'] == 'lg') {
                         <a href="javascript:;" onclick="<?php echo $cash_receipt_script; ?>">현금영수증 확인하기</a>
                     <?php
                     }
-                    else
+                    else if (shop_is_taxsave($od))
                     {
                     ?>
                         <a href="javascript:;" onclick="window.open('<?php echo G5_SHOP_URL; ?>/taxsave.php?od_id=<?php echo $od_id; ?>', 'taxsave', 'width=550,height=400,scrollbars=1,menus=0');">현금영수증을 발급하시려면 클릭하십시오.</a>

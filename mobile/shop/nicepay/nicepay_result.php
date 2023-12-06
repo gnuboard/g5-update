@@ -39,6 +39,7 @@ function jsonRespDump($resp){
 	}
 }
 
+/*
 if (! function_exists('nicepay_reqPost')) {
     //Post api call
     function nicepay_reqPost($data, $url){
@@ -54,6 +55,7 @@ if (! function_exists('nicepay_reqPost')) {
         return $response;
     }
 }
+*/
 
 if (! function_exists('nicepay_res')) {
     function nicepay_res($key, $data, $default_val='') {
@@ -122,7 +124,7 @@ if($authResultCode === "0000"){
         } else if ($ResultCode == '4100') {    // 가상계좌
 
             $bank_name = $bankname = nicepay_res('VbankBankName', $respArr);
-            $account = nicepay_res('VbankNum', $respArr);
+            $account   = nicepay_res('VbankNum', $respArr);
             $va_date   = nicepay_res('VbankExpDate', $respArr).' '.nicepay_res('VbankExpTime', $respArr); // 가상계좌 입금마감시간
             $app_no    = nicepay_res('VbankNum', $respArr);
 
@@ -136,6 +138,14 @@ if($authResultCode === "0000"){
             $RcptType = nicepay_res('RcptType', $respArr); // 현금영수증타입 (0:발행안함,1:소득공제,2:지출증빙)
             $RcptTID = nicepay_res('RcptTID', $respArr); // 현금영수증 TID, 현금영수증 거래인 경우 리턴
             $RcptAuthCode = nicepay_res('RcptAuthCode', $respArr); // 현금영수증 승인번호, 현금영수증 거래인 경우 리턴
+            $AuthDate = nicepay_res('AuthDate', $respArr); // 현금영수증 승인번호, 현금영수증 거래인 경우 리턴
+
+            // 현금영수증 발급시 1 또는 2 이면
+            if ($RcptType) {
+                $pg_receipt_infos['od_cash'] = 1;   // 현금영수증 발급인것으로 처리
+                $pg_receipt_infos['od_cash_no'] = $RcptAuthCode;    // 현금영수증 승인번호
+                $pg_receipt_infos['od_cash_info'] = serialize(array('TID'=>$RcptTID, 'ApplNum'=>$RcptAuthCode, 'AuthDate'=>$AuthDate));
+            }
 
             if ($default['de_escrow_use'] == 1)
                 $escw_yn         = 'Y';

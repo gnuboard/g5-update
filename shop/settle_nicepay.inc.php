@@ -21,8 +21,9 @@ if ($default['de_card_test']) {
     // $default['de_nicepay_key'] = 'kNuUIpYvHPGcTTlmRsFddsqp6P9JoTcEcoRB1pindAwCZ0oySNuCQX5Zv483XTU5UuRiy/VYZ9BXw1BRvEUYMg==';
 
     // 나이스 삼성페이 간편결제 직접 호출 테스트 아이디
-    $default['de_nicepay_mid'] = 'nicessp06m';
-    $default['de_nicepay_key'] = '+iz0ov8wQDjOQ73GhO6QJ/kXF041yRiS+ERc3rD36Oe62onynMp0u0+ZvmKcBw2EKd2LlRcxJqbHBz313h0aJg==';
+    // $default['de_nicepay_mid'] = 'nicessp06m';
+    // $default['de_nicepay_key'] = '+iz0ov8wQDjOQ73GhO6QJ/kXF041yRiS+ERc3rD36Oe62onynMp0u0+ZvmKcBw2EKd2LlRcxJqbHBz313h0aJg==';
+
 } else {
     // 실결제인 경우
     $default['de_nicepay_mid'] = "SIR".$default['de_nicepay_mid'];
@@ -43,6 +44,13 @@ $NICEPAY_METHOD = array(
 if (! function_exists('nicepay_reqPost')) {
     //Post api call
     function nicepay_reqPost($data, $url){
+        $url_data = parse_url($url);
+
+        // 나이스페이 url이 맞는지 체크하여 틀리면 false를 리턴합니다.
+        if (! (isset($url_data['host']) && preg_match('#\.nicepay\.co\.kr$#i', $url_data['host']))) {
+            return false;
+        }
+
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

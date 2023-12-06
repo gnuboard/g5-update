@@ -57,7 +57,6 @@ $buyerTel      = $buyertel;// 구매자 전화번호
 $useOpt        = $useopt;// 현금영수증 발행용도 ("1" - 소비자 소득공제용, "2" - 사업자 지출증빙용)
 $regNum        = $reg_num;// 현금결제자 주민등록번호
 
-
 $ediDate = preg_replace('/[^0-9]/', '', G5_TIME_YMDHIS);
 
 // 04 (현금영수증), 01 (매체구분 일반), 시간정보 (12자리), 랜덤 4자리숫자

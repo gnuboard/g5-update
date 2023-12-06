@@ -2487,6 +2487,15 @@ function shop_is_taxsave($od, $is_view_receipt=false){
 	return 0;
 }
 
+// 해당 주문에 현금영수증이 발급되었다면 마이페이지 주문
+function is_order_cashreceipt($od) {
+    if ($od['od_cash'] && $od['od_cash_no'] && $od['od_cash_info'] && $od['od_receipt_price'] && in_array($od['od_settle_case'], array('무통장', '계좌이체', '가상계좌'))) {
+        return true;
+    }
+
+    return false;
+}
+
 // 장바구니 금액 체크 $is_price_update 가 true 이면 장바구니 가격 업데이트한다. 
 function before_check_cart_price($s_cart_id, $is_ct_select_condition=false, $is_price_update=false, $is_item_cache=false){
     global $g5, $default, $config;
