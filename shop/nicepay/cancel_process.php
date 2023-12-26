@@ -13,10 +13,6 @@ $moid = isset($od_id) ? $od_id : get_session('ss_order_id');
 $cancelMsg = $cancel_msg;
 $tid = $tno;
 $partialCancelCode = isset($partialCancelCode) ? (int) $partialCancelCode : 0;
-// $cancelAmt = $_POST['CancelAmt']; 
-// $partialCancelCode = $_POST['PartialCancelCode'];
-
-// $cancelAmt = 900;
 
 /*
 ****************************************************************************************
@@ -40,7 +36,7 @@ try{
 		'CharSet' => 'utf-8'
 	);
 
-    add_log($data);
+    if (function_exists('add_log')) add_log($data);
 
 	/*
 	****************************************************************************************
@@ -51,8 +47,8 @@ try{
 
     $result = json_decode($response, true);
     
-    add_log(array('1'=>1));
-    add_log($result, true, 'cc');
+    if (function_exists('add_log')) add_log(array('1'=>1));
+    if (function_exists('add_log')) add_log($result, true, 'cc');
 	
 }catch(Exception $e){
 	$e->getMessage();

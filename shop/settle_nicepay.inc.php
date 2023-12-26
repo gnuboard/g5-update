@@ -24,12 +24,17 @@ if ($default['de_card_test']) {
     // $default['de_nicepay_mid'] = 'nicessp06m';
     // $default['de_nicepay_key'] = '+iz0ov8wQDjOQ73GhO6QJ/kXF041yRiS+ERc3rD36Oe62onynMp0u0+ZvmKcBw2EKd2LlRcxJqbHBz313h0aJg==';
 
+    // 나이스 애플페이 간편결제 직접 호출 테스트 아이디 (애플페이는 오직 모바일에서만 됩니다)
+    // $default['de_nicepay_mid'] = 'nicapple1m';
+    // $default['de_nicepay_key'] = 'dBJ0hrJ8HtFpWHYxuyC3nRkBaEA3AXUfzZxfbRHKgrMipQmcY2m0Ga4qG0jz92VJe7BL5tK0qSVSloowdXrtqg==';
+
 } else {
     // 실결제인 경우
     $default['de_nicepay_mid'] = "SIR".$default['de_nicepay_mid'];
 }
 
-$nicepay_returnURL = G5_SHOP_URL.'/orderformupdate.php';
+// 개인결제인지 아니면 쇼핑몰 일반결제인지 returnURL이 서로 다름
+$nicepay_returnURL = ((isset($pp['pp_id']) && $pp['pp_id'])) ? G5_SHOP_URL.'/personalpayformupdate.php' : G5_SHOP_URL.'/orderformupdate.php';
 
 // $ediDate = preg_replace('/[^0-9]/', '', G5_TIME_YMDHIS);
 // $hashString = bin2hex(hash('sha256', $ediDate.$default['de_nicepay_mid'].$price.$default['de_nicepay_key'], true));

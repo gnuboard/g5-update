@@ -2282,9 +2282,6 @@ function ss_mb_key($member, $regenerate = false)
 
     if (!$client_key) {
         $client_key = get_random_token_string(16);
-
-        add_log(array('time'=>G5_TIME_YMDHIS, 'key'=>$client_key, 'user_agent'=>$_SERVER['HTTP_USER_AGENT']), 'ssmbkey');
-
         set_cookie('mb_client_key', $client_key, G5_SERVER_TIME * -1);
     }
 

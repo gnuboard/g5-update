@@ -210,8 +210,8 @@ if( ! isset($default['de_inicis_iniapi_key']) ){
 // NICEPAY mid, key 추가
 if (! isset($default['de_nicepay_mid'])) {
     $sql = "ALTER TABLE `{$g5['g5_shop_default_table']}` 
-            ADD COLUMN `de_nicepay_mid` VARCHAR(30) NOT NULL DEFAULT '' AFTER `de_inicis_cartpoint_use`,
-            ADD COLUMN `de_nicepay_key` VARCHAR(30) NOT NULL DEFAULT '' AFTER `de_nicepay_mid`; ";
+            ADD COLUMN `de_nicepay_mid` VARCHAR(20) NOT NULL DEFAULT '' AFTER `de_inicis_cartpoint_use`,
+            ADD COLUMN `de_nicepay_key` VARCHAR(150) NOT NULL DEFAULT '' AFTER `de_nicepay_mid`; ";
     sql_query($sql, false);
 }
 
@@ -949,9 +949,12 @@ if(!$default['de_kakaopay_cancelpwd']){
         </tr>
 
         <tr class="pg_info_fld nicepay_info_fld" id="nicepay_info_anchor">
-            <th scope="row"><label for="de_nicepay_mid">NICEPAY MID</label></th>
+            <th scope="row"><label for="de_nicepay_mid">NICEPAY MID</label><br><a href="http://sir.kr/main/service/inicis_pg.php" target="_blank" id="scf_nicepay_reg" class="nicepay_btn">NICEPAY 신청하기</a></th>
             <td>
-                <input type="text" name="de_nicepay_mid" value="<?php echo get_sanitize_input($default['de_nicepay_mid']); ?>" id="de_nicepay_mid" class="frm_input" size="30" maxlength="30">
+                <span class="frm_info">NICEPAY로 부터 발급 받으신 상점아이디(ID)를 SIR 을 제외한 나머지 자리를 입력 합니다.<br>만약, 상점아이디가 SIR로 시작하지 않는다면 계약담당자에게 변경 요청을 해주시기 바랍니다. 예) SIRpaytest</span>
+                <span class="sitecode">SIR</span>
+                <input type="text" name="de_nicepay_mid" value="<?php echo get_sanitize_input($default['de_nicepay_mid']); ?>" id="de_nicepay_mid" class="frm_input" size="12" maxlength="12">
+                영문소문자(숫자포함 가능)
             </td>
         </tr>
         <tr class="pg_info_fld nicepay_info_fld">

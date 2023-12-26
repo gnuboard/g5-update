@@ -449,6 +449,9 @@ else if ($od_settle_case == "간편결제" || (($od_settle_case == "lpay" || $od
         case 'inicis':
             include G5_SHOP_PATH.'/inicis/inistdpay_result.php';
             break;
+        case 'nicepay':
+            include G5_SHOP_PATH.'/nicepay/nicepay_result.php';
+            break;
         default:
             include G5_SHOP_PATH.'/kcp/pp_ax_hub.php';
             $card_name  = iconv("cp949", "utf-8", $card_name);

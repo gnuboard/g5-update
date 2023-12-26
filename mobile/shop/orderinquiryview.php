@@ -246,6 +246,7 @@ if($od['od_pg'] == 'lg') {
             $app_no_subj = '승인번호';
             $app_no = $od['od_app_no'];
             $disp_bank = false;
+            $disp_receipt = true;
         } else if($od['od_settle_case'] == '휴대폰') {
             $app_no_subj = '휴대폰번호';
             $app_no = $od['od_bank_account'];
@@ -347,7 +348,7 @@ if($od['od_pg'] == 'lg') {
                         <?php
                         }
 
-                        if($od['od_settle_case'] == '신용카드' || is_inicis_order_pay($od['od_settle_case']) || (shop_is_taxsave($od, true) && $misu_price == 0) )
+                        if($od['od_settle_case'] == '신용카드' || $od['od_settle_case'] == '간편결제' || is_inicis_order_pay($od['od_settle_case']) || (shop_is_taxsave($od, true) && $misu_price == 0) )
                         {
                             if($od['od_pg'] == 'lg') {
                                 require_once G5_SHOP_PATH.'/settle_lg.inc.php';

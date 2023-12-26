@@ -1,6 +1,7 @@
 <?php
 include_once('./_common.php');
 
+if (function_exists('add_log')) add_log($_POST, false, 'vv');
 
 $NICEPAY_log_path = G5_DATA_PATH.'/log'; // 나이스페이 가상계좌 로그저장 경로
 $NICEPAY_payLog  = false;                  // 로그를 기록하려면 true 로 수정
@@ -13,7 +14,7 @@ $pg_allow_ips = array(
     '211.33.136.39'
 );
 
-//PG에서 보냈는지 IP로 체크
+// PG 사에서 보냈는지 IP로 체크
 if (in_array($_SERVER['REMOTE_ADDR'], $pg_allow_ips)) {
 
     $PayMethod      = isset($_POST['PayMethod']) ? clean_xss_tags($_POST['PayMethod']) : '';           //지불수단
@@ -92,9 +93,20 @@ if (in_array($_SERVER['REMOTE_ADDR'], $pg_allow_ips)) {
             if($row['cnt'] == 1) {
                 // 미수금 정보 업데이트
                 $info = get_order_info($od_id);
+                
+                $add_update_sql = '';
+
+                // 현금영수증 발급시 1 또는 2 이면
+                if ($RcptType) {
+                    $add_update_sql = "
+                    , od_cash           = '1',
+                    od_cash_no        = '".$RcptAuthCode."',
+                    od_cash_info      = '".serialize(array('TID'=>$RcptTID, 'ApplNum'=>$RcptAuthCode, 'AuthDate'=>$AuthDate))."'
+                    ";
+                }
 
                 $sql = " update {$g5['g5_shop_order_table']}
-                            set od_misu = '{$info['od_misu']}' ";
+                            set od_misu = '{$info['od_misu']}' $add_update_sql ";
                 if($info['od_misu'] == 0)
                     $sql .= " , od_status = '입금' ";
                 $sql .= " where od_id = '$od_id' ";
@@ -107,6 +119,7 @@ if (in_array($_SERVER['REMOTE_ADDR'], $pg_allow_ips)) {
                                 where od_id = '$od_id' ";
                     sql_query($sql, FALSE);
                 }
+
             }
         }
 

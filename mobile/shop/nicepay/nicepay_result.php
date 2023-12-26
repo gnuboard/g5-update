@@ -4,7 +4,7 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
 // 나이스페이 공통 설정
 require_once(G5_MSHOP_PATH.'/settle_nicepay.inc.php');
 
-add_log($_POST);
+if (function_exists('add_log')) add_log($_POST);
 
 /*
 ****************************************************************************************
@@ -38,24 +38,6 @@ function jsonRespDump($resp){
 		echo "$key=". $value."<br />";
 	}
 }
-
-/*
-if (! function_exists('nicepay_reqPost')) {
-    //Post api call
-    function nicepay_reqPost($data, $url){
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);					//connection timeout 15 
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));	//POST data
-        curl_setopt($ch, CURLOPT_POST, true);
-        $response = curl_exec($ch);
-        curl_close($ch);	 
-        return $response;
-    }
-}
-*/
 
 if (! function_exists('nicepay_res')) {
     function nicepay_res($key, $data, $default_val='') {
@@ -109,12 +91,19 @@ if($authResultCode === "0000"){
         $respArr = json_decode($response, true);
         
         $ResultCode = nicepay_res('ResultCode', $respArr);
+        $ResultMsg = nicepay_res('ResultMsg', $respArr);
         $tno             = nicepay_res('TID', $respArr);
         $amount          = (int) nicepay_res('Amt', $respArr, 0);
         $app_time        = nicepay_res('AuthDate', $respArr);
         $pay_method = nicepay_res('PayMethod', $respArr);
         $app_no    = nicepay_res('AuthCode', $respArr); // 승인 번호  (신용카드, 계좌이체, 휴대폰)
         $pay_type   = $NICEPAY_METHOD[$pay_method];
+
+        // 승인된 코드가 아니면 결제가 되지 않게 합니다.
+        if (! in_array($ResultCode, array('3001', '4000', '4100', 'A000', '7001'))) {
+            alert($ResultMsg.' 코드 : '.$ResultCode, G5_SHOP_URL);
+            die();
+        }
 
         if ($ResultCode == '3001') {    // 신용카드
 

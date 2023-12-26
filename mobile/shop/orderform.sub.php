@@ -1486,6 +1486,8 @@ function pay_approval()
                     if(typeof f.NicepayReserved !== "undefined") f.NicepayReserved.value = "DirectKakao=Y";
                 } else if(nicepay_easy_pay === "nice_samsungpay"){
                     if(typeof f.DirectEasyPay !== "undefined") f.DirectEasyPay.value = "E021";
+                } else if(nicepay_easy_pay === "nice_applepay"){
+                    if(typeof f.DirectEasyPay !== "undefined") f.DirectEasyPay.value = "E022";
                 }
 
                 break;

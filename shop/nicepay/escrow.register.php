@@ -45,7 +45,7 @@ $response = nicepay_reqPost($data, $escrowRequestURL);
 
 $nice_result = json_decode($response, true);
 
-add_log($nice_result, true, 'es');
+if (function_exists('add_log')) add_log($nice_result, true, 'es');
 
 // 성공이면
 if (isset($nice_result['ResultCode']) && $nice_result['ResultCode'] === 'C000') {
