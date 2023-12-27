@@ -23,20 +23,33 @@ $amt = isset($_POST['Amt']) ? (int) preg_replace('/[^0-9]/', '', $_POST['Amt']) 
 $reqReserved = isset($_POST['ReqReserved']) ? clean_xss_tags($_POST['ReqReserved']) : '';			// mall custom field 
 $netCancelURL = isset($_POST['NetCancelURL']) ? clean_xss_tags($_POST['NetCancelURL']) : '';			// netCancelURL
 
-if (get_session('ss_order_id') != $moid){
-    alert("요청한 주문번호가 틀려서 결제를 진행할수 없습니다.\n다시 장바구니에서 시도해 주세요.");
+if (isset($pp['pp_id']) && $pp['pp_id']) {   //개인결제
+    $session_order_id = get_session('ss_personalpay_id');
+    $order_price = (int) $pp['pp_price'];
+} else {
+    $session_order_id = get_session('ss_order_id');     // 쇼핑몰 일반결제
+}
+
+if ($session_order_id != $moid){
+    alert("요청한 주문번호가 틀려서 결제를 진행할수 없습니다.\\n다시 장바구니에서 시도해 주세요.", G5_SHOP_URL);
 }
 
 if ($default['de_nicepay_mid'] != $mid) {
-    alert("요청한 상점 mid와 설정된 mid가 틀리므로 결제를 진행할수 없습니다.");
+    alert("요청한 상점 mid와 설정된 mid가 틀리므로 결제를 진행할수 없습니다.", G5_SHOP_URL);
+}
+
+if ($order_price != $amt) {
+    alert("요청한 결제금액이 틀리므로 결제를 진행할수 없습니다.", G5_SHOP_URL);
 }
 
 // API CALL foreach example
-function jsonRespDump($resp){
-	$respArr = json_decode($resp);
-	foreach ( $respArr as $key => $value ){
-		echo "$key=". $value."<br />";
-	}
+if (! function_exists('jsonRespDump')) {
+    function jsonRespDump($resp){
+        $respArr = json_decode($resp);
+        foreach ( $respArr as $key => $value ){
+            echo "$key=". $value."<br />";
+        }
+    }
 }
 
 if (! function_exists('nicepay_res')) {
@@ -96,7 +109,7 @@ if($authResultCode === "0000"){
         $amount          = (int) nicepay_res('Amt', $respArr, 0);
         $app_time        = nicepay_res('AuthDate', $respArr);
         $pay_method = nicepay_res('PayMethod', $respArr);
-        $app_no    = nicepay_res('AuthCode', $respArr); // 승인 번호  (신용카드, 계좌이체, 휴대폰)
+        $od_app_no = $app_no    = nicepay_res('AuthCode', $respArr); // 승인 번호  (신용카드, 계좌이체, 휴대폰)
         $pay_type   = $NICEPAY_METHOD[$pay_method];
 
         // 승인된 코드가 아니면 결제가 되지 않게 합니다.
@@ -140,11 +153,10 @@ if($authResultCode === "0000"){
                 $escw_yn         = 'Y';
 
         }
-        $depositor       = nicepay_res('BuyerName', $respArr);  // 입금할 계좌 예금주
+        $depositor       = '';  // 입금할 계좌 예금주 (나이스페이 경우 가상계좌의 예금주명을 리턴받지 못합니다. )
         $account         = nicepay_res('VbankNum', $respArr);
         $commid          = '';    // 통신사 코드
         $mobile_no       = '';    // 휴대폰결제시 휴대폰번호 (나이스페이 경우 결제한 휴대폰번호를 리턴받지 못합니다.)
-        $app_no = $od_app_no = nicepay_res('VbankNum', $respArr);
         $card_name       = nicepay_res('CardName', $respArr);
 
 	} catch(Exception $e) {
@@ -171,7 +183,7 @@ if($authResultCode === "0000"){
         alert("결제 오류로 더 이상 진행할수 없습니다.");
 	}	
 	
-}else{
+} else {
 	//When authentication fail
 	$ResultCode = $authResultCode; 	
 	$ResultMsg = $authResultMsg;

@@ -12,6 +12,10 @@ $moid = isset($_POST['Moid']) ? clean_xss_tags($_POST['Moid']) : '';							// or
 $sql = " select * from {$g5['g5_shop_order_data_table']} where od_id = '$moid' ";
 $row = sql_fetch($sql);
 
+if (empty($row)) {
+    die('');
+}
+
 $data = unserialize(base64_decode($row['dt_data']));
 
 if(isset($data['pp_id']) && $data['pp_id']) {
@@ -56,7 +60,7 @@ if ($authResultCode === '0000') {
             }
 
         }
-
+        
         include_once(G5_MSHOP_PATH.'/personalpayformupdate.php');
 
     } else {    //상점주문
