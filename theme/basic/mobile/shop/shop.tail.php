@@ -36,7 +36,17 @@ $admin = get_admin("super");
     <a href="<?php echo get_device_change_url(); ?>" id="device_change">PC 버전</a>
     <?php } ?>
 </div>
-
+<script>
+jQuery(function ($){
+    $('#darkmode_btn').on("click", function(e) {
+        if ($("#dark-mode-toggle").is(':checked')) {
+            set_darkmode('dark');
+        } else {
+            set_darkmode('light');
+        }
+    });
+});
+</script>
 <?php
 $sec = get_microtime() - $begin_time;
 $file = $_SERVER['SCRIPT_NAME'];
