@@ -74,6 +74,14 @@ jQuery(function($) {
             return false;
         });
 
+        $('#darkmode_btn').on("click", function(e) {
+            if ($("#dark-mode-toggle").is(':checked')) {
+                set_darkmode('dark');
+            } else {
+                set_darkmode('light');
+            }
+        });
+
     });
 });
 </script>

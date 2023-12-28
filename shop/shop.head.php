@@ -156,37 +156,6 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_JS_URL.'/owlcarousel/owl.carou
     </div>
 </div>
 <script>
-  // 다크모드 설정
-  const $checkbox = document.querySelector('#dark-mode-toggle');
-
-  const isUserColorTheme = localStorage.getItem('color-theme');
-  const isOsColorTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-
-  const getUserTheme = () => (isUserColorTheme ? isUserColorTheme : isOsColorTheme);
-
-  document.addEventListener('DOMContentLoaded', function () {
-  const initialTheme = getUserTheme();
-    if (initialTheme === 'dark') {
-      localStorage.setItem('color-theme', 'dark');
-      document.documentElement.setAttribute('color-theme', 'dark');
-    } else {
-      localStorage.setItem('color-theme', 'light');
-      document.documentElement.setAttribute('color-theme', 'light');
-    }
-  }); 
-
-  $checkbox.addEventListener('click', e => {
-    if (e.target.checked) {
-      localStorage.setItem('color-theme', 'dark');
-      document.documentElement.setAttribute('color-theme', 'dark');
-    } else {
-      localStorage.setItem('color-theme', 'light');
-      document.documentElement.setAttribute('color-theme', 'light');
-    }
-  });
-  
-</script>
-<script>
 
 jQuery(function ($){
 	$(".btn_member_mn").on("click", function() {
