@@ -1132,3 +1132,7 @@ input[type="text"]{max-width:200px}
 /* Styles */
 input[type="text"]{max-width:200px}
 }
+
+.preview_upload_item {max-width: 400px; max-height: 300px; object-fit: contain; margin: 10px}
+.upload_cancel_button {visibility: collapse}
+.upload_cancel_button_show {visibility: visible}
