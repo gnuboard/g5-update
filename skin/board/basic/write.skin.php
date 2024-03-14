@@ -180,6 +180,8 @@ add_stylesheet('<link rel="stylesheet" href="'.$board_skin_url.'/style.css">', 0
     });
 
     <?php } ?>
+    const max_file_count = <?php echo isset($board['bo_cf_count']) ? $board['bo_cf_count'] : 0; ?>;
+
     function html_auto_br(obj)
     {
         if (obj.checked) {
@@ -250,6 +252,121 @@ add_stylesheet('<link rel="stylesheet" href="'.$board_skin_url.'/style.css">', 0
 
         return true;
     }
+
+
+    // function check_upload_file_list() {
+    //     let upload_file_nodes = document.querySelectorAll('input[name="bf_file[]"]');
+    //     let file_list = [];
+    //     for (let i = 0; i < upload_file_nodes.length; i++) {
+    //         file_list[i] = upload_file_nodes[i].value;
+    //     }
+    //     return file_list;
+    // }
+    
+    function ajax_file_submit(element) {
+        let file_upload_form = element;
+
+        //유효성 검사
+        let upload_file_list = document.querySelectorAll('input[name="bf_file[]"]');
+        let file_tag = file_upload_form.querySelector('input[name="bf_file[]"]');
+        if (file_tag.files.length == 0) {
+            return;
+        }
+        if (upload_file_list.length > max_file_count) {
+            alert('최대 ' + max_file_count + '개 업로드 가능합니다.');
+            return;
+        }
+
+        set_comment_token(file_upload_form);
+        let formData = new FormData(file_upload_form);
+        formData.append('bo_table', g5_bo_table);
+
+        let progressbar = document.createElement('progress');
+        progressbar.max = 100;
+        file_upload_form.appendChild(progressbar);
+
+        let upload_percent = 0;
+        let req = new XMLHttpRequest();
+        req.upload.onprogress = function (e) {
+            if (e.lengthComputable) {
+                upload_percent = Math.round(e.loaded / e.total * 100);
+                progressbar.value = upload_percent;
+                if (upload_percent == 100) {
+                    progressbar.style.display = 'none';
+                }
+            }
+        };
+
+        let url = g5_bbs_url + "/comment_file.php";
+        req.open('POST', url, true);
+        req.send(formData);
+
+        req.onreadystatechange = function () {
+            if (req.readyState === 4) {
+
+                if (this.status == 200) {
+                    upload_success(req.response);
+                } else {
+                    let result = JSON.parse(req.response)
+                    if (result == null) {
+                        alert('업로드에 실패했습니다.')
+                    } else if (result.allow_file_size != undefined) {
+                        alert('파일 크기는 ' + result.allow_file_size + ' MB 이하만 허용됩니다')
+                    } else {
+                        alert(result.msg);
+                    }
+                }
+            }
+        };
+
+        function upload_success(data) {
+            let res = JSON.parse(data);
+            view_image(res);
+            let file_list = create_comment_file_list(res);
+            document.querySelector('#fcomment_file .upload-file-list').appendChild(file_list);
+            file_tag.files = new DataTransfer().files; //초기화
+        }
+
+    }
+
+    function add_comment_editor_event() {
+        document.querySelector('#bf_file').addEventListener('keypress', add_paragraph);
+        document.querySelector('#wr_content').addEventListener("paste", image_paste_uploader);
+        document.querySelector('#wr_content').addEventListener('drop', image_drop, false);
+        $(document).on("keyup change", "#wr_content", function () {
+            let str = $(this).html();
+            let max = char_max ? parseInt(char_max) : null;
+            if (max == null) {
+                return false;
+            }
+
+            if (str.length > max) {
+                $(this).val(str.substr(0, max));
+                return false;
+            }
+        });
+
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const file_inputs = document.querySelectorAll('input[name="bf_file[]"]');
+
+        file_inputs.forEach(function (input) {
+            input.addEventListener("change", function (event) {
+                console.log("File changed:", event.target.files);
+                if (event.target.files.length == 0) {
+                    return false;
+                }
+                
+                if (confirm('파일을 업로드 하시겠습니까?')) {
+                    ajax_file_submit(event.target.form);
+                } else {
+                    event.target.value = '';
+                }
+            });
+        });
+    });
+    
     </script>
 </section>
 <!-- } 게시물 작성/수정 끝 -->
