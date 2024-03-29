@@ -636,6 +636,18 @@ if($is_kakaopay_use) {
                     if( in_array('nicepay_kakaopay', $de_easy_pay_service_array) ){
                         $easypay_prints['nicepay_kakaopay'] = '<li><input type="radio" id="od_settle_nicepay_kakaopay" name="od_settle_case" data-pay="nice_kakaopay" value="간편결제" > <label for="od_settle_nicepay_kakaopay" class="kakaopay_icon nicepay_kakaopay lb_icon" title="NICEPAY - 카카오페이">카카오페이</label></li>';
                     }
+                    if( in_array('nicepay_paycopay', $de_easy_pay_service_array) ){
+                        $easypay_prints['nicepay_paycopay'] = '<li><input type="radio" id="od_settle_nicepay_paycopay" name="od_settle_case" data-pay="nice_paycopay" value="간편결제" > <label for="od_settle_nicepay_paycopay" class="paycopay_icon nicepay_paycopay lb_icon" title="NICEPAY - 페이코">페이코</label></li>';
+                    }
+                    if( in_array('nicepay_skpay', $de_easy_pay_service_array) ){
+                        $easypay_prints['nicepay_skpay'] = '<li><input type="radio" id="od_settle_nicepay_skpay" name="od_settle_case" data-pay="nice_skpay" value="간편결제" > <label for="od_settle_nicepay_skpay" class="skpay_icon nicepay_skpay lb_icon" title="NICEPAY - SK페이">SK페이</label></li>';
+                    }
+                    if( in_array('nicepay_ssgpay', $de_easy_pay_service_array) ){
+                        $easypay_prints['nicepay_ssgpay'] = '<li><input type="radio" id="od_settle_nicepay_ssgpay" name="od_settle_case" data-pay="nice_ssgpay" value="간편결제" > <label for="od_settle_nicepay_ssgpay" class="ssgpay_icon nicepay_ssgpay lb_icon" title="NICEPAY - SSGPAY">SSGPAY</label></li>';
+                    }
+                    if( in_array('nicepay_lpay', $de_easy_pay_service_array) ){
+                        $easypay_prints['nicepay_lpay'] = '<li><input type="radio" id="od_settle_nicepay_lpay" name="od_settle_case" data-pay="nice_lpay" value="간편결제" > <label for="od_settle_nicepay_lpay" class="lpay_icon nicepay_lpay lb_icon" title="NICEPAY - LPAY">LPAY</label></li>';
+                    }
                 }
 
                 if( (in_array('nhnkcp_applepay', $de_easy_pay_service_array) || in_array('nicepay_applepay', $de_easy_pay_service_array)) && preg_match('~^(?:(?:(?:Mozilla/\d\.\d\s*\()+|Mobile\s*Safari\s*\d+\.\d+(\.\d+)?\s*)(?:iPhone(?:\s+Simulator)?|iPad|iPod);\s*(?:U;\s*)?(?:[a-z]+(?:-[a-z]+)?;\s*)?CPU\s*(?:iPhone\s*)?(?:OS\s*\d+_\d+(?:_\d+)?\s*)?(?:like|comme)\s*Mac\s*O?S?\s*X(?:;\s*[a-z]+(?:-[a-z]+)?)?\)\s*)?(?:AppleWebKit/\d+(?:\.\d+(?:\.\d+)?|\s*\+)?\s*)?(?:\(KHTML,\s*(?:like|comme)\s*Gecko\s*\)\s*)?(?:Version/\d+\.\d+(?:\.\d+)?\s*)?(?:Mobile/\w+\s*)?(?:Safari/\d+\.\d+(?:\.\d+)?.*)?$~', $_SERVER['HTTP_USER_AGENT']) ){
@@ -1488,6 +1500,14 @@ function pay_approval()
                     if(typeof f.DirectEasyPay !== "undefined") f.DirectEasyPay.value = "E021";
                 } else if(nicepay_easy_pay === "nice_applepay"){
                     if(typeof f.DirectEasyPay !== "undefined") f.DirectEasyPay.value = "E022";
+                } else if(nicepay_easy_pay === "nice_paycopay"){
+                    if(typeof f.NicepayReserved !== "undefined") f.NicepayReserved.value = "DirectPayco=Y";
+                } else if(nicepay_easy_pay === "nice_skpay"){
+                    if(typeof f.NicepayReserved !== "undefined") f.NicepayReserved.value = "DirectPay11=Y";
+                } else if(nicepay_easy_pay === "nice_ssgpay"){
+                    if(typeof f.DirectEasyPay !== "undefined") f.DirectEasyPay.value = "E007";
+                } else if(nicepay_easy_pay === "nice_lpay"){
+                    if(typeof f.DirectEasyPay !== "undefined") f.DirectEasyPay.value = "E018";
                 }
 
                 break;

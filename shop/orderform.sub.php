@@ -647,7 +647,7 @@ if($is_kakaopay_use) {
                             }
                         } else if ($default['de_pg_service'] === 'nicepay') {
                             if( in_array('nicepay_samsungpay', $de_easy_pay_service_array) ){
-                                $easypay_prints['nicepay_samsungpay'] = '<input type="radio" id="od_settle_nicepay_samsungpay" name="od_settle_case" data-pay="nice_samsungpay" value="간편결제"> <label for="od_settle_nicepay_samsungpay" class="samsung nicepay_samsungpay lb_icon" title="NICEPAY - 삼성페이">삼성페이</label>';
+                                $easypay_prints['nicepay_samsungpay'] = '<input type="radio" id="od_settle_nicepay_samsungpay" name="od_settle_case" data-pay="nice_samsungpay" value="간편결제"> <label for="od_settle_nicepay_samsungpay" class="samsungpay_icon nicepay_samsungpay lb_icon" title="NICEPAY - 삼성페이">삼성페이</label>';
                             }
                             if( in_array('nicepay_naverpay', $de_easy_pay_service_array) ){
                                 $easypay_prints['nicepay_naverpay'] = '<input type="radio" id="od_settle_nicepay_naverpay" name="od_settle_case" data-pay="nice_naverpay" value="간편결제" > <label for="od_settle_nicepay_naverpay" class="naverpay_icon nicepay_naverpay lb_icon" title="NICEPAY - 네이버페이">네이버페이</label>';
@@ -662,7 +662,10 @@ if($is_kakaopay_use) {
                                 $easypay_prints['nicepay_skpay'] = '<input type="radio" id="od_settle_nicepay_skpay" name="od_settle_case" data-pay="nice_skpay" value="간편결제" > <label for="od_settle_nicepay_skpay" class="skpay_icon nicepay_skpay lb_icon" title="NICEPAY - SK페이">SK페이</label>';
                             }
                             if( in_array('nicepay_ssgpay', $de_easy_pay_service_array) ){
-                                $easypay_prints['nicepay_ssgpay'] = '<input type="radio" id="od_settle_nicepay_ssgpay" name="od_settle_case" data-pay="nice_ssgpay" value="간편결제" > <label for="od_settle_nicepay_ssgpay" class="ssgpay_icon nicepay_ssgpay lb_icon" title="NICEPAY - 카카오페이">카카오페이</label>';
+                                $easypay_prints['nicepay_ssgpay'] = '<input type="radio" id="od_settle_nicepay_ssgpay" name="od_settle_case" data-pay="nice_ssgpay" value="간편결제" > <label for="od_settle_nicepay_ssgpay" class="ssgpay_icon nicepay_ssgpay lb_icon" title="NICEPAY - SSGPAY">SSGPAY</label>';
+                            }
+                            if( in_array('nicepay_lpay', $de_easy_pay_service_array) ){
+                                $easypay_prints['nicepay_lpay'] = '<input type="radio" id="od_settle_nicepay_lpay" name="od_settle_case" data-pay="nice_lpay" value="간편결제" > <label for="od_settle_nicepay_lpay" class="lpay_icon nicepay_lpay lb_icon" title="NICEPAY - LPAY">LPAY</label>';
                             }
                         }
                     } else {
@@ -1590,6 +1593,14 @@ function forderform_check(f)
                     if(typeof f.NicepayReserved !== "undefined") f.NicepayReserved.value = "DirectKakao=Y";
                 } else if(nicepay_easy_pay === "nice_samsungpay"){
                     if(typeof f.DirectEasyPay !== "undefined") f.DirectEasyPay.value = "E021";
+                } else if(nicepay_easy_pay === "nice_paycopay"){
+                    if(typeof f.NicepayReserved !== "undefined") f.NicepayReserved.value = "DirectPayco=Y";
+                } else if(nicepay_easy_pay === "nice_skpay"){
+                    if(typeof f.NicepayReserved !== "undefined") f.NicepayReserved.value = "DirectPay11=Y";
+                } else if(nicepay_easy_pay === "nice_ssgpay"){
+                    if(typeof f.DirectEasyPay !== "undefined") f.DirectEasyPay.value = "E007";
+                } else if(nicepay_easy_pay === "nice_lpay"){
+                    if(typeof f.DirectEasyPay !== "undefined") f.DirectEasyPay.value = "E018";
                 }
 
                 break;
