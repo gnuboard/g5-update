@@ -33,10 +33,12 @@ add_stylesheet('<link rel="stylesheet" href="'.G5_SHOP_CSS_URL.'/style.css">', 0
 	            }
 	        }
 	
-	        if($big_img_count == 0) {
+	        if($big_img_count === 0) {
 	            echo '<img src="'.G5_SHOP_URL.'/img/no_image.gif" alt="">';
 	        }
 	        ?>
+            <div class="item-button-next"></div>
+            <div class="item-button-prev"></div>
 	        <a href="<?php echo G5_SHOP_URL; ?>/largeimage.php?it_id=<?php echo $it['it_id']; ?>&amp;no=1" target="_blank" id="popup_item_image" class="popup_item_image"><i class="fa fa-search-plus" aria-hidden="true"></i><span class="sound_only">확대보기</span></a>
 	        </div>
 	        <?php
@@ -523,6 +525,62 @@ function fitem_submit(f)
 
     return true;
 }
+
+function add_image_zoom() {
+    $('#sit_pvi_big a img')
+        .wrap('<span style="display:inline-block"></span>')
+        .css('display', 'block')
+        .parent()
+        .zoom({
+            magnify: 2,
+            callback: function () {
+                //300px 이하는 확대하지 않게 하기 위함
+                if (this.width < 300 && this.height < 300) {
+                    $(this).css('width', '0')
+                    $(this).css('height', '0')
+                }
+            }
+        });
+}
+
+$(function () {
+
+    add_image_zoom();
+
+    //이미지 슬라이드 번호 가져오기
+    function get_current_slide_index() {
+        let images = document.querySelectorAll('#sit_pvi_big a');
+        for (let i = 0; i < images.length; i++) {
+            if (images[i].className === 'visible') {
+                return i;
+            }
+        }
+    }
+
+    let slide_left_button = document.querySelector('.item-button-prev');
+    slide_left_button.addEventListener('click', function (e) {
+        let idx = get_current_slide_index();
+        if (idx > 0) {
+            idx--;
+            $("#sit_pvi_big a.visible").removeClass("visible");
+            $("#sit_pvi_big a:eq(" + idx + ")").addClass("visible");
+        }
+    })
+
+    let slide_right_button = document.querySelector('.item-button-next');
+    slide_right_button.addEventListener('click', function (e) {
+        let idx = get_current_slide_index();
+        if (idx < --document.querySelectorAll("#sit_pvi .img_thumb").length) {
+            idx++;
+            document.querySelector('#sit_pvi_big a.visible').className = '';
+            $("#sit_pvi_big a.visible").removeClass("visible");
+            $("#sit_pvi_big a:eq(" + idx + ")").addClass("visible");
+        }
+    })
+})
+
 </script>
-<?php /* 2017 리뉴얼한 테마 적용 스크립트입니다. 기존 스크립트를 오버라이드 합니다. */ ?>
+<?php
+add_javascript('<script src="'.G5_JS_URL.'/image.zoom.js"></script>');
+/* 2017 리뉴얼한 테마 적용 스크립트입니다. 기존 스크립트를 오버라이드 합니다. */ ?>
 <script src="<?php echo G5_JS_URL; ?>/shop.override.js"></script>

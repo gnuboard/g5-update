@@ -7,7 +7,7 @@ html, h1, h2, h3, h4, h5, h6, form, fieldset, img {margin:0;padding:0;border:0}
 h1, h2, h3, h4, h5, h6 {font-size:1em;font-family:'Malgun Gothic', dotum, sans-serif}
 article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, section {display:block}
 ul {margin:0;padding:0;list-style:none}
-ol,li,dl,dt,dd {margin:0;padding:0} 
+ol,li,dl,dt,dd {margin:0;padding:0}
 legend {position:absolute;margin:0;padding:0;font-size:0;line-height:0;text-indent:-9999em;overflow:hidden}
 label, input, button, select, img {vertical-align:middle}
 input, button {margin:0;padding:0;font-family:'Malgun Gothic', dotum, sans-serif;font-size:1em}
@@ -32,14 +32,14 @@ input[type=text],input[type=password], textarea {
 -o-transition:all 0.30s ease-in-out;
 outline:none;
 }
- 
+
 input[type=text]:focus,input[type=password]:focus, textarea:focus,select:focus {
 -webkit-box-shadow:0 0 5px #9ed4ff;
 -moz-box-shadow:0 0 5px #9ed4ff;
 box-shadow:0 0 5px #9ed4ff;
 border:1px solid #558ab7 !important;
 }
- 
+
 .placeholdersjs {color:#aaa !important}
 #hd, #wrapper, #ft {min-width:1200px}
 
@@ -523,7 +523,7 @@ box-shadow:0 1px 10px rgba(0,0,0,.1)}
 
 /* 페이징 */
 .pg_wrap {margin:10px 0 30px;text-align:center}
-.pg_wrap:after {display:block;visibility:hidden;clear:both;content:""} 
+.pg_wrap:after {display:block;visibility:hidden;clear:both;content:""}
 .pg {text-align:center}
 .pg_page, .pg_current,.qa_page {display:inline-block;vertical-align:middle;background:#eee;border:1px solid #eee}
 .pg a:focus, .pg a:hover {text-decoration:none}
@@ -1088,7 +1088,7 @@ a.btn_frmline.is-long-text{height:auto;width:160px}
 #sod_fin_cancel p {text-align:center;background:#ffe0e0;border:2px solid #d50c0c;padding:15px;color:#d50c0c;font-size:1.167em;font-weight:bold}
 
 #sod_cancel_pop {display:none;width:100%;height:100%;position:fixed;top:0;left:0;z-index:999}
-#sod_fin_cancelfrm {position:absolute;top:50%;left:50%;background:#fff;text-align:center;width:245px;max-height:300px;margin-left:-125px;margin-top:-180px;overflow-y:auto;border-radius:5px;-webkit-box-shadow:1px 1px 18px rgba(0,0,0,0.2);-moz-box-shadow:1px 1px 18px rgba(0,0,0,0.2);box-shadow:1px 1px 18px rgba(0,0,0,0.2);border:1px solid #dde7e9;background:#fff;border-radius:3px}  
+#sod_fin_cancelfrm {position:absolute;top:50%;left:50%;background:#fff;text-align:center;width:245px;max-height:300px;margin-left:-125px;margin-top:-180px;overflow-y:auto;border-radius:5px;-webkit-box-shadow:1px 1px 18px rgba(0,0,0,0.2);-moz-box-shadow:1px 1px 18px rgba(0,0,0,0.2);box-shadow:1px 1px 18px rgba(0,0,0,0.2);border:1px solid #dde7e9;background:#fff;border-radius:3px}
 #sod_fin_cancelfrm form {padding:20px}
 .sod_fin_bg {background:rgba(0,0,0,0.1);width:100%;height:100%}
 .sod_cls_btn {position:absolute;right:0;top:0;color:#b5b8bb;border:0;padding:12px 15px;font-size:16px;background:#fff}
@@ -1294,4 +1294,5 @@ html.no-overflowscrolling #sc_coupon_frm, html.no-overflowscrolling #od_coupon_f
 .chk_box input[type="radio"] + label span {position:absolute;top:0;left:0;width:15px;height:15px;display:block;background:#fff;border:1px solid #cdd6df;border-radius:50%}
 .chk_box input[type="radio"]:checked + label {color:#305af9}
 .chk_box input[type="radio"]:checked + label span:before {width:7px;height:7px;background:#305af9;content:'';position:absolute;top:3px;left:3px;border-radius:50%}
-
+.zoom {display:inline-block;position: relative;}
+.zoom img {display: block;}
