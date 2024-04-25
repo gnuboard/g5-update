@@ -924,16 +924,12 @@ class XPayClient
 	@brief Micro time 
 	@param MertKey MertKey
 	@date 2014.04.03
+	@update 2024.04.24
 	@author SangmanPark (sangman.park@gmail.com)
 	@remark Micro Time 을 구한다.
 	*/
 	function getMicrotime()
 	{
-		if (version_compare(PHP_VERSION, '5.0.0', '<'))
-		{
-			return array_sum(explode(' ', microtime()));
-		}
-
 		return microtime(true);
 	}
 
