@@ -40,7 +40,7 @@ function g5_path()
     $document_root = str_replace($tilde_remove, '', $server_script_filename); 
     $pattern = '/.*?' . preg_quote($document_root, '/') . '/i';
     $root = preg_replace($pattern, '', $result['path']); 
-    $port = ($_SERVER['SERVER_PORT'] == 80 || $_SERVER['SERVER_PORT'] == 443) ? '' : ':'.$_SERVER['SERVER_PORT']; 
+    $port = ($_SERVER['SERVER_PORT'] == 80 || $_SERVER['SERVER_PORT'] == 443) ? '' : ':'.$_SERVER['SERVER_PORT'];
     $http = 'http' . ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on') ? 's' : '') . '://'; 
     $user = str_replace(preg_replace($pattern, '', $server_script_filename), '', $server_script_name); 
     $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME']; 
@@ -137,8 +137,7 @@ $config = array();
 $member = array('mb_id'=>'', 'mb_level'=> 1, 'mb_name'=> '', 'mb_point'=> 0, 'mb_certify'=>'', 'mb_email'=>'', 'mb_open'=>'', 'mb_homepage'=>'', 'mb_tel'=>'', 'mb_hp'=>'', 'mb_zip1'=>'', 'mb_zip2'=>'', 'mb_addr1'=>'', 'mb_addr2'=>'', 'mb_addr3'=>'', 'mb_addr_jibeon'=>'', 'mb_signature'=>'', 'mb_profile'=>'');
 $board  = array('bo_table'=>'', 'bo_skin'=>'', 'bo_mobile_skin'=>'', 'bo_upload_count' => 0, 'bo_use_dhtml_editor'=>'', 'bo_subject'=>'', 'bo_image_width'=>0);
 $group  = array('gr_device'=>'', 'gr_subject'=>'');
-$g5     = array();
-if( version_compare( phpversion(), '8.0.0', '>=' ) ) { $g5 = array('title'=>''); }
+$g5     = array('title'=>'');
 $qaconfig = array();
 $g5_debug = array('php'=>array(),'sql'=>array());
 
