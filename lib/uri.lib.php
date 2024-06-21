@@ -210,17 +210,13 @@ function generate_seo_title($string, $wordLimit=G5_SEO_TITLE_WORD_CUT){
 
     $string = strip_tags($string);
 
-    if( function_exists('mb_convert_encoding') ){
-        $string = mb_convert_encoding($string, 'UTF-8', 'UTF-8');
-    }
-
     foreach ($trans as $key => $val){
         $string = preg_replace('#'.$key.'#iu', $val, $string);
     }
 
     $string = strtolower($string);
 
-    return trim(trim($string, $separator));
+    return trim($string, $separator);
 }
 
 function exist_seo_url($type, $seo_title, $write_table, $sql_id=0){
