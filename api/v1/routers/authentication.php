@@ -11,7 +11,7 @@ use Slim\Routing\RouteCollectorProxy;
 // - REFRESH_TOKEN_EXPIRE_MINUTES
 // - AUTH_ISSUER
 // - AUTH_AUDIENCE
-require_once __DIR__ . '/../../config.php';
+require_once dirname(__DIR__, 3) . '/config.php';
 
 
 $app->group('/token', function (RouteCollectorProxy $group) {
