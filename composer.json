@@ -1,8 +1,19 @@
 {
     "require": {
+        "php": ">=7.4",
         "slim/slim": "4.*",
-        "slim/psr7": "^1.7",
-        "firebase/php-jwt": "^6.10",
-        "paragonie/sodium_compat": "^2.0"
+        "slim/psr7": "^1.6",
+        "firebase/php-jwt": "^6.10"
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "composer dump-autoload -o"
+        ],
+        "post-update-cmd": [
+            "composer dump-autoload -o"
+        ]
+    },
+    "config": {
+        "optimize-autoloader": true
     }
 }
