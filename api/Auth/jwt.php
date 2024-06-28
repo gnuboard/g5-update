@@ -18,10 +18,10 @@ class JwtTokenManager
     public function __construct(string $type = 'access')
     {
         $this->algorithm = 'HS256';
-        $this->access_token_secret_key = ACCESS_TOKEN_SECRET_KEY ?? 'secret_key';
-        $this->refresh_token_secret_key = REFRESH_TOKEN_SECRET_KEY ?? 'secret_key';
-        $this->access_token_expire_minutes = ACCESS_TOKEN_EXPIRE_MINUTES ?? 30;
-        $this->refresh_token_expire_days = REFRESH_TOKEN_EXPIRE_MINUTES ?? 60 * 24 * 14;
+        $this->access_token_secret_key = defined('ACCESS_TOKEN_SECRET_KEY') ? ACCESS_TOKEN_SECRET_KEY : 'secre2t_key';
+        $this->refresh_token_secret_key = defined('REFRESH_TOKEN_SECRET_KEY') ? REFRESH_TOKEN_SECRET : 's2ecret_key';
+        $this->access_token_expire_minutes = defined('ACCESS_TOKEN_EXPIRE_MINUTES') ? ACCESS_TOKEN_EXPIRE_MINUTES : 30;
+        $this->refresh_token_expire_days = defined('REFRESH_TOKEN_EXPIRE_MINUTES') ? REFRESH_TOKEN_EXPIRE_MINUTES : 60 * 24 * 14;
         $this->type = $type;
     }
 
